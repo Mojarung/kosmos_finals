@@ -523,7 +523,8 @@ html.map-moving .panel {
   font-size: 12px; font-weight: 600; transition: background-color 0.2s var(--ease-standard), color 0.2s var(--ease-standard), box-shadow 0.2s;
 }
 .basemap-switch button:hover { color: var(--foreground); }
-.basemap-switch button.active { color: var(--foreground); background: var(--surface-1); box-shadow: 0 2px 6px rgb(0 0 0 / 0.12); }
+/* Выбранная подложка — та же светлая капля стекла, что и остальные выделения, а не сплошной --surface-1. */
+.basemap-switch button.active { color: var(--glass-select-text); background: var(--glass-select); box-shadow: var(--glass-select-edge); }
 .opacity-control { display: grid; gap: 2px; width: 112px; font-size: 11px; color: var(--muted-foreground); }
 .opacity-control span { display: flex; justify-content: space-between; }
 .opacity-control b { color: var(--foreground); font-weight: 650; }
