@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { Box, Globe2, Moon, Sun, Waves } from '@lucide/vue'
+import { Box, Globe2, LocateFixed, Moon, Sun, Waves } from '@lucide/vue'
 import BubbleTabs from './BubbleTabs.vue'
 import { chooseScene, state } from '../store'
 import { toggleTheme } from '../lib/theme'
@@ -38,6 +38,7 @@ const scene = computed({
     </div>
 
     <div class="panel capsule actions" data-enter>
+      <button v-tip="'Вернуться к снимку'" class="ghost-icon" aria-label="Показать весь снимок" @click="emit('focus-chip')"><LocateFixed :size="18" /></button>
       <button v-tip="state.tilted ? 'Вернуть вид сверху' : 'Наклонный 3D-обзор территории'" class="ghost-icon" :class="{ active: state.tilted }"
         :aria-pressed="state.tilted" aria-label="3D-обзор" @click="emit('tilt')"><Box :size="18" /></button>
       <button v-tip="'Вся Земля: где лежат три сцены'" class="ghost-icon" aria-label="Показать Землю" @click="emit('globe')"><Globe2 :size="18" /></button>

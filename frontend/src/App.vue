@@ -27,6 +27,10 @@ function chooseAsset(id) {
   const asset = state.analysis?.assets.find(item => item.id === id)
   if (asset) mapRef.value?.focusAsset(asset)
 }
+function finishDrawing() {
+  state.drawing = false
+  if (window.innerWidth < 1024) state.observeOpen = true
+}
 
 /*
  * Заставка уходит, когда готовы и карта, и расчёт. Панели после неё
@@ -55,7 +59,7 @@ onMounted(() => {
 <template>
   <main class="atlas">
     <GlobeMap ref="mapRef" @ready="mapReady = true" @region="chooseRegion" @asset="chooseAsset"
-      @draw-complete="state.drawing = false" />
+      @draw-complete="finishDrawing" />
 
     <div ref="chrome" class="chrome">
       <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
@@ -64,10 +68,26 @@ onMounted(() => {
         <DecisionPanel @asset="chooseAsset" @reset="mapRef?.focusChip()" />
       </div>
       <div class="bottom-row">
-        <div v-if="state.analysis" class="panel capsule legend" data-enter>
-          <span class="legend-item"><i class="legend-water" :class="state.layerMode"></i>{{ legend }}</span>
-          <span class="legend-item"><i class="legend-asset"></i>Объект</span>
-          <span v-if="state.showZones" class="legend-item"><i class="legend-zone"></i>Зона съёмки</span>
+        <div v-if="state.analysis" class="panel map-console" data-enter>
+          <div class="map-console-layer">
+            <span class="legend-item"><i class="legend-water" :class="state.layerMode"></i>{{ legend }}</span>
+            <span class="legend-item asset-key"><i class="legend-asset"></i>Объект</span>
+            <span v-if="state.showZones" class="legend-item zone-key"><i class="legend-zone"></i>Зона</span>
+          </div>
+          <div class="map-console-tools">
+            <div class="basemap-switch" role="group" aria-label="Подложка карты">
+              <button :class="{ active: state.basemap === 'street' }" :aria-pressed="state.basemap === 'street'"
+                @click="state.basemap = 'street'">Схема</button>
+              <button v-tip="'Спутниковая подложка для ориентации. Её дата может отличаться от Sentinel‑1; расчёт сделан по радару'"
+                :class="{ active: state.basemap === 'satellite' }" :aria-pressed="state.basemap === 'satellite'"
+                @click="state.basemap = 'satellite'">Спутник</button>
+            </div>
+            <label class="opacity-control">
+              <span>Слой <b class="tabular">{{ state.overlayOpacity }}%</b></span>
+              <input v-model.number="state.overlayOpacity" type="range" min="0" max="100" step="1"
+                aria-label="Непрозрачность слоя модели" :style="{ '--progress': state.overlayOpacity + '%' }" />
+            </label>
+          </div>
         </div>
       </div>
     </div>

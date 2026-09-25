@@ -346,6 +346,32 @@ strong, b { font-weight: 600; }
 
 /* ---------- Низ экрана и карта ---------- */
 .bottom-row { display: flex; justify-content: center; }
+.map-console {
+  display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 6px 8px 6px 18px;
+  border-radius: 23px; font-size: 13px;
+}
+.map-console-layer, .map-console-tools { display: flex; align-items: center; gap: 11px; }
+.map-console-tools { padding-left: 12px; border-left: 1px solid var(--border); }
+.basemap-switch { display: flex; gap: 2px; padding: 3px; border-radius: 13px; background: var(--surface-2); }
+.basemap-switch button {
+  min-width: 64px; height: 32px; padding: 0 10px; border-radius: 10px; color: var(--muted-foreground);
+  font-size: 12px; font-weight: 600; transition: background-color 0.2s var(--ease-standard), color 0.2s var(--ease-standard), box-shadow 0.2s;
+}
+.basemap-switch button:hover { color: var(--foreground); }
+.basemap-switch button.active { color: var(--foreground); background: var(--surface-1); box-shadow: 0 2px 6px rgb(0 0 0 / 0.12); }
+.opacity-control { display: grid; gap: 2px; width: 112px; font-size: 11px; color: var(--muted-foreground); }
+.opacity-control span { display: flex; justify-content: space-between; }
+.opacity-control b { color: var(--foreground); font-weight: 650; }
+.opacity-control input {
+  width: 100%; height: 5px; margin: 6px 0; border-radius: 99px; appearance: none; -webkit-appearance: none;
+  background: linear-gradient(to right, var(--water) 0 var(--progress), var(--surface-3) var(--progress) 100%); cursor: pointer;
+}
+.opacity-control input::-webkit-slider-thumb {
+  appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border: 3px solid var(--surface-1);
+  border-radius: 50%; background: var(--water); box-shadow: 0 1px 5px rgb(0 0 0 / 0.25);
+}
+.opacity-control input::-moz-range-thumb { width: 10px; height: 10px; border: 3px solid var(--surface-1); border-radius: 50%; background: var(--water); }
+.opacity-control input:focus-visible { outline: 2px solid var(--primary); outline-offset: 5px; }
 .legend { display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 18px; font-size: 13px; }
 .legend-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .legend-water { width: 12px; height: 12px; border-radius: 4px; background: var(--water); }
@@ -376,7 +402,7 @@ strong, b { font-weight: 600; }
 
 /* Карточка пикселя стоит над легендой, по центру между панелями. */
 .pixel-card {
-  position: absolute; z-index: 20; left: 50%; bottom: 72px; transform: translateX(-50%);
+  position: absolute; z-index: 20; left: 50%; bottom: 96px; transform: translateX(-50%);
   width: 280px; padding: 12px 16px 14px; border-radius: 24px;
 }
 .pixel-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--muted-foreground); }
@@ -452,15 +478,20 @@ html.theme-anim, html.theme-anim *:not(.maplibregl-map):not(.maplibregl-map *) {
   /* Панели стопкой: свёрнутые капсулы сверху, развёрнутая — во всю ширину. */
   .panels { flex-direction: column; justify-content: flex-start; }
   .observe-panel:not(.pill), .decision-panel:not(.pill) { width: 100%; max-height: 62dvh; }
-  .legend { height: 36px; gap: 12px; padding: 0 14px; font-size: 12px; }
+  .map-console { flex-direction: column; gap: 5px; padding: 8px 12px; width: min(380px, calc(100vw - 88px)); border-radius: 20px; }
+  .map-console-layer, .map-console-tools { width: 100%; justify-content: center; }
+  .map-console-layer { min-height: 20px; }
+  .map-console-tools { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); padding-top: 5px; }
+  .opacity-control { width: 105px; }
   .maplibregl-ctrl-bottom-right { bottom: 60px; right: 10px; }
-  .map-hint { top: auto; bottom: 64px; }
-  .pixel-card { bottom: 60px; width: min(280px, calc(100% - 20px)); }
+  .map-hint { top: 264px; bottom: auto; }
+  .pixel-card { bottom: 112px; width: min(280px, calc(100% - 20px)); }
 }
 @media (max-width: 480px) {
   .brand { padding-right: 14px; }
   .brand-copy strong { font-size: 14px; }
-  .legend-item:nth-child(n + 3) { display: none; }
+  .asset-key, .zone-key { display: none; }
+  .map-console { width: min(320px, calc(100vw - 76px)); }
   .maplibregl-ctrl-attrib { display: none; }
   .hero .display { font-size: 40px; }
 }

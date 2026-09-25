@@ -16,7 +16,7 @@ const LAYERS = [
   { value: 'uncertainty', label: 'Неуверенность', color: 'var(--uncertain)', hint: 'Разброс пяти моделей ансамбля: где они не согласны между собой' },
   { value: 'baseline', label: 'Порог VH', color: 'var(--risk)', hint: 'Классический метод для сравнения: VH < −23,6 dB' },
   { value: 'reference', label: 'Ручная метка', color: 'var(--reference)', hint: 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт' },
-  { value: 'none', label: 'Без слоя', color: 'var(--surface-3)', hint: 'Только радар и подложка' },
+  { value: 'none', label: 'Без слоя', color: 'var(--surface-3)', hint: 'Подложка без модели; радар можно включить отдельно' },
 ]
 
 const segments = computed(() => {
@@ -34,6 +34,10 @@ const segments = computed(() => {
 function reset() {
   resetRegion()
   emit('reset')
+}
+function toggleDrawing() {
+  state.drawing = !state.drawing
+  if (state.drawing && window.innerWidth < 1024) state.observeOpen = false
 }
 </script>
 
@@ -88,7 +92,7 @@ function reset() {
       <section class="block">
         <span class="caption">Область анализа</span>
         <div class="button-row">
-          <button class="tonal-button" :class="{ active: state.drawing }" @click="state.drawing = !state.drawing">
+          <button class="tonal-button" :class="{ active: state.drawing }" @click="toggleDrawing">
             <Crosshair :size="16" />{{ state.drawing ? 'Отменить выбор' : 'Выделить на карте' }}
           </button>
           <button class="tonal-icon" v-tip="'Вернуться ко всему снимку'" aria-label="Вернуться ко всему снимку" @click="reset"><RotateCcw :size="16" /></button>
@@ -106,7 +110,7 @@ function reset() {
         </div>
         <div class="toggles">
           <button class="toggle" :aria-pressed="state.showRadar" @click="state.showRadar = !state.showRadar">
-            <span>Радар VH под слоем</span><span class="switch" :class="{ on: state.showRadar }"></span>
+            <span>Показать радар VH</span><span class="switch" :class="{ on: state.showRadar }"></span>
           </button>
           <button class="toggle" :aria-pressed="state.showZones" @click="state.showZones = !state.showZones">
             <span>Зоны съёмки</span><span class="switch" :class="{ on: state.showZones }"></span>
