@@ -66,6 +66,7 @@ backend/.venv/bin/python scripts/validate_package.py floodvalue-Nigeria_812045.z
 Компактные выходы модели лежат в `data/demo`. Исходные GeoTIFF и промежуточный inference намеренно не включены в Git. Для полного пересоздания скачайте три пары `S1Hand`/`LabelHand` из официального бакета `sen1floods11/v1.1` в `data/source`, затем:
 
 ```bash
+git lfs install --local
 git lfs pull
 uv sync --project ml
 uv sync --project backend --extra demo
