@@ -141,3 +141,20 @@ def test_validator_rejects_p_not_read_at_asset_pixel(tmp_path):
             archive.writestr(name, content)
     with pytest.raises(ValueError, match="asset pixel"):
         validator.validate(path)
+
+
+def test_proxy_check_uses_binary_label_at_asset_pixel():
+    from app.catalog import mask
+    from app.evidence import asset_proxy_check
+    result = asset_proxy_check("Nigeria_812045")
+    info = metadata("Nigeria_812045")
+    water = mask("Nigeria_812045", "water")
+    assert result["rows"]
+    for row in result["rows"]:
+        asset = next(item for item in info["assets"] if item["id"] == row["asset_id"])
+        label = water[asset["row"] * info["width"] + asset["col"]]
+        assert label in (0, 1) and row["y"] == label
+        assert row["el_ref_rub"] == round(label * asset["value_rub"] * asset["vulnerability"], 2)
+        assert row["el_rub"] == round(asset["p_flood"] * asset["value_rub"] * asset["vulnerability"], 2)
+    assert result["n_points"] + result["n_skipped_invalid_label"] == 10
+    assert result["n_points"] == len(result["rows"])
