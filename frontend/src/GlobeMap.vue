@@ -145,11 +145,17 @@ function updateMarkers() {
     currentIds.add(asset.id)
     let entry = markers.get(asset.id)
     if (!entry) {
+      // MapLibre двигает маркер через transform самого элемента. Переход на transform у кнопки
+      // (увеличение при наведении) тогда тянул бы кружок за картой с задержкой, поэтому
+      // позицию держит голая обёртка, а оформление и анимации живут на кнопке внутри.
+      const pin = document.createElement('div')
+      pin.className = 'asset-pin'
       const element = document.createElement('button')
       element.type = 'button'
       element.className = 'asset-marker'
       element.addEventListener('click', event => { event.stopPropagation(); emit('asset', asset.id) })
-      const marker = new maplibregl.Marker({ element, anchor: 'center' }).setLngLat([asset.longitude, asset.latitude]).addTo(map)
+      pin.append(element)
+      const marker = new maplibregl.Marker({ element: pin, anchor: 'center' }).setLngLat([asset.longitude, asset.latitude]).addTo(map)
       entry = { marker, element }
       markers.set(asset.id, entry)
     }

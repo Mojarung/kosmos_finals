@@ -548,6 +548,8 @@ html.map-moving .panel {
 .legend-asset { width: 12px; height: 12px; border-radius: 50%; background: var(--risk); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6), 0 0 0 0.5px rgb(8 28 36 / 0.25); }
 .legend-zone { width: 14px; height: 10px; border: 2px dashed var(--risk); border-radius: 3px; }
 
+/* Обёртку двигает MapLibre: никаких transition на ней, иначе маркер отстаёт от карты. */
+.asset-pin { width: 26px; height: 26px; }
 /* Маркер объекта: цветная капля с тонкой светлой кромкой и бликом, без толстой обводки. */
 .asset-marker {
   display: grid; place-items: center; width: 26px; height: 26px; padding: 0 0 1px; border-radius: 50%;
