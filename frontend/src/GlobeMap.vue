@@ -7,6 +7,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { state } from './store'
 import { number } from './lib/format'
 import MorphLoader from './components/MorphLoader.vue'
+import { preloadGlobe, preloadTilt } from './lib/prefetch'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -272,6 +273,27 @@ function flyToScene(id) {
   }, { whenCovered: () => analysisFor(id), layersChange: true })
 }
 
+/*
+ * Когда камера успокоилась на снимке, в фоне докачиваем тайлы для кнопок
+ * «Глобус» и «3D»: тогда эти переходы идут по уже загруженной подложке.
+ * Повторяем только при смене сцены, подложки или масштаба.
+ */
+let warmTimer
+let warmedKey = ''
+function scheduleWarmUp() {
+  clearTimeout(warmTimer)
+  warmTimer = setTimeout(() => {
+    if (!ready || phase || !state.analysis || map.getZoom() < 9) return
+    const [w, s, e, n] = state.analysis.chip.bbox
+    const center = [(w + e) / 2, (s + n) / 2]
+    const zoom = map.getZoom()
+    const key = `${state.analysis.chip.chip_id}|${state.basemap}|${Math.round(zoom)}`
+    if (key === warmedKey) return
+    warmedKey = key
+    preloadGlobe(map, center, zoom).then(() => preloadTilt(map, center, zoom))
+  }, 1200)
+}
+
 function focusAsset(asset) {
   if (!map) return
   const camera = { center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20 }
@@ -341,6 +363,10 @@ onMounted(() => {
     container: container.value, style: styleUrl(),
     center: [5.818, 9.084], zoom: 11.2, minZoom: 1, maxZoom: 17,
     attributionControl: false, canvasContextAttributes: { antialias: true },
+    // По умолчанию MapLibre держит в памяти тайлы не дальше 5 зумов от текущего.
+    // Глобус (зум ~2) и снимок (~14) разделяют 12 зумов, и глобус вычищался при
+    // каждом возврате к снимку. 300 готовых тайлов на все зумы — десятки МБ.
+    maxTileCacheSize: 300, maxTileCacheZoomLevels: 16,
   })
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
   map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
@@ -365,6 +391,7 @@ onMounted(() => {
   map.on('moveend', () => {
     clearTimeout(movingTimer)
     movingTimer = setTimeout(() => root.classList.remove('map-moving'), 150)
+    scheduleWarmUp()
   })
   map.on('click', event => {
     if (!state.drawing && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
@@ -396,6 +423,7 @@ onMounted(() => {
 onBeforeUnmount(() => { for (const entry of markers.values()) entry.marker.remove(); map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones], syncMap, { deep: true })
+watch(() => state.basemap, () => scheduleWarmUp())
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
