@@ -11,7 +11,7 @@ const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
 const scenes = computed(() => (state.analysis?.scenes || []).map(scene => ({
   value: scene.chip_id,
   label: scene.event,
-  hint: `${date(scene.observed_at)} · ${scene.chip_id} · вода ${km(scene.model_water_area_km2)}`,
+  hint: `${scene.origin === 'live' ? 'Живой расчёт · ' : ''}${date(scene.observed_at)} · ${scene.chip_id} · вода ${km(scene.model_water_area_km2)}`,
 })))
 const scene = computed({
   get: () => state.sceneId,
