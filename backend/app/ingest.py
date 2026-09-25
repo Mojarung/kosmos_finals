@@ -13,6 +13,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -65,6 +66,8 @@ def infer_command() -> list[str]:
     for candidate in (ROOT / "ml" / ".venv" / "Scripts" / "floodvalue.exe", ROOT / "ml" / ".venv" / "bin" / "floodvalue"):
         if candidate.exists():
             return [str(candidate), "infer"]
+    if (ROOT / "ml" / "src" / "floodvalue" / "cli.py").exists():
+        return [sys.executable, "-m", "floodvalue.cli", "infer"]
     return ["uv", "run", "--project", str(ROOT / "ml"), "floodvalue", "infer"]
 
 

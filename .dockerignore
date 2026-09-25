@@ -2,7 +2,12 @@
 backend/.venv
 frontend/node_modules
 frontend/dist
+ml/.venv
+ml/data
+ml/runs
+ml/outputs
 data/source
+data/live
 __pycache__
 .DS_Store
 docs

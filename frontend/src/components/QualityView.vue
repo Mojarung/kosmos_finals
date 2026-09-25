@@ -33,8 +33,9 @@ const METRICS = [
   </div>
 
   <section class="block">
-    <span class="caption">На выбранном участке</span>
-    <div class="mini-rows">
+    <span class="caption">{{ state.analysis.chip.source_kind === 'live_sentinel1_rtc' ? 'В этой области нет ручной метки' : 'На выбранном участке' }}</span>
+    <p v-if="state.analysis.chip.source_kind === 'live_sentinel1_rtc'" class="source-line">IoU на новом снимке не измерен. Цифры выше — независимый test_core Sen1Floods11, а не эта территория.</p>
+    <div v-else class="mini-rows">
       <div><span>IoU</span><span class="compare tabular">{{ percent(region.baseline_quality?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality?.iou, 1) }}</b></span></div>
       <div v-tip="'Пиксели настоящей воды, которые метод пропустил'"><span>Пропущено пикселей воды</span><span class="compare tabular">{{ number(region.baseline_quality?.fn) }}<ArrowRight :size="12" /><b>{{ number(region.model_quality?.fn) }}</b></span></div>
       <div><span>Пикселей с меткой</span><b class="tabular">{{ number(region.reference_pixels) }}</b></div>

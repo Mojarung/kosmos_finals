@@ -69,6 +69,16 @@ onMounted(() => {
 
     <div ref="chrome" class="chrome">
       <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
+      <Transition name="pop">
+        <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="panel capsule live-flow" role="status">
+          <MorphLoader :size="25" />
+          <span>{{ state.liveStatus === 'searching' ? 'Ищем свежие VV/VH снимки' : 'Читаем COG · считаем ансамбль' }}</span>
+        </div>
+        <div v-else-if="state.liveStatus === 'ready' && state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="panel capsule live-flow ready" role="status">
+          <span class="live-flow-dot"></span>
+          <span>Sentinel‑1 RTC · {{ state.analysis.chip.source_item_ids?.length || 1 }} кадр{{ (state.analysis.chip.source_item_ids?.length || 1) > 1 ? 'а' : '' }} · {{ state.analysis.chip.pixel_size_m_approx }} м/пикс. · учебные объекты</span>
+        </div>
+      </Transition>
       <div class="panels">
         <ObservePanel @reset="mapRef?.focusChip()" />
         <DecisionPanel @asset="chooseAsset" @reset="mapRef?.focusChip()" />

@@ -11,6 +11,7 @@ from .analysis import analyze, inspect_pixel
 from .catalog import default_scene_id, known_scene_ids, metadata, scene_catalog, scene_dir
 from .chips import official_chips, official_events
 from .exporter import package
+from .live import LiveError, discover, prepare
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 
@@ -78,6 +79,30 @@ def job_status(job_id: str) -> dict:
     if job is None:
         raise HTTPException(404, "Unknown job")
     return job
+
+
+@app.get("/api/live/discover")
+def discover_scenes(bbox: str) -> dict:
+    bounds = parse_bounds(bbox)
+    try:
+        return {"bbox": bounds, "scenes": discover(bounds)}
+    except LiveError as error:
+        raise HTTPException(422 if "Область" in str(error) or "рамка" in str(error) else 503,
+                            str(error)) from error
+
+
+@app.post("/api/live/prepare")
+def prepare_scene(bbox: str, item_id: str) -> dict:
+    bounds = parse_bounds(bbox)
+    try:
+        info = prepare(bounds, item_id)
+    except LiveError as error:
+        raise HTTPException(422 if "Область" in str(error) or "рамка" in str(error) or "снимок" in str(error)
+                            else 503, str(error)) from error
+    return {"scene_id": info["chip_id"], "observed_at": info["observed_at"],
+            "source_item_id": info["source_item_id"],
+            "source_item_ids": info.get("source_item_ids", [info["source_item_id"]]),
+            "valid_pixels": info["valid_pixels"]}
 
 
 @app.get("/api/pixel")

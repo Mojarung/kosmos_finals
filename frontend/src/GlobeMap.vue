@@ -133,6 +133,15 @@ function updateMarkers() {
 
 function syncMap() {
   if (!ready || !state.analysis) return
+  if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
+    for (const name of rasterNames) map.setLayoutProperty(name + '-layer', 'visibility', 'none')
+    setData('chip', empty)
+    setData('zones', empty)
+    setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
+    for (const entry of markers.values()) entry.marker.remove()
+    markers.clear()
+    return
+  }
   const chip = state.analysis.chip
   // Пока камера отъезжает от старой сцены, снимки не меняем: иначе новый квадрат
   // появился бы на другом конце карты, а старое место опустело бы посреди полёта.
@@ -336,7 +345,7 @@ const PROBE_MESSAGES = {
   no_valid_pixel: 'Пиксель без валидного сигнала',
   error: 'Не удалось прочитать пиксель',
 }
-const water = value => value == null ? 'нет' : value ? 'вода' : 'суша'
+const water = value => value == null ? 'нет разметки' : value ? 'вода' : 'суша'
 
 defineExpose({ focusChip, showGlobe, focusAsset, toggleTilt })
 
@@ -422,7 +431,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => { for (const entry of markers.values()) entry.marker.remove(); map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy,
-  state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones], syncMap, { deep: true })
+  state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
@@ -465,7 +474,7 @@ watch(() => state.drawing, value => {
         <div class="mini-rows">
           <div v-tip="'Решение модели при пороге p ≥ ' + probe.model_threshold + ' и классического порога VH'"><span>Модель / порог VH</span><b>{{ water(probe.model_water) }} / {{ water(probe.baseline_water) }}</b></div>
           <div><span>Разброс ансамбля</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
-          <div v-tip="'Ручная метка Sen1Floods11 только для контроля качества, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water(probe.reference_water) }}</b></div>
+          <div v-tip="state.analysis?.chip.source_kind === 'live_sentinel1_rtc' ? 'Для нового снимка ручной разметки нет' : 'Ручная метка Sen1Floods11 только для контроля качества, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water(probe.reference_water) }}</b></div>
         </div>
         <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>
       </template>

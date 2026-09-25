@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(os.environ.get("DEMO_DATA_DIR", ROOT / "data" / "demo"))
 RUNTIME_DIR = Path(os.environ.get("FLOODVALUE_RUNTIME_DIR", ROOT / "data" / "runtime"))
+LIVE_DIR = Path(os.environ.get("LIVE_DATA_DIR", ROOT / "data" / "live"))
 _write_lock = threading.Lock()
 
 
@@ -49,10 +50,14 @@ def default_scene_id() -> str:
 
 
 def known_scene_ids() -> set[str]:
-    return {scene["chip_id"] for scene in scene_catalog()["scenes"]}
+    return {scene["chip_id"] for scene in scene_catalog()["scenes"]} | {
+        path.parent.name for path in LIVE_DIR.glob("live_*/metadata.json")
+    }
 
 
 def scene_dir(scene_id: str) -> Path:
+    if scene_id.startswith("live_") and (LIVE_DIR / scene_id / "metadata.json").is_file():
+        return LIVE_DIR / scene_id
     return (DATA_DIR if scene_id in _demo_ids() else RUNTIME_DIR) / scene_id
 
 
@@ -75,7 +80,7 @@ def register_runtime_scene(row: dict) -> None:
         refresh()
 
 
-@lru_cache(maxsize=16)
+@lru_cache(maxsize=64)
 def metadata(scene_id: str | None = None) -> dict:
     scene_id = scene_id or default_scene_id()
     if scene_id not in known_scene_ids():
@@ -88,7 +93,7 @@ def quality() -> dict:
     return json.loads((DATA_DIR / "quality.json").read_text(encoding="utf-8"))
 
 
-@lru_cache(maxsize=48)
+@lru_cache(maxsize=128)
 def mask(scene_id: str, name: str) -> bytes:
     if name not in {"water", "model", "baseline"}:
         raise KeyError(name)
@@ -99,7 +104,7 @@ def mask(scene_id: str, name: str) -> bytes:
     return values
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=128)
 def float_map(scene_id: str, name: str) -> array:
     if name not in {"probability", "uncertainty"}:
         raise KeyError(name)

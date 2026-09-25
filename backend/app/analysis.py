@@ -108,10 +108,12 @@ def region_summary(bounds: list[float] | None, scene_id: str | None = None) -> d
             base_tn += not base and not truth
     pixel_area = info["area_km2"] / (width * height)
     observed = rectangle_area_km2(overlap)
+    if info.get("source_kind") == "live_sentinel1_rtc":
+        observed *= valid_pixels / max(1, (row1 - row0) * (col1 - col0))
     return {
         **common,
         "observed_area_km2": round(observed, 3),
-        "data_status": ("covered" if abs(observed - area) < 0.001 else "partial_coverage") if valid_pixels else "no_valid_pixels",
+        "data_status": ("covered" if observed / max(area, 0.000001) >= 0.98 else "partial_coverage") if valid_pixels else "no_valid_pixels",
         "model_water_area_km2": round(model_pixels * pixel_area, 3),
         "baseline_water_area_km2": round(baseline_pixels * pixel_area, 3),
         "reference_water_area_km2": round(ref_pixels * pixel_area, 3) if main_tp + main_fp + main_fn + main_tn else None,
@@ -186,7 +188,9 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
         "chip": {key: info[key] for key in (
             "chip_id", "event", "observed_at", "bbox", "area_km2", "valid_pixels",
             "model_water_area_km2", "water_area_km2", "portfolio_seed",
-            "model_threshold", "baseline_threshold_db")},
+            "model_threshold", "baseline_threshold_db")}
+            | {key: info[key] for key in ("source_kind", "source_item_id", "source_item_ids", "pixel_size_m_approx",
+                                            "portfolio_status", "processed_at") if key in info},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets, "zones": zones,
         "sensitivity": sensitivity,
@@ -214,11 +218,13 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
-        "asset_proxy_check": asset_proxy_check(scene_id),
+        "asset_proxy_check": None if info.get("source_kind") == "live_sentinel1_rtc" else asset_proxy_check(scene_id),
         "limitations": [
             "Модель измеряет воду, но не отделяет постоянную воду от паводковой.",
             "V и q объектов заданы кейсом; сами точки учебные, а не реальный реестр.",
             "Базовая ставка 788,64 ₽/км² и доступность новой съёмки через 6 часов сценарные.",
             "Охват ожидаемого ущерба — приоритет проверки, а не предотвращённый ущерб.",
-        ],
+        ] + (["Для нового региона нет ручной метки: локальные IoU/F1 не вычисляются.",
+              "Модель обучена на Sen1Floods11; перенос на RTC другого времени и места требует полевой проверки."]
+             if info.get("source_kind") == "live_sentinel1_rtc" else []),
     }

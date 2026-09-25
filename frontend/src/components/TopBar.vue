@@ -1,8 +1,8 @@
 <script setup>
 import { computed, reactive } from 'vue'
-import { Box, Globe2, LocateFixed, Moon, Sun } from '@lucide/vue'
+import { Box, Globe2, LocateFixed, Moon, Sun, Satellite } from '@lucide/vue'
 import BubbleTabs from './BubbleTabs.vue'
-import { chooseScene, state } from '../store'
+import { chooseScene, loadLiveItem, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date, km } from '../lib/format'
 
@@ -31,6 +31,7 @@ const scene = computed({
   get: () => state.sceneId,
   set: id => { if (!chooseScene(id)) emit('focus-chip') },
 })
+const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandidates.length > 0)
 </script>
 
 <template>
@@ -51,7 +52,18 @@ const scene = computed({
     </div>
 
     <div class="topbar-center">
-      <div v-if="scenes.length" class="panel capsule scenes" data-enter>
+      <div v-if="liveMode" class="panel capsule live-scenes" data-enter>
+        <Satellite :size="17" class="accent" />
+        <span v-if="!state.liveCandidates.length" class="live-scenes-label">{{ state.liveStatus === 'searching' ? 'Ищем снимки…' : 'Новый регион' }}</span>
+        <label v-else class="live-select-label">
+          <span>Снимок</span>
+          <select :value="state.liveItemId" aria-label="Дата снимка Sentinel-1" @change="loadLiveItem($event.target.value)">
+            <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
+          </select>
+        </label>
+        <button class="live-demo-link" @click="chooseScene('Nigeria_812045')">Демо</button>
+      </div>
+      <div v-else-if="scenes.length" class="panel capsule scenes" data-enter>
         <BubbleTabs v-model="scene" :options="scenes" label="Событие" />
       </div>
     </div>
