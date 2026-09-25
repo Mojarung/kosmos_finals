@@ -8,3 +8,6 @@ data/source/
 data/inference/
 *.pyc
 .env
+
+data/runtime/
+.playwright-cli/

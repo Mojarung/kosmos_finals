@@ -12,6 +12,11 @@
   "height": 512,
   "area_km2": 25.721,
   "portfolio_seed": 2026,
+  "portfolio_rule": "numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without replacement, one per case asset type in table order; independent of p, masks and labels",
+  "probability_rule": "flood_probability.tif value in the pixel that contains the asset point; valid 3x3 mean kept as a robustness check (p_window3)",
+  "split_part": "test_core",
+  "metrics_independent": true,
+  "origin": "demo",
   "valid_pixels": 236584,
   "water_pixels": 119583,
   "water_area_km2": 11.733,
@@ -54,9 +59,14 @@
       "vulnerability": 0.25,
       "longitude": 5.817983853364287,
       "latitude": 9.1055482986565,
-      "p_flood": 0.45781,
-      "uncertainty": 0.12907,
-      "baseline_water_at_point": false
+      "row": 13,
+      "col": 253,
+      "p_flood": 0.42303,
+      "uncertainty": 0.15073,
+      "p_window3": 0.45781,
+      "uncertainty_window3": 0.12907,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A02",
@@ -66,9 +76,14 @@
       "vulnerability": 0.4,
       "longitude": 5.8097193527503865,
       "latitude": 9.090456601883291,
-      "p_flood": 0.01728,
-      "uncertainty": 0.0192,
-      "baseline_water_at_point": false
+      "row": 181,
+      "col": 161,
+      "p_flood": 0.01818,
+      "uncertainty": 0.02257,
+      "p_window3": 0.01728,
+      "uncertainty_window3": 0.0192,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A03",
@@ -78,9 +93,14 @@
       "vulnerability": 0.3,
       "longitude": 5.814031266114161,
       "latitude": 9.098541439440366,
-      "p_flood": 0.148,
-      "uncertainty": 0.27801,
-      "baseline_water_at_point": false
+      "row": 91,
+      "col": 209,
+      "p_flood": 0.14203,
+      "uncertainty": 0.27649,
+      "p_window3": 0.148,
+      "uncertainty_window3": 0.27801,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A04",
@@ -90,9 +110,14 @@
       "vulnerability": 0.2,
       "longitude": 5.836848474330797,
       "latitude": 9.077431030263558,
-      "p_flood": 0.96309,
-      "uncertainty": 0.00213,
-      "baseline_water_at_point": false
+      "row": 326,
+      "col": 463,
+      "p_flood": 0.96897,
+      "uncertainty": 0.00161,
+      "p_window3": 0.96309,
+      "uncertainty_window3": 0.00213,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A05",
@@ -102,9 +127,14 @@
       "vulnerability": 0.35,
       "longitude": 5.8030718196479025,
       "latitude": 9.067639393666655,
-      "p_flood": 0.01043,
-      "uncertainty": 0.00114,
-      "baseline_water_at_point": false
+      "row": 435,
+      "col": 87,
+      "p_flood": 0.01075,
+      "uncertainty": 0.00128,
+      "p_window3": 0.01043,
+      "uncertainty_window3": 0.00114,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A06",
@@ -114,9 +144,14 @@
       "vulnerability": 0.15,
       "longitude": 5.827775489961189,
       "latitude": 9.09000744424123,
-      "p_flood": 0.32899,
-      "uncertainty": 0.16816,
-      "baseline_water_at_point": false
+      "row": 186,
+      "col": 362,
+      "p_flood": 0.32967,
+      "uncertainty": 0.17126,
+      "p_window3": 0.32899,
+      "uncertainty_window3": 0.16816,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A07",
@@ -126,9 +161,14 @@
       "vulnerability": 0.2,
       "longitude": 5.831099256512432,
       "latitude": 9.103122847389375,
-      "p_flood": 0.97892,
-      "uncertainty": 0.00195,
-      "baseline_water_at_point": true
+      "row": 40,
+      "col": 399,
+      "p_flood": 0.98097,
+      "uncertainty": 0.00173,
+      "p_window3": 0.97892,
+      "uncertainty_window3": 0.00195,
+      "baseline_water_at_point": true,
+      "status": "ok"
     },
     {
       "id": "A08",
@@ -138,9 +178,14 @@
       "vulnerability": 0.45,
       "longitude": 5.827865321489601,
       "latitude": 9.08533620476381,
-      "p_flood": 0.91803,
-      "uncertainty": 0.01775,
-      "baseline_water_at_point": true
+      "row": 238,
+      "col": 363,
+      "p_flood": 0.9337,
+      "uncertainty": 0.01203,
+      "p_window3": 0.91803,
+      "uncertainty_window3": 0.01775,
+      "baseline_water_at_point": true,
+      "status": "ok"
     },
     {
       "id": "A09",
@@ -150,9 +195,14 @@
       "vulnerability": 0.5,
       "longitude": 5.8079227221821474,
       "latitude": 9.089737949655996,
-      "p_flood": 0.00293,
-      "uncertainty": 0.00032,
-      "baseline_water_at_point": false
+      "row": 189,
+      "col": 141,
+      "p_flood": 0.00285,
+      "uncertainty": 0.0003,
+      "p_window3": 0.00293,
+      "uncertainty_window3": 0.00032,
+      "baseline_water_at_point": false,
+      "status": "ok"
     },
     {
       "id": "A10",
@@ -162,21 +212,36 @@
       "vulnerability": 0.3,
       "longitude": 5.828224647603249,
       "latitude": 9.077251367206735,
-      "p_flood": 0.98061,
-      "uncertainty": 0.00365,
-      "baseline_water_at_point": true
+      "row": 328,
+      "col": 367,
+      "p_flood": 0.9829,
+      "uncertainty": 0.00308,
+      "p_window3": 0.98061,
+      "uncertainty_window3": 0.00365,
+      "baseline_water_at_point": true,
+      "status": "ok"
     }
   ],
   "source_manifest": [
     {
       "name": "Nigeria_812045_S1Hand.tif",
       "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/S1Hand/Nigeria_812045_S1Hand.tif",
-      "sha256": "60721c48b1bc862abdb9e6b0ee93d67590fb058f4581e43f615569b22beff4e0"
+      "sha256": "60721c48b1bc862abdb9e6b0ee93d67590fb058f4581e43f615569b22beff4e0",
+      "version": "v1.1",
+      "layer": "S1Hand",
+      "role": "model_input",
+      "gcs_generation": "1601572896427807",
+      "published_at": "2020-10-01T17:21:36.427Z"
     },
     {
       "name": "Nigeria_812045_LabelHand.tif",
       "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/LabelHand/Nigeria_812045_LabelHand.tif",
-      "sha256": "77386f8586a6a825430b11d74619fd39391f2c5d3fc2fc93d829bc15f4933308"
+      "sha256": "77386f8586a6a825430b11d74619fd39391f2c5d3fc2fc93d829bc15f4933308",
+      "version": "v1.1",
+      "layer": "LabelHand",
+      "role": "diagnostic_label_only",
+      "gcs_generation": "1601572622485841",
+      "published_at": "2020-10-01T17:17:02.485Z"
     }
   ],
   "inference_manifest": {

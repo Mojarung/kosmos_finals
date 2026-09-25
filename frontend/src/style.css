@@ -575,3 +575,37 @@ html.theme-anim, html.theme-anim *:not(.maplibregl-map):not(.maplibregl-map *) {
   html.theme-anim, html.theme-anim * { transition: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* Выбор официального чипа Sen1Floods11 и прогресс живого расчёта */
+.ingest-toggle { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 40px; padding: 0 12px; border: 1px dashed var(--border); border-radius: 14px; background: transparent; color: var(--primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .18s, background-color .18s; }
+.ingest-toggle:hover, .ingest.open .ingest-toggle { border-color: var(--primary); background: var(--primary-container); color: var(--on-primary-container); }
+.ingest-body { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.ingest-label { font-size: 12px; color: var(--muted-foreground); }
+.ingest-search { display: flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-1); color: var(--muted-foreground); }
+.ingest-search:focus-within { border-color: var(--primary); }
+.ingest-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--foreground); font: inherit; font-size: 13px; }
+.ingest-hint, .ingest-empty { font-size: 12px; line-height: 1.45; color: var(--muted-foreground); }
+.ingest-list { display: grid; gap: 3px; max-height: 236px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.ingest-list button { display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; width: 100%; padding: 7px 9px; border: 1px solid transparent; border-radius: 12px; background: transparent; color: var(--foreground); font: inherit; text-align: left; cursor: pointer; transition: background-color .18s, border-color .18s; }
+.ingest-list button:hover { background: var(--surface-2); }
+.ingest-list button.selected { border-color: var(--primary); background: var(--primary-container); }
+.ingest-id { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ingest-meta { grid-column: 1; font-size: 12px; color: var(--muted-foreground); }
+.ingest-part { grid-column: 2; grid-row: 1 / span 2; align-self: center; padding: 2px 7px; border-radius: 8px; background: color-mix(in srgb, var(--reference) 16%, transparent); color: var(--reference); font-size: 11px; font-weight: 600; white-space: nowrap; }
+.ingest-part.risky { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.ingest-warning, .ingest-error { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; line-height: 1.45; color: var(--warn); }
+.ingest-warning svg, .ingest-error svg { flex: none; margin-top: 2px; }
+.ingest-run { width: 100%; }
+.ingest-progress ol { display: grid; gap: 5px; margin: 4px 0 0; padding: 0; list-style: none; }
+.ingest-progress li { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 7px; font-size: 13px; color: var(--muted-foreground); }
+.ingest-progress li.active, .ingest-progress li.done { color: var(--foreground); }
+.ingest-progress li small { font-size: 12px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.ingest-dot { display: grid; place-items: center; width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 50%; color: var(--primary-foreground); }
+.ingest-progress li.active .ingest-dot { border-color: var(--primary); }
+.ingest-progress li.done .ingest-dot { border-color: var(--reference); background: var(--reference); }
+.ingest-progress li.error .ingest-dot { border-color: var(--warn); background: var(--warn); }
+.ingest-progress > p { margin-top: 7px; font-size: 12px; color: var(--muted-foreground); }
+.ingest-progress .tonal-button { width: 100%; margin-top: 7px; }
+.ingest .spin { animation: ingest-spin 1s linear infinite; }
+@keyframes ingest-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ingest .spin { animation: none; } }

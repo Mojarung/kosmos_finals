@@ -2,9 +2,10 @@
 import { computed } from 'vue'
 import { ChevronLeft, Crosshair, Globe2, Info, RotateCcw, Waves } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
+import ChipIngest from '../ChipIngest.vue'
 import MorphPanel from './MorphPanel.vue'
 import ShareBar from './ShareBar.vue'
-import { hasData, resetRegion, state } from '../store'
+import { chooseScene, fetchAnalysis, hasData, resetRegion, state } from '../store'
 import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
@@ -33,6 +34,10 @@ const segments = computed(() => {
 
 function reset() {
   resetRegion()
+  emit('reset')
+}
+function openScene(id) {
+  if (!chooseScene(id)) fetchAnalysis()
   emit('reset')
 }
 function toggleDrawing() {
@@ -86,7 +91,7 @@ function toggleDrawing() {
       <div v-else-if="state.analysis" class="empty">
         <Globe2 :size="26" />
         <strong>Здесь нет снимка</strong>
-        <span>Сейчас загружены три сцены Sen1Floods11. Выберите одну из них сверху или вернитесь к снимку.</span>
+        <span>Выберите снимок сверху или рассчитайте другой официальный чип Sen1Floods11 ниже.</span>
       </div>
 
       <section class="block">
@@ -97,6 +102,11 @@ function toggleDrawing() {
           </button>
           <button class="tonal-icon" v-tip="'Вернуться ко всему снимку'" aria-label="Вернуться ко всему снимку" @click="reset"><RotateCcw :size="16" /></button>
         </div>
+      </section>
+
+      <section class="block">
+        <span class="caption">Другой снимок</span>
+        <ChipIngest :scenes="state.analysis?.scenes || []" @ready="openScene" />
       </section>
 
       <section v-if="hasData" class="block">

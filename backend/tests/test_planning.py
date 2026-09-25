@@ -5,12 +5,14 @@ import json
 import zipfile
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.analysis import analyze
 from app.catalog import metadata
 from app.main import app
 from app.planning import candidates, covered_assets, quote, rectangle_area_km2
+from app.scene_builder import PROBABILITY_RULE
 
 validator_spec = importlib.util.spec_from_file_location(
     "validate_package", Path(__file__).resolve().parents[2] / "scripts" / "validate_package.py")
@@ -105,3 +107,54 @@ def test_sensitivity_pixel_and_submission_validation(tmp_path):
     report = validator.validate(zip_path)
     assert report["status"] == "ok"
     assert report["assets"] == 10
+
+
+def test_export_documents_pixel_probability_rule():
+    client = TestClient(app)
+    with zipfile.ZipFile(io.BytesIO(client.get("/api/export").content)) as archive:
+        meta = json.loads(archive.read("run_metadata.json"))
+        header = archive.read("asset_loss.csv").decode().splitlines()[0].split(",")
+    assert meta["probability_rule"] == PROBABILITY_RULE
+    assert "p_window3" in header
+
+
+def test_validator_rejects_p_not_read_at_asset_pixel(tmp_path):
+    client = TestClient(app)
+    with zipfile.ZipFile(io.BytesIO(client.get("/api/export").content)) as archive:
+        files = {name: archive.read(name) for name in archive.namelist()}
+    rows = list(csv.DictReader(io.StringIO(files["asset_loss.csv"].decode())))
+    assets = {row["asset_id"]: row for row in csv.DictReader(io.StringIO(files["assets.csv"].decode()))}
+    target = next(row for row in rows if row["status"] == "ok")
+    tampered = 0.5 if float(target["p_flood"]) < 0.4 else 0.1
+    asset = assets[target["asset_id"]]
+    target["p_flood"] = str(tampered)
+    target["expected_loss_rub"] = str(round(
+        tampered * float(asset["asset_value_rub"]) * float(asset["vulnerability_coef"]), 2))
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=list(rows[0]))
+    writer.writeheader()
+    writer.writerows(rows)
+    files["asset_loss.csv"] = output.getvalue().encode()
+    path = tmp_path / "tampered.zip"
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, content in files.items():
+            archive.writestr(name, content)
+    with pytest.raises(ValueError, match="asset pixel"):
+        validator.validate(path)
+
+
+def test_proxy_check_uses_binary_label_at_asset_pixel():
+    from app.catalog import mask
+    from app.evidence import asset_proxy_check
+    result = asset_proxy_check("Nigeria_812045")
+    info = metadata("Nigeria_812045")
+    water = mask("Nigeria_812045", "water")
+    assert result["rows"]
+    for row in result["rows"]:
+        asset = next(item for item in info["assets"] if item["id"] == row["asset_id"])
+        label = water[asset["row"] * info["width"] + asset["col"]]
+        assert label in (0, 1) and row["y"] == label
+        assert row["el_ref_rub"] == round(label * asset["value_rub"] * asset["vulnerability"], 2)
+        assert row["el_rub"] == round(asset["p_flood"] * asset["value_rub"] * asset["vulnerability"], 2)
+    assert result["n_points"] + result["n_skipped_invalid_label"] == 10
+    assert result["n_points"] == len(result["rows"])

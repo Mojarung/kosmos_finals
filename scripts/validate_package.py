@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 from rasterio.io import MemoryFile
+from rasterio.transform import rowcol
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from app.planning import quote, rectangle_area_km2  # noqa: E402
@@ -149,6 +150,15 @@ def validate(path: str | Path) -> dict:
                 "Raster probability outside [0,1]")
         require(np.array_equal(flood[p_mask], (probability[p_mask] >= meta["model_threshold"]).astype("uint8")),
                 "Flood mask differs from p ≥ frozen threshold")
+        for row in losses:
+            if row["status"] != "ok":
+                continue
+            asset = by_id[row["asset_id"]]
+            pixel_row, pixel_col = rowcol(p_transform, float(asset["longitude"]), float(asset["latitude"]))
+            require(0 <= pixel_row < probability.shape[0] and 0 <= pixel_col < probability.shape[1]
+                    and p_mask[pixel_row, pixel_col], f"{row['asset_id']}: asset pixel outside valid S1")
+            close(float(row["p_flood"]), float(probability[pixel_row, pixel_col]),
+                  f"{row['asset_id']}: p_flood differs from flood_probability.tif at the asset pixel", 1e-5)
         return {"status": "ok", "chip_id": meta["chip_id"], "assets": len(assets),
                 "zones": len(zones), "valid_pixels": int(p_mask.sum()),
                 "budget_rub": budget, "files": len(archive.namelist())}
