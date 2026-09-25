@@ -30,6 +30,14 @@ let requestTimer
 
 const hasData = computed(() => ['covered', 'partial_coverage'].includes(analysis.value?.region.data_status))
 const selectedAsset = computed(() => analysis.value?.assets.find(item => item.id === selectedAssetId.value) || null)
+const selectedSensitivity = computed(() => {
+  if (!selectedAsset.value) return []
+  return ['p', 'V', 'q'].map(input => {
+    const rows = analysis.value?.sensitivity.asset.filter(row => row.asset_id === selectedAsset.value.id && row.input === input) || []
+    return { input, low: rows.find(row => row.factor === 0.8), high: rows.find(row => row.factor === 1.2) }
+  })
+})
+const planSensitivity = computed(() => analysis.value?.sensitivity.plan.filter(row => row.factor !== 1) || [])
 const activePlan = computed(() => analysis.value?.strategies[strategy.value])
 const testQuality = computed(() => analysis.value?.quality.parts.test_core)
 const focusedZones = computed(() => {
@@ -253,7 +261,12 @@ function exportDecision() { window.location.href = '/api/export?' + parameters()
                 <div><span>Разброс ансамбля</span><b>{{ percent(selectedAsset.uncertainty, 1) }}</b></div>
                 <div><span>Стоимость · уязвимость</span><b>{{ compactRub(selectedAsset.value_rub) }} · {{ selectedAsset.vulnerability }}</b></div>
               </div>
-              <div class="sensitivity"><span>Если p изменится на ±20%</span><strong>{{ compactRub(selectedAsset.expected_loss_rub * 0.8) }} — {{ compactRub(Math.min(1, selectedAsset.p_flood * 1.2) * selectedAsset.value_rub * selectedAsset.vulnerability) }}</strong></div>
+              <div class="sensitivity"><span>Что меняет приоритет · по одному входу ±20%</span>
+                <div v-for="item in selectedSensitivity" :key="item.input" class="sensitivity-row">
+                  <b>{{ item.input }}</b><span>{{ compactRub(item.low?.expected_loss_rub) }} → {{ compactRub(item.high?.expected_loss_rub) }}</span>
+                  <small>место {{ item.low?.rank }} → {{ item.high?.rank }}</small>
+                </div>
+              </div>
               <button class="accent-button" :class="{ active: mustCover === selectedAsset.id }" @click="toggleGuarantee">
                 <Check v-if="mustCover === selectedAsset.id" :size="16" /><Crosshair v-else :size="16" />
                 {{ mustCover === selectedAsset.id ? 'Объект закреплён в плане' : 'Включить в план съёмки' }}
@@ -289,7 +302,7 @@ function exportDecision() { window.location.href = '/api/export?' + parameters()
             <button v-for="key in ['A','B','C']" :key="key" :class="{ selected: strategy === key }"
               @click="strategy = key; showZones = true">
               <span class="strategy-key">{{ key }}</span>
-              <span class="strategy-name"><strong>{{ key === 'A' ? 'Открытые данные' : key === 'B' ? 'Широкая съёмка' : 'Приоритетная' }}</strong><small>{{ !analysis?.strategies[key].timely ? 'позже срока' : !analysis?.strategies[key].budget_feasible ? 'сверх бюджета' : key === 'A' ? 'без покупки' : 'в бюджете' }}</small></span>
+              <span class="strategy-name"><strong>{{ key === 'A' ? 'Открытые данные' : key === 'B' ? 'Широкая съёмка' : 'Приоритетная' }}</strong><small>{{ !analysis?.strategies[key].timely ? 'позже срока' : key === 'C' && !analysis?.strategies[key].constraints_feasible ? 'условие не выполнено' : !analysis?.strategies[key].budget_feasible ? 'сверх бюджета' : key === 'A' ? 'без покупки' : 'в бюджете' }}</small></span>
               <span class="strategy-cost"><strong>{{ compactRub(analysis?.strategies[key].data_cost_rub) }}</strong><small>{{ percent(analysis?.strategies[key].coverage_share) }} охват</small></span>
             </button>
           </div>
@@ -307,6 +320,20 @@ function exportDecision() { window.location.href = '/api/export?' + parameters()
             <span>Широкая B → выборочная C</span>
             <strong>−{{ compactRub(analysis?.metrics.data_savings_vs_broad_rub) }}</strong>
             <small>Затраты на данные · {{ percent(analysis?.strategies.C.coverage_share) }} охвата модельного EL</small>
+          </div>
+          <div class="scenario-block">
+            <div class="section-heading"><h3>Устойчивость плана</h3><span>±20% к одному входу</span></div>
+            <div v-for="item in planSensitivity" :key="item.input + item.factor" class="scenario-row">
+              <span>{{ item.input === 'budget' ? 'Бюджет' : 'Ставка' }} {{ item.factor < 1 ? '−20%' : '+20%' }}</span>
+              <strong>{{ compactRub(item.covered_expected_loss_rub) }}</strong>
+              <small>{{ item.zone_ids.length }} зон · {{ compactRub(item.data_cost_rub) }}</small>
+            </div>
+            <p>Охваченный EL — риск под наблюдением, а не предотвращённый ущерб.</p>
+          </div>
+          <div class="priority-evidence">
+            <span>Приоритет «{{ priority === 'risk' ? 'ущерб' : 'уточнение' }}» против альтернативы</span>
+            <strong>{{ analysis?.decision_evidence.priority_changes_order ? 'состав зон меняется' : 'состав зон совпадает' }}</strong>
+            <small>Разброс моделей помогает выбрать проверку; пользу нового снимка ещё надо измерить.</small>
           </div>
           <div v-if="focusedZones.length" class="zones-detail">
             <div class="section-heading"><h3>Зоны на карте</h3><span>{{ focusedZones.length }}</span></div>
@@ -339,6 +366,14 @@ function exportDecision() { window.location.href = '/api/export?' + parameters()
               <div><span>Неопределённость указывает на ошибки · AUROC</span><strong>{{ number(testQuality?.uncertainty_error_auroc, 3) }}</strong></div>
               <div><span>IoU на новом событии Bolivia</span><strong>{{ percent(analysis?.quality.parts.bolivia.model.iou, 1) }}</strong></div>
             </div>
+          </div>
+          <div class="quality-block">
+            <div class="section-heading"><h3>Прокси-проверка объектов</h3><span>{{ analysis?.asset_proxy_check.n_assets }} из 10</span></div>
+            <div class="quality-rows">
+              <div><span>Средняя ошибка p у точек</span><strong>{{ percent(analysis?.asset_proxy_check.mean_absolute_probability_error, 1) }}</strong></div>
+              <div><span>Средняя ошибка EL по метке воды</span><strong>{{ compactRub(analysis?.asset_proxy_check.mean_absolute_proxy_loss_error_rub) }}</strong></div>
+            </div>
+            <p class="quality-caveat">Метка воды проверяет перенос p в формулу EL. Фактический денежный ущерб здесь не измерен.</p>
           </div>
           <p class="panel-footnote"><Info :size="14" /> Ручная метка не отделяет постоянную воду. Учебные объекты и тариф не являются подтверждённым ущербом или предложением поставщика.</p>
         </template>
