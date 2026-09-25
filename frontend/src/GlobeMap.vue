@@ -1,6 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as maplibregl from 'maplibre-gl'
+import { Box, ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -21,6 +22,9 @@ const emit = defineEmits(['region', 'asset', 'draw-complete', 'ready'])
 const container = ref(null)
 const pickStart = ref(null)
 const mapError = ref(false)
+const tilted = ref(false)
+const probe = ref(null)
+const probeLoading = ref(false)
 let map
 let ready = false
 let loadedScene = ''
@@ -44,7 +48,7 @@ function setData(id, data) { map.getSource(id)?.setData(data) }
 function buildOverlays() {
   if (!map) return
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'region', 'preview', 'zones', 'probe']) map.addSource(id, { type: 'geojson', data: empty })
   const bounds = props.analysis?.chip.bbox || [5.795, 9.06, 5.841, 9.107]
   const imageCoords = coordinates(bounds)
   for (const name of rasterNames) {
@@ -71,6 +75,11 @@ function buildOverlays() {
     paint: { 'fill-color': '#efa330', 'fill-opacity': 0.1 } }, before)
   map.addLayer({ id: 'preview-line', type: 'line', source: 'preview',
     paint: { 'line-color': '#d17e1c', 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
+  map.addLayer({ id: 'probe-halo', type: 'circle', source: 'probe',
+    paint: { 'circle-radius': 13, 'circle-color': '#e9a84c', 'circle-opacity': 0.2 } }, before)
+  map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
+    paint: { 'circle-radius': 5, 'circle-color': '#ecab4d', 'circle-stroke-width': 2,
+      'circle-stroke-color': '#ffffff' } }, before)
   map.setProjection({ type: 'globe' })
   ready = true
   syncMap()
@@ -117,6 +126,8 @@ function syncMap() {
       })
     }
     loadedScene = chip.chip_id
+    probe.value = null
+    setData('probe', empty)
     focusChip()
   }
   map.setLayoutProperty('radar-layer', 'visibility', props.showRadar ? 'visible' : 'none')
@@ -147,6 +158,30 @@ function focusChip() {
   })
 }
 function showGlobe() { map?.flyTo({ center: [13, 11], zoom: 1.8, pitch: 0, duration: 1150, essential: false }) }
+function toggleTilt() {
+  tilted.value = !tilted.value
+  map?.easeTo({ pitch: tilted.value ? 58 : 0,
+    bearing: tilted.value ? -18 : 0,
+    duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 700,
+    essential: false })
+}
+function clearProbe() {
+  probe.value = null
+  if (ready) setData('probe', empty)
+}
+async function inspectAt(longitude, latitude) {
+  probeLoading.value = true
+  setData('probe', collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: [longitude, latitude] }, properties: {} }]))
+  try {
+    const params = new URLSearchParams({ scene_id: props.analysis.chip.chip_id,
+      longitude: String(longitude), latitude: String(latitude) })
+    const response = await fetch('/api/pixel?' + params)
+    if (!response.ok) throw new Error('pixel API ' + response.status)
+    probe.value = await response.json()
+  } catch {
+    probe.value = { status: 'error' }
+  } finally { probeLoading.value = false }
+}
 function focusAsset(asset) {
   if (!map) return
   map.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20,
@@ -170,7 +205,10 @@ onMounted(() => {
   map.on('error', error => { mapError.value = true; console.warn('Map layer:', error.error) })
   map.on('style.load', buildOverlays)
   map.on('click', event => {
-    if (!props.drawing) return
+    if (!props.drawing) {
+      if (props.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
+      return
+    }
     const point = [event.lngLat.lng, event.lngLat.lat]
     if (!pickStart.value) { pickStart.value = point; return }
     const west = Math.min(pickStart.value[0], point[0])
@@ -201,6 +239,22 @@ watch(() => props.drawing, value => { if (!value) { pickStart.value = null; if (
 
 <template>
   <div ref="container" class="globe-map" aria-label="Карта Sentinel-1 и объектов"></div>
+  <div class="map-tools" role="group" aria-label="Режим карты">
+    <button type="button" :class="{ active: tilted }" :aria-pressed="tilted"
+      title="Наклонный обзор территории" @click="toggleTilt"><Box :size="16" />{{ tilted ? 'Сверху' : '3D-обзор' }}</button>
+  </div>
+  <div v-if="probe || probeLoading" class="pixel-card" aria-live="polite">
+    <div class="pixel-card-head"><span><ScanSearch :size="15" /> Пиксель S1</span><button aria-label="Закрыть данные пикселя" @click="clearProbe"><X :size="15" /></button></div>
+    <span v-if="probeLoading" class="pixel-message">Читаем карту…</span>
+    <template v-else-if="probe?.status === 'ok'">
+      <strong>{{ Math.round(probe.p_flood * 100) }}% <small>p воды</small></strong>
+      <div><span>Модель / порог</span><b>{{ probe.model_water ? 'вода' : 'суша' }} / {{ probe.baseline_water ? 'вода' : 'суша' }}</b></div>
+      <div><span>Разброс ансамбля</span><b>{{ (probe.uncertainty * 100).toFixed(1) }} п.п.</b></div>
+      <div><span>Ручная метка</span><b>{{ probe.reference_water == null ? 'нет' : probe.reference_water ? 'вода' : 'суша' }}</b></div>
+      <small>Метка — только контроль качества. {{ probe.longitude.toFixed(4) }}, {{ probe.latitude.toFixed(4) }}</small>
+    </template>
+    <span v-else class="pixel-message">{{ probe?.status === 'outside_coverage' ? 'Нет снимка в этой точке' : probe?.status === 'no_valid_pixel' ? 'Пиксель без валидного сигнала' : 'Не удалось прочитать пиксель' }}</span>
+  </div>
   <div v-if="drawing" class="draw-hint"><span class="draw-pulse"></span>{{ pickStart ? 'Выберите второй угол' : 'Выберите первый угол области' }}</div>
   <div v-if="mapError" class="map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
 </template>
