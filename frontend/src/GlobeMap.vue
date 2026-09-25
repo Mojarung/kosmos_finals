@@ -36,8 +36,8 @@ const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/Wor
 
 // Цвета оверлеев в тон интерфейсу: контур снимка — акцент, зоны и выделение — янтарь риска.
 const COLORS = {
-  light: { chip: '#1d6a80', zone: '#d88a2c', zoneLine: '#b8691a', zoneIdle: '#5b8797', region: '#e0a23c', regionLine: '#b8691a' },
-  dark: { chip: '#7cc9df', zone: '#f0b057', zoneLine: '#f0b057', zoneIdle: '#6e98a6', region: '#f0b057', regionLine: '#f5c374' },
+  light: { chip: '#3d7686', zone: '#dd9a5e', zoneLine: '#c98049', zoneIdle: '#7c9ea9', region: '#e3b26f', regionLine: '#c98049' },
+  dark: { chip: '#a6d3df', zone: '#efc68e', zoneLine: '#efc68e', zoneIdle: '#86a9b4', region: '#efc68e', regionLine: '#f4d3a4' },
 }
 
 function polygon(bounds) {

@@ -14,16 +14,17 @@
   --surface-3: #e1e8e8;
   --muted-foreground: #58696f;
   --border: #d3dddd;
-  --primary: #1d5f74;
+  /* Пастельные акценты. Вода не меняется: маска на карте приходит готовой картинкой. */
+  --primary: #3d7686;
   --primary-foreground: #ffffff;
-  --primary-container: #cfe5ec;
-  --on-primary-container: #0b3a48;
+  --primary-container: #d6e9ee;
+  --on-primary-container: #1c4a57;
   --water: #2f7fc6;
   --water-soft: #8fbfe6;
-  --uncertain: #d9983e;
-  --risk: #c46a1c;
-  --reference: #17897f;
-  --warn: #a8581a;
+  --uncertain: #dfae68;
+  --risk: #c98049;
+  --reference: #3a8a80;
+  --warn: #a0643a;
   --shadow-panel: 0 16px 38px -22px rgb(19 50 60 / 0.36), 0 2px 6px -3px rgb(19 50 60 / 0.14);
   --shadow-float: 0 10px 24px -14px rgb(19 50 60 / 0.34);
   /* Стекло тонировано сине-зелёным акцентом, а не нейтральным белым. */
@@ -47,23 +48,23 @@
   color-scheme: light;
 }
 :root[data-theme='dark'] {
-  --background: #0c1316;
-  --foreground: #e2ecee;
-  --surface-1: #131c20;
-  --surface-2: #1a252a;
-  --surface-3: #243238;
-  --muted-foreground: #95a8ad;
-  --border: #2a383e;
-  --primary: #8fd0e3;
-  --primary-foreground: #05303d;
-  --primary-container: #1d4552;
-  --on-primary-container: #cdeef7;
+  --background: #10181c;
+  --foreground: #e4edef;
+  --surface-1: #162126;
+  --surface-2: #1d2a30;
+  --surface-3: #283840;
+  --muted-foreground: #9aadb2;
+  --border: #2f3f46;
+  --primary: #a6d3df;
+  --primary-foreground: #123a45;
+  --primary-container: #2a4c57;
+  --on-primary-container: #d8f0f6;
   --water: #5aa4e6;
   --water-soft: #3d6f9a;
-  --uncertain: #f0b057;
-  --risk: #f0934a;
-  --reference: #5cc9bd;
-  --warn: #f5b36b;
+  --uncertain: #efc68e;
+  --risk: #eea77c;
+  --reference: #8bd0c6;
+  --warn: #f0c093;
   /* В тёмной теме тень работает как отделяющее свечение, в светлой — как подъём. */
   --shadow-panel: 0 18px 50px -24px rgb(0 0 0 / 0.7);
   --shadow-float: 0 12px 30px -14px rgb(0 0 0 / 0.6);
@@ -272,7 +273,7 @@ html.map-moving .panel {
 .live-demo-link:hover { color: var(--foreground); background: var(--surface-3); }
 .live-flow { position: absolute; top: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 7px 14px; white-space: nowrap; font-size: 12px; font-weight: 600; }
 .live-flow.ready { color: var(--primary); }
-.live-flow-dot { width: 8px; height: 8px; border-radius: 50%; background: #36a884; box-shadow: 0 0 0 5px color-mix(in srgb, #36a884 15%, transparent); }
+.live-flow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--reference); box-shadow: 0 0 0 5px color-mix(in srgb, var(--reference) 15%, transparent); }
 .portfolio-note { margin-bottom: 10px; color: var(--muted-foreground); }
 .actions { display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 4px; flex: none; }
 
@@ -542,7 +543,7 @@ html.map-moving .panel {
 
 .asset-marker {
   display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 50%;
-  border: 2.5px solid var(--surface-1); background: #4d7a8a; color: #fff;
+  border: 2.5px solid var(--surface-1); background: #6a8f9c; color: #fff;
   font-family: inherit; font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums;
   box-shadow: 0 3px 12px rgb(8 28 36 / 0.45); cursor: pointer;
   transition: transform 0.35s var(--ease-spring), box-shadow 0.25s, opacity 0.3s var(--ease-standard);
