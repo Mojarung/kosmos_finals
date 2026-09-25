@@ -19,6 +19,8 @@ export const state = reactive({
   showRadar: false,
   showZones: false,
   tilted: false,
+  // Камера отдалена до масштаба глобуса: наклон там бессмыслен, кнопка 3D выключена.
+  globeView: false,
   theme: 'light',
   budget: 6500,
   deadline: 8,

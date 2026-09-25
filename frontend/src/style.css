@@ -128,6 +128,9 @@ strong, b { font-weight: 600; }
 }
 .ghost-icon:hover { background: var(--surface-3); }
 .ghost-icon.active { background: var(--primary-container); color: var(--on-primary-container); }
+/* aria-disabled вместо disabled: кнопка остаётся наводимой, и подсказка объясняет, почему она неактивна. */
+.ghost-icon[aria-disabled='true'] { opacity: 0.38; cursor: not-allowed; background: none; }
+.ghost-icon[aria-disabled='true']:active { transform: none; }
 .ghost-icon:active { transform: scale(0.92); }
 .ghost-icon.small { width: 34px; height: 34px; color: var(--muted-foreground); }
 .ghost-icon.small:hover { color: var(--foreground); }

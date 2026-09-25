@@ -171,6 +171,7 @@ function focusChip() {
 }
 function showGlobe() {
   if (!map) return
+  state.tilted = false
   map.setProjection({ type: 'globe' })
   map.flyTo({ center: [13, 11], zoom: 1.8, pitch: 0,
     duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1150, essential: false })
@@ -179,6 +180,7 @@ function focusAsset(asset) {
   map?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20, duration: 750, essential: false })
 }
 function toggleTilt() {
+  if (state.globeView) return
   state.tilted = !state.tilted
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   map?.easeTo({ pitch: state.tilted ? 58 : 0, bearing: state.tilted ? -18 : 0, duration: reduced ? 0 : 800, essential: false })
@@ -246,6 +248,14 @@ onMounted(() => {
     console.warn('Map layer:', error.error)
   })
   map.on('style.load', buildOverlays)
+  // Порог по реальному масштабу, а не по кнопке «Глобус»: выключается и при отдалении колесом.
+  const GLOBE_ZOOM = 5
+  map.on('zoom', () => {
+    const globe = map.getZoom() < GLOBE_ZOOM
+    if (globe === state.globeView) return
+    state.globeView = globe
+    if (globe) state.tilted = false
+  })
   map.on('click', event => {
     if (!state.drawing && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
   })
