@@ -1,0 +1,73 @@
+<script setup>
+import { gsap } from 'gsap'
+import { ref, watch } from 'vue'
+import { Activity, ChevronRight, Download, Globe2 } from '@lucide/vue'
+import AssetsView from './AssetsView.vue'
+import BubbleTabs from './BubbleTabs.vue'
+import MorphLoader from './MorphLoader.vue'
+import MorphPanel from './MorphPanel.vue'
+import PlanView from './PlanView.vue'
+import QualityView from './QualityView.vue'
+import { exportDecision, fetchAnalysis, hasData, resetRegion, state } from '../store'
+import { compactRub } from '../lib/format'
+
+const emit = defineEmits(['asset', 'reset'])
+const TABS = [
+  { value: 'assets', label: 'Объекты', hint: 'Что проверить первым: рейтинг ожидаемого ущерба' },
+  { value: 'plan', label: 'Съёмка', hint: 'Заказ дополнительной съёмки под бюджет и срок' },
+  { value: 'quality', label: 'Качество', hint: 'Насколько верить карте воды' },
+]
+const scroller = ref(null)
+const content = ref(null)
+
+watch(() => state.tab, () => {
+  scroller.value?.scrollTo({ top: 0 })
+  if (content.value) gsap.from(content.value, { y: 12, opacity: 0, duration: 0.35, ease: 'power2.out', clearProps: 'all' })
+}, { flush: 'post' })
+
+function back() {
+  resetRegion()
+  emit('reset')
+}
+</script>
+
+<template>
+  <MorphPanel :open="state.decisionOpen" class="decision-panel" data-enter>
+    <template #pill>
+      <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
+        <Activity :size="16" class="accent" />
+        <span v-if="hasData" class="tabular">Ущерб {{ compactRub(state.analysis.metrics.expected_loss_rub) }}</span>
+        <span v-else>Решение</span>
+      </button>
+    </template>
+
+    <header class="panel-head">
+      <BubbleTabs v-model="state.tab" :options="TABS" stretch label="Раздел решения" />
+      <button class="ghost-icon small" v-tip="'Свернуть, карта станет шире'" aria-label="Свернуть панель" @click="state.decisionOpen = false"><ChevronRight :size="17" /></button>
+    </header>
+
+    <div ref="scroller" class="panel-scroll">
+      <div v-if="state.error" class="error-note">{{ state.error }} <button @click="fetchAnalysis">Повторить</button></div>
+      <div v-if="state.analysis && !hasData" class="empty">
+        <Globe2 :size="26" />
+        <strong>Пока нет наблюдения</strong>
+        <span>Область выделена, но снимка для неё нет. Решение считается только там, где есть Sentinel‑1.</span>
+        <button class="tonal-button" @click="back">Вернуться к снимку</button>
+      </div>
+      <div v-else-if="hasData" ref="content" :class="{ dimmed: state.loading }">
+        <AssetsView v-if="state.tab === 'assets'" @asset="id => emit('asset', id)" />
+        <PlanView v-else-if="state.tab === 'plan'" />
+        <QualityView v-else />
+      </div>
+      <Transition name="pop">
+        <div v-if="state.loading && state.analysis" class="corner-loader"><MorphLoader :size="26" /></div>
+      </Transition>
+    </div>
+
+    <footer class="panel-foot">
+      <button class="primary-button wide" :disabled="!hasData" v-tip="'ZIP: GeoTIFF воды, вероятности и неопределённости, таблицы объектов, план закупки, сравнение A/B/C, метрики и параметры'" @click="exportDecision">
+        <Download :size="17" />Скачать решение
+      </button>
+    </footer>
+  </MorphPanel>
+</template>

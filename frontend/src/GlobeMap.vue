@@ -3,20 +3,10 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as maplibregl from 'maplibre-gl'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { state } from './store'
 
 maplibregl.setWorkerUrl(workerUrl)
 
-const props = defineProps({
-  analysis: { type: Object, default: null },
-  region: { type: Array, default: null },
-  drawing: { type: Boolean, default: false },
-  selectedAsset: { type: String, default: null },
-  activeStrategy: { type: String, default: 'C' },
-  layerMode: { type: String, default: 'model' },
-  showRadar: { type: Boolean, default: true },
-  showZones: { type: Boolean, default: true },
-  theme: { type: String, default: 'light' },
-})
 const emit = defineEmits(['region', 'asset', 'draw-complete', 'ready'])
 const container = ref(null)
 const pickStart = ref(null)
@@ -28,6 +18,12 @@ const markers = new Map()
 const empty = { type: 'FeatureCollection', features: [] }
 const rasterNames = ['radar', 'probability', 'model', 'baseline', 'reference', 'uncertainty']
 
+// Цвета оверлеев в тон интерфейсу: контур снимка — акцент, зоны и выделение — янтарь риска.
+const COLORS = {
+  light: { chip: '#1d6a80', zone: '#d88a2c', zoneLine: '#b8691a', zoneIdle: '#5b8797', region: '#e0a23c', regionLine: '#b8691a' },
+  dark: { chip: '#7cc9df', zone: '#f0b057', zoneLine: '#f0b057', zoneIdle: '#6e98a6', region: '#f0b057', regionLine: '#f5c374' },
+}
+
 function polygon(bounds) {
   const [w, s, e, n] = bounds
   return { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] }
@@ -37,40 +33,36 @@ function coordinates(bounds) {
   const [w, s, e, n] = bounds
   return [[w, n], [e, n], [e, s], [w, s]]
 }
-function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (props.theme === 'dark' ? 'dark' : 'bright') }
+function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (state.theme === 'dark' ? 'dark' : 'positron') }
 function beforeLabels() { return map.getStyle().layers.find(layer => layer.type === 'symbol')?.id }
 function setData(id, data) { map.getSource(id)?.setData(data) }
 
 function buildOverlays() {
   if (!map) return
+  const c = COLORS[state.theme === 'dark' ? 'dark' : 'light']
   const before = beforeLabels()
   for (const id of ['chip', 'region', 'preview', 'zones']) map.addSource(id, { type: 'geojson', data: empty })
-  const bounds = props.analysis?.chip.bbox || [5.795, 9.06, 5.841, 9.107]
-  const imageCoords = coordinates(bounds)
+  const chipId = state.analysis?.chip.chip_id || 'Nigeria_812045'
+  const imageCoords = coordinates(state.analysis?.chip.bbox || [5.795, 9.06, 5.841, 9.107])
   for (const name of rasterNames) {
-    const url = props.analysis ? '/api/demo/' + props.analysis.chip.chip_id + '/' + name + '.png' : '/api/demo/Nigeria_812045/' + name + '.png'
-    map.addSource(name, { type: 'image', url, coordinates: imageCoords })
+    map.addSource(name, { type: 'image', url: '/api/demo/' + chipId + '/' + name + '.png', coordinates: imageCoords })
     map.addLayer({ id: name + '-layer', type: 'raster', source: name,
-      paint: { 'raster-opacity': name === 'radar' ? 0.68 : 0.88, 'raster-fade-duration': 250 } }, before)
+      paint: { 'raster-opacity': name === 'radar' ? 0.7 : 0.86, 'raster-fade-duration': 250 } }, before)
   }
-  map.addLayer({ id: 'chip-fill', type: 'fill', source: 'chip', paint: { 'fill-color': '#3e80d5', 'fill-opacity': 0.035 } }, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
-    paint: { 'line-color': '#286ebc', 'line-width': 2.3, 'line-opacity': 0.8 } }, before)
+    paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
   map.addLayer({ id: 'zone-fill', type: 'fill', source: 'zones',
-    paint: { 'fill-color': ['case', ['==', ['get', 'active'], 1], '#edab4c', '#4c7fb8'],
-      'fill-opacity': ['case', ['==', ['get', 'active'], 1], 0.24, 0.06] } }, before)
+    paint: { 'fill-color': ['case', ['==', ['get', 'active'], 1], c.zone, c.zoneIdle],
+      'fill-opacity': ['case', ['==', ['get', 'active'], 1], 0.22, 0.05] } }, before)
   map.addLayer({ id: 'zone-outline', type: 'line', source: 'zones',
-    paint: { 'line-color': ['case', ['==', ['get', 'active'], 1], '#c37724', '#507da8'],
-      'line-width': ['case', ['==', ['get', 'active'], 1], 2.4, 1.1],
+    paint: { 'line-color': ['case', ['==', ['get', 'active'], 1], c.zoneLine, c.zoneIdle],
+      'line-width': ['case', ['==', ['get', 'active'], 1], 2.2, 1],
       'line-dasharray': [2, 1.3] } }, before)
-  map.addLayer({ id: 'region-fill', type: 'fill', source: 'region',
-    paint: { 'fill-color': '#f2bc54', 'fill-opacity': 0.14 } }, before)
-  map.addLayer({ id: 'region-outline', type: 'line', source: 'region',
-    paint: { 'line-color': '#c87518', 'line-width': 3 } }, before)
-  map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview',
-    paint: { 'fill-color': '#efa330', 'fill-opacity': 0.1 } }, before)
+  map.addLayer({ id: 'region-fill', type: 'fill', source: 'region', paint: { 'fill-color': c.region, 'fill-opacity': 0.12 } }, before)
+  map.addLayer({ id: 'region-outline', type: 'line', source: 'region', paint: { 'line-color': c.regionLine, 'line-width': 2.5 } }, before)
+  map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview', paint: { 'fill-color': c.region, 'fill-opacity': 0.1 } }, before)
   map.addLayer({ id: 'preview-line', type: 'line', source: 'preview',
-    paint: { 'line-color': '#d17e1c', 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
+    paint: { 'line-color': c.regionLine, 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
   map.setProjection({ type: 'globe' })
   ready = true
   syncMap()
@@ -78,27 +70,27 @@ function buildOverlays() {
 }
 
 function updateMarkers() {
-  if (!map || !props.analysis) return
+  if (!map || !state.analysis) return
   const currentIds = new Set()
-  for (const asset of props.analysis.assets) {
+  const ranks = new Map(state.analysis.assets.map((asset, index) => [asset.id, index + 1]))
+  for (const asset of state.analysis.assets) {
     currentIds.add(asset.id)
     let entry = markers.get(asset.id)
     if (!entry) {
       const element = document.createElement('button')
       element.type = 'button'
       element.className = 'asset-marker'
-      element.textContent = asset.id
-      element.setAttribute('aria-label', asset.name + ', вероятность воды ' + Math.round(asset.p_flood * 100) + '%')
       element.addEventListener('click', event => { event.stopPropagation(); emit('asset', asset.id) })
-      const marker = new maplibregl.Marker({ element, anchor: 'center' })
-        .setLngLat([asset.longitude, asset.latitude]).addTo(map)
+      const marker = new maplibregl.Marker({ element, anchor: 'center' }).setLngLat([asset.longitude, asset.latitude]).addTo(map)
       entry = { marker, element }
       markers.set(asset.id, entry)
     }
+    // На маркере место в рейтинге ущерба, а не служебный ID: сразу видно, куда смотреть первым.
+    entry.element.textContent = String(ranks.get(asset.id))
     entry.marker.setLngLat([asset.longitude, asset.latitude])
-    entry.element.classList.toggle('selected', asset.id === props.selectedAsset)
-    entry.element.classList.toggle('high-risk', asset.p_flood >= 0.41)
-    entry.element.setAttribute('aria-label', asset.name + ', вероятность воды ' + Math.round(asset.p_flood * 100) + '%')
+    entry.element.classList.toggle('selected', asset.id === state.selectedAssetId)
+    entry.element.classList.toggle('high-risk', asset.p_flood >= state.analysis.chip.model_threshold)
+    entry.element.setAttribute('aria-label', `${ranks.get(asset.id)}. ${asset.name}, вероятность воды ${Math.round(asset.p_flood * 100)}%`)
   }
   for (const [id, entry] of markers) {
     if (!currentIds.has(id)) { entry.marker.remove(); markers.delete(id) }
@@ -106,58 +98,50 @@ function updateMarkers() {
 }
 
 function syncMap() {
-  if (!ready || !props.analysis) return
-  const chip = props.analysis.chip
+  if (!ready || !state.analysis) return
+  const chip = state.analysis.chip
   if (loadedScene !== chip.chip_id) {
     const imageCoords = coordinates(chip.bbox)
     for (const name of rasterNames) {
-      map.getSource(name).updateImage({
-        url: '/api/demo/' + chip.chip_id + '/' + name + '.png',
-        coordinates: imageCoords,
-      })
+      map.getSource(name).updateImage({ url: '/api/demo/' + chip.chip_id + '/' + name + '.png', coordinates: imageCoords })
     }
+    const first = !loadedScene
     loadedScene = chip.chip_id
-    focusChip()
+    if (first || !state.region) focusChip()
   }
-  map.setLayoutProperty('radar-layer', 'visibility', props.showRadar ? 'visible' : 'none')
+  map.setLayoutProperty('radar-layer', 'visibility', state.showRadar ? 'visible' : 'none')
   for (const name of rasterNames.filter(name => name !== 'radar')) {
-    map.setLayoutProperty(name + '-layer', 'visibility', props.layerMode === name ? 'visible' : 'none')
+    map.setLayoutProperty(name + '-layer', 'visibility', state.layerMode === name ? 'visible' : 'none')
   }
   setData('chip', collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
-  setData('region', props.region ? collection([{ type: 'Feature', geometry: polygon(props.region), properties: {} }]) : empty)
-  const active = new Set(props.analysis.strategies[props.activeStrategy]?.zone_ids || [])
-  const zones = props.showZones
-    ? props.analysis.zones.filter(zone => active.has(zone.id) || zone.id !== 'ZALL')
-    : []
+  setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
+  const active = new Set(state.analysis.strategies[state.strategy]?.zone_ids || [])
+  const zones = state.showZones ? state.analysis.zones.filter(zone => active.has(zone.id) || zone.id !== 'ZALL') : []
   setData('zones', collection(zones.map(zone => ({ type: 'Feature', geometry: zone.geometry,
     properties: { id: zone.id, active: active.has(zone.id) ? 1 : 0 } }))))
   updateMarkers()
 }
 
+// Отступы учитывают, открыты ли панели: свёрнутая панель отдаёт место снимку.
+function padding() {
+  const width = window.innerWidth
+  if (width < 1024) return { left: 24, right: 24, top: 140, bottom: 90 }
+  return {
+    left: state.observeOpen ? 420 : 60,
+    right: state.decisionOpen ? 440 : 60,
+    top: 100, bottom: 80,
+  }
+}
 function focusChip() {
-  if (!map || !props.analysis) return
-  const [w, s, e, n] = props.analysis.chip.bbox
-  const desktop = window.innerWidth >= 1180
-  const tablet = window.innerWidth >= 700 && !desktop
-  map.fitBounds([[w, s], [e, n]], {
-    padding: desktop ? { left: 338, right: 378, top: 120, bottom: 110 }
-      : tablet ? { left: 320, right: 48, top: 116, bottom: 90 }
-        : { left: 28, right: 28, top: 105, bottom: 285 },
-    maxZoom: 13.6, pitch: 22, duration: 1050, essential: false,
-  })
+  if (!map || !state.analysis) return
+  const [w, s, e, n] = state.analysis.chip.bbox
+  map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 13.6, pitch: 22, duration: 1050, essential: false })
 }
 function showGlobe() { map?.flyTo({ center: [13, 11], zoom: 1.8, pitch: 0, duration: 1150, essential: false }) }
 function focusAsset(asset) {
-  if (!map) return
-  map.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20,
-    duration: 750, essential: false })
+  map?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20, duration: 750, essential: false })
 }
-function focusRegion() {
-  if (!map || !props.region) return
-  const [w, s, e, n] = props.region
-  map.fitBounds([[w, s], [e, n]], { padding: 105, maxZoom: 13.8, duration: 750, essential: false })
-}
-defineExpose({ focusChip, showGlobe, focusAsset, focusRegion })
+defineExpose({ focusChip, showGlobe, focusAsset })
 
 onMounted(() => {
   map = new maplibregl.Map({
@@ -170,7 +154,7 @@ onMounted(() => {
   map.on('error', error => { mapError.value = true; console.warn('Map layer:', error.error) })
   map.on('style.load', buildOverlays)
   map.on('click', event => {
-    if (!props.drawing) return
+    if (!state.drawing) return
     const point = [event.lngLat.lng, event.lngLat.lat]
     if (!pickStart.value) { pickStart.value = point; return }
     const west = Math.min(pickStart.value[0], point[0])
@@ -183,24 +167,27 @@ onMounted(() => {
     emit('draw-complete')
   })
   map.on('mousemove', event => {
-    map.getCanvas().style.cursor = props.drawing ? 'crosshair' : 'grab'
-    if (!props.drawing || !pickStart.value) return
+    map.getCanvas().style.cursor = state.drawing ? 'crosshair' : 'grab'
+    if (!state.drawing || !pickStart.value) return
     const [x, y] = pickStart.value
     const point = [event.lngLat.lng, event.lngLat.lat]
-    const bounds = [Math.min(x, point[0]), Math.min(y, point[1]),
-      Math.max(x, point[0]), Math.max(y, point[1])]
-    setData('preview', collection([{ type: 'Feature', geometry: polygon(bounds), properties: {} }]))
+    setData('preview', collection([{ type: 'Feature', properties: {},
+      geometry: polygon([Math.min(x, point[0]), Math.min(y, point[1]), Math.max(x, point[0]), Math.max(y, point[1])]) }]))
   })
 })
 onBeforeUnmount(() => { for (const entry of markers.values()) entry.marker.remove(); map?.remove() })
-watch(() => [props.analysis, props.region, props.selectedAsset, props.activeStrategy,
-  props.layerMode, props.showRadar, props.showZones], syncMap, { deep: true })
-watch(() => props.theme, () => { ready = false; loadedScene = ''; map?.setStyle(styleUrl(), { diff: false }) })
-watch(() => props.drawing, value => { if (!value) { pickStart.value = null; if (ready) setData('preview', empty) } })
+watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy,
+  state.layerMode, state.showRadar, state.showZones], syncMap, { deep: true })
+watch(() => state.theme, () => { ready = false; loadedScene = ''; map?.setStyle(styleUrl(), { diff: false }) })
+watch(() => state.drawing, value => { if (!value) { pickStart.value = null; if (ready) setData('preview', empty) } })
 </script>
 
 <template>
-  <div ref="container" class="globe-map" aria-label="Карта Sentinel-1 и объектов"></div>
-  <div v-if="drawing" class="draw-hint"><span class="draw-pulse"></span>{{ pickStart ? 'Выберите второй угол' : 'Выберите первый угол области' }}</div>
-  <div v-if="mapError" class="map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
+  <div ref="container" class="globe-map" aria-label="Карта Sentinel‑1 и объектов"></div>
+  <Transition name="pop">
+    <div v-if="state.drawing" class="panel capsule map-hint">
+      <span class="pulse"></span>{{ pickStart ? 'Кликните второй угол области' : 'Кликните первый угол области' }}
+    </div>
+  </Transition>
+  <div v-if="mapError" class="panel capsule map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
 </template>
