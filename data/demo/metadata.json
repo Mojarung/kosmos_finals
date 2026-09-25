@@ -1,0 +1,134 @@
+{
+  "chip_id": "Ghana_313799",
+  "event": "Ghana",
+  "observed_at": "2018-09-18",
+  "bbox": [
+    -1.471799761501424,
+    9.290735994477739,
+    -1.4258060189545045,
+    9.336729737024658
+  ],
+  "width": 512,
+  "height": 512,
+  "area_km2": 25.705,
+  "valid_pixels": 244464,
+  "water_pixels": 14933,
+  "water_area_km2": 1.464,
+  "portfolio_seed": 2026,
+  "assets": [
+    {
+      "id": "A01",
+      "class": "warehouse",
+      "name": "Склад",
+      "value_rub": 10000000,
+      "vulnerability": 0.25,
+      "longitude": -1.447590164594403,
+      "latitude": 9.335517011391097,
+      "scenario_probability": 0.855
+    },
+    {
+      "id": "A02",
+      "class": "substation",
+      "name": "Подстанция",
+      "value_rub": 20000000,
+      "vulnerability": 0.4,
+      "longitude": -1.4387866748100315,
+      "latitude": 9.32042531461789,
+      "scenario_probability": 0.819
+    },
+    {
+      "id": "A03",
+      "class": "road_unit",
+      "name": "Участок дороги",
+      "value_rub": 5000000,
+      "vulnerability": 0.3,
+      "longitude": -1.443637577344277,
+      "latitude": 9.328510152174964,
+      "scenario_probability": 0.603
+    },
+    {
+      "id": "A04",
+      "class": "facility",
+      "name": "Производственный объект",
+      "value_rub": 8000000,
+      "vulnerability": 0.2,
+      "longitude": -1.4429189251169814,
+      "latitude": 9.307309911469744,
+      "scenario_probability": 0.692
+    },
+    {
+      "id": "A05",
+      "class": "pumping_station",
+      "name": "Насосная станция",
+      "value_rub": 12000000,
+      "vulnerability": 0.35,
+      "longitude": -1.4656463018052053,
+      "latitude": 9.297518274872841,
+      "scenario_probability": 0.512
+    },
+    {
+      "id": "A06",
+      "class": "clinic",
+      "name": "Клиника",
+      "value_rub": 30000000,
+      "vulnerability": 0.15,
+      "longitude": -1.4662751225040889,
+      "latitude": 9.319886325447417,
+      "scenario_probability": 0.748
+    },
+    {
+      "id": "A07",
+      "class": "school",
+      "name": "Школа",
+      "value_rub": 18000000,
+      "vulnerability": 0.2,
+      "longitude": -1.4316899840654873,
+      "latitude": 9.333091560123973,
+      "scenario_probability": 0.461
+    },
+    {
+      "id": "A08",
+      "class": "workshop",
+      "name": "Мастерская",
+      "value_rub": 6000000,
+      "vulnerability": 0.45,
+      "longitude": -1.4608852307993718,
+      "latitude": 9.315215085969996,
+      "scenario_probability": 0.377
+    },
+    {
+      "id": "A09",
+      "class": "telecom_node",
+      "name": "Узел связи",
+      "value_rub": 4000000,
+      "vulnerability": 0.5,
+      "longitude": -1.4398646531509751,
+      "latitude": 9.319706662390594,
+      "scenario_probability": 0.331
+    },
+    {
+      "id": "A10",
+      "class": "water_intake",
+      "name": "Водозабор",
+      "value_rub": 16000000,
+      "vulnerability": 0.3,
+      "longitude": -1.451273257259293,
+      "latitude": 9.30713024841292,
+      "scenario_probability": 0.292
+    }
+  ],
+  "source_manifest": [
+    {
+      "name": "Ghana_313799_S1Hand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/S1Hand/Ghana_313799_S1Hand.tif",
+      "sha256": "4555c98d54ea0ca81e681abc75af20d61774fbbcdc3d48992c3378ebdd5887bc"
+    },
+    {
+      "name": "Ghana_313799_LabelHand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/LabelHand/Ghana_313799_LabelHand.tif",
+      "sha256": "3bde81b5172d5017ec561ce137cdf8d59fbf3a69fc7796d08188b97219a32862"
+    }
+  ],
+  "probability_status": "scenario_fixture_independent_of_observation",
+  "water_status": "manual_reference_label_not_model_output"
+}
