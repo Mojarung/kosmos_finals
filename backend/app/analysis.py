@@ -6,6 +6,33 @@ from math import ceil, floor
 
 from .catalog import default_scene_id, float_map, mask, metadata, quality, scene_catalog
 from .planning import candidates, contains, enrich_assets, intersects, plan, quote, rectangle_area_km2, square_around
+from .sensitivity import asset_sensitivity, plan_sensitivity
+from .evidence import asset_proxy_check
+
+
+def inspect_pixel(longitude: float, latitude: float, scene_id: str | None = None) -> dict:
+    """Read the same frozen grids shown on the map at a clicked coordinate."""
+    scene_id = scene_id or default_scene_id()
+    info = metadata(scene_id)
+    west, south, east, north = info["bbox"]
+    result = {"chip_id": scene_id, "longitude": longitude, "latitude": latitude,
+              "status": "outside_coverage"}
+    if not (west <= longitude < east and south < latitude <= north):
+        return result
+    col = min(info["width"] - 1, int((longitude - west) / (east - west) * info["width"]))
+    row = min(info["height"] - 1, int((north - latitude) / (north - south) * info["height"]))
+    index = row * info["width"] + col
+    model = mask(scene_id, "model")[index]
+    if model == 255:
+        return {**result, "status": "no_valid_pixel", "row": row, "col": col}
+    reference = mask(scene_id, "water")[index]
+    return {**result, "status": "ok", "row": row, "col": col,
+            "p_flood": round(float_map(scene_id, "probability")[index], 4),
+            "uncertainty": round(float_map(scene_id, "uncertainty")[index], 4),
+            "model_water": model == 1,
+            "baseline_water": mask(scene_id, "baseline")[index] == 1,
+            "reference_water": None if reference == 255 else reference == 1,
+            "reference_role": "diagnostic_only", "model_threshold": info["model_threshold"]}
 
 
 def _scores(tp: int, fp: int, fn: int, tn: int) -> dict:
@@ -142,11 +169,19 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
         "C": {"label": "Приоритетная съёмка", **c,
               "data_cost_rub": c["quote"]["total_rub"],
               "coverage_share": round(c["covered_expected_loss_rub"] / exposure, 4) if exposure else 0,
-              "budget_feasible": c["feasible"], "timely": True,
+              "budget_feasible": c["quote"]["total_rub"] <= budget_rub,
+              "constraints_feasible": c["feasible"], "timely": True,
               "residual_uncertainty": None, "uncertainty_status": "not_estimated"},
     }
     selected_count = len(strategies["C"]["covered_asset_ids"])
     savings = round(b_quote["total_rub"] - c["quote"]["total_rub"], 2) if c["feasible"] and c["covered_expected_loss_rub"] > 0 else None
+    sensitivity = {
+        "asset": asset_sensitivity(assets),
+        "plan": plan_sensitivity(assets, zones, budget_rub, priority, deadline_hours, must_cover),
+        "method": "one_input_at_a_time_20_percent_fixed_probability_map_and_portfolio",
+    }
+    alternate = plan(assets, zones, budget_rub,
+                     "information" if priority == "risk" else "risk", deadline_hours, must_cover)
     return {
         "chip": {key: info[key] for key in (
             "chip_id", "event", "observed_at", "bbox", "area_km2", "valid_pixels",
@@ -154,6 +189,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             "model_threshold", "baseline_threshold_db")},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets, "zones": zones,
+        "sensitivity": sensitivity,
         "inputs": {"budget_rub": budget_rub, "priority": priority,
                    "deadline_hours": deadline_hours, "must_cover": must_cover},
         "metrics": {"portfolio_count": len(assets), "expected_loss_rub": exposure,
@@ -164,11 +200,21 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                     "savings_share_vs_broad": round(savings / b_quote["total_rub"], 4) if savings is not None and b_quote["total_rub"] else None,
                     "cost_per_million_covered_rub": round(c["quote"]["total_rub"] / (c["covered_expected_loss_rub"] / 1_000_000), 2) if c["covered_expected_loss_rub"] else None,
                     "status": "measured_model_probability_scenario_assets_and_tariff"},
+        "decision_evidence": {
+            "selected_priority": priority,
+            "alternate_priority": "information" if priority == "risk" else "risk",
+            "selected_zone_ids": c["zone_ids"],
+            "alternate_zone_ids": alternate["zone_ids"],
+            "priority_changes_order": set(c["zone_ids"]) != set(alternate["zone_ids"]),
+            "alternate_covered_expected_loss_rub": alternate["covered_expected_loss_rub"],
+            "meaning": "Information priority is a heuristic based on ensemble spread, not measured value of a new image.",
+        },
         "strategies": strategies,
         "comparison": {"data_savings_vs_broad_rub": savings,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
+        "asset_proxy_check": asset_proxy_check(scene_id),
         "limitations": [
             "Модель измеряет воду, но не отделяет постоянную воду от паводковой.",
             "V и q объектов заданы кейсом; сами точки учебные, а не реальный реестр.",
