@@ -28,7 +28,7 @@
   --shadow-float: 0 10px 24px -14px rgb(19 50 60 / 0.34);
   /* Стекло тонировано сине-зелёным акцентом, а не нейтральным белым. */
   --glass-tint: color-mix(in srgb, color-mix(in srgb, var(--primary) 14%, var(--surface-1)) 87%, transparent);
-  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 12%, var(--surface-1)) 95%, transparent);
+  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 14%, var(--surface-1)) 95%, transparent);
   /* Блик в верхнем углу и светлая лужица у нижнего края, как у стекла iOS 26. */
   --glass-sheen: radial-gradient(140% 90% at 0% 0%, rgb(255 255 255 / 0.42), rgb(255 255 255 / 0) 55%),
     linear-gradient(to top, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 38%);
@@ -68,7 +68,7 @@
   --shadow-panel: 0 18px 50px -24px rgb(0 0 0 / 0.7);
   --shadow-float: 0 12px 30px -14px rgb(0 0 0 / 0.6);
   --glass-tint: color-mix(in srgb, color-mix(in srgb, var(--primary) 16%, var(--surface-1)) 88%, transparent);
-  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 13%, var(--surface-1)) 95%, transparent);
+  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 16%, var(--surface-1)) 95%, transparent);
   --glass-sheen: radial-gradient(140% 90% at 0% 0%, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0) 55%),
     linear-gradient(to top, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0) 38%);
   --glass-rim: linear-gradient(135deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.07) 28%, rgb(255 255 255 / 0.03) 62%, rgb(255 255 255 / 0.18));

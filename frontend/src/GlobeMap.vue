@@ -387,10 +387,18 @@ onMounted(() => {
   })
   // Пока карта движется, стеклу не нужно размытие: иначе backdrop-filter пересчитывается
   // под каждой панелью на каждом кадре. Снимаем с задержкой, чтобы зум колесом не мигал.
+  // Класс ставим кадром позже: resize окна (фуллскрин) шлёт movestart, move и moveend
+  // синхронно подряд, и без отсрочки стекло моргало бы сплошной заливкой.
   let movingTimer
+  let movingFrame
   const root = document.documentElement
-  map.on('movestart', () => { clearTimeout(movingTimer); root.classList.add('map-moving') })
+  map.on('movestart', () => {
+    clearTimeout(movingTimer)
+    cancelAnimationFrame(movingFrame)
+    movingFrame = requestAnimationFrame(() => root.classList.add('map-moving'))
+  })
   map.on('moveend', () => {
+    cancelAnimationFrame(movingFrame)
     clearTimeout(movingTimer)
     movingTimer = setTimeout(() => root.classList.remove('map-moving'), 150)
     scheduleWarmUp()
