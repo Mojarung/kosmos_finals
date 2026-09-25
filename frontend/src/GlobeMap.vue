@@ -90,6 +90,8 @@ function buildOverlays() {
   map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
     paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
   if (probe.value?.longitude != null) setProbePoint(probe.value.longitude, probe.value.latitude)
+  // Проекция всегда глобус: на крупном масштабе MapLibre сам рисует его плоским,
+  // а при отдалении колесом карта плавно сворачивается в шар.
   map.setProjection({ type: 'globe' })
   // MapLibre раскрывает длинную атрибуцию при добавлении нового raster-source.
   // Оставляем доступную кнопку «i», а сам текст показываем по запросу.
@@ -176,7 +178,6 @@ function padding() {
 }
 function fitChip(duration) {
   const [w, s, e, n] = state.analysis.chip.bbox
-  map.setProjection({ type: 'mercator' })
   map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0, bearing: 0, duration, essential: false })
 }
 function focusChip() {
@@ -189,7 +190,6 @@ function showGlobe() {
   if (!map || state.globeView) return
   state.tilted = false
   veiledMove(() => {
-    map.setProjection({ type: 'globe' })
     map.jumpTo({ center: [13, 11], zoom: 1.8, pitch: 0, bearing: 0 })
   }, { from: 'far', limit: 1500 })
 }
@@ -268,7 +268,6 @@ function flyToScene(id) {
     phase = 'in'
     syncMap()
     const [w, s, e, n] = target
-    map.setProjection({ type: 'mercator' })
     map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0, bearing: 0, duration: 0 })
   }, { whenCovered: () => analysisFor(id), layersChange: true })
 }
@@ -298,7 +297,7 @@ function focusAsset(asset) {
   if (!map) return
   const camera = { center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20 }
   if (state.globeView) {
-    return veiledMove(() => { map.setProjection({ type: 'mercator' }); map.jumpTo({ ...camera, bearing: 0 }) })
+    return veiledMove(() => map.jumpTo({ ...camera, bearing: 0 }))
   }
   map.flyTo({ ...camera, duration: 750, essential: false })
 }
