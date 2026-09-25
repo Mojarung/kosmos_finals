@@ -391,8 +391,23 @@ strong, b { font-weight: 600; }
   border: 2.5px solid var(--surface-1); background: #4d7a8a; color: #fff;
   font-family: inherit; font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums;
   box-shadow: 0 3px 12px rgb(8 28 36 / 0.45); cursor: pointer;
-  transition: transform 0.35s var(--ease-spring), box-shadow 0.25s;
+  transition: transform 0.35s var(--ease-spring), box-shadow 0.25s, opacity 0.3s var(--ease-standard);
 }
+/* Шторка смены сцены: закрывает карту, пока под ней грузятся тайлы новой сцены. */
+.map-veil {
+  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; pointer-events: none;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(0.8); -webkit-backdrop-filter: blur(14px) saturate(0.8);
+  opacity: 0; transition: opacity 0.2s var(--ease-standard);
+}
+.map-veil.on { opacity: 1; pointer-events: auto; }
+.veil-loader-enter-active { transition: opacity 0.3s, transform 0.4s var(--ease-spring); }
+.veil-loader-leave-active { transition: opacity 0.15s; }
+.veil-loader-enter-from { opacity: 0; transform: scale(0.7); }
+.veil-loader-leave-to { opacity: 0; }
+/* Под шторкой маркеры гаснут: их координаты меняются вместе со сценой.
+   !important: MapLibre сам пишет маркерам inline-opacity (прячет их за горизонтом глобуса). */
+.scene-moving .asset-marker { opacity: 0 !important; pointer-events: none; }
 .asset-marker.high-risk { background: var(--risk); }
 .asset-marker:hover { transform: scale(1.18); }
 .asset-marker.selected { transform: scale(1.3); box-shadow: 0 0 0 5px color-mix(in srgb, var(--risk) 30%, transparent), 0 4px 14px rgb(8 28 36 / 0.5); }

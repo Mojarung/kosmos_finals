@@ -6,6 +6,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { state } from './store'
 import { number } from './lib/format'
+import MorphLoader from './components/MorphLoader.vue'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -15,11 +16,16 @@ const dragging = ref(false)
 const mapError = ref(false)
 const probe = ref(null)
 const probeLoading = ref(false)
+const veiled = ref(false)
+const veilLoader = ref(false)
 let map
 let ready = false
 let loadedScene = ''
 let dragStart = null
 let dragEnd = null
+// Смена сцены под шторкой: 'out' — шторка закрывается, снимки ещё старые; 'in' — под ней встала новая сцена.
+let phase = null
+let flight = 0
 const markers = new Map()
 const empty = { type: 'FeatureCollection', features: [] }
 const rasterNames = ['radar', 'probability', 'model', 'baseline', 'reference', 'uncertainty']
@@ -62,7 +68,7 @@ function buildOverlays() {
     map.addSource(name, { type: 'image', url: '/api/demo/' + chipId + '/' + name + '.png', coordinates: imageCoords })
     map.addLayer({ id: name + '-layer', type: 'raster', source: name,
       paint: { 'raster-opacity': name === 'radar' ? 0.7 : state.overlayOpacity / 100,
-        'raster-opacity-transition': { duration: 220 }, 'raster-fade-duration': 250 } }, before)
+        'raster-opacity-transition': { duration: 350 }, 'raster-fade-duration': 250 } }, before)
   }
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
@@ -127,7 +133,9 @@ function updateMarkers() {
 function syncMap() {
   if (!ready || !state.analysis) return
   const chip = state.analysis.chip
-  if (loadedScene !== chip.chip_id) {
+  // Пока камера отъезжает от старой сцены, снимки не меняем: иначе новый квадрат
+  // появился бы на другом конце карты, а старое место опустело бы посреди полёта.
+  if (loadedScene !== chip.chip_id && phase !== 'out') {
     const imageCoords = coordinates(chip.bbox)
     for (const name of rasterNames) {
       map.getSource(name).updateImage({ url: '/api/demo/' + chip.chip_id + '/' + name + '.png', coordinates: imageCoords })
@@ -135,15 +143,18 @@ function syncMap() {
     const first = !loadedScene
     if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
-    if (first || !state.region) focusChip()
+    if (!phase && (first || !state.region)) focusChip()
   }
+  const hidden = phase !== null
   map.setLayoutProperty('radar-layer', 'visibility', state.showRadar ? 'visible' : 'none')
+  map.setPaintProperty('radar-layer', 'raster-opacity', hidden ? 0 : 0.7)
   map.setLayoutProperty('satellite-layer', 'visibility', state.basemap === 'satellite' ? 'visible' : 'none')
   for (const name of rasterNames.filter(name => name !== 'radar')) {
     map.setLayoutProperty(name + '-layer', 'visibility', state.layerMode === name ? 'visible' : 'none')
-    map.setPaintProperty(name + '-layer', 'raster-opacity', state.overlayOpacity / 100)
+    map.setPaintProperty(name + '-layer', 'raster-opacity', hidden ? 0 : state.overlayOpacity / 100)
   }
-  setData('chip', collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
+  map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
+  if (!hidden) setData('chip', collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
   const active = new Set(state.analysis.strategies[state.strategy]?.zone_ids || [])
   const zones = state.showZones ? state.analysis.zones.filter(zone => active.has(zone.id) || zone.id !== 'ZALL') : []
@@ -162,22 +173,112 @@ function padding() {
     top: 100, bottom: 80,
   }
 }
-function focusChip() {
-  if (!map || !state.analysis) return
+function fitChip(duration) {
   const [w, s, e, n] = state.analysis.chip.bbox
   map.setProjection({ type: 'mercator' })
-  map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0,
-    duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1050, essential: false })
+  map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0, bearing: 0, duration, essential: false })
+}
+function focusChip() {
+  if (!map || !state.analysis) return
+  // С глобуса камера пролетела бы 12 зумов, и тайлы каждого проступали бы кусками: только через шторку.
+  if (state.globeView) return veiledMove(() => fitChip(0))
+  fitChip(reducedMotion() ? 0 : 1050)
 }
 function showGlobe() {
-  if (!map) return
+  if (!map || state.globeView) return
   state.tilted = false
-  map.setProjection({ type: 'globe' })
-  map.flyTo({ center: [13, 11], zoom: 1.8, pitch: 0,
-    duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1150, essential: false })
+  veiledMove(() => {
+    map.setProjection({ type: 'globe' })
+    map.jumpTo({ center: [13, 11], zoom: 1.8, pitch: 0, bearing: 0 })
+  }, { from: 'far', limit: 1500 })
 }
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
+/*
+ * Ждём только тайлы. Событие idle ждёт ещё расстановку и проявление подписей и
+ * все переходы карты — на глобусе это добавляло заметную паузу, а для «кадр
+ * без дыр» хватает загруженных тайлов. Потолок — чтобы медленная сеть не
+ * держала экран закрытым.
+ */
+async function tilesReady(limit) {
+  const deadline = performance.now() + limit
+  // Кадр после прыжка: MapLibre должен успеть запросить тайлы нового вида.
+  await wait(32)
+  while (!map.areTilesLoaded() && performance.now() < deadline) await wait(50)
+}
+function analysisFor(id) {
+  if (state.analysis?.chip.chip_id === id) return Promise.resolve()
+  return new Promise(resolve => {
+    const stop = watch(() => state.analysis?.chip.chip_id, value => { if (value === id) { stop(); resolve() } })
+  })
+}
+
+/*
+ * Большие переходы камеры — шторка, а не перелёт. Анимация через 10+ зумов
+ * всегда упирается в загрузку тайлов: MapLibre запрашивает их для каждого
+ * промежуточного масштаба на всю ширину экрана, и на лету видны пустые
+ * прямоугольники. Поэтому карта закрывается вуалью, под ней камера мгновенно
+ * встаёт на место, и вуаль уходит только после события idle — когда подложка
+ * и снимки загружены целиком. Движение даёт CSS-масштаб готового кадра.
+ *
+ * whenCovered — что дождаться под вуалью до прыжка (расчёт для новой сцены).
+ * from: 'near' — кадр «наезжает» (к снимку), 'far' — «отъезжает» (к глобусу).
+ */
+async function veiledMove(move, { whenCovered, from = 'near', limit = 3000, layersChange = false } = {}) {
+  if (!map || !ready) return
+  const token = ++flight
+  const quick = reducedMotion()
+  veiled.value = true
+  // Капля появляется, только если ожидание затянулось: на быстрой сети её не видно.
+  const loaderTimer = setTimeout(() => { if (token === flight) veilLoader.value = true }, 450)
+  const aborted = () => { if (token !== flight) { clearTimeout(loaderTimer); return true } return false }
+  await wait(quick ? 0 : 200)
+  if (aborted()) return
+  if (whenCovered) await whenCovered()
+  if (aborted()) return
+  map.stop()
+  move()
+  await tilesReady(limit)
+  if (aborted()) return
+  // Слои проявляются ещё под вуалью, чтобы кадр открылся уже целым. Ждать их
+  // есть смысл только при смене сцены: у глобуса снимки не меняются.
+  phase = null
+  syncMap()
+  await wait(quick || !layersChange ? 0 : 260)
+  if (aborted()) return
+  clearTimeout(loaderTimer)
+  veilLoader.value = false
+  veiled.value = false
+  if (!quick) {
+    const scale = from === 'far' ? 0.955 : 1.045
+    container.value?.animate(
+      [{ transform: `scale(${scale})`, filter: 'blur(3px)' }, { transform: 'scale(1)', filter: 'blur(0)' }],
+      { duration: 700, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    )
+  }
+}
+
+function flyToScene(id) {
+  const target = state.analysis?.scenes.find(scene => scene.chip_id === id)?.bbox
+  if (!map || !ready || !target) return
+  phase = 'out'
+  syncMap()
+  veiledMove(() => {
+    phase = 'in'
+    syncMap()
+    const [w, s, e, n] = target
+    map.setProjection({ type: 'mercator' })
+    map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0, bearing: 0, duration: 0 })
+  }, { whenCovered: () => analysisFor(id), layersChange: true })
+}
+
 function focusAsset(asset) {
-  map?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20, duration: 750, essential: false })
+  if (!map) return
+  const camera = { center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20 }
+  if (state.globeView) {
+    return veiledMove(() => { map.setProjection({ type: 'mercator' }); map.jumpTo({ ...camera, bearing: 0 }) })
+  }
+  map.flyTo({ ...camera, duration: 750, essential: false })
 }
 function toggleTilt() {
   if (state.globeView) return
@@ -286,6 +387,10 @@ onMounted(() => {
 onBeforeUnmount(() => { for (const entry of markers.values()) entry.marker.remove(); map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones], syncMap, { deep: true })
+// classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
+watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
+// Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
+watch(() => state.sceneId, id => flyToScene(id))
 watch(() => state.theme, () => { ready = false; loadedScene = ''; map?.setStyle(styleUrl(), { diff: false }) })
 watch(() => state.drawing, value => {
   if (!map) return
@@ -300,6 +405,9 @@ watch(() => state.drawing, value => {
 
 <template>
   <div ref="container" class="globe-map" aria-label="Карта Sentinel‑1 и объектов"></div>
+  <div class="map-veil" :class="{ on: veiled }" aria-hidden="true">
+    <Transition name="veil-loader"><MorphLoader v-if="veilLoader" :size="44" /></Transition>
+  </div>
   <Transition name="pop">
     <div v-if="state.drawing" class="panel capsule map-hint">
       <span class="pulse"></span>{{ dragging ? 'Отпустите, чтобы проанализировать область' : 'Протяните рамку по карте' }}
