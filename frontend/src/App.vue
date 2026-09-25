@@ -36,8 +36,14 @@ function finishDrawing() {
  * Заставка уходит, когда готовы и карта, и расчёт. Панели после неё
  * выезжают по очереди с лёгкой пружиной, а не появляются разом.
  */
-watch(() => [mapReady.value, state.analysis != null], async ([map, data]) => {
-  if (!map || !data || !splash.value) return
+/*
+ * Срабатывает ровно один раз. Раньше геттер возвращал новый массив на каждый
+ * ответ API, и въезд панелей перезапускался при смене страны и даже при
+ * движении слайдера бюджета: всё гасло до нуля и выезжало заново.
+ */
+const stopBoot = watch(() => mapReady.value && state.analysis != null, async ready => {
+  if (!ready || !splash.value) return
+  stopBoot()
   await nextTick()
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const timeline = gsap.timeline()
