@@ -8,12 +8,24 @@ import { date, km } from '../lib/format'
 
 const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
 
-const scenes = computed(() => (state.analysis?.scenes || []).map(scene => ({
-  value: scene.chip_id,
-  label: scene.event,
-  hint: `${scene.origin === 'live' ? 'Живой расчёт · ' : ''}${date(scene.observed_at)} · ${scene.chip_id} · вода ${km(scene.model_water_area_km2)}`,
-})))
-const current = computed(() => state.analysis?.scenes.find(item => item.chip_id === state.sceneId) || state.analysis?.chip)
+const scenes = computed(() => {
+  const rows = state.analysis?.scenes || []
+  const eventCounts = rows.reduce((counts, scene) => {
+    counts[scene.event] = (counts[scene.event] || 0) + 1
+    return counts
+  }, {})
+  return rows.map(scene => ({
+    value: scene.chip_id,
+    label: eventCounts[scene.event] > 1 ? `${scene.event} · ${scene.chip_id.split('_').pop()}` : scene.event,
+    hint: `${scene.origin === 'live' ? 'Живой расчёт · ' : ''}${date(scene.observed_at)} · ${scene.chip_id} · вода ${km(scene.model_water_area_km2)}`,
+  }))
+})
+const current = computed(() => {
+  if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
+    return { chip_id: 'live_pending', event: 'Выбранная область', observed_at: null }
+  }
+  return state.analysis?.scenes.find(item => item.chip_id === state.sceneId) || state.analysis?.chip
+})
 // Флаг страны снимка с бесплатного flagcdn.com (SVG без ключа). Код — по префиксу chip_id;
 // Меконг — снимок из Камбоджи.
 // Без сети или при сбое CDN флаг просто не показываем, название остаётся.
@@ -32,6 +44,7 @@ const scene = computed({
   set: id => { if (!chooseScene(id)) emit('focus-chip') },
 })
 const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandidates.length > 0)
+const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 </script>
 
 <template>
@@ -46,7 +59,7 @@ const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandida
             <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
               @error="failedFlags.add(flag)" />{{ current.event }}
           </h1>
-          <p class="scene-date"><span class="tabular">{{ date(current.observed_at) }}</span><span class="scene-source">Sentinel‑1</span></p>
+          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span class="scene-source">Sentinel‑1</span></p>
         </div>
       </Transition>
     </div>
@@ -58,7 +71,7 @@ const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandida
         <label v-else class="live-select-label">
           <span>Снимок</span>
           <select :value="state.liveItemId" aria-label="Дата снимка Sentinel-1" @change="loadLiveItem($event.target.value)">
-            <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
+            <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ utcTime(item.datetime) }} UTC · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
           </select>
         </label>
         <button class="live-demo-link" @click="chooseScene('Nigeria_812045')">Демо</button>

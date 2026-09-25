@@ -10,6 +10,7 @@ import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
 const region = computed(() => state.analysis?.region)
+const livePending = computed(() => ['searching', 'preparing', 'error'].includes(state.liveStatus))
 
 const LAYERS = [
   { value: 'model', label: 'Маска', color: 'var(--water)', hint: 'Вода по модели: вероятность выше порога калибровки' },
@@ -59,7 +60,7 @@ function toggleDrawing() {
     <header class="panel-head">
       <div class="panel-title">
         <h2>Где вода</h2>
-        <p>{{ state.region ? 'Выбранная область' : 'Весь снимок' }} · {{ km(region?.area_km2) }}</p>
+        <p>{{ livePending ? 'Выбранная область · ' + (state.liveStatus === 'error' ? 'нет результата' : 'загружаем снимок') : (state.region ? 'Выбранная область' : 'Весь снимок') + ' · ' + km(region?.area_km2) }}</p>
       </div>
       <button class="ghost-icon small" v-tip="'Свернуть, карта станет шире'" aria-label="Свернуть панель" @click="state.observeOpen = false"><ChevronLeft :size="17" /></button>
     </header>
@@ -144,8 +145,8 @@ function toggleDrawing() {
     </div>
 
     <footer class="panel-foot">
-      <span class="source" v-tip="isLive ? 'Снимок: Sentinel‑1 RTC. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34. Ручной метки для этой области нет' : 'Снимки и ручная метка: Sen1Floods11 v1.1. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34 с калибровкой Platt'">
-        <Info :size="14" />{{ isLive ? 'Sentinel‑1 RTC · VV/VH · U‑Net' : 'Sen1Floods11 · U‑Net' }}
+      <span class="source" v-tip="isLive || livePending ? 'Снимок: Sentinel‑1 RTC. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34. Ручной метки для этой области нет' : 'Снимки и ручная метка: Sen1Floods11 v1.1. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34 с калибровкой Platt'">
+        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV/VH · U‑Net' : 'Sen1Floods11 · U‑Net' }}
       </span>
     </footer>
   </MorphPanel>

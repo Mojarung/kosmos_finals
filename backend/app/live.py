@@ -209,7 +209,7 @@ def prepare(bounds: list[float], item_id: str) -> dict:
     area = validate_area(bounds)
     features = _features(bounds, item_id)
     feature = features[0]
-    cache_key = b"live-v2:" + ("|".join(item["id"] for item in features) + ":" +
+    cache_key = b"live-v3:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
     cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]

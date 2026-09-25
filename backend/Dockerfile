@@ -9,6 +9,7 @@ RUN uv pip install --python /app/backend/.venv/bin/python \
     'segmentation-models-pytorch==0.5.0' 'safetensors>=0.6,<1' 'scipy>=1.16,<2'
 COPY backend/app ./backend/app
 COPY data/demo ./data/demo
+COPY data/catalog ./data/catalog
 COPY ml/src/floodvalue ./ml/src/floodvalue
 COPY ml/artifacts/model ./ml/artifacts/model
 COPY ml/artifacts/evaluation/calibration.json ./ml/artifacts/evaluation/calibration.json
