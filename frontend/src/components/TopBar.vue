@@ -18,7 +18,11 @@ const current = computed(() => state.analysis?.scenes.find(item => item.chip_id 
 // Меконг — снимок из Камбоджи.
 // Без сети или при сбое CDN флаг просто не показываем, название остаётся.
 const failedFlags = reactive(new Set())
-const COUNTRY_CODES = { Nigeria: 'ng', Ghana: 'gh', Mekong: 'kh', Cambodia: 'kh', Bolivia: 'bo' }
+// Все страны каталога Sen1Floods11: любой официальный чип можно посчитать живьём.
+const COUNTRY_CODES = {
+  Bolivia: 'bo', Ghana: 'gh', India: 'in', Mekong: 'kh', Nigeria: 'ng', Pakistan: 'pk',
+  Paraguay: 'py', Somalia: 'so', Spain: 'es', 'Sri-Lanka': 'lk', USA: 'us',
+}
 const flag = computed(() => {
   const code = COUNTRY_CODES[current.value?.chip_id?.split('_')[0]]
   return code ? `https://flagcdn.com/${code}.svg` : null
