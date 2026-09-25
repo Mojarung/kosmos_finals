@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue'
-import { Box, Globe2, LocateFixed, Moon, Sun, Waves } from '@lucide/vue'
+import { computed, reactive } from 'vue'
+import { Box, Globe2, LocateFixed, Moon, Sun } from '@lucide/vue'
 import BubbleTabs from './BubbleTabs.vue'
 import { chooseScene, state } from '../store'
 import { toggleTheme } from '../lib/theme'
@@ -13,6 +13,16 @@ const scenes = computed(() => (state.analysis?.scenes || []).map(scene => ({
   label: scene.event,
   hint: `${date(scene.observed_at)} · ${scene.chip_id} · вода ${km(scene.model_water_area_km2)}`,
 })))
+const current = computed(() => state.analysis?.scenes.find(item => item.chip_id === state.sceneId) || state.analysis?.chip)
+// Флаг страны снимка с бесплатного flagcdn.com (SVG без ключа). Код — по префиксу chip_id;
+// Меконг — снимок из Камбоджи.
+// Без сети или при сбое CDN флаг просто не показываем, название остаётся.
+const failedFlags = reactive(new Set())
+const COUNTRY_CODES = { Nigeria: 'ng', Ghana: 'gh', Mekong: 'kh', Cambodia: 'kh', Bolivia: 'bo' }
+const flag = computed(() => {
+  const code = COUNTRY_CODES[current.value?.chip_id?.split('_')[0]]
+  return code ? `https://flagcdn.com/${code}.svg` : null
+})
 const scene = computed({
   get: () => state.sceneId,
   set: id => { if (!chooseScene(id)) emit('focus-chip') },
@@ -21,14 +31,19 @@ const scene = computed({
 
 <template>
   <header class="topbar">
-    <div class="panel capsule brand" data-enter
-      v-tip="'Оперативный атлас паводка: вода по Sentinel‑1, риск для объектов и заказ доснимки под бюджет'">
-      <span class="brand-mark"><Waves :size="17" :stroke-width="2.2" /></span>
-      <span class="brand-copy">
-        <strong>FloodValue</strong>
-        <small v-if="state.analysis">{{ state.analysis.chip.event }}, {{ date(state.analysis.chip.observed_at) }}</small>
-        <small v-else>Атлас паводка</small>
-      </span>
+    <!-- Заголовок сцены: страна крупно, дата снимка под ней. Меняется сразу по клику,
+         не дожидаясь расчёта, и прокручивается как табло. -->
+    <div v-if="current" class="panel scene-title" data-enter
+      v-tip="`Снимок ${current.chip_id}: радар Sentinel‑1, поляризации VV и VH`">
+      <Transition name="roll" mode="out-in">
+        <div :key="current.chip_id" class="scene-title-body">
+          <h1 class="scene-country">
+            <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
+              @error="failedFlags.add(flag)" />{{ current.event }}
+          </h1>
+          <p class="scene-date"><span class="tabular">{{ date(current.observed_at) }}</span><span class="scene-source">Sentinel‑1</span></p>
+        </div>
+      </Transition>
     </div>
 
     <div class="topbar-center">
