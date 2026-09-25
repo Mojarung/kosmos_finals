@@ -38,7 +38,16 @@ export function toggleTheme(event) {
   const x = rect.left + rect.width / 2
   const y = rect.top + rect.height / 2
   const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
-  const transition = document.startViewTransition(() => apply(next))
+  // Новый кадр в круге живой: без этого в нём доигрывали бы CSS-переходы цветов
+  // (заливка стекла, кнопки), и первые мгновения круг показывал бы старую тему.
+  const root = document.documentElement
+  root.classList.add('theme-switching')
+  const transition = document.startViewTransition(() => {
+    apply(next)
+    // Пересчёт стилей, пока переходы выключены: цвета встают сразу, а не после снятия класса.
+    void getComputedStyle(root).color
+  })
+  transition.finished.finally(() => root.classList.remove('theme-switching'))
   transition.ready.then(() => {
     document.documentElement.animate(
       { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },

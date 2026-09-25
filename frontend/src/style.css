@@ -624,8 +624,10 @@ html.map-moving .panel {
 
 /* Смена темы: цвета едут плавно только в момент переключения, карта своим движком. */
 html.theme-anim, html.theme-anim *:not(.maplibregl-map):not(.maplibregl-map *) {
-  transition: background-color 700ms var(--ease-standard), border-color 700ms var(--ease-standard), color 700ms var(--ease-standard), box-shadow 700ms var(--ease-standard) !important;
+  transition: background-color 700ms var(--ease-standard), border-color 700ms var(--ease-standard), color 700ms var(--ease-standard), box-shadow 700ms var(--ease-standard), --glass-fill 700ms var(--ease-standard) !important;
 }
+/* Смена темы кругом: анимацию даёт сам круг, переходы элементов внутри нового кадра выключены. */
+html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
 ::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 ::view-transition-old(root) { z-index: 0; }
 ::view-transition-new(root) { z-index: 1; }

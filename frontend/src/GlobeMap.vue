@@ -22,6 +22,8 @@ const veilLoader = ref(false)
 let map
 let ready = false
 let loadedScene = ''
+// Стиль перезагружен сменой темы: снимки кладём заново, а камеру не трогаем.
+let keepCamera = false
 let dragStart = null
 let dragEnd = null
 // Смена сцены под шторкой: 'out' — шторка закрывается, снимки ещё старые; 'in' — под ней встала новая сцена.
@@ -146,7 +148,8 @@ function syncMap() {
     const first = !loadedScene
     if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
-    if (!phase && (first || !state.region)) focusChip()
+    if (!phase && !keepCamera && (first || !state.region)) focusChip()
+    keepCamera = false
   }
   const hidden = phase !== null
   map.setLayoutProperty('radar-layer', 'visibility', state.showRadar ? 'visible' : 'none')
@@ -427,7 +430,7 @@ watch(() => state.basemap, () => scheduleWarmUp())
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
 watch(() => state.sceneId, id => flyToScene(id))
-watch(() => state.theme, () => { ready = false; loadedScene = ''; map?.setStyle(styleUrl(), { diff: false }) })
+watch(() => state.theme, () => { ready = false; loadedScene = ''; keepCamera = true; map?.setStyle(styleUrl(), { diff: false }) })
 watch(() => state.drawing, value => {
   if (!map) return
   if (value) { map.dragPan.disable(); map.touchZoomRotate.disable(); map.getCanvas().style.cursor = 'crosshair' }
