@@ -1,4 +1,4 @@
-"""Scenario procurement math, independent of the future ML pipeline."""
+"""Procurement math for frozen model outputs and a disclosed scenario tariff."""
 
 from __future__ import annotations
 
@@ -63,7 +63,9 @@ def candidates(assets: list[dict], chip_bounds: list[float], broad_bounds: list[
             "resolution_m": 1, "sensor_type": "optical", "delivery_hours": 6,
             "data_role": "event_observation", "acquisition_type": "new",
             "processing_level": "L2", "usage_type": "internal", "guaranteed_purchase": True,
-            "base_rate_status": "scenario",
+            "base_rate_status": "scenario", "base_rate_source": "case_materials_control_example",
+            "base_rate_rub_km2": float(BASE_RATE), "observation_at": None,
+            "available_at": None, "legal_edition": "PP_RF_840_2025-08-27",
         })
     broad_bounds = broad_bounds or chip_bounds
     zones.append({
@@ -73,7 +75,9 @@ def candidates(assets: list[dict], chip_bounds: list[float], broad_bounds: list[
         "resolution_m": 1, "sensor_type": "optical", "delivery_hours": 6,
         "data_role": "event_observation", "acquisition_type": "new",
         "processing_level": "L2", "usage_type": "internal", "guaranteed_purchase": True,
-        "base_rate_status": "scenario",
+        "base_rate_status": "scenario", "base_rate_source": "case_materials_control_example",
+        "base_rate_rub_km2": float(BASE_RATE), "observation_at": None,
+        "available_at": None, "legal_edition": "PP_RF_840_2025-08-27",
     })
     return zones
 
@@ -94,6 +98,7 @@ def quote(zones: list[dict]) -> dict:
         "discount_coef": float(discount), "group_area_km2": float(group_area),
         "base_rate_rub_km2": float(BASE_RATE), "base_rate_status": "scenario",
         "processing_coef": 1.2, "usage_coef": 1.0, "freshness_coef": 1.8,
+        "formula": "B*K*O*P*T*R", "legal_edition": "PP_RF_840_2025-08-27",
     } for zone in zones]
     total = sum(Decimal(str(line["cost_rub"])) for line in lines)
     return {"total_rub": float(total), "group_area_km2": float(group_area),
@@ -103,13 +108,15 @@ def quote(zones: list[dict]) -> dict:
 def enrich_assets(assets: list[dict]) -> list[dict]:
     result = []
     for asset in assets:
-        p = asset["scenario_probability"]
+        p = asset["p_flood"]
+        uncertainty = asset["uncertainty"]
         result.append({
-            **asset, "expected_loss_rub": round(p * asset["value_rub"] * asset["vulnerability"], 2),
-            "attention_score": round(4 * p * (1 - p), 3),
-            "probability_status": "scenario",
+            **asset,
+            "expected_loss_rub": round(p * asset["value_rub"] * asset["vulnerability"], 2) if p is not None else None,
+            "attention_score": round(min(1, uncertainty / 0.15), 3) if uncertainty is not None else None,
+            "probability_status": "frozen_ensemble",
         })
-    return sorted(result, key=lambda asset: (-asset["expected_loss_rub"], asset["id"]))
+    return sorted(result, key=lambda asset: (-(asset["expected_loss_rub"] or 0), asset["id"]))
 
 
 def covered_assets(zones: list[dict], assets: list[dict]) -> list[dict]:
@@ -129,8 +136,8 @@ def plan(assets: list[dict], zones: list[dict], budget_rub: float, priority: str
             covered = covered_assets(selected, assets)
             if must_cover and not any(asset["id"] == must_cover for asset in covered):
                 continue
-            utility = sum(asset["expected_loss_rub"] *
-                          (asset["attention_score"] if priority == "information" else 1)
+            utility = sum((asset["expected_loss_rub"] or 0) *
+                          (0.25 + 0.75 * (asset["attention_score"] or 0) if priority == "information" else 1)
                           for asset in covered)
             score = (utility, -price["total_rub"])
             if best is None or score > best[:2]:
@@ -143,5 +150,5 @@ def plan(assets: list[dict], zones: list[dict], budget_rub: float, priority: str
     covered = covered_assets(selected, assets)
     return {"zone_ids": [zone["id"] for zone in selected], "quote": price,
             "covered_asset_ids": [asset["id"] for asset in covered],
-            "covered_expected_loss_rub": round(sum(a["expected_loss_rub"] for a in covered), 2),
+            "covered_expected_loss_rub": round(sum(a["expected_loss_rub"] or 0 for a in covered), 2),
             "feasible": True, "reason": None}

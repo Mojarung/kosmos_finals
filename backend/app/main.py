@@ -1,22 +1,15 @@
+"""FloodValue API: frozen model evidence, regional analysis, and decision export."""
+
 from __future__ import annotations
 
-import csv
-import io
-import json
-import zipfile
-from pathlib import Path
-
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 
 from .analysis import analyze
-from .catalog import DATA_DIR, metadata
-from .planning import as_polygon
+from .catalog import DATA_DIR, default_scene_id, known_scene_ids, metadata, scene_catalog
+from .exporter import package
 
-
-app = FastAPI(title="FloodValue API", version="0.1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
+app = FastAPI(title="FloodValue API", version="0.2.0")
 
 
 def parse_bounds(bbox: str | None) -> list[float] | None:
@@ -34,71 +27,60 @@ def parse_bounds(bbox: str | None) -> list[float] | None:
 
 
 def response(bbox: str | None, budget: float, priority: str, deadline: int,
-             must_cover: str | None) -> dict:
-    bounds = parse_bounds(bbox)
+             must_cover: str | None, scene_id: str | None) -> dict:
     if priority not in {"risk", "information"}:
         raise HTTPException(422, "priority must be risk or information")
-    if must_cover and must_cover not in {asset["id"] for asset in metadata()["assets"]}:
+    scene_id = scene_id or default_scene_id()
+    if scene_id not in known_scene_ids():
+        raise HTTPException(404, "Unknown scene")
+    if must_cover and must_cover not in {asset["id"] for asset in metadata(scene_id)["assets"]}:
         raise HTTPException(422, "Unknown asset")
-    return analyze(bounds, budget, priority, deadline, must_cover)
+    return analyze(parse_bounds(bbox), budget, priority, deadline, must_cover, scene_id)
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "chip_id": metadata()["chip_id"]}
+    return {"status": "ok", "default_chip_id": default_scene_id(),
+            "scenes": len(known_scene_ids()), "model": "frozen_ensemble"}
+
+
+@app.get("/api/scenes")
+def scenes() -> dict:
+    return scene_catalog()
 
 
 @app.get("/api/analysis")
-def get_analysis(bbox: str | None = None,
-                 budget: float = Query(6500, ge=0, le=1000000),
-                 priority: str = "risk",
-                 deadline: int = Query(8, ge=1, le=48),
-                 must_cover: str | None = None) -> dict:
-    return response(bbox, budget, priority, deadline, must_cover)
+def get_analysis(
+    bbox: str | None = None,
+    budget: float = Query(6500, ge=0, le=1000000),
+    priority: str = "risk",
+    deadline: int = Query(8, ge=1, le=48),
+    must_cover: str | None = None,
+    scene_id: str | None = None,
+) -> dict:
+    return response(bbox, budget, priority, deadline, must_cover, scene_id)
 
 
-@app.get("/api/demo/{asset_name}")
-def demo_asset(asset_name: str) -> FileResponse:
-    if asset_name not in {"water.png", "radar.png"}:
+@app.get("/api/demo/{scene_id}/{asset_name}")
+def demo_asset(scene_id: str, asset_name: str) -> FileResponse:
+    if scene_id not in known_scene_ids() or asset_name not in {
+        "radar.png", "model.png", "baseline.png", "reference.png",
+        "probability.png", "uncertainty.png",
+    }:
         raise HTTPException(404)
-    return FileResponse(DATA_DIR / asset_name, media_type="image/png")
+    return FileResponse(DATA_DIR / scene_id / asset_name, media_type="image/png")
 
 
 @app.get("/api/export")
-def export_decision(bbox: str | None = None,
-                    budget: float = Query(6500, ge=0, le=1000000),
-                    priority: str = "risk",
-                    deadline: int = Query(8, ge=1, le=48),
-                    must_cover: str | None = None) -> StreamingResponse:
-    result = response(bbox, budget, priority, deadline, must_cover)
-    output = io.BytesIO()
-    with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("analysis.json", json.dumps(result, ensure_ascii=False, indent=2))
-        archive.writestr("source_manifest.json", json.dumps(metadata()["source_manifest"], ensure_ascii=False, indent=2))
-        archive.writestr("selected_region.geojson", json.dumps({"type": "FeatureCollection", "features": [
-            {"type": "Feature", "geometry": as_polygon(result["region"]["bounds"]),
-             "properties": {"area_km2": result["region"]["area_km2"],
-                            "data_status": result["region"]["data_status"]}}
-        ]}, ensure_ascii=False))
-        archive.writestr("README.txt", "FloodValue — сценарный экспорт интерфейса.\n"
-                         "Ручная маска воды не является прогнозом. Вероятности объектов сценарные.\n"
-                         "Этот архив не является итоговым комплектом ML-результатов кейса.\n")
-        assets = io.StringIO()
-        writer = csv.writer(assets)
-        writer.writerow(["asset_id", "asset_class", "longitude", "latitude", "scenario_probability",
-                         "asset_value_rub", "vulnerability_coef", "scenario_expected_loss_rub"])
-        for asset in result["assets"]:
-            writer.writerow([asset["id"], asset["class"], asset["longitude"], asset["latitude"],
-                             asset["scenario_probability"], asset["value_rub"],
-                             asset["vulnerability"], asset["expected_loss_rub"]])
-        archive.writestr("assets_scenario.csv", assets.getvalue())
-        archive.writestr("candidate_zones.geojson", json.dumps({
-            "type": "FeatureCollection", "features": [
-                {"type": "Feature", "geometry": zone["geometry"],
-                 "properties": {key: value for key, value in zone.items() if key not in {"geometry", "bounds"}}}
-                for zone in result["zones"]],
-        }, ensure_ascii=False))
-    output.seek(0)
-    return StreamingResponse(output, media_type="application/zip", headers={
-        "Content-Disposition": 'attachment; filename="floodvalue-decision-demo.zip"'
+def export_decision(
+    bbox: str | None = None,
+    budget: float = Query(6500, ge=0, le=1000000),
+    priority: str = "risk",
+    deadline: int = Query(8, ge=1, le=48),
+    must_cover: str | None = None,
+    scene_id: str | None = None,
+) -> StreamingResponse:
+    result = response(bbox, budget, priority, deadline, must_cover, scene_id)
+    return StreamingResponse(package(result), media_type="application/zip", headers={
+        "Content-Disposition": f'attachment; filename="floodvalue-{result["chip"]["chip_id"]}.zip"'
     })

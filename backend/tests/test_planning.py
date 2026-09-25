@@ -1,3 +1,4 @@
+import csv
 import io
 import json
 import zipfile
@@ -27,6 +28,8 @@ def test_zones_and_budget_plan_are_consistent():
     assert result["strategies"]["C"]["data_cost_rub"] <= 6500
     assert result["strategies"]["C"]["covered_expected_loss_rub"] == round(sum(a["expected_loss_rub"] for a in covered), 2)
     assert result["strategies"]["B"]["data_cost_rub"] > result["strategies"]["C"]["data_cost_rub"]
+    assert all(abs(a["expected_loss_rub"] - a["p_flood"] * a["value_rub"] * a["vulnerability"]) < 0.02
+               for a in result["assets"])
 
 
 def test_arbitrary_region_without_demo_data_is_not_misreported():
@@ -34,24 +37,43 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
     response = client.get("/api/analysis", params={"bbox": "30,50,31,51"})
     assert response.status_code == 200
     result = response.json()
-    assert result["region"]["data_status"] == "outside_demo_coverage"
-    assert result["region"]["water_area_km2"] is None
+    assert result["region"]["data_status"] == "outside_coverage"
+    assert result["region"]["model_water_area_km2"] is None
     assert result["assets"] == []
     assert result["strategies"]["C"]["data_cost_rub"] == 0
 
-    inside = client.get("/api/analysis", params={"bbox": "-1.467,9.304,-1.439,9.326"}).json()
+    inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
     assert abs(broad["area_km2"] - inside["region"]["area_km2"]) < 0.001
 
 
-def test_manual_label_metrics_and_export_status():
+def test_frozen_model_metrics_and_case_export():
     client = TestClient(app)
     result = client.get("/api/analysis").json()
-    assert result["chip"]["water_pixels"] == 14933
-    assert result["region"]["water_area_km2"] == 1.464
+    assert result["chip"]["chip_id"] == "Nigeria_812045"
+    assert result["region"]["model_water_area_km2"] == 14.796
+    assert result["region"]["model_quality"]["iou"] > result["region"]["baseline_quality"]["iou"]
+    assert result["quality"]["parts"]["test_core"]["model"]["iou"] > result["quality"]["parts"]["test_core"]["baseline"]["iou"]
+    assert result["quality"]["parts"]["test_core"]["chips"] == 55
     exported = client.get("/api/export")
     assert exported.status_code == 200
     assert exported.headers["content-type"] == "application/zip"
     with zipfile.ZipFile(io.BytesIO(exported.content)) as archive:
         region = json.loads(archive.read("selected_region.geojson"))
+        names = set(archive.namelist())
+        assets = archive.read("asset_loss.csv").decode()
     assert region["features"][0]["properties"]["data_status"] == "covered"
+    assert {"flood_probability.tif", "flood_mask.tif", "baseline_mask.tif",
+            "assets.geojson", "asset_loss.csv", "procurement_plan.csv",
+            "strategy_comparison.csv", "run_metadata.json"} <= names
+    assert len(assets.splitlines()) == 11
+
+    clipped = client.get("/api/export", params={"bbox": "5.801,9.067,5.83,9.096"})
+    with zipfile.ZipFile(io.BytesIO(clipped.content)) as archive:
+        rows = list(csv.DictReader(io.StringIO(archive.read("asset_loss.csv").decode())))
+    assert len(rows) == 10
+    assert any(row["in_region"] == "false" for row in rows)
+
+    impossible = client.get("/api/analysis", params={"budget": 2000, "must_cover": "A10"}).json()
+    assert impossible["strategies"]["C"]["budget_feasible"] is False
+    assert impossible["metrics"]["data_savings_vs_broad_rub"] is None
