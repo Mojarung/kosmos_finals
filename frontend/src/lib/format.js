@@ -19,6 +19,11 @@ export function plural(count, [one, few, many]) {
   const form = pluralRules.select(count)
   return count + ' ' + (form === 'one' ? one : form === 'few' ? few : many)
 }
+/** «сент. 2018» */
+export function monthYear(value) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' }).replace(/\s*г\.$/, '')
+}
 export function date(value) {
   if (!value) return '—'
   return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*г\.$/, '')
