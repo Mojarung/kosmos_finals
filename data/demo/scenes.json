@@ -13,7 +13,10 @@
       ],
       "model_water_area_km2": 14.796,
       "reference_water_area_km2": 11.733,
-      "model_iou": 0.9211
+      "model_iou": 0.9211,
+      "split_part": "test_core",
+      "metrics_independent": true,
+      "origin": "demo"
     },
     {
       "chip_id": "Ghana_313799",
@@ -27,7 +30,10 @@
       ],
       "model_water_area_km2": 0.359,
       "reference_water_area_km2": 1.464,
-      "model_iou": 0.2245
+      "model_iou": 0.2245,
+      "split_part": "test_core",
+      "metrics_independent": true,
+      "origin": "demo"
     },
     {
       "chip_id": "Mekong_333434",
@@ -41,7 +47,10 @@
       ],
       "model_water_area_km2": 0.41,
       "reference_water_area_km2": 0.318,
-      "model_iou": 0.2661
+      "model_iou": 0.2661,
+      "split_part": "test_core",
+      "metrics_independent": true,
+      "origin": "demo"
     }
   ]
 }

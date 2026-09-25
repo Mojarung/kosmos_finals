@@ -10,6 +10,7 @@ import zipfile
 
 from .catalog import DATA_DIR, metadata
 from .planning import as_polygon, enrich_assets, plan
+from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_sensitivity
 
 
@@ -60,11 +61,12 @@ def package(result: dict) -> io.BytesIO:
             [[asset["id"], scene_id, asset["class"], asset["value_rub"], asset["vulnerability"],
               asset["longitude"], asset["latitude"]] for asset in info["assets"]]))
         archive.writestr("asset_loss.csv", _csv(
-            ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status"],
+            ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status",
+             "p_window3"],
             [[asset["id"], scene_id, asset["p_flood"], asset["expected_loss_rub"],
               asset["uncertainty"], rank if asset["p_flood"] is not None else "",
               str(asset["id"] in selected_ids).lower(),
-              "ok" if asset["p_flood"] is not None else "no_data"]
+              "ok" if asset["p_flood"] is not None else "no_data", asset.get("p_window3")]
              for rank, asset in enumerate(assets, 1)]))
         sensitivity_rows = []
         for row in asset_sensitivity(assets):
@@ -157,10 +159,10 @@ def package(result: dict) -> io.BytesIO:
             "chip_id": scene_id, "event_id": info["event"],
             "s1_source_files": [item["name"] for item in info["source_manifest"] if "S1Hand" in item["name"]],
             "portfolio_seed": info["portfolio_seed"],
-            "portfolio_rule": "one of each case asset type; seeded coordinates independent of p and label",
+            "portfolio_rule": info.get("portfolio_rule", "one of each case asset type; seeded coordinates independent of p and label"),
             "model_threshold": info["model_threshold"],
             "baseline_threshold_db": info["baseline_threshold_db"],
-            "probability_rule": "mean of valid 3x3 flood_probability pixels around asset point",
+            "probability_rule": info.get("probability_rule", PROBABILITY_RULE),
             "model": "5 member S1-only U-Net ensemble, Platt calibrated on validation",
             "model_weights": "ml/artifacts/model/model_card.json",
             "baseline": "VH threshold -23.6 dB fixed on validation",
