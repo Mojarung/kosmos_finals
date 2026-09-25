@@ -1,0 +1,15 @@
+{
+  "name": "unet_r34_vvvh_scratch",
+  "channel_set": "vv_vh",
+  "encoder": "resnet34",
+  "encoder_weights": null,
+  "epochs": 60,
+  "batch_size": 16,
+  "crop": 256,
+  "crops_per_chip": 4,
+  "lr": 0.0005,
+  "weight_decay": 0.0001,
+  "dice_weight": 0.5,
+  "seed": 0,
+  "eval_every": 2
+}

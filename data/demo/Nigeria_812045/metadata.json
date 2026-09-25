@@ -1,0 +1,190 @@
+{
+  "chip_id": "Nigeria_812045",
+  "event": "Нигерия",
+  "observed_at": "2018-09-21",
+  "bbox": [
+    5.795211560911857,
+    9.060767281743141,
+    5.841205303458776,
+    9.10676102429006
+  ],
+  "width": 512,
+  "height": 512,
+  "area_km2": 25.721,
+  "portfolio_seed": 2026,
+  "valid_pixels": 236584,
+  "water_pixels": 119583,
+  "water_area_km2": 11.733,
+  "model_water_pixels": 150796,
+  "model_water_area_km2": 14.796,
+  "baseline_water_pixels": 114672,
+  "baseline_water_area_km2": 11.251,
+  "model_water_labeled_pixels": 127876,
+  "baseline_water_labeled_pixels": 96793,
+  "model_threshold": 0.41,
+  "baseline_threshold_db": -23.6,
+  "model_quality": {
+    "tp": 118648,
+    "fp": 9228,
+    "fn": 935,
+    "tn": 107773,
+    "iou": 0.9211,
+    "f1": 0.9589,
+    "precision": 0.9278,
+    "recall": 0.9922,
+    "valid_pixels": 236584
+  },
+  "baseline_quality": {
+    "tp": 93474,
+    "fp": 3319,
+    "fn": 26109,
+    "tn": 113682,
+    "iou": 0.7606,
+    "f1": 0.864,
+    "precision": 0.9657,
+    "recall": 0.7817,
+    "valid_pixels": 236584
+  },
+  "assets": [
+    {
+      "id": "A01",
+      "class": "warehouse",
+      "name": "Склад",
+      "value_rub": 10000000,
+      "vulnerability": 0.25,
+      "longitude": 5.817983853364287,
+      "latitude": 9.1055482986565,
+      "p_flood": 0.45781,
+      "uncertainty": 0.12907,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A02",
+      "class": "substation",
+      "name": "Подстанция",
+      "value_rub": 20000000,
+      "vulnerability": 0.4,
+      "longitude": 5.8097193527503865,
+      "latitude": 9.090456601883291,
+      "p_flood": 0.01728,
+      "uncertainty": 0.0192,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A03",
+      "class": "road_unit",
+      "name": "Участок дороги",
+      "value_rub": 5000000,
+      "vulnerability": 0.3,
+      "longitude": 5.814031266114161,
+      "latitude": 9.098541439440366,
+      "p_flood": 0.148,
+      "uncertainty": 0.27801,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A04",
+      "class": "facility",
+      "name": "Производственный объект",
+      "value_rub": 8000000,
+      "vulnerability": 0.2,
+      "longitude": 5.836848474330797,
+      "latitude": 9.077431030263558,
+      "p_flood": 0.96309,
+      "uncertainty": 0.00213,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A05",
+      "class": "pumping_station",
+      "name": "Насосная станция",
+      "value_rub": 12000000,
+      "vulnerability": 0.35,
+      "longitude": 5.8030718196479025,
+      "latitude": 9.067639393666655,
+      "p_flood": 0.01043,
+      "uncertainty": 0.00114,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A06",
+      "class": "clinic",
+      "name": "Клиника",
+      "value_rub": 30000000,
+      "vulnerability": 0.15,
+      "longitude": 5.827775489961189,
+      "latitude": 9.09000744424123,
+      "p_flood": 0.32899,
+      "uncertainty": 0.16816,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A07",
+      "class": "school",
+      "name": "Школа",
+      "value_rub": 18000000,
+      "vulnerability": 0.2,
+      "longitude": 5.831099256512432,
+      "latitude": 9.103122847389375,
+      "p_flood": 0.97892,
+      "uncertainty": 0.00195,
+      "baseline_water_at_point": true
+    },
+    {
+      "id": "A08",
+      "class": "workshop",
+      "name": "Мастерская",
+      "value_rub": 6000000,
+      "vulnerability": 0.45,
+      "longitude": 5.827865321489601,
+      "latitude": 9.08533620476381,
+      "p_flood": 0.91803,
+      "uncertainty": 0.01775,
+      "baseline_water_at_point": true
+    },
+    {
+      "id": "A09",
+      "class": "telecom_node",
+      "name": "Узел связи",
+      "value_rub": 4000000,
+      "vulnerability": 0.5,
+      "longitude": 5.8079227221821474,
+      "latitude": 9.089737949655996,
+      "p_flood": 0.00293,
+      "uncertainty": 0.00032,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A10",
+      "class": "water_intake",
+      "name": "Водозабор",
+      "value_rub": 16000000,
+      "vulnerability": 0.3,
+      "longitude": 5.828224647603249,
+      "latitude": 9.077251367206735,
+      "p_flood": 0.98061,
+      "uncertainty": 0.00365,
+      "baseline_water_at_point": true
+    }
+  ],
+  "source_manifest": [
+    {
+      "name": "Nigeria_812045_S1Hand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/S1Hand/Nigeria_812045_S1Hand.tif",
+      "sha256": "60721c48b1bc862abdb9e6b0ee93d67590fb058f4581e43f615569b22beff4e0"
+    },
+    {
+      "name": "Nigeria_812045_LabelHand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/LabelHand/Nigeria_812045_LabelHand.tif",
+      "sha256": "77386f8586a6a825430b11d74619fd39391f2c5d3fc2fc93d829bc15f4933308"
+    }
+  ],
+  "inference_manifest": {
+    "flood_probability.tif": "ff2797b5d7b4d0e9a662b6572f157fe635be353badb0b262c5533bbdb97bdc0b",
+    "flood_mask.tif": "132cadfe3c740882ed90efea8968eb4ca229363b203023802877e2c19648d634",
+    "flood_uncertainty.tif": "bbfe54297025ccdeef0291138abefb14982f2aaccf4680514a599e863886dde8",
+    "baseline_mask.tif": "5d51af9ce28b11de93a011621085d75fac345f218de0cc12d4647d116451f801"
+  },
+  "probability_status": "frozen_ensemble_calibrated_on_validation",
+  "reference_status": "manual_label_for_diagnostics_only"
+}

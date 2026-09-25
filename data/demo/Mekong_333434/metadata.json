@@ -1,0 +1,190 @@
+{
+  "chip_id": "Mekong_333434",
+  "event": "Меконг · Камбоджа",
+  "observed_at": "2018-08-05",
+  "bbox": [
+    105.8775953430087,
+    13.246197853512816,
+    105.92358908555562,
+    13.292191596059736
+  ],
+  "width": 512,
+  "height": 512,
+  "area_km2": 25.362,
+  "portfolio_seed": 2028,
+  "valid_pixels": 203133,
+  "water_pixels": 3284,
+  "water_area_km2": 0.318,
+  "model_water_pixels": 4237,
+  "model_water_area_km2": 0.41,
+  "baseline_water_pixels": 2279,
+  "baseline_water_area_km2": 0.22,
+  "model_water_labeled_pixels": 2750,
+  "baseline_water_labeled_pixels": 1380,
+  "model_threshold": 0.41,
+  "baseline_threshold_db": -23.6,
+  "model_quality": {
+    "tp": 1268,
+    "fp": 1482,
+    "fn": 2016,
+    "tn": 198367,
+    "iou": 0.2661,
+    "f1": 0.4203,
+    "precision": 0.4611,
+    "recall": 0.3861,
+    "valid_pixels": 203133
+  },
+  "baseline_quality": {
+    "tp": 409,
+    "fp": 971,
+    "fn": 2875,
+    "tn": 198878,
+    "iou": 0.0961,
+    "f1": 0.1754,
+    "precision": 0.2964,
+    "recall": 0.1245,
+    "valid_pixels": 203133
+  },
+  "assets": [
+    {
+      "id": "A01",
+      "class": "warehouse",
+      "name": "Склад",
+      "value_rub": 10000000,
+      "vulnerability": 0.25,
+      "longitude": 105.88949802052328,
+      "latitude": 13.281366896886096,
+      "p_flood": 0.00602,
+      "uncertainty": 0.00078,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A02",
+      "class": "substation",
+      "name": "Подстанция",
+      "value_rub": 20000000,
+      "vulnerability": 0.4,
+      "longitude": 105.89982864629066,
+      "latitude": 13.266185368584475,
+      "p_flood": 0.00925,
+      "uncertainty": 0.00058,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A03",
+      "class": "road_unit",
+      "name": "Участок дороги",
+      "value_rub": 5000000,
+      "vulnerability": 0.3,
+      "longitude": 105.87808941641497,
+      "latitude": 13.274360037669963,
+      "p_flood": 0.01178,
+      "uncertainty": 0.00648,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A04",
+      "class": "facility",
+      "name": "Производственный объект",
+      "value_rub": 8000000,
+      "vulnerability": 0.2,
+      "longitude": 105.90414055965442,
+      "latitude": 13.276785488937087,
+      "p_flood": 0.00337,
+      "uncertainty": 0.00038,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A05",
+      "class": "pumping_station",
+      "name": "Насосная станция",
+      "value_rub": 12000000,
+      "vulnerability": 0.35,
+      "longitude": 105.91213556568309,
+      "latitude": 13.275797342124555,
+      "p_flood": 0.06018,
+      "uncertainty": 0.01789,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A06",
+      "class": "clinic",
+      "name": "Клиника",
+      "value_rub": 30000000,
+      "vulnerability": 0.15,
+      "longitude": 105.8903963358074,
+      "latitude": 13.246871589975905,
+      "p_flood": 0.00748,
+      "uncertainty": 0.00253,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A07",
+      "class": "school",
+      "name": "Школа",
+      "value_rub": 18000000,
+      "vulnerability": 0.2,
+      "longitude": 105.90090662463159,
+      "latitude": 13.258280194084223,
+      "p_flood": 0.12139,
+      "uncertainty": 0.03124,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A08",
+      "class": "workshop",
+      "name": "Мастерская",
+      "value_rub": 6000000,
+      "vulnerability": 0.45,
+      "longitude": 105.91761528891622,
+      "latitude": 13.24794956831685,
+      "p_flood": 0.12648,
+      "uncertainty": 0.05743,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A09",
+      "class": "telecom_node",
+      "name": "Узел связи",
+      "value_rub": 4000000,
+      "vulnerability": 0.5,
+      "longitude": 105.88815054759709,
+      "latitude": 13.253429291549978,
+      "p_flood": 0.00973,
+      "uncertainty": 0.0013,
+      "baseline_water_at_point": false
+    },
+    {
+      "id": "A10",
+      "class": "water_intake",
+      "name": "Водозабор",
+      "value_rub": 16000000,
+      "vulnerability": 0.3,
+      "longitude": 105.89515740681323,
+      "latitude": 13.264927727186707,
+      "p_flood": 0.00566,
+      "uncertainty": 0.00082,
+      "baseline_water_at_point": false
+    }
+  ],
+  "source_manifest": [
+    {
+      "name": "Mekong_333434_S1Hand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/S1Hand/Mekong_333434_S1Hand.tif",
+      "sha256": "abed88cdb40aa823a3255ea53fdee7afd8ccabdb3e2045734b89c4756bf3a325"
+    },
+    {
+      "name": "Mekong_333434_LabelHand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/LabelHand/Mekong_333434_LabelHand.tif",
+      "sha256": "1719be41e6a0ac8b224c7d460d7ca1605433b42774d886966929f0c1f02b19c4"
+    }
+  ],
+  "inference_manifest": {
+    "flood_probability.tif": "4f2c45240d026c67f059d5f0e84a7c4f5a5313d4c4283f864c4e4842e7308ba4",
+    "flood_mask.tif": "42a6d3b6f0a1fe0da452055302857a05a38c2ceddf777149e8be2e746870c94f",
+    "flood_uncertainty.tif": "93207fc6e5c7b03db18594d3351c6912b21b0de4cdb524109dc435eb3895204c",
+    "baseline_mask.tif": "74bfde4d5c28308384befa22661b824f871849859d6dbb5ded61fdbacb162ce2"
+  },
+  "probability_status": "frozen_ensemble_calibrated_on_validation",
+  "reference_status": "manual_label_for_diagnostics_only"
+}

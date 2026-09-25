@@ -1,0 +1,47 @@
+{
+  "default_chip_id": "Nigeria_812045",
+  "scenes": [
+    {
+      "chip_id": "Nigeria_812045",
+      "event": "Нигерия",
+      "observed_at": "2018-09-21",
+      "bbox": [
+        5.795211560911857,
+        9.060767281743141,
+        5.841205303458776,
+        9.10676102429006
+      ],
+      "model_water_area_km2": 14.796,
+      "reference_water_area_km2": 11.733,
+      "model_iou": 0.9211
+    },
+    {
+      "chip_id": "Ghana_313799",
+      "event": "Гана",
+      "observed_at": "2018-09-18",
+      "bbox": [
+        -1.471799761501424,
+        9.290735994477739,
+        -1.4258060189545045,
+        9.336729737024658
+      ],
+      "model_water_area_km2": 0.359,
+      "reference_water_area_km2": 1.464,
+      "model_iou": 0.2245
+    },
+    {
+      "chip_id": "Mekong_333434",
+      "event": "Меконг · Камбоджа",
+      "observed_at": "2018-08-05",
+      "bbox": [
+        105.8775953430087,
+        13.246197853512816,
+        105.92358908555562,
+        13.292191596059736
+      ],
+      "model_water_area_km2": 0.41,
+      "reference_water_area_km2": 0.318,
+      "model_iou": 0.2661
+    }
+  ]
+}
