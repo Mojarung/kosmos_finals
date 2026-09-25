@@ -26,6 +26,12 @@
   --warn: #a8581a;
   --shadow-panel: 0 16px 38px -22px rgb(19 50 60 / 0.36), 0 2px 6px -3px rgb(19 50 60 / 0.14);
   --shadow-float: 0 10px 24px -14px rgb(19 50 60 / 0.34);
+  /* Стекло: лёгкий сине-зелёный оттенок акцента, а не нейтральный белый. */
+  --glass-tint: color-mix(in srgb, color-mix(in srgb, var(--primary) 9%, var(--surface-1)) 86%, transparent);
+  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 7%, var(--surface-1)) 94%, transparent);
+  --glass-sheen: linear-gradient(135deg, rgb(255 255 255 / 0.5) 0%, rgb(255 255 255 / 0.08) 38%, rgb(255 255 255 / 0) 60%);
+  --glass-border: rgb(255 255 255 / 0.55);
+  --glass-edge: inset 0 1px 0 rgb(255 255 255 / 0.85), inset 0 -1px 0 rgb(19 50 60 / 0.06);
   --radius-panel: 28px;
   --ease-spring: linear(0, 0.009, 0.035 2.1%, 0.141, 0.281 6.7%, 0.723 12.9%, 0.938 16.7%, 1.017, 1.077, 1.121, 1.149 24.3%, 1.159, 1.163, 1.161, 1.154 29.9%, 1.129 32.8%, 1.051 39.6%, 1.017 43.1%, 0.991, 0.977 51%, 0.974 53.8%, 0.975 57.1%, 0.997 69.8%, 1.003 76.9%, 1.004 83.8%, 1);
   --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
@@ -53,6 +59,11 @@
   /* В тёмной теме тень работает как отделяющее свечение, в светлой — как подъём. */
   --shadow-panel: 0 18px 50px -24px rgb(0 0 0 / 0.7);
   --shadow-float: 0 12px 30px -14px rgb(0 0 0 / 0.6);
+  --glass-tint: color-mix(in srgb, color-mix(in srgb, var(--primary) 10%, var(--surface-1)) 88%, transparent);
+  --glass-solid: color-mix(in srgb, color-mix(in srgb, var(--primary) 8%, var(--surface-1)) 95%, transparent);
+  --glass-sheen: linear-gradient(135deg, rgb(255 255 255 / 0.09) 0%, rgb(255 255 255 / 0.02) 40%, rgb(255 255 255 / 0) 60%);
+  --glass-border: rgb(255 255 255 / 0.09);
+  --glass-edge: inset 0 1px 0 rgb(255 255 255 / 0.12), inset 0 -1px 0 rgb(0 0 0 / 0.25);
   color-scheme: dark;
 }
 
@@ -96,14 +107,36 @@ strong, b { font-weight: 600; }
   display: flex; flex-direction: column; gap: 12px; padding: 16px;
 }
 .chrome > * { pointer-events: none; }
+/*
+ * Тонированное «жидкое» стекло без дорогих фильтров. Размытие маленьким
+ * радиусом (цена backdrop-filter растёт с радиусом), а «жидкость» дают
+ * бесплатные слои: блик-градиент, светлая верхняя кромка, полупрозрачная
+ * рамка. Пока карта движется, размытие выключается (html.map-moving): иначе
+ * оно пересчитывалось бы под каждой панелью на каждом кадре.
+ */
 .panel {
   pointer-events: auto;
-  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  border: 1px solid var(--border);
+  /* Внутри стекла сплошные заливки становятся полупрозрачными, иначе кнопки выглядят плашками. */
+  --surface-2: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --surface-3: color-mix(in srgb, var(--foreground) 10%, transparent);
+  background-color: var(--glass-tint);
+  background-image: var(--glass-sheen);
+  backdrop-filter: blur(12px) saturate(170%);
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  border: 1px solid var(--glass-border);
+  transition: background-color 0.18s var(--ease-standard);
   border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--glass-edge), var(--shadow-panel);
+}
+html.map-moving .panel {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  background-color: var(--glass-solid);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel { background-color: var(--glass-solid); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .panel { backdrop-filter: none; -webkit-backdrop-filter: none; background-color: var(--surface-1); background-image: none; }
 }
 .capsule { border-radius: 999px; }
 

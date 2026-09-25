@@ -357,6 +357,15 @@ onMounted(() => {
     state.globeView = globe
     if (globe) state.tilted = false
   })
+  // Пока карта движется, стеклу не нужно размытие: иначе backdrop-filter пересчитывается
+  // под каждой панелью на каждом кадре. Снимаем с задержкой, чтобы зум колесом не мигал.
+  let movingTimer
+  const root = document.documentElement
+  map.on('movestart', () => { clearTimeout(movingTimer); root.classList.add('map-moving') })
+  map.on('moveend', () => {
+    clearTimeout(movingTimer)
+    movingTimer = setTimeout(() => root.classList.remove('map-moving'), 150)
+  })
   map.on('click', event => {
     if (!state.drawing && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
   })
