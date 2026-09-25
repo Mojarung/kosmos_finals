@@ -1,0 +1,38 @@
+[project]
+name = "floodvalue"
+version = "0.1.0"
+description = "Flood water mapping on Sen1Floods11 and expected-loss pipeline for the KosmoHackathon 2026 FloodValue case"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+    "rasterio>=1.5.1",
+    "scikit-learn>=1.9.1",
+    "segmentation-models-pytorch>=0.5.0",
+    "torch>=2.14.0",
+    "torchvision>=0.29.0",
+]
+
+[project.scripts]
+floodvalue = "floodvalue.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu132", marker = "sys_platform != 'darwin'" }]
+torchvision = [{ index = "pytorch-cu132", marker = "sys_platform != 'darwin'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu132"
+url = "https://download.pytorch.org/whl/cu132"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

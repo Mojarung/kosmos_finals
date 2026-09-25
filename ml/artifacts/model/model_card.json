@@ -1,0 +1,35 @@
+{
+  "format": "safetensors float16, loaded as float32",
+  "members": [
+    {
+      "dir": "members/m0",
+      "source_run": "runs/unet_r34_vvvh/seed0",
+      "sha256": "a0d598e9e6e00c24c27231d1c6c3554e15a1498cdc82e09a4134474e475be4c0",
+      "bytes": 48932074
+    },
+    {
+      "dir": "members/m1",
+      "source_run": "runs/unet_r34_vvvh/seed1",
+      "sha256": "ceec23cc9856bf0ee8e4aedeb7f8fe757b0bdff548f4da37a58771719fa413c4",
+      "bytes": 48932074
+    },
+    {
+      "dir": "members/m2",
+      "source_run": "runs/unet_r34_vvvh/seed2",
+      "sha256": "10a6188abf5226661623661dee7ef83357fc87b38632a4bd068cb2eed2de8932",
+      "bytes": 48932074
+    },
+    {
+      "dir": "members/m3",
+      "source_run": "runs/unet_r34_vvvh/seed3",
+      "sha256": "e71863b449494c26643e9415a23b3620aedaef8979de4600a89c53eefb265905",
+      "bytes": 48932074
+    },
+    {
+      "dir": "members/m4",
+      "source_run": "runs/unet_r34_vvvh/seed4",
+      "sha256": "48b1589d71e36aa06b36c27dfcee2d0a33df6b455367ea9aca34335a7ebf3428",
+      "bytes": 48932074
+    }
+  ]
+}
