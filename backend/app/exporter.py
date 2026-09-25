@@ -8,7 +8,7 @@ import io
 import json
 import zipfile
 
-from .catalog import DATA_DIR, metadata
+from .catalog import metadata, scene_dir
 from .planning import as_polygon, enrich_assets, plan
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_sensitivity
@@ -169,7 +169,10 @@ def package(result: dict) -> io.BytesIO:
             "repository": "https://github.com/Mojarung/kosmos_finals",
             "gitverse_commit": None,
             "gitverse_status": "pending_team_publication",
-            "split": "test_core, independent of train adjacency",
+            "split": "ml/artifacts/split.json: authors' v1.1 lists; test chips touching train chips moved to test_adjacent",
+            "split_part": info.get("split_part", "test_core"),
+            "metrics_independent": info.get("metrics_independent", True),
+            "scene_origin": info.get("origin", "demo"),
             "budget_rub": result["inputs"]["budget_rub"],
             "deadline_hours": result["inputs"]["deadline_hours"],
             "expected_loss_model": "p_flood * asset_value_rub * vulnerability_coef",
@@ -196,7 +199,7 @@ def package(result: dict) -> io.BytesIO:
             "inference_manifest": info["inference_manifest"],
         })
         for name in ("flood_probability.tif", "flood_mask.tif", "flood_uncertainty.tif", "baseline_mask.tif"):
-            archive.write(DATA_DIR / scene_id / name, arcname=name)
+            archive.write(scene_dir(scene_id) / name, arcname=name)
         archive.writestr("README.txt",
                          "FloodValue — один согласованный комплект для выбранного чипа и бюджета.\n"
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"

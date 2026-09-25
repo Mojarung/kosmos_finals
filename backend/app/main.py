@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 
+from . import ingest
 from .analysis import analyze, inspect_pixel
-from .catalog import DATA_DIR, default_scene_id, known_scene_ids, metadata, scene_catalog
+from .catalog import default_scene_id, known_scene_ids, metadata, scene_catalog, scene_dir
+from .chips import official_chips, official_events
 from .exporter import package
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
@@ -49,6 +52,34 @@ def scenes() -> dict:
     return scene_catalog()
 
 
+class IngestRequest(BaseModel):
+    chip_id: str
+
+
+@app.get("/api/chips")
+def chips() -> dict:
+    return {"events": official_events(), "chips": official_chips(), "prepared": sorted(known_scene_ids())}
+
+
+@app.post("/api/scenes", status_code=202)
+def create_scene(request: IngestRequest, response: Response) -> dict:
+    try:
+        job = ingest.start(request.chip_id)
+    except KeyError as error:
+        raise HTTPException(404, "Unknown official Sen1Floods11 hand-labeled chip") from error
+    if job["id"] is None:
+        response.status_code = 200
+    return job
+
+
+@app.get("/api/jobs/{job_id}")
+def job_status(job_id: str) -> dict:
+    job = ingest.get(job_id)
+    if job is None:
+        raise HTTPException(404, "Unknown job")
+    return job
+
+
 @app.get("/api/pixel")
 def pixel(
     longitude: float = Query(..., ge=-180, le=180),
@@ -80,7 +111,7 @@ def demo_asset(scene_id: str, asset_name: str) -> FileResponse:
         "probability.png", "uncertainty.png",
     }:
         raise HTTPException(404)
-    return FileResponse(DATA_DIR / scene_id / asset_name, media_type="image/png")
+    return FileResponse(scene_dir(scene_id) / asset_name, media_type="image/png")
 
 
 @app.get("/api/export")
