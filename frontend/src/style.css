@@ -14,13 +14,15 @@
   --surface-3: #e1e8e8;
   --muted-foreground: #58696f;
   --border: #d3dddd;
-  /* Пастельные акценты. Вода не меняется: маска на карте приходит готовой картинкой. */
+  /* Пастельные акценты. Вода совпадает с текстурой маски на карте (lib/water.js): от берега к глубине. */
   --primary: #3d7686;
   --primary-foreground: #ffffff;
   --primary-container: #d6e9ee;
   --on-primary-container: #1c4a57;
-  --water: #2f7fc6;
-  --water-soft: #8fbfe6;
+  --water: #5d9fd1;
+  --water-shallow: #96d6ea;
+  --water-deep: #2468a8;
+  --water-soft: #a9cfe8;
   --uncertain: #dfae68;
   --risk: #c98049;
   --reference: #3a8a80;
@@ -59,7 +61,9 @@
   --primary-foreground: #123a45;
   --primary-container: #2a4c57;
   --on-primary-container: #d8f0f6;
-  --water: #5aa4e6;
+  --water: #3a78a2;
+  --water-shallow: #5cb0d4;
+  --water-deep: #144070;
   --water-soft: #3d6f9a;
   --uncertain: #efc68e;
   --risk: #eea77c;
@@ -532,7 +536,7 @@ html.map-moving .panel {
 .opacity-control input:focus-visible { outline: 2px solid var(--primary); outline-offset: 5px; }
 .legend { display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 18px; font-size: 13px; }
 .legend-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
-.legend-water { width: 12px; height: 12px; border-radius: 4px; background: var(--water); }
+.legend-water { width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--water-shallow), var(--water-deep)); }
 .legend-water.probability { background: linear-gradient(90deg, var(--water-soft), var(--water)); }
 .legend-water.uncertainty { background: var(--uncertain); }
 .legend-water.baseline { background: var(--risk); }

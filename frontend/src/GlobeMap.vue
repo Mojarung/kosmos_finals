@@ -6,6 +6,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { state } from './store'
 import { number } from './lib/format'
+import { BLANK, cachedWater, waterImage } from './lib/water'
 import MorphLoader from './components/MorphLoader.vue'
 import { preloadGlobe, preloadTilt } from './lib/prefetch'
 
@@ -40,6 +41,34 @@ const COLORS = {
   dark: { chip: '#a6d3df', zone: '#efc68e', zoneLine: '#efc68e', zoneIdle: '#86a9b4', region: '#efc68e', regionLine: '#f4d3a4' },
 }
 
+/*
+ * Слои приходят готовыми PNG одного насыщенного цвета (эталонные растры не меняем),
+ * поэтому мягкость задаём при отрисовке: подъём тёмного края делает цвет пастельным,
+ * воду чуть уводим в бирюзу, а линейное сглаживание убирает ступеньки 10-метровых пикселей.
+ * Итоговый цвет маски воды посчитан по формулам шейдера и записан в --water, чтобы
+ * легенда и панель совпадали с картой.
+ */
+function rasterLook(name) {
+  // Маска уже нарисована водой (lib/water.js), фильтры ей не нужны.
+  if (name === 'model') return { 'raster-resampling': 'linear' }
+  const dark = state.theme === 'dark'
+  return {
+    'raster-resampling': 'linear',
+    'raster-brightness-min': dark ? 0.18 : 0.3,
+    ...(name === 'probability' ? { 'raster-hue-rotate': -8, 'raster-saturation': -0.1 } : {}),
+  }
+}
+const theme = () => (state.theme === 'dark' ? 'dark' : 'light')
+let waterToken = 0
+async function refreshWater(chipId, coords) {
+  const token = ++waterToken
+  try {
+    const url = await waterImage('/api/demo/' + chipId + '/model.png', theme())
+    if (token === waterToken && ready) map.getSource('model')?.updateImage({ url, coordinates: coords })
+  } catch (error) {
+    console.warn('Water texture:', error)
+  }
+}
 function polygon(bounds) {
   const [w, s, e, n] = bounds
   return { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] }
@@ -71,7 +100,8 @@ function buildOverlays() {
     map.addSource(name, { type: 'image', url: '/api/demo/' + chipId + '/' + name + '.png', coordinates: imageCoords })
     map.addLayer({ id: name + '-layer', type: 'raster', source: name,
       paint: { 'raster-opacity': name === 'radar' ? 0.7 : state.overlayOpacity / 100,
-        'raster-opacity-transition': { duration: 350 }, 'raster-fade-duration': 250 } }, before)
+        'raster-opacity-transition': { duration: 350 }, 'raster-fade-duration': 250,
+        ...(name === 'radar' ? {} : rasterLook(name)) } }, before)
   }
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
@@ -152,8 +182,11 @@ function syncMap() {
   if (loadedScene !== chip.chip_id && phase !== 'out') {
     const imageCoords = coordinates(chip.bbox)
     for (const name of rasterNames) {
-      map.getSource(name).updateImage({ url: '/api/demo/' + chip.chip_id + '/' + name + '.png', coordinates: imageCoords })
+      const url = '/api/demo/' + chip.chip_id + '/' + name + '.png'
+      // Маску рисуем водой; пока она считается, слой пустой, а не старым плоским цветом.
+      map.getSource(name).updateImage({ url: name === 'model' ? cachedWater(url, theme()) || BLANK : url, coordinates: imageCoords })
     }
+    refreshWater(chip.chip_id, imageCoords)
     const first = !loadedScene
     if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
