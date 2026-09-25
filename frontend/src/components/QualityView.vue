@@ -18,9 +18,9 @@ const METRICS = [
   <section class="block" v-tip="'IoU на независимой выборке test_core: 55 чипов, оба метода на одних и тех же валидных пикселях'">
     <span class="caption">Совпадение с ручной меткой, IoU</span>
     <div class="ring-pair">
-      <RingGauge :value="testQuality.baseline.iou" label="порог VH" color="var(--risk)" :size="76" />
+      <RingGauge :value="testQuality.baseline.iou" label="порог VH" color="var(--risk)" :size="64" />
       <ArrowRight :size="18" class="muted" />
-      <RingGauge :value="testQuality.model.iou" label="модель" :size="100" />
+      <RingGauge :value="testQuality.model.iou" label="модель" :size="84" />
     </div>
     <p class="gain tabular">+{{ number(gain, 1) }} п.п. к пороговому методу</p>
   </section>
