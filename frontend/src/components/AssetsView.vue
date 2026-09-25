@@ -34,6 +34,8 @@ function select(asset) {
 
 <template>
   <section class="block" v-tip="'Σ p × стоимость × уязвимость. Вероятность p из модели, стоимость и уязвимость объектов учебные'">
+    <p v-if="analysis.chip.portfolio_status" class="source-line portfolio-note">Учебный портфель · 10 сценарных точек и стоимостей</p>
+    <p v-if="analysis.region.data_status === 'partial_coverage'" class="source-line portfolio-note">Снимок покрывает {{ percent(analysis.region.observed_area_km2 / analysis.region.area_km2, 1) }} рамки. В остальных точках p не рассчитывается.</p>
     <span class="caption">Ожидаемый ущерб портфеля</span>
     <div class="hero">
       <AnimatedNumber class="display" :value="analysis.metrics.expected_loss_rub / 1e6" :format="v => v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })" />

@@ -48,7 +48,18 @@ function back() {
 
     <div ref="scroller" class="panel-scroll">
       <div v-if="state.error" class="error-note">{{ state.error }} <button @click="fetchAnalysis">Повторить</button></div>
-      <div v-if="state.analysis && !hasData" class="empty">
+      <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="empty">
+        <Globe2 :size="26" />
+        <strong>{{ state.liveStatus === 'searching' ? 'Ищем наблюдение' : 'Считаем риск по снимку' }}</strong>
+        <span>После инференса появятся объекты, зоны и три стратегии закупки.</span>
+      </div>
+      <div v-else-if="state.liveStatus === 'error'" class="empty">
+        <Globe2 :size="26" />
+        <strong>Анализ не готов</strong>
+        <span>{{ state.liveError }}</span>
+        <button class="tonal-button" @click="back">Вернуться к демо</button>
+      </div>
+      <div v-else-if="state.analysis && !hasData" class="empty">
         <Globe2 :size="26" />
         <strong>Пока нет наблюдения</strong>
         <span>Область выделена, но снимка для неё нет. Решение считается только там, где есть Sentinel‑1.</span>

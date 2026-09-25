@@ -36,12 +36,13 @@ def package(result: dict) -> io.BytesIO:
             archive.writestr(name, json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False))
 
         json_file("analysis.json", result)
+        live = info.get("source_kind") == "live_sentinel1_rtc"
         json_file("source_manifest.json", [{
-            **item, "version": "Sen1Floods11_v1.1", "observed_at": info["observed_at"],
-            "published_at": None, "available_at": None,
-            "license": "not_confirmed_by_dataset_publisher",
-            "role": "model_input" if "S1Hand" in item["name"] else "diagnostic_label_only",
-            "limitation": "Historical 512x512 chip; not a live flood observation",
+            **item, "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
+            "observed_at": info["observed_at"], "published_at": None, "available_at": None,
+            "license": "CC-BY-4.0" if live else "not_confirmed_by_dataset_publisher",
+            "role": "model_input" if live or "S1Hand" in item["name"] else "diagnostic_label_only",
+            "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
         } for item in info["source_manifest"]])
         json_file("selected_region.geojson", {"type": "FeatureCollection", "features": [{
             "type": "Feature", "geometry": as_polygon(result["region"]["bounds"]),
@@ -157,7 +158,7 @@ def package(result: dict) -> io.BytesIO:
         json_file("run_metadata.json", {
             "run_id": hashlib.sha256(run_signature.encode()).hexdigest()[:16],
             "chip_id": scene_id, "event_id": info["event"],
-            "s1_source_files": [item["name"] for item in info["source_manifest"] if "S1Hand" in item["name"]],
+            "s1_source_files": [item["name"] for item in info["source_manifest"] if live or "S1Hand" in item["name"]],
             "portfolio_seed": info["portfolio_seed"],
             "portfolio_rule": info.get("portfolio_rule", "one of each case asset type; seeded coordinates independent of p and label"),
             "model_threshold": info["model_threshold"],
@@ -196,7 +197,8 @@ def package(result: dict) -> io.BytesIO:
                          "ml/.venv/bin/floodvalue infer --s1 data/source/CHIP_S1Hand.tif --out data/inference/CHIP",
                          "backend/.venv/bin/python scripts/prepare_demo.py",
                          "backend/.venv/bin/python scripts/validate_package.py floodvalue-CHIP.zip"],
-            "inference_manifest": info["inference_manifest"],
+            "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
+                                                                  "processed_at": info.get("processed_at")}),
         })
         for name in ("flood_probability.tif", "flood_mask.tif", "flood_uncertainty.tif", "baseline_mask.tif"):
             archive.write(scene_dir(scene_id) / name, arcname=name)

@@ -5,6 +5,9 @@ services:
       dockerfile: backend/Dockerfile
     ports:
       - "${API_PORT:-18000}:8000"
+    volumes:
+      - live-observations:/app/data/live
+      - runtime-observations:/app/data/runtime
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 15s
@@ -20,3 +23,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  live-observations:
+  runtime-observations:

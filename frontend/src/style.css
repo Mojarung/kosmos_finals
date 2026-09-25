@@ -264,6 +264,16 @@ html.map-moving .panel {
 .drop-enter-active { transition: opacity 0.2s var(--ease-standard), transform 0.35s var(--ease-emphasized); transform-origin: top center; }
 .drop-leave-active { transition: opacity 0.12s var(--ease-standard), transform 0.12s var(--ease-standard); transform-origin: top center; }
 .drop-enter-from, .drop-leave-to { opacity: 0; transform: translateY(-6px) scale(0.97); }
+.live-scenes { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 5px 8px 5px 13px; max-width: min(580px, 100%); }
+.live-scenes-label { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.live-select-label { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12px; color: var(--muted-foreground); }
+.live-select-label select { min-width: 0; max-width: 215px; border: 0; border-radius: 12px; background: var(--surface-2); color: var(--foreground); padding: 7px 9px; font: inherit; cursor: pointer; }
+.live-demo-link { border-radius: 999px; padding: 7px 11px; background: var(--surface-2); color: var(--muted-foreground); font-size: 12px; white-space: nowrap; }
+.live-demo-link:hover { color: var(--foreground); background: var(--surface-3); }
+.live-flow { position: absolute; top: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 7px 14px; white-space: nowrap; font-size: 12px; font-weight: 600; }
+.live-flow.ready { color: var(--primary); }
+.live-flow-dot { width: 8px; height: 8px; border-radius: 50%; background: #36a884; box-shadow: 0 0 0 5px color-mix(in srgb, #36a884 15%, transparent); }
+.portfolio-note { margin-bottom: 10px; color: var(--muted-foreground); }
 .actions { display: flex; align-items: center; gap: 2px; height: 44px; padding: 0 4px; flex: none; }
 
 .ghost-icon {
@@ -644,6 +654,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .country-menu { width: min(340px, calc(100vw - 20px)); }
   .scene-title { padding: 6px 14px 7px 12px; border-radius: 16px; }
   .scene-country { font-size: 19px; }
+  .live-scenes { max-width: calc(100vw - 32px); }
+  .live-flow { top: 124px; max-width: calc(100vw - 28px); overflow: hidden; text-overflow: ellipsis; }
   /* Панели стопкой: свёрнутые капсулы сверху, развёрнутая — во всю ширину. */
   .panels { flex-direction: column; justify-content: flex-start; }
   .observe-panel:not(.pill), .decision-panel:not(.pill) { width: 100%; max-height: 62dvh; }

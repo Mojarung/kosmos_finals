@@ -1,18 +1,26 @@
 <script setup>
 import { computed, reactive } from 'vue'
-import { Box, Globe2, LocateFixed, Moon, Sun } from '@lucide/vue'
+import { Box, Globe2, LocateFixed, Moon, Satellite, Sun } from '@lucide/vue'
 import CountryPicker from './CountryPicker.vue'
-import { state } from '../store'
+import { chooseScene, loadLiveItem, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date } from '../lib/format'
 import { eventKey, flagUrl } from '../lib/flags'
 
 const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
 
-const current = computed(() => state.analysis?.scenes.find(item => item.chip_id === state.sceneId) || state.analysis?.chip)
+const current = computed(() => {
+  if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
+    return { chip_id: 'live_pending', event: 'Выбранная область', observed_at: null }
+  }
+  return state.analysis?.scenes.find(item => item.chip_id === state.sceneId) || state.analysis?.chip
+})
 // Без сети или при сбое CDN флаг просто не показываем, название остаётся.
 const failedFlags = reactive(new Set())
 const flag = computed(() => flagUrl(eventKey(current.value?.chip_id)))
+// Живой регион (рамка на карте) заменяет переключатель стран выбором даты снимка.
+const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandidates.length > 0)
+const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 </script>
 
 <template>
@@ -27,13 +35,24 @@ const flag = computed(() => flagUrl(eventKey(current.value?.chip_id)))
             <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
               @error="failedFlags.add(flag)" />{{ current.event }}
           </h1>
-          <p class="scene-date"><span class="tabular">{{ date(current.observed_at) }}</span><span class="scene-source">Sentinel‑1</span></p>
+          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span class="scene-source">Sentinel‑1</span></p>
         </div>
       </Transition>
     </div>
 
     <div class="topbar-center">
-      <CountryPicker @focus-chip="emit('focus-chip')" />
+      <div v-if="liveMode" class="panel capsule live-scenes" data-enter>
+        <Satellite :size="17" class="accent" />
+        <span v-if="!state.liveCandidates.length" class="live-scenes-label">{{ state.liveStatus === 'searching' ? 'Ищем снимки…' : 'Новый регион' }}</span>
+        <label v-else class="live-select-label">
+          <span>Снимок</span>
+          <select :value="state.liveItemId" aria-label="Дата снимка Sentinel-1" @change="loadLiveItem($event.target.value)">
+            <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ utcTime(item.datetime) }} UTC · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
+          </select>
+        </label>
+        <button class="live-demo-link" @click="chooseScene('Nigeria_812045')">Демо</button>
+      </div>
+      <CountryPicker v-else @focus-chip="emit('focus-chip')" />
     </div>
 
     <div class="panel capsule actions" data-enter>
