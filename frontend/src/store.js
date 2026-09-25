@@ -16,6 +16,7 @@ export const state = reactive({
   layerMode: 'model',
   showRadar: true,
   showZones: false,
+  tilted: false,
   theme: 'light',
   budget: 6500,
   deadline: 8,

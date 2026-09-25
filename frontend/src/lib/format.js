@@ -13,6 +13,12 @@ export function compactRub(value) {
 }
 export function km(value) { return value == null ? '—' : number(value, 2) + ' км²' }
 export function percent(value, digits = 0) { return value == null ? '—' : number(value * 100, digits) + '%' }
+const pluralRules = new Intl.PluralRules('ru-RU')
+/** plural(2, ['зона', 'зоны', 'зон']) → «2 зоны» */
+export function plural(count, [one, few, many]) {
+  const form = pluralRules.select(count)
+  return count + ' ' + (form === 'one' ? one : form === 'few' ? few : many)
+}
 export function date(value) {
   if (!value) return '—'
   return new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*г\.$/, '')

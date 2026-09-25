@@ -5,7 +5,7 @@ import AnimatedNumber from './AnimatedNumber.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import RingGauge from './RingGauge.vue'
 import { activePlan, state } from '../store'
-import { compactRub, km, number, percent, rub } from '../lib/format'
+import { compactRub, km, number, percent, plural, rub } from '../lib/format'
 
 const MAX_BUDGET = 45000
 const analysis = computed(() => state.analysis)
@@ -26,9 +26,13 @@ const focusedZones = computed(() => {
 function status(key) {
   const plan = analysis.value.strategies[key]
   if (!plan.timely) return 'позже срока'
+  if (key === 'C' && plan.constraints_feasible === false) return 'условие не выполнено'
   if (!plan.budget_feasible) return 'сверх бюджета'
   return key === 'A' ? 'без покупки' : 'в бюджете'
 }
+const scenarios = computed(() => (analysis.value?.sensitivity?.plan || []).filter(row => row.factor !== 1))
+const evidence = computed(() => analysis.value?.decision_evidence)
+const PRIORITY_NAMES = { risk: 'Ущерб', information: 'Уточнение' }
 function pick(key) {
   state.strategy = key
   state.showZones = true
@@ -91,6 +95,25 @@ function pick(key) {
       <span class="display tabular">−{{ number(analysis.metrics.data_savings_vs_broad_rub / 1000, 1) }}</span>
       <span class="unit">тыс. ₽</span>
       <span class="hero-aside">{{ percent(analysis.metrics.savings_share_vs_broad) }}<br>бюджета B</span>
+    </div>
+  </section>
+
+  <section v-if="scenarios.length" class="block">
+    <span class="caption" v-tip="'План C пересчитан при изменении одного входа на 20%. Охваченный ущерб — риск под наблюдением, а не предотвращённые потери'">Устойчивость плана, ±20%</span>
+    <div class="mini-rows scenario-rows">
+      <div v-for="item in scenarios" :key="item.input + item.factor">
+        <span>{{ item.input === 'budget' ? 'Бюджет' : 'Тариф' }} {{ item.factor < 1 ? '−20%' : '+20%' }}</span>
+        <span class="scenario-zones">{{ plural(item.zone_ids.length, ['зона', 'зоны', 'зон']) }} ·{{ compactRub(item.data_cost_rub) }}</span>
+        <b class="tabular">{{ compactRub(item.covered_expected_loss_rub) }}</b>
+      </div>
+    </div>
+  </section>
+
+  <section v-if="evidence" class="block" v-tip="'Цель «Уточнение» опирается на разброс моделей ансамбля. Сколько на самом деле даст новый снимок, ещё не измерено'">
+    <span class="caption">Если цель «{{ PRIORITY_NAMES[evidence.alternate_priority] }}»</span>
+    <div class="evidence">
+      <strong>{{ evidence.priority_changes_order ? 'Другой набор зон' : 'Те же зоны' }}</strong>
+      <span class="tabular">{{ evidence.alternate_zone_ids.join(', ') }} · охват {{ compactRub(evidence.alternate_covered_expected_loss_rub) }}</span>
     </div>
   </section>
 

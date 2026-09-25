@@ -1,9 +1,11 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as maplibregl from 'maplibre-gl'
+import { ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { state } from './store'
+import { number } from './lib/format'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -11,6 +13,8 @@ const emit = defineEmits(['region', 'asset', 'draw-complete', 'ready'])
 const container = ref(null)
 const pickStart = ref(null)
 const mapError = ref(false)
+const probe = ref(null)
+const probeLoading = ref(false)
 let map
 let ready = false
 let loadedScene = ''
@@ -41,7 +45,7 @@ function buildOverlays() {
   if (!map) return
   const c = COLORS[state.theme === 'dark' ? 'dark' : 'light']
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'region', 'preview', 'zones', 'probe']) map.addSource(id, { type: 'geojson', data: empty })
   const chipId = state.analysis?.chip.chip_id || 'Nigeria_812045'
   const imageCoords = coordinates(state.analysis?.chip.bbox || [5.795, 9.06, 5.841, 9.107])
   for (const name of rasterNames) {
@@ -63,6 +67,11 @@ function buildOverlays() {
   map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview', paint: { 'fill-color': c.region, 'fill-opacity': 0.1 } }, before)
   map.addLayer({ id: 'preview-line', type: 'line', source: 'preview',
     paint: { 'line-color': c.regionLine, 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
+  map.addLayer({ id: 'probe-halo', type: 'circle', source: 'probe',
+    paint: { 'circle-radius': 14, 'circle-color': c.chip, 'circle-opacity': 0.22 } }, before)
+  map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
+    paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
+  if (probe.value?.longitude != null) setProbePoint(probe.value.longitude, probe.value.latitude)
   map.setProjection({ type: 'globe' })
   ready = true
   syncMap()
@@ -106,6 +115,7 @@ function syncMap() {
       map.getSource(name).updateImage({ url: '/api/demo/' + chip.chip_id + '/' + name + '.png', coordinates: imageCoords })
     }
     const first = !loadedScene
+    if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
     if (first || !state.region) focusChip()
   }
@@ -141,7 +151,42 @@ function showGlobe() { map?.flyTo({ center: [13, 11], zoom: 1.8, pitch: 0, durat
 function focusAsset(asset) {
   map?.flyTo({ center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20, duration: 750, essential: false })
 }
-defineExpose({ focusChip, showGlobe, focusAsset })
+function toggleTilt() {
+  state.tilted = !state.tilted
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  map?.easeTo({ pitch: state.tilted ? 58 : 0, bearing: state.tilted ? -18 : 0, duration: reduced ? 0 : 800, essential: false })
+}
+
+function setProbePoint(longitude, latitude) {
+  setData('probe', collection([{ type: 'Feature', geometry: { type: 'Point', coordinates: [longitude, latitude] }, properties: {} }]))
+}
+function clearProbe() {
+  probe.value = null
+  if (ready) setData('probe', empty)
+}
+// Клик по карте читает один пиксель снимка: p, решение модели и порога, ручную метку.
+async function inspectAt(longitude, latitude) {
+  probeLoading.value = true
+  setProbePoint(longitude, latitude)
+  try {
+    const params = new URLSearchParams({ scene_id: state.analysis.chip.chip_id, longitude: String(longitude), latitude: String(latitude) })
+    const response = await fetch('/api/pixel?' + params)
+    if (!response.ok) throw new Error('pixel API ' + response.status)
+    probe.value = await response.json()
+  } catch {
+    probe.value = { status: 'error' }
+  } finally {
+    probeLoading.value = false
+  }
+}
+const PROBE_MESSAGES = {
+  outside_coverage: 'В этой точке нет снимка',
+  no_valid_pixel: 'Пиксель без валидного сигнала',
+  error: 'Не удалось прочитать пиксель',
+}
+const water = value => value == null ? 'нет' : value ? 'вода' : 'суша'
+
+defineExpose({ focusChip, showGlobe, focusAsset, toggleTilt })
 
 onMounted(() => {
   map = new maplibregl.Map({
@@ -154,7 +199,10 @@ onMounted(() => {
   map.on('error', error => { mapError.value = true; console.warn('Map layer:', error.error) })
   map.on('style.load', buildOverlays)
   map.on('click', event => {
-    if (!state.drawing) return
+    if (!state.drawing) {
+      if (state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
+      return
+    }
     const point = [event.lngLat.lng, event.lngLat.lat]
     if (!pickStart.value) { pickStart.value = point; return }
     const west = Math.min(pickStart.value[0], point[0])
@@ -187,6 +235,28 @@ watch(() => state.drawing, value => { if (!value) { pickStart.value = null; if (
   <Transition name="pop">
     <div v-if="state.drawing" class="panel capsule map-hint">
       <span class="pulse"></span>{{ pickStart ? 'Кликните второй угол области' : 'Кликните первый угол области' }}
+    </div>
+  </Transition>
+  <Transition name="rise">
+    <div v-if="probe || probeLoading" class="panel pixel-card" aria-live="polite">
+      <div class="pixel-head">
+        <span><ScanSearch :size="15" />Пиксель Sentinel‑1</span>
+        <button class="ghost-icon tiny" aria-label="Закрыть данные пикселя" @click="clearProbe"><X :size="15" /></button>
+      </div>
+      <p v-if="probeLoading" class="pixel-message">Читаем снимок…</p>
+      <template v-else-if="probe?.status === 'ok'">
+        <div class="hero small">
+          <span class="display">{{ Math.round(probe.p_flood * 100) }}%</span>
+          <span class="unit">вероятность воды</span>
+        </div>
+        <div class="mini-rows">
+          <div v-tip="'Решение модели при пороге p ≥ ' + probe.model_threshold + ' и классического порога VH'"><span>Модель / порог VH</span><b>{{ water(probe.model_water) }} / {{ water(probe.baseline_water) }}</b></div>
+          <div><span>Разброс ансамбля</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
+          <div v-tip="'Ручная метка Sen1Floods11 только для контроля качества, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water(probe.reference_water) }}</b></div>
+        </div>
+        <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>
+      </template>
+      <p v-else class="pixel-message">{{ PROBE_MESSAGES[probe?.status] || PROBE_MESSAGES.error }}</p>
     </div>
   </Transition>
   <div v-if="mapError" class="panel capsule map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>

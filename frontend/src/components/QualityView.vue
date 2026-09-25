@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { ArrowRight, Info } from '@lucide/vue'
 import RingGauge from './RingGauge.vue'
 import { state, testQuality } from '../store'
-import { number, percent } from '../lib/format'
+import { compactRub, number, percent } from '../lib/format'
 
 const region = computed(() => state.analysis.region)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
@@ -47,6 +47,15 @@ const METRICS = [
       <div v-tip="'Ошибка калибровки: насколько p совпадает с реальной частотой воды. Меньше лучше'"><span>ECE до и после калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
       <div v-tip="'Насколько разброс ансамбля указывает на ошибки модели. 0,5 — случайно, 1 — идеально'"><span>Неуверенность ловит ошибки</span><b class="tabular">AUROC {{ number(testQuality.uncertainty_error_auroc, 3) }}</b></div>
       <div v-tip="'Событие, которого не было в обучении'"><span>Новое событие Bolivia</span><b class="tabular">IoU {{ percent(state.analysis.quality.parts.bolivia.model.iou, 1) }}</b></div>
+    </div>
+  </section>
+
+  <section v-if="state.analysis.asset_proxy_check" class="block"
+    v-tip="'В тех же окрестностях 3×3 вокруг объектов p модели сравнивается с ручной меткой воды, V и q фиксированы. Проверяется перенос p в формулу ущерба, а не реальный денежный ущерб'">
+    <span class="caption">Проверка объектов по метке воды · {{ state.analysis.asset_proxy_check.n_assets }} из 10</span>
+    <div class="mini-rows">
+      <div><span>Средняя ошибка p в точках</span><b class="tabular">{{ percent(state.analysis.asset_proxy_check.mean_absolute_probability_error, 1) }}</b></div>
+      <div><span>Средняя ошибка ущерба</span><b class="tabular">{{ compactRub(state.analysis.asset_proxy_check.mean_absolute_proxy_loss_error_rub) }}</b></div>
     </div>
   </section>
 

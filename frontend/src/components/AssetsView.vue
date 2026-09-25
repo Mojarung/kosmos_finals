@@ -3,11 +3,28 @@ import { computed } from 'vue'
 import { ArrowRight, Check, ChevronRight, Pin } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import { selectedAsset, state, toggleGuarantee } from '../store'
-import { compactRub, percent } from '../lib/format'
+import { compactRub, number, percent } from '../lib/format'
 
 const emit = defineEmits(['asset'])
 const analysis = computed(() => state.analysis)
 const maxLoss = computed(() => Math.max(...(analysis.value?.assets || []).map(a => a.expected_loss_rub), 1))
+
+const INPUTS = {
+  p: { hint: 'p: вероятность воды из модели' },
+  V: { hint: 'V: стоимость объекта, учебная' },
+  q: { hint: 'q: уязвимость, доля стоимости под ударом воды' },
+}
+function sensitivity(id) {
+  const rows = analysis.value?.sensitivity?.asset || []
+  return ['p', 'V', 'q'].map(input => {
+    const own = rows.filter(row => row.asset_id === id && row.input === input)
+    return { input, low: own.find(row => row.factor === 0.8), high: own.find(row => row.factor === 1.2) }
+  })
+}
+function rankRange({ low, high }) {
+  if (!low || !high) return '—'
+  return low.rank === high.rank ? `место ${low.rank}` : `место ${low.rank} → ${high.rank}`
+}
 
 function select(asset) {
   if (state.selectedAssetId === asset.id) { state.selectedAssetId = null; return }
@@ -46,8 +63,15 @@ function select(asset) {
           <div class="mini-rows">
             <div v-tip="'Вероятность воды в сетке 3×3 пикселя вокруг объекта'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="'Насколько расходятся пять моделей ансамбля в этой точке'"><span>Разброс ансамбля</span><b class="tabular">{{ percent(asset.uncertainty, 1) }}</b></div>
-            <div><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ asset.vulnerability }}</b></div>
-            <div v-tip="'Если вероятность модели ошибается на 20% в любую сторону'"><span>При p ± 20%</span><b class="tabular">{{ compactRub(asset.expected_loss_rub * 0.8) }} … {{ compactRub(Math.min(1, asset.p_flood * 1.2) * asset.value_rub * asset.vulnerability) }}</b></div>
+            <div><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ number(asset.vulnerability, 2) }}</b></div>
+          </div>
+          <span class="caption sensitivity-caption" v-tip="'Каждый вход меняется на −20% и +20% по отдельности, остальные на месте. Видно, какой из них сильнее двигает объект в рейтинге'">Что сдвигает приоритет, ±20%</span>
+          <div class="sensitivity">
+            <div v-for="item in sensitivity(asset.id)" :key="item.input" v-tip="INPUTS[item.input].hint">
+              <span class="input-key">{{ item.input }}</span>
+              <span class="tabular">{{ compactRub(item.low?.expected_loss_rub) }} … {{ compactRub(item.high?.expected_loss_rub) }}</span>
+              <span class="rank-shift tabular" :class="{ moved: item.low?.rank !== item.high?.rank }">{{ rankRange(item) }}</span>
+            </div>
           </div>
           <button class="primary-button" :class="{ done: state.mustCover === asset.id }" @click="toggleGuarantee">
             <Check v-if="state.mustCover === asset.id" :size="16" /><Pin v-else :size="16" />

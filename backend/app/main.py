@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
 
-from .analysis import analyze
+from .analysis import analyze, inspect_pixel
 from .catalog import DATA_DIR, default_scene_id, known_scene_ids, metadata, scene_catalog
 from .exporter import package
 
@@ -47,6 +47,18 @@ def health() -> dict:
 @app.get("/api/scenes")
 def scenes() -> dict:
     return scene_catalog()
+
+
+@app.get("/api/pixel")
+def pixel(
+    longitude: float = Query(..., ge=-180, le=180),
+    latitude: float = Query(..., ge=-85, le=85),
+    scene_id: str | None = None,
+) -> dict:
+    scene_id = scene_id or default_scene_id()
+    if scene_id not in known_scene_ids():
+        raise HTTPException(404, "Unknown scene")
+    return inspect_pixel(longitude, latitude, scene_id)
 
 
 @app.get("/api/analysis")

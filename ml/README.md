@@ -13,7 +13,7 @@ uv sync
 
 Версии зафиксированы в `uv.lock`: Python 3.13, torch 2.14.0+cu132, torchvision 0.29.0+cu132, segmentation-models-pytorch 0.5.0, rasterio 1.5.1, numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1. Колёса torch берутся из индекса `https://download.pytorch.org/whl/cu132` (см. `pyproject.toml`), они работают и без GPU.
 
-Веса лежат в Git LFS: после клонирования выполнить `git lfs pull`.
+Веса лежат в Git LFS: после клонирования выполнить `git lfs install --local && git lfs pull`.
 
 ## Полный прогон
 

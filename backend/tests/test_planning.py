@@ -1,7 +1,9 @@
 import csv
+import importlib.util
 import io
 import json
 import zipfile
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -9,6 +11,11 @@ from app.analysis import analyze
 from app.catalog import metadata
 from app.main import app
 from app.planning import candidates, covered_assets, quote, rectangle_area_km2
+
+validator_spec = importlib.util.spec_from_file_location(
+    "validate_package", Path(__file__).resolve().parents[2] / "scripts" / "validate_package.py")
+validator = importlib.util.module_from_spec(validator_spec)
+validator_spec.loader.exec_module(validator)
 
 
 def test_case_control_price_and_basket_discount():
@@ -75,5 +82,26 @@ def test_frozen_model_metrics_and_case_export():
     assert any(row["in_region"] == "false" for row in rows)
 
     impossible = client.get("/api/analysis", params={"budget": 2000, "must_cover": "A10"}).json()
-    assert impossible["strategies"]["C"]["budget_feasible"] is False
+    assert impossible["strategies"]["C"]["budget_feasible"] is True
+    assert impossible["strategies"]["C"]["constraints_feasible"] is False
     assert impossible["metrics"]["data_savings_vs_broad_rub"] is None
+
+
+def test_sensitivity_pixel_and_submission_validation(tmp_path):
+    client = TestClient(app)
+    result = client.get("/api/analysis").json()
+    assert len(result["sensitivity"]["asset"]) == 60
+    assert len(result["sensitivity"]["plan"]) == 6
+    assert result["decision_evidence"]["priority_changes_order"] is True
+    assert result["asset_proxy_check"]["n_assets"] > 0
+    pixel = client.get("/api/pixel", params={"scene_id": "Nigeria_812045",
+                                            "longitude": 5.81, "latitude": 9.08}).json()
+    assert pixel["status"] == "ok"
+    assert pixel["model_water"] == (pixel["p_flood"] >= pixel["model_threshold"])
+    assert client.get("/api/pixel", params={"longitude": 31, "latitude": 52}).json()["status"] == "outside_coverage"
+
+    zip_path = tmp_path / "case.zip"
+    zip_path.write_bytes(client.get("/api/export").content)
+    report = validator.validate(zip_path)
+    assert report["status"] == "ok"
+    assert report["assets"] == 10

@@ -58,7 +58,7 @@ onMounted(() => {
       @draw-complete="state.drawing = false" />
 
     <div ref="chrome" class="chrome">
-      <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" />
+      <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
       <div class="panels">
         <ObservePanel @reset="mapRef?.focusChip()" />
         <DecisionPanel @asset="chooseAsset" @reset="mapRef?.focusChip()" />

@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from 'vue'
-import { Globe2, Moon, Sun, Waves } from '@lucide/vue'
+import { Box, Globe2, Moon, Sun, Waves } from '@lucide/vue'
 import BubbleTabs from './BubbleTabs.vue'
 import { chooseScene, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date, km } from '../lib/format'
 
-const emit = defineEmits(['globe', 'focus-chip'])
+const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
 
 const scenes = computed(() => (state.analysis?.scenes || []).map(scene => ({
   value: scene.chip_id,
@@ -38,6 +38,8 @@ const scene = computed({
     </div>
 
     <div class="panel capsule actions" data-enter>
+      <button v-tip="state.tilted ? 'Вернуть вид сверху' : 'Наклонный 3D-обзор территории'" class="ghost-icon" :class="{ active: state.tilted }"
+        :aria-pressed="state.tilted" aria-label="3D-обзор" @click="emit('tilt')"><Box :size="18" /></button>
       <button v-tip="'Вся Земля: где лежат три сцены'" class="ghost-icon" aria-label="Показать Землю" @click="emit('globe')"><Globe2 :size="18" /></button>
       <button v-tip="state.theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'" class="ghost-icon" aria-label="Сменить тему" @click="toggleTheme">
         <Sun v-if="state.theme === 'dark'" :size="18" /><Moon v-else :size="18" />

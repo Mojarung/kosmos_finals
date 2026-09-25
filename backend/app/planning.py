@@ -82,7 +82,7 @@ def candidates(assets: list[dict], chip_bounds: list[float], broad_bounds: list[
     return zones
 
 
-def quote(zones: list[dict]) -> dict:
+def quote(zones: list[dict], tariff_multiplier: float = 1.0) -> dict:
     """Recalculate volume discount for the entire basket, then round each line."""
     if not zones:
         return {"total_rub": 0.0, "group_area_km2": 0, "discount_coef": 1.0, "lines": []}
@@ -90,13 +90,14 @@ def quote(zones: list[dict]) -> dict:
     # The demo catalog is one optical / 1 m / calendar-year group.
     raw_discount = -0.058 * log(float(group_area)) + 1.037
     discount = rounded(min(1.0, max(0.2, raw_discount)), DISCOUNT)
-    unit_price = rounded(BASE_RATE * Decimal("1.2") * Decimal("1.8") * discount, MONEY)
+    scenario_rate = BASE_RATE * Decimal(str(tariff_multiplier))
+    unit_price = rounded(scenario_rate * Decimal("1.2") * Decimal("1.8") * discount, MONEY)
     lines = [{
         "candidate_id": zone["id"], "area_km2": zone["area_km2"],
         "unit_price_rub_km2": float(unit_price),
         "cost_rub": float(rounded(unit_price * Decimal(str(zone["area_km2"])), MONEY)),
         "discount_coef": float(discount), "group_area_km2": float(group_area),
-        "base_rate_rub_km2": float(BASE_RATE), "base_rate_status": "scenario",
+        "base_rate_rub_km2": float(scenario_rate), "base_rate_status": "scenario",
         "processing_coef": 1.2, "usage_coef": 1.0, "freshness_coef": 1.8,
         "formula": "B*K*O*P*T*R", "legal_edition": "PP_RF_840_2025-08-27",
     } for zone in zones]
@@ -124,13 +125,14 @@ def covered_assets(zones: list[dict], assets: list[dict]) -> list[dict]:
 
 
 def plan(assets: list[dict], zones: list[dict], budget_rub: float, priority: str,
-         deadline_hours: int, must_cover: str | None) -> dict:
+         deadline_hours: int, must_cover: str | None,
+         tariff_multiplier: float = 1.0) -> dict:
     timely = [zone for zone in zones if zone["delivery_hours"] <= deadline_hours]
     best: tuple[float, float, list[dict], dict] | None = None
     for size in range(len(timely) + 1):
         for group in combinations(timely, size):
             selected = list(group)
-            price = quote(selected)
+            price = quote(selected, tariff_multiplier)
             if price["total_rub"] > budget_rub:
                 continue
             covered = covered_assets(selected, assets)
