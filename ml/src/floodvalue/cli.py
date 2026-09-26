@@ -181,6 +181,26 @@ def _cmd_doubt_threshold(_args: argparse.Namespace) -> None:
                                       for part, row in report.items()}}, indent=2))
 
 
+NORM_CHECK_PATH = EVALUATION_DIR / "norm_stats_check.json"
+
+
+def _cmd_norm_check(_args: argparse.Namespace) -> None:
+    from floodvalue.features import NormStats
+    from floodvalue.norm_check import LazyChips, norm_check
+    from floodvalue.package import member_dirs
+    from floodvalue.split import load_split
+
+    dirs = member_dirs(MODEL_DIR)
+    shipped = [NormStats.from_dict(json.loads((d / "norm_stats.json").read_text(encoding="utf-8"))) for d in dirs]
+    record = norm_check(LazyChips(paths.SEN1FLOODS11_DIR, load_split(SPLIT_PATH)["train"]), shipped)
+    record = {"command": "uv run --project ml floodvalue norm-check", "part": "train",
+              "member_files": [(d / "norm_stats.json").relative_to(paths.PIPELINE_ROOT).as_posix() for d in dirs],
+              **record}
+    NORM_CHECK_PATH.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    print(json.dumps({key: record[key] for key in ("recomputed_float64", "clip_bounds_equal_shipped",
+                                                   "old_float32_reduction_replayed", "nodata")}, indent=2))
+
+
 def _cmd_failure(args: argparse.Namespace) -> None:
     from floodvalue.failure import run_failure
     report = run_failure(args.chip, args.reference, EVALUATION_DIR)
@@ -222,6 +242,10 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser("doubt-threshold",
                         help="fix the service's doubt threshold on valid; report test_core and bolivia only") \
         .set_defaults(handler=_cmd_doubt_threshold)
+
+    commands.add_parser("norm-check",
+                        help="shipped normalisation constants against float64 train statistics") \
+        .set_defaults(handler=_cmd_norm_check)
 
     failure = commands.add_parser("failure", help="explain where the frozen ensemble misses water on one chip")
     failure.add_argument("--chip", default="Bolivia_242570", help="official chip name")

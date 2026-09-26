@@ -1,0 +1,86 @@
+{
+  "command": "uv run --project ml floodvalue norm-check",
+  "part": "train",
+  "member_files": [
+    "artifacts/model/members/m0/norm_stats.json",
+    "artifacts/model/members/m1/norm_stats.json",
+    "artifacts/model/members/m2/norm_stats.json",
+    "artifacts/model/members/m3/norm_stats.json",
+    "artifacts/model/members/m4/norm_stats.json"
+  ],
+  "channel_set": "vv_vh",
+  "channels": [
+    "VV",
+    "VH"
+  ],
+  "train_chips": 252,
+  "valid_pixels_per_channel": 64735152,
+  "shipped": {
+    "members": 5,
+    "identical_in_all_members": true,
+    "channel_set": "vv_vh",
+    "low": [
+      -29.312366485595703,
+      -46.99314498901367
+    ],
+    "high": [
+      3.1420488357543945,
+      -5.243322849273682
+    ],
+    "mean": [
+      -5.643166542053223,
+      -8.742729187011719
+    ],
+    "std": [
+      5.590733528137207,
+      8.348861694335938
+    ]
+  },
+  "recomputed_float64": {
+    "low": [
+      -29.312366485595703,
+      -46.99314498901367
+    ],
+    "high": [
+      3.1420488357543945,
+      -5.243322849273682
+    ],
+    "mean": [
+      -10.392747895013317,
+      -17.242477951930354
+    ],
+    "std": [
+      4.012759925665157,
+      4.743441428515264
+    ]
+  },
+  "clip_bounds_equal_shipped": true,
+  "old_float32_reduction_replayed": {
+    "mean": [
+      -5.643166542053223,
+      -8.742729187011719
+    ],
+    "std": [
+      5.590733528137207,
+      8.348861694335938
+    ],
+    "equal_to_shipped": true,
+    "rule": "clip to the shipped bounds, one float32 running sum per channel in chip order, quotient by the pixel count in float64 stored as float32 (numpy mean/std along the strided axis of an F-ordered float32 [C, N] array)"
+  },
+  "nodata": {
+    "normalized_value": 0.0,
+    "db": [
+      -5.643166542053223,
+      -8.742729187011719
+    ],
+    "z_in_true_train_units": [
+      1.184,
+      1.792
+    ],
+    "share_of_train_pixels_darker": [
+      0.9325,
+      0.9939
+    ],
+    "note": "invalid S1 pixels enter the model as 0, which the shipped transform maps from the shipped mean in dB: bright backscatter, not the train mean"
+  }
+}

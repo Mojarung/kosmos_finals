@@ -11,6 +11,7 @@ import numpy as np
 
 from floodvalue.chips import s1_valid
 from floodvalue.features import build_channels, fit_norm_stats
+from floodvalue.norm_check import float32_running_mean_std
 
 
 def _chips(count: int = 8, size: int = 512) -> list[np.ndarray]:
@@ -48,6 +49,20 @@ def test_float32_mean_of_the_f_ordered_pixel_array_drifts():
 
     assert pixels.dtype == np.float32 and pixels.flags.f_contiguous and not pixels.flags.c_contiguous
     assert np.abs(pixels.mean(axis=1) - mean).max() > 1e-4
+
+
+def test_replay_of_the_old_float32_reduction_is_bit_exact():
+    """norm-check replays the old sums chunk by chunk; the chunk edges must not change a bit."""
+    chips = _chips(count=2)
+    pixels = np.concatenate([build_channels(s1, "vv_vh")[:, s1_valid(s1)] for s1 in chips], axis=1)
+    pixels = np.clip(pixels, *(np.percentile(pixels, q, axis=1)[:, None] for q in (0.1, 99.9)))
+    old_mean, old_std = pixels.mean(axis=1), pixels.std(axis=1)
+
+    for channel in range(2):
+        row = np.ascontiguousarray(pixels[channel])
+        mean, std = float32_running_mean_std(row, chunk=100_003)
+        assert (mean, std) == (old_mean[channel], old_std[channel])
+        assert mean.dtype == std.dtype == np.float32
 
 
 def test_fit_norm_stats_matches_float64_mean_and_std():
