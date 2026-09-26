@@ -706,7 +706,9 @@ def package(result: dict) -> io.BytesIO:
                                                           all_assets))
         archive.writestr("README.txt",
                          "FloodValue: один согласованный комплект для выбранного чипа и бюджета.\n"
-                         "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
+                         "Вероятности и маски получены замороженной моделью, режим входа: "
+                         f"{(info.get('model') or {}).get('mode') or 'Sentinel-1'} "
+                         "(S1+S2 — радар и допустимая оптика Sentinel-2; S1 fallback — только Sentinel-1).\n"
                          "asset_loss.csv: обязательный EL = p × V × q для всех объектов, в том числе на постоянной воде.\n"
                          "p_calibration_status: где на независимых снимках калиброванная p выше (overestimated) "
                          "или ниже (underestimated) доли воды; правило в run_metadata.json, calibration_bias.\n"
