@@ -237,8 +237,9 @@ def validate(path: str | Path) -> dict:
                   f"{strategy}: line sum")
         require(not basket_groups["B"] & basket_groups["C"], "B and C share a discount group")
         budget = float(meta["budget_rub"])
-        require(comparison["C"]["budget_feasible"] == "false" or
-                float(comparison["C"]["data_cost_rub"]) <= budget, "C exceeds budget")
+        # C обязана укладываться в объявленный бюджет: флаг budget_feasible=false не оправдывает перерасход.
+        require(float(comparison["C"]["data_cost_rub"]) <= budget + 0.005, "C exceeds budget")
+        require(comparison["C"]["budget_feasible"] == "true", "C must be budget feasible")
         require(comparison["B"]["budget_feasible"] == str(
             float(comparison["B"]["data_cost_rub"]) <= budget).lower(), "B budget status wrong")
         require(comparison["B"]["budget_feasible"] == "true"

@@ -49,7 +49,8 @@ export const state = reactive({
   priority: 'risk',
   strategy: 'C',
   tab: 'assets',
-  objectMode: 'buildings',
+  // Сначала обязательный портфель кейса: 10 точек, их EL и A/B/C. Здания OSM — дополнительный режим.
+  objectMode: 'points',
   observeOpen: true,
   decisionOpen: true,
   decisionExpanded: false,
