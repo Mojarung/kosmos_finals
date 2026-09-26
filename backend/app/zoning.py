@@ -190,6 +190,38 @@ def uncertainty_zones(scene_id: str, window: tuple[int, int, int, int], area_km2
     return zones
 
 
+def union_share(scene_id: str, kind: str, window: tuple[int, int, int, int],
+                bounds_list: list[list[float]]) -> float | None:
+    """Share of the window's mass of `kind` (e.g. map error chance) inside the union of rectangles.
+
+    The window is cut at every rectangle edge, so each piece is wholly inside or outside
+    the union and overlapping zones are never counted twice. None when the window has no mass.
+    """
+    info = metadata(scene_id)
+    r0, r1, c0, c1 = window
+    table = _integral(scene_id, kind)
+    total = box_sum(table, r0, r1, c0, c1)
+    if total <= 0:
+        return None
+    rects = []
+    for bounds in bounds_list:
+        zr0, zr1, zc0, zc1 = pixel_edges(info, bounds)
+        rect = (max(zr0, r0), min(zr1, r1), max(zc0, c0), min(zc1, c1))
+        if rect[1] > rect[0] and rect[3] > rect[2]:
+            rects.append(rect)
+    if not rects:
+        return 0.0
+    rows = np.array(sorted({r0, r1} | {v for rect in rects for v in rect[:2]}))
+    cols = np.array(sorted({c0, c1} | {v for rect in rects for v in rect[2:]}))
+    top, bottom = rows[:-1, None], rows[1:, None]
+    left, right = cols[None, :-1], cols[None, 1:]
+    mass = table[bottom, right] - table[top, right] - table[bottom, left] + table[top, left]
+    inside = np.zeros(mass.shape, dtype=bool)
+    for zr0, zr1, zc0, zc1 in rects:
+        inside |= (top >= zr0) & (bottom <= zr1) & (left >= zc0) & (right <= zc1)
+    return float(mass[inside].sum() / total)
+
+
 def doubt_atoms(scene_id: str, window: tuple[int, int, int, int],
                 zones: list[dict]) -> tuple[np.ndarray, np.ndarray, float]:
     """Split the window by every zone edge; each piece gets its doubtful area and the zones over it.

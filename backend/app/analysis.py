@@ -13,7 +13,9 @@ from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candi
                        enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2,
                        square_around, today)
 from .sensitivity import asset_sensitivity, plan_sensitivity
-from .zoning import DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window, uncertainty_zones
+from .costs import decision_costs
+from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
+                     uncertainty_zones, union_share)
 
 LIVE = "live_sentinel1_rtc"
 WITH_DATA = {"covered", "partial_coverage"}
@@ -177,6 +179,8 @@ class Context:
     exposure: float
     unestimated: list[dict]
     case_exposure: float
+    scene_id: str = ""
+    window: tuple[int, int, int, int] = (0, 0, 0, 0)
 
 
 def raster_assets(scene_id: str, info: dict) -> list[dict]:
@@ -214,7 +218,7 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     exposure = round(sum(asset["expected_loss_rub"] or 0 for asset in assets), 2)
     unestimated = [asset for asset in assets if asset["loss_status"] == "no_data"]
     case_exposure = round(sum(asset["case_expected_loss_rub"] or 0 for asset in assets), 2)
-    return Context(info, region, assets, zones, space, exposure, unestimated, case_exposure)
+    return Context(info, region, assets, zones, space, exposure, unestimated, case_exposure, scene_id, window)
 
 
 on_refresh(_region.cache_clear)
@@ -252,6 +256,26 @@ def _zone_view(zone: dict, deadline_hours: int) -> dict:
             "timely": product["delivery_hours"] <= deadline_hours}
 
 
+RESIDUAL_BASIS = ("scenario: mean map error chance of the region after a timely new observation resolves the map "
+                  "inside the ordered zones = A x (1 - chance mass inside ordered zones / chance mass of the region); "
+                  "not measured, no new observation exists")
+
+
+def _residual(ctx: Context, baseline: float | None, footprint_ids: list[str]) -> dict:
+    """Residual uncertainty of a paid strategy as an explicit scenario, never an automatic reduction."""
+    if baseline is None:
+        return {"residual_uncertainty": None, "uncertainty_status": "not_estimated",
+                "uncertainty_basis": "no map error chance in the region", "covered_chance_share": None}
+    bounds = [zone["bounds"] for zone in ctx.zones if zone["id"] in set(footprint_ids)]
+    share = union_share(ctx.scene_id, "chance", ctx.window, bounds) if bounds else 0.0
+    if not bounds or share is None:
+        return {"residual_uncertainty": baseline, "uncertainty_status": "baseline",
+                "uncertainty_basis": "no timely event observation ordered", "covered_chance_share": 0.0}
+    share = round(share, 4)
+    return {"residual_uncertainty": round(baseline * (1 - share), 5), "uncertainty_status": "scenario",
+            "uncertainty_basis": RESIDUAL_BASIS, "covered_chance_share": share}
+
+
 def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, on) -> dict:
     space, exposure = ctx.space, ctx.exposure
     broad, broad_index = _broad(ctx)
@@ -262,14 +286,15 @@ def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, o
     b_covered = b["covered_expected_loss_rub"] if b_timely else 0
     b_doubt = (b["covered_doubt_share"] if b_timely else 0) if space.doubt_total else None
     no_exposure = None if exposure else "no_estimated_exposure_in_portfolio"
-    return {
+    baseline = round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None
+    strategies = {
         "A": {"label": "Открытые данные", "zone_ids": [], "data_cost_rub": 0, "covered_asset_ids": [],
               "covered_expected_loss_rub": 0, "coverage_share": 0 if exposure else None,
               "coverage_status": no_exposure, **_case_coverage(ctx, []),
               "covered_doubt_share": 0 if space.doubt_total else None,
               "budget_feasible": True, "timely": True,
-              "residual_uncertainty": round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None,
-              "uncertainty_status": "baseline"},
+              "residual_uncertainty": baseline, "uncertainty_status": "baseline",
+              "uncertainty_basis": "mean_map_error_probability_of_region"},
         "B": {"label": "Широкая съёмка", "zone_ids": b["zone_ids"], "candidate_ids": b["candidate_ids"],
               "data_cost_rub": b["quote"]["total_rub"], "quote": b["quote"],
               "covered_asset_ids": b_covered_ids, "covered_expected_loss_rub": b_covered,
@@ -277,16 +302,18 @@ def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, o
               **_case_coverage(ctx, b_covered_ids),
               "covered_doubt_share": b_doubt,
               "budget_feasible": b["quote"]["total_rub"] <= budget_rub,
-              "timely": b_timely, "residual_uncertainty": None,
-              "uncertainty_status": "not_estimated"},
+              "timely": b_timely, **_residual(ctx, baseline, b["zone_ids"] if b_timely else [])},
         "C": {"label": "Приоритетная съёмка", **c,
               "data_cost_rub": c["quote"]["total_rub"],
               "coverage_share": _share(c["covered_expected_loss_rub"], exposure), "coverage_status": no_exposure,
               **_case_coverage(ctx, c["covered_asset_ids"]),
               "budget_feasible": c["quote"]["total_rub"] <= budget_rub,
               "constraints_feasible": c["feasible"], "timely": True,
-              "residual_uncertainty": None, "uncertainty_status": "not_estimated"},
+              **_residual(ctx, baseline, c["zone_ids"])},
     }
+    for item in strategies.values():
+        item.update(decision_costs(item["data_cost_rub"], item.get("quote", {}).get("lines", [])))
+    return strategies
 
 
 def _all_uncertainty(space: BasketSpace, broad: dict, deadline_hours: int) -> dict | None:

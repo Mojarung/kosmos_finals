@@ -313,6 +313,17 @@ def validate(path: str | Path) -> dict:
                 and len(asset_scenarios) == 6 * len(region_ok), "Sensitivity must cover every region asset ±20% p/V/q")
         require(not region_ok or {json.loads(row["changed_inputs_json"])["input"] for row in asset_scenarios}
                 == {"p", "V", "q"}, "p/V/q sensitivity missing")
+        # Decision cost and residual uncertainty statuses (checked last, after the order checks).
+        for key, row in comparison.items():
+            close(float(row["decision_cost_rub"]), float(row["data_cost_rub"]) + float(row["other_cost_rub"]),
+                  f"{key}: decision cost is not data + other cost", 0.011)
+            if row["uncertainty_status"] == "scenario":
+                require(row["residual_uncertainty"] != "" and row["uncertainty_basis"] != "",
+                        f"{key}: scenario residual uncertainty needs a value and its formula")
+                require(float(row["residual_uncertainty"]) <= float(comparison["A"]["residual_uncertainty"] or 0) + 1e-9,
+                        f"{key}: scenario residual exceeds the baseline")
+            elif row["uncertainty_status"] == "not_estimated":
+                require(row["residual_uncertainty"] == "", f"{key}: not_estimated residual must be empty")
         return {"status": "ok", "chip_id": meta["chip_id"], "assets": len(assets),
                 "zones": len(zones), "footprints": len(footprints), "valid_pixels": int(p_mask.sum()),
                 "budget_rub": budget, "deadline_hours": deadline, "calculation_date": calculation_date.isoformat(),

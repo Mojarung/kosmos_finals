@@ -19,6 +19,8 @@ from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, SAR
                        as_polygon, enrich_assets)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
+from .analysis import RESIDUAL_BASIS
+from .costs import RULE as COST_RULE
 from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
 
 REASONS = {
@@ -442,14 +444,18 @@ def package(result: dict) -> io.BytesIO:
             ["strategy", "strategy_status", "data_cost_rub", "other_cost_rub", "other_cost_status", "decision_cost_rub",
              "budget_rub", "budget_feasible", "covered_expected_loss_rub", "coverage_share", "coverage_status",
              "covered_asset_count", "covered_doubt_share",
-             "residual_uncertainty", "uncertainty_status", "uncertainty_basis", "covered_flood_loss_rub"],
-            [[key, _strategy_status(key, item), item["data_cost_rub"], "", "not_estimated", "", inputs["budget_rub"],
+             "residual_uncertainty", "uncertainty_status", "uncertainty_basis", "covered_flood_loss_rub",
+             "other_cost_basis", "compute_rub", "review_rub", "processing_rub", "field_rub", "covered_chance_share"],
+            [[key, _strategy_status(key, item), item["data_cost_rub"], item["other_cost_rub"],
+              item["other_costs"]["status"], item["decision_cost_rub"], inputs["budget_rub"],
               str(item["budget_feasible"]).lower(), item["case_covered_expected_loss_rub"],
               _blank(item["case_coverage_share"]), _blank(item["case_coverage_status"]),
               len(item.get("covered_asset_ids", [])), _blank(item.get("covered_doubt_share")),
-              _blank(item["residual_uncertainty"]), item["uncertainty_status"],
-              "mean_map_error_probability_of_region" if key == "A" else "no_new_observation",
-              round(sum(flood_loss[asset_id] for asset_id in item["covered_asset_ids"]), 2)]
+              _blank(item["residual_uncertainty"]), item["uncertainty_status"], item["uncertainty_basis"],
+              round(sum(flood_loss[asset_id] for asset_id in item["covered_asset_ids"]), 2),
+              item["other_costs"]["basis"], item["other_costs"]["compute_rub"],
+              item["other_costs"]["review_rub"], item["other_costs"]["processing_rub"],
+              _blank(item["other_costs"]["field_rub"]), _blank(item.get("covered_chance_share"))]
              for key, item in strategies.items()]))
         quality = result["quality"]
         metrics_rows = []
@@ -572,6 +578,8 @@ def package(result: dict) -> io.BytesIO:
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],
             "decision_evidence": result["decision_evidence"],
+            "decision_cost_rule": COST_RULE,
+            "residual_uncertainty_rule": RESIDUAL_BASIS,
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
             "commands": _commands(scene_id, info, inputs, live),
             "commands_note": ("Run from the repository root on Windows, Linux or macOS. <CHIP> is any official "
