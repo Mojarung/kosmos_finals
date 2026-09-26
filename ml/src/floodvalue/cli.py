@@ -206,7 +206,9 @@ def _cmd_failure(args: argparse.Namespace) -> None:
     report = run_failure(args.chip, args.reference, EVALUATION_DIR)
     target = report["target"]
     print(json.dumps({"chip": report["chip"], "model": target["model"], "baseline": target["baseline"],
-                      "missed": target["missed"], "fragments": target["fragments"]}, ensure_ascii=False, indent=2))
+                      "missed": target["missed"], "fragments": target["fragments"], "doubt": target["doubt"],
+                      "label_shift": {key: target["label_shift"][key] for key in ("zero_shift", "best")}},
+                     ensure_ascii=False, indent=2))
 
 
 def build_parser() -> argparse.ArgumentParser:

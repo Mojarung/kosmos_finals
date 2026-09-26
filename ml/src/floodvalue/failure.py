@@ -15,13 +15,16 @@ import numpy as np
 from scipy import ndimage
 from sklearn.metrics import roc_auc_score
 
-from floodvalue.chips import s1_valid
+from floodvalue.chips import LABEL_INVALID, s1_valid
+from floodvalue.doubt import map_error_chance
 
 VH_BINS = [("< -26", -np.inf, -26.0), ("-26 .. -23.6", -26.0, -23.6),
            ("-23.6 .. -21", -23.6, -21.0), (">= -21", -21.0, np.inf)]
 SMALL_COMPONENT_PX = 100
 SHORE_PX = 3
 EIGHT = np.ones((3, 3), dtype=bool)
+SHIFT_MAX_PX = 16
+SHIFT_STEP_PX = 2
 
 
 def _ratio(numerator: float, denominator: float) -> float | None:
@@ -48,8 +51,62 @@ def local_std(band: np.ndarray, size: int = 5) -> np.ndarray:
     return np.sqrt(np.maximum(square - mean ** 2, 0))
 
 
+def shift_label(label: np.ndarray, dy: int, dx: int) -> np.ndarray:
+    """The label moved dy rows down and dx columns right; pixels it leaves become -1 (not scored)."""
+    height, width = label.shape
+    moved = np.full_like(label, LABEL_INVALID)
+    if abs(dy) < height and abs(dx) < width:
+        moved[max(dy, 0):height + min(dy, 0), max(dx, 0):width + min(dx, 0)] = \
+            label[max(-dy, 0):height + min(-dy, 0), max(-dx, 0):width + min(-dx, 0)]
+    return moved
+
+
+def _iou(pred: np.ndarray, water: np.ndarray, valid: np.ndarray) -> float | None:
+    tp = int((pred & water).sum())
+    union = int(((pred & valid) | water).sum())
+    return round(tp / union, 4) if union else None
+
+
+def label_shift_search(valid_s1: np.ndarray, label: np.ndarray, model_water: np.ndarray,
+                       baseline_water: np.ndarray, max_shift: int = SHIFT_MAX_PX, step: int = SHIFT_STEP_PX) -> dict:
+    """IoU of both masks against the label moved by every (dy, dx) on the grid; masks stay put.
+
+    A label drawn a few pixels off the image would show as a clear IoU peak away from (0, 0).
+    """
+    shifts = list(range(-max_shift, max_shift + 1, step))
+    masks = {"model": model_water.astype(bool), "baseline": baseline_water.astype(bool)}
+    grids: dict[str, list[list[float | None]]] = {key: [] for key in masks}
+    for dy in shifts:
+        rows: dict[str, list[float | None]] = {key: [] for key in masks}
+        for dx in shifts:
+            moved = shift_label(label, dy, dx)
+            valid = valid_s1 & (moved != LABEL_INVALID)
+            water = (moved == 1) & valid
+            for key, mask in masks.items():
+                rows[key].append(_iou(mask, water, valid))
+        for key in masks:
+            grids[key].append(rows[key])
+    centre = shifts.index(0)
+    zero = {key: grids[key][centre][centre] for key in masks}
+    best = {}
+    for key, grid in grids.items():
+        scores = np.array([[-1.0 if v is None else v for v in row] for row in grid])
+        # Ties keep the smallest move: rank by IoU, then by distance from (0, 0).
+        distance = np.add.outer(np.square(shifts), np.square(shifts))
+        row, col = np.unravel_index(np.lexsort((distance.ravel(), -scores.ravel()))[0], scores.shape)
+        iou = grid[row][col]
+        best[key] = {"dy": shifts[row], "dx": shifts[col], "iou": iou,
+                     "gain_vs_zero_shift": round(iou - zero[key], 4) if iou is not None and zero[key] is not None
+                     else None}
+    return {"rule": "label moved dy rows down and dx columns right, vacated pixels -1; "
+                    "masks fixed; IoU on finite S1 and label != -1 of the moved label",
+            "shifts_px": shifts, "model_iou": grids["model"], "baseline_iou": grids["baseline"],
+            "zero_shift": zero, "best": best}
+
+
 def chip_diagnostics(s1: np.ndarray, label: np.ndarray, p: np.ndarray, member_std: np.ndarray,
-                     baseline_water: np.ndarray, jrc: np.ndarray, threshold: float, baseline_db: float) -> dict:
+                     baseline_water: np.ndarray, jrc: np.ndarray, threshold: float, baseline_db: float,
+                     chance_threshold: float | None = None) -> dict:
     """Counts and shares that say which water the model finds, which it misses, and how sure it was."""
     valid = s1_valid(s1) & (label != -1)
     water = (label == 1) & valid
@@ -71,6 +128,18 @@ def chip_diagnostics(s1: np.ndarray, label: np.ndarray, p: np.ndarray, member_st
     missed = water & ~model
     found = water & model
     texture = local_std(vh)
+    doubt = None
+    if chance_threshold is not None:
+        # The service's rule on every finite S1 pixel, labelled or not; see floodvalue.doubt.
+        valid_s1 = s1_valid(s1)
+        doubtful = (map_error_chance(p, threshold) >= chance_threshold) & valid_s1
+        false_alarm = model & ~water
+        doubt = {"chance_threshold": chance_threshold,
+                 "valid_s1_pixels": int(valid_s1.sum()), "doubtful_pixels": int(doubtful.sum()),
+                 "doubtful_share_of_valid_s1": _ratio(doubtful.sum(), valid_s1.sum()),
+                 "missed_water_doubtful_share": _ratio((missed & doubtful).sum(), missed.sum()),
+                 "false_alarm_doubtful_share": _ratio((false_alarm & doubtful).sum(), false_alarm.sum()),
+                 "found_water_doubtful_share": _ratio((found & doubtful).sum(), found.sum())}
     return {
         "valid_pixels": int(valid.sum()), "water_pixels": int(water.sum()),
         "water_share": _ratio(water.sum(), valid.sum()),
@@ -100,6 +169,7 @@ def chip_diagnostics(s1: np.ndarray, label: np.ndarray, p: np.ndarray, member_st
                     "found_local_std_median": _median(texture[found]),
                     "missed_local_std_median": _median(texture[missed]),
                     "dry_darker_than_-26_share": _ratio((valid & ~water & (vh < -26)).sum(), (valid & ~water).sum())},
+        "doubt": doubt,
     }
 
 
@@ -115,6 +185,18 @@ def pooled_recall_by_vh(diagnostics: Iterable[dict]) -> list[dict]:
              "model_recall": _ratio(counts["model_found"], counts["water"]),
              "baseline_recall": _ratio(counts["baseline_found"], counts["water"])}
             for name, counts in totals.items()]
+
+
+def spread_of(items: Iterable[dict], block: str, keys: Iterable[str]) -> dict:
+    """Median and range of ``item[block][key]`` over the items that have a value."""
+    items = list(items)
+    spread = {}
+    for key in keys:
+        values = [item[block][key] for item in items if item[block] and item[block][key] is not None]
+        spread[key] = {"chips": len(values),
+                       **({"median": round(float(np.median(values)), 3), "min": min(values), "max": max(values)}
+                          if values else {})}
+    return spread
 
 
 def draw(path: Path, chip_name: str, s1: np.ndarray, label: np.ndarray, p: np.ndarray,
@@ -159,7 +241,7 @@ def run_failure(chip_name: str, reference_part: str, out_dir: Path) -> dict:
     from floodvalue import paths
     from floodvalue.baseline_run import load_baseline
     from floodvalue.chips import Chip, read_jrc, read_label, read_s1
-    from floodvalue.cli import BASELINE_PATH, CALIBRATION_PATH, MODEL_DIR
+    from floodvalue.cli import BASELINE_PATH, CALIBRATION_PATH, DOUBT_PATH, MODEL_DIR
     from floodvalue.ensemble import load_members, run_ensemble
     from floodvalue.infer import load_calibration
     from floodvalue.package import member_dirs
@@ -167,6 +249,8 @@ def run_failure(chip_name: str, reference_part: str, out_dir: Path) -> dict:
     platt, threshold = load_calibration(CALIBRATION_PATH)
     members = load_members(member_dirs(MODEL_DIR))
     baseline = load_baseline(BASELINE_PATH)
+    doubt_record = json.loads(DOUBT_PATH.read_text(encoding="utf-8"))
+    chance_threshold = doubt_record["map_error_chance_threshold"]
     split = json.loads((paths.ARTIFACTS_DIR / "split.json").read_text(encoding="utf-8"))
     names = [name for name in split["parts"][reference_part] if name != chip_name]
     results = {}
@@ -177,18 +261,27 @@ def run_failure(chip_name: str, reference_part: str, out_dir: Path) -> dict:
         out = run_ensemble(members, [s1], platt)
         water, _ = baseline.predict(s1)
         results[name] = chip_diagnostics(s1, label, out.prob[0], out.member_std[0], water,
-                                         read_jrc(paths.SEN1FLOODS11_DIR, chip), threshold, baseline.threshold_db)
+                                         read_jrc(paths.SEN1FLOODS11_DIR, chip), threshold, baseline.threshold_db,
+                                         chance_threshold=chance_threshold)
         if name == chip_name:
+            results[name]["label_shift"] = label_shift_search(s1_valid(s1), label, out.prob[0] >= threshold, water)
             draw(out_dir / "figures" / f"failure_{chip_name}.png", chip_name, s1, label, out.prob[0], water, threshold)
-    reference = [results[name] for name in names if results[name]["water_pixels"] >= 1000]
+    reference_names = [name for name in names if results[name]["water_pixels"] >= 1000]
+    reference = [results[name] for name in reference_names]
     report = {
+        "command": f"uv run --project ml floodvalue failure --chip {chip_name} --reference {reference_part}",
         "chip": chip_name, "reference_part": reference_part, "threshold": threshold,
         "baseline_threshold_db": baseline.threshold_db,
+        "doubt_threshold": {"map_error_chance_threshold": chance_threshold,
+                            "source": DOUBT_PATH.relative_to(paths.PIPELINE_ROOT).as_posix(),
+                            "source_part": doubt_record["source_part"]},
         "target": results[chip_name],
-        "reference_chips": [name for name in names if results[name]["water_pixels"] >= 1000],
+        "reference_chips": reference_names,
         "reference_recall_by_vh": pooled_recall_by_vh(reference),
+        "reference_doubt": spread_of(reference, "doubt", ("doubtful_share_of_valid_s1", "missed_water_doubtful_share")),
         "reference_per_chip": {name: {key: results[name][key] for key in (
-            "water_pixels", "vh_water_median", "vv_minus_vh_water_median", "fragments", "missed", "found", "texture", "separability")}
+            "water_pixels", "vh_water_median", "vv_minus_vh_water_median", "fragments", "missed", "found", "texture",
+            "separability", "doubt")}
             | {"model_iou": results[name]["model"]["iou"], "baseline_iou": results[name]["baseline"]["iou"]}
             for name in names},
     }

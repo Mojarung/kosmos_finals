@@ -1,0 +1,2419 @@
+{
+  "command": "uv run --project ml floodvalue failure --chip India_747992 --reference test_adjacent",
+  "chip": "India_747992",
+  "reference_part": "test_adjacent",
+  "threshold": 0.41,
+  "baseline_threshold_db": -23.6,
+  "doubt_threshold": {
+    "map_error_chance_threshold": 0.0826,
+    "source": "artifacts/evaluation/doubt_threshold.json",
+    "source_part": "valid"
+  },
+  "target": {
+    "valid_pixels": 262087,
+    "water_pixels": 117322,
+    "water_share": 0.448,
+    "model": {
+      "iou": 0.061,
+      "recall": 0.062,
+      "precision": 0.821,
+      "tp": 7223,
+      "fp": 1572,
+      "fn": 110099
+    },
+    "baseline": {
+      "iou": 0.289,
+      "recall": 0.298,
+      "precision": 0.905,
+      "tp": 34973,
+      "fp": 3651,
+      "fn": 82349
+    },
+    "baseline_threshold_db": -23.6,
+    "vh_water_median": -21.52,
+    "vv_minus_vh_water_median": 8.39,
+    "recall_by_vh": [
+      {
+        "vh_bin": "< -26",
+        "water": 17130,
+        "model_found": 2421,
+        "baseline_found": 17130,
+        "share_of_water": 0.146,
+        "model_recall": 0.141,
+        "baseline_recall": 1.0
+      },
+      {
+        "vh_bin": "-26 .. -23.6",
+        "water": 17843,
+        "model_found": 1700,
+        "baseline_found": 17843,
+        "share_of_water": 0.152,
+        "model_recall": 0.095,
+        "baseline_recall": 1.0
+      },
+      {
+        "vh_bin": "-23.6 .. -21",
+        "water": 30185,
+        "model_found": 2025,
+        "baseline_found": 0,
+        "share_of_water": 0.257,
+        "model_recall": 0.067,
+        "baseline_recall": 0.0
+      },
+      {
+        "vh_bin": ">= -21",
+        "water": 52164,
+        "model_found": 1077,
+        "baseline_found": 0,
+        "share_of_water": 0.445,
+        "model_recall": 0.021,
+        "baseline_recall": 0.0
+      }
+    ],
+    "fragments": {
+      "components": 775,
+      "largest_component_px": 50199,
+      "share_in_components_below_100px": 0.056,
+      "share_within_3px_of_land": 0.386
+    },
+    "missed": {
+      "pixels": 110099,
+      "vh_median": -21.33,
+      "member_std_mean": 0.112,
+      "baseline_catches_share": 0.28,
+      "p_median": 0.069
+    },
+    "found": {
+      "pixels": 7223,
+      "vh_median": -24.2,
+      "member_std_mean": 0.232
+    },
+    "permanent_water_share": 0.0,
+    "separability": {
+      "auc_vh": 0.849,
+      "auc_p": 0.708
+    },
+    "texture": {
+      "window_px": 5,
+      "water_local_std_median": 2.67,
+      "found_local_std_median": 3.57,
+      "missed_local_std_median": 2.62,
+      "dry_darker_than_-26_share": 0.008
+    },
+    "doubt": {
+      "chance_threshold": 0.0826,
+      "valid_s1_pixels": 262144,
+      "doubtful_pixels": 86244,
+      "doubtful_share_of_valid_s1": 0.329,
+      "missed_water_doubtful_share": 0.44,
+      "false_alarm_doubtful_share": 0.996,
+      "found_water_doubtful_share": 0.967
+    },
+    "label_shift": {
+      "rule": "label moved dy rows down and dx columns right, vacated pixels -1; masks fixed; IoU on finite S1 and label != -1 of the moved label",
+      "shifts_px": [
+        -16,
+        -14,
+        -12,
+        -10,
+        -8,
+        -6,
+        -4,
+        -2,
+        0,
+        2,
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16
+      ],
+      "model_iou": [
+        [
+          0.0379,
+          0.0383,
+          0.0387,
+          0.0391,
+          0.0392,
+          0.0392,
+          0.0393,
+          0.0391,
+          0.0385,
+          0.0381,
+          0.0375,
+          0.0374,
+          0.0371,
+          0.0365,
+          0.0355,
+          0.0341,
+          0.0331
+        ],
+        [
+          0.0376,
+          0.0383,
+          0.0386,
+          0.0389,
+          0.0387,
+          0.0386,
+          0.0388,
+          0.0387,
+          0.0384,
+          0.0381,
+          0.0374,
+          0.037,
+          0.0364,
+          0.0355,
+          0.0348,
+          0.0341,
+          0.0333
+        ],
+        [
+          0.0378,
+          0.0384,
+          0.0389,
+          0.0391,
+          0.0389,
+          0.0389,
+          0.0389,
+          0.0392,
+          0.039,
+          0.0385,
+          0.0375,
+          0.0367,
+          0.0362,
+          0.0353,
+          0.0346,
+          0.0339,
+          0.0332
+        ],
+        [
+          0.0384,
+          0.0388,
+          0.0395,
+          0.0401,
+          0.0399,
+          0.0397,
+          0.0399,
+          0.0406,
+          0.041,
+          0.0402,
+          0.0389,
+          0.0377,
+          0.0367,
+          0.0356,
+          0.0346,
+          0.0338,
+          0.0331
+        ],
+        [
+          0.039,
+          0.0394,
+          0.0401,
+          0.0408,
+          0.041,
+          0.0411,
+          0.0417,
+          0.043,
+          0.0431,
+          0.042,
+          0.0407,
+          0.0392,
+          0.0378,
+          0.0363,
+          0.0348,
+          0.0337,
+          0.0332
+        ],
+        [
+          0.0398,
+          0.0402,
+          0.041,
+          0.0421,
+          0.0428,
+          0.0434,
+          0.0448,
+          0.0465,
+          0.0467,
+          0.0447,
+          0.0427,
+          0.0406,
+          0.039,
+          0.0372,
+          0.0355,
+          0.0347,
+          0.0341
+        ],
+        [
+          0.0406,
+          0.0414,
+          0.0427,
+          0.0441,
+          0.0452,
+          0.047,
+          0.0497,
+          0.0525,
+          0.0523,
+          0.0489,
+          0.0453,
+          0.0424,
+          0.0398,
+          0.038,
+          0.0365,
+          0.0354,
+          0.0344
+        ],
+        [
+          0.0413,
+          0.0424,
+          0.0442,
+          0.0463,
+          0.048,
+          0.0509,
+          0.0553,
+          0.0593,
+          0.0588,
+          0.0537,
+          0.0479,
+          0.0436,
+          0.0406,
+          0.0385,
+          0.0367,
+          0.0353,
+          0.0339
+        ],
+        [
+          0.0413,
+          0.0429,
+          0.0449,
+          0.0466,
+          0.0486,
+          0.0524,
+          0.0574,
+          0.062,
+          0.0608,
+          0.0544,
+          0.0481,
+          0.0435,
+          0.0405,
+          0.0385,
+          0.0365,
+          0.0349,
+          0.0332
+        ],
+        [
+          0.0407,
+          0.042,
+          0.0435,
+          0.0448,
+          0.0461,
+          0.049,
+          0.0527,
+          0.0558,
+          0.054,
+          0.0491,
+          0.0443,
+          0.0407,
+          0.0385,
+          0.0367,
+          0.0346,
+          0.033,
+          0.0317
+        ],
+        [
+          0.0393,
+          0.04,
+          0.0408,
+          0.0415,
+          0.0425,
+          0.0442,
+          0.0464,
+          0.0477,
+          0.0459,
+          0.0427,
+          0.0399,
+          0.0375,
+          0.0357,
+          0.0341,
+          0.0321,
+          0.0307,
+          0.0297
+        ],
+        [
+          0.0374,
+          0.0376,
+          0.0383,
+          0.0388,
+          0.0393,
+          0.0398,
+          0.0411,
+          0.0417,
+          0.0403,
+          0.0384,
+          0.0368,
+          0.035,
+          0.0333,
+          0.0317,
+          0.0303,
+          0.0293,
+          0.0282
+        ],
+        [
+          0.0349,
+          0.035,
+          0.0356,
+          0.036,
+          0.036,
+          0.0363,
+          0.0369,
+          0.0371,
+          0.036,
+          0.0348,
+          0.0337,
+          0.0327,
+          0.0312,
+          0.0299,
+          0.0287,
+          0.0277,
+          0.0264
+        ],
+        [
+          0.0326,
+          0.0329,
+          0.0332,
+          0.0331,
+          0.0327,
+          0.0326,
+          0.033,
+          0.0333,
+          0.0324,
+          0.0315,
+          0.0309,
+          0.0301,
+          0.0291,
+          0.0282,
+          0.0273,
+          0.0264,
+          0.025
+        ],
+        [
+          0.0311,
+          0.0315,
+          0.0316,
+          0.0315,
+          0.0309,
+          0.0304,
+          0.0302,
+          0.0303,
+          0.0301,
+          0.0296,
+          0.0291,
+          0.0286,
+          0.0279,
+          0.0272,
+          0.0265,
+          0.0257,
+          0.0247
+        ],
+        [
+          0.0297,
+          0.0303,
+          0.0303,
+          0.0303,
+          0.03,
+          0.0293,
+          0.029,
+          0.0287,
+          0.0285,
+          0.0284,
+          0.0282,
+          0.0276,
+          0.0269,
+          0.0262,
+          0.0256,
+          0.0248,
+          0.024
+        ],
+        [
+          0.0286,
+          0.0289,
+          0.0294,
+          0.0297,
+          0.0291,
+          0.0287,
+          0.0281,
+          0.0274,
+          0.0273,
+          0.0274,
+          0.0272,
+          0.0266,
+          0.0259,
+          0.0251,
+          0.0246,
+          0.0242,
+          0.0233
+        ]
+      ],
+      "baseline_iou": [
+        [
+          0.2128,
+          0.2172,
+          0.2207,
+          0.2237,
+          0.2268,
+          0.2293,
+          0.2307,
+          0.2319,
+          0.233,
+          0.2335,
+          0.2336,
+          0.2323,
+          0.2315,
+          0.2301,
+          0.2285,
+          0.2259,
+          0.2228
+        ],
+        [
+          0.2156,
+          0.2197,
+          0.2237,
+          0.2277,
+          0.2308,
+          0.2331,
+          0.2343,
+          0.2353,
+          0.2364,
+          0.2361,
+          0.2357,
+          0.2341,
+          0.2321,
+          0.2302,
+          0.2294,
+          0.2262,
+          0.2232
+        ],
+        [
+          0.2191,
+          0.2237,
+          0.2271,
+          0.231,
+          0.2344,
+          0.2367,
+          0.239,
+          0.2415,
+          0.2417,
+          0.2406,
+          0.2389,
+          0.2365,
+          0.2342,
+          0.2317,
+          0.2299,
+          0.2266,
+          0.2232
+        ],
+        [
+          0.2229,
+          0.2259,
+          0.2289,
+          0.2337,
+          0.2387,
+          0.2419,
+          0.2447,
+          0.2472,
+          0.2476,
+          0.2462,
+          0.2439,
+          0.2409,
+          0.2381,
+          0.2346,
+          0.232,
+          0.2287,
+          0.2252
+        ],
+        [
+          0.2254,
+          0.2296,
+          0.2339,
+          0.2389,
+          0.2433,
+          0.2484,
+          0.2509,
+          0.2533,
+          0.2535,
+          0.2513,
+          0.2484,
+          0.2441,
+          0.2408,
+          0.2372,
+          0.2331,
+          0.2294,
+          0.2256
+        ],
+        [
+          0.2301,
+          0.2347,
+          0.2398,
+          0.2459,
+          0.2506,
+          0.2551,
+          0.2587,
+          0.2616,
+          0.2619,
+          0.258,
+          0.2538,
+          0.2487,
+          0.2442,
+          0.2389,
+          0.2347,
+          0.231,
+          0.2267
+        ],
+        [
+          0.2339,
+          0.2384,
+          0.245,
+          0.2519,
+          0.2585,
+          0.2644,
+          0.2699,
+          0.2745,
+          0.2723,
+          0.2665,
+          0.2596,
+          0.2526,
+          0.247,
+          0.2413,
+          0.2367,
+          0.2316,
+          0.227
+        ],
+        [
+          0.2349,
+          0.2415,
+          0.2485,
+          0.2561,
+          0.2635,
+          0.2721,
+          0.2813,
+          0.2888,
+          0.2859,
+          0.2755,
+          0.2644,
+          0.2556,
+          0.2489,
+          0.242,
+          0.2369,
+          0.2313,
+          0.226
+        ],
+        [
+          0.2351,
+          0.2418,
+          0.2487,
+          0.2567,
+          0.264,
+          0.2735,
+          0.2841,
+          0.2921,
+          0.2891,
+          0.277,
+          0.265,
+          0.2563,
+          0.2493,
+          0.2429,
+          0.2364,
+          0.2302,
+          0.2239
+        ],
+        [
+          0.2344,
+          0.2405,
+          0.2465,
+          0.2538,
+          0.2593,
+          0.2674,
+          0.2741,
+          0.2793,
+          0.2768,
+          0.2684,
+          0.259,
+          0.2519,
+          0.2462,
+          0.2404,
+          0.2344,
+          0.2283,
+          0.2228
+        ],
+        [
+          0.2323,
+          0.2376,
+          0.2431,
+          0.2485,
+          0.2531,
+          0.2588,
+          0.2628,
+          0.2648,
+          0.2623,
+          0.2566,
+          0.2499,
+          0.2455,
+          0.2417,
+          0.2365,
+          0.232,
+          0.2259,
+          0.2206
+        ],
+        [
+          0.2302,
+          0.2347,
+          0.2393,
+          0.2439,
+          0.2481,
+          0.2507,
+          0.2531,
+          0.2542,
+          0.2527,
+          0.249,
+          0.2443,
+          0.2405,
+          0.2368,
+          0.2317,
+          0.2274,
+          0.2222,
+          0.2176
+        ],
+        [
+          0.2285,
+          0.2318,
+          0.2356,
+          0.2401,
+          0.243,
+          0.2448,
+          0.2466,
+          0.2466,
+          0.246,
+          0.2432,
+          0.2399,
+          0.2363,
+          0.2325,
+          0.2272,
+          0.2227,
+          0.2189,
+          0.2138
+        ],
+        [
+          0.2278,
+          0.2306,
+          0.2328,
+          0.2363,
+          0.2383,
+          0.2401,
+          0.2415,
+          0.2408,
+          0.2398,
+          0.2377,
+          0.2353,
+          0.2326,
+          0.2291,
+          0.2247,
+          0.2209,
+          0.216,
+          0.2112
+        ],
+        [
+          0.2269,
+          0.2308,
+          0.2322,
+          0.2348,
+          0.2368,
+          0.237,
+          0.2371,
+          0.237,
+          0.2361,
+          0.2344,
+          0.2318,
+          0.2285,
+          0.2243,
+          0.2207,
+          0.2179,
+          0.213,
+          0.2092
+        ],
+        [
+          0.2277,
+          0.2303,
+          0.2308,
+          0.2324,
+          0.2344,
+          0.2348,
+          0.2343,
+          0.2342,
+          0.2331,
+          0.2312,
+          0.2279,
+          0.2242,
+          0.2202,
+          0.2178,
+          0.2152,
+          0.2116,
+          0.208
+        ],
+        [
+          0.2274,
+          0.2294,
+          0.2302,
+          0.2316,
+          0.2333,
+          0.2335,
+          0.232,
+          0.2307,
+          0.2298,
+          0.2278,
+          0.2245,
+          0.2208,
+          0.2177,
+          0.2146,
+          0.2122,
+          0.2091,
+          0.2057
+        ]
+      ],
+      "zero_shift": {
+        "model": 0.0608,
+        "baseline": 0.2891
+      },
+      "best": {
+        "model": {
+          "dy": 0,
+          "dx": -2,
+          "iou": 0.062,
+          "gain_vs_zero_shift": 0.0012
+        },
+        "baseline": {
+          "dy": 0,
+          "dx": -2,
+          "iou": 0.2921,
+          "gain_vs_zero_shift": 0.003
+        }
+      }
+    }
+  },
+  "reference_chips": [
+    "Ghana_359826",
+    "Ghana_319168",
+    "Ghana_141271",
+    "Mekong_1443339",
+    "Mekong_382276",
+    "Mekong_424793",
+    "Nigeria_225131",
+    "Pakistan_70625",
+    "Paraguay_280900",
+    "Paraguay_790830",
+    "Paraguay_1029191",
+    "Paraguay_59731",
+    "Paraguay_683296",
+    "Paraguay_511199",
+    "Paraguay_651904",
+    "Somalia_94102",
+    "Spain_7558720",
+    "Spain_5650136",
+    "Spain_7370579",
+    "Spain_6095801",
+    "Spain_7387658",
+    "Sri-Lanka_117737",
+    "Sri-Lanka_649970",
+    "Sri-Lanka_849649",
+    "USA_905409",
+    "USA_430764",
+    "USA_527077",
+    "USA_933610",
+    "USA_595451",
+    "USA_670826"
+  ],
+  "reference_recall_by_vh": [
+    {
+      "vh_bin": "< -26",
+      "water": 505230,
+      "model_found": 499036,
+      "baseline_found": 505230,
+      "share_of_water": 0.578,
+      "model_recall": 0.988,
+      "baseline_recall": 1.0
+    },
+    {
+      "vh_bin": "-26 .. -23.6",
+      "water": 112733,
+      "model_found": 102669,
+      "baseline_found": 112733,
+      "share_of_water": 0.129,
+      "model_recall": 0.911,
+      "baseline_recall": 1.0
+    },
+    {
+      "vh_bin": "-23.6 .. -21",
+      "water": 95427,
+      "model_found": 72987,
+      "baseline_found": 0,
+      "share_of_water": 0.109,
+      "model_recall": 0.765,
+      "baseline_recall": 0.0
+    },
+    {
+      "vh_bin": ">= -21",
+      "water": 161099,
+      "model_found": 74975,
+      "baseline_found": 0,
+      "share_of_water": 0.184,
+      "model_recall": 0.465,
+      "baseline_recall": 0.0
+    }
+  ],
+  "reference_doubt": {
+    "doubtful_share_of_valid_s1": {
+      "chips": 30,
+      "median": 0.043,
+      "min": 0.001,
+      "max": 0.406
+    },
+    "missed_water_doubtful_share": {
+      "chips": 30,
+      "median": 0.622,
+      "min": 0.081,
+      "max": 0.964
+    }
+  },
+  "reference_per_chip": {
+    "Ghana_359826": {
+      "water_pixels": 3496,
+      "vh_water_median": -21.09,
+      "vv_minus_vh_water_median": 8.12,
+      "fragments": {
+        "components": 112,
+        "largest_component_px": 1509,
+        "share_in_components_below_100px": 0.235,
+        "share_within_3px_of_land": 0.829
+      },
+      "missed": {
+        "pixels": 1922,
+        "vh_median": -18.89,
+        "member_std_mean": 0.046,
+        "baseline_catches_share": 0.11,
+        "p_median": 0.022
+      },
+      "found": {
+        "pixels": 1574,
+        "vh_median": -24.52,
+        "member_std_mean": 0.058
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.07,
+        "found_local_std_median": 4.36,
+        "missed_local_std_median": 2.31,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.853,
+        "auc_p": 0.93
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 2618,
+        "doubtful_share_of_valid_s1": 0.01,
+        "missed_water_doubtful_share": 0.217,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.567
+      },
+      "model_iou": 0.411,
+      "baseline_iou": 0.26
+    },
+    "Ghana_319168": {
+      "water_pixels": 39521,
+      "vh_water_median": -22.06,
+      "vv_minus_vh_water_median": 8.05,
+      "fragments": {
+        "components": 35,
+        "largest_component_px": 28103,
+        "share_in_components_below_100px": 0.007,
+        "share_within_3px_of_land": 0.293
+      },
+      "missed": {
+        "pixels": 19102,
+        "vh_median": -20.46,
+        "member_std_mean": 0.21,
+        "baseline_catches_share": 0.178,
+        "p_median": 0.201
+      },
+      "found": {
+        "pixels": 20419,
+        "vh_median": -23.92,
+        "member_std_mean": 0.235
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.45,
+        "found_local_std_median": 2.73,
+        "missed_local_std_median": 2.2,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.937,
+        "auc_p": 0.983
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 62569,
+        "doubtful_share_of_valid_s1": 0.239,
+        "missed_water_doubtful_share": 0.812,
+        "false_alarm_doubtful_share": 0.935,
+        "found_water_doubtful_share": 0.917
+      },
+      "model_iou": 0.493,
+      "baseline_iou": 0.354
+    },
+    "Ghana_141271": {
+      "water_pixels": 1636,
+      "vh_water_median": -16.85,
+      "vv_minus_vh_water_median": 6.59,
+      "fragments": {
+        "components": 1,
+        "largest_component_px": 1636,
+        "share_in_components_below_100px": 0.0,
+        "share_within_3px_of_land": 0.998
+      },
+      "missed": {
+        "pixels": 1636,
+        "vh_median": -16.85,
+        "member_std_mean": 0.018,
+        "baseline_catches_share": 0.019,
+        "p_median": 0.016
+      },
+      "found": {
+        "pixels": 0,
+        "vh_median": null,
+        "member_std_mean": null
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.05,
+        "found_local_std_median": null,
+        "missed_local_std_median": 2.05,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.608,
+        "auc_p": 0.875
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 226,
+        "doubtful_share_of_valid_s1": 0.001,
+        "missed_water_doubtful_share": 0.081,
+        "false_alarm_doubtful_share": null,
+        "found_water_doubtful_share": null
+      },
+      "model_iou": 0.0,
+      "baseline_iou": 0.015
+    },
+    "India_631692": {
+      "water_pixels": 802,
+      "vh_water_median": -17.8,
+      "vv_minus_vh_water_median": 5.67,
+      "fragments": {
+        "components": 3,
+        "largest_component_px": 537,
+        "share_in_components_below_100px": 0.056,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 520,
+        "vh_median": -16.85,
+        "member_std_mean": 0.062,
+        "baseline_catches_share": 0.0,
+        "p_median": 0.135
+      },
+      "found": {
+        "pixels": 282,
+        "vh_median": -19.78,
+        "member_std_mean": 0.105
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.49,
+        "found_local_std_median": 2.89,
+        "missed_local_std_median": 2.29,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.863,
+        "auc_p": 0.996
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 1764,
+        "doubtful_share_of_valid_s1": 0.007,
+        "missed_water_doubtful_share": 0.696,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.993
+      },
+      "model_iou": 0.289,
+      "baseline_iou": 0.019
+    },
+    "Mekong_45934": {
+      "water_pixels": 296,
+      "vh_water_median": -19.46,
+      "vv_minus_vh_water_median": 8.01,
+      "fragments": {
+        "components": 24,
+        "largest_component_px": 69,
+        "share_in_components_below_100px": 1.0,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 207,
+        "vh_median": -18.62,
+        "member_std_mean": 0.033,
+        "baseline_catches_share": 0.024,
+        "p_median": 0.085
+      },
+      "found": {
+        "pixels": 89,
+        "vh_median": -21.21,
+        "member_std_mean": 0.082
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.23,
+        "found_local_std_median": 2.54,
+        "missed_local_std_median": 2.14,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.941,
+        "auc_p": 0.995
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 1129,
+        "doubtful_share_of_valid_s1": 0.004,
+        "missed_water_doubtful_share": 0.507,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 1.0
+      },
+      "model_iou": 0.251,
+      "baseline_iou": 0.072
+    },
+    "Mekong_1443339": {
+      "water_pixels": 192783,
+      "vh_water_median": -28.47,
+      "vv_minus_vh_water_median": 7.56,
+      "fragments": {
+        "components": 224,
+        "largest_component_px": 188650,
+        "share_in_components_below_100px": 0.007,
+        "share_within_3px_of_land": 0.224
+      },
+      "missed": {
+        "pixels": 5326,
+        "vh_median": -15.13,
+        "member_std_mean": 0.122,
+        "baseline_catches_share": 0.001,
+        "p_median": 0.2
+      },
+      "found": {
+        "pixels": 187457,
+        "vh_median": -28.62,
+        "member_std_mean": 0.013
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.62,
+        "found_local_std_median": 3.65,
+        "missed_local_std_median": 2.28,
+        "dry_darker_than_-26_share": 0.003
+      },
+      "separability": {
+        "auc_vh": 0.965,
+        "auc_p": 0.983
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 55375,
+        "doubtful_share_of_valid_s1": 0.211,
+        "missed_water_doubtful_share": 0.775,
+        "false_alarm_doubtful_share": 0.899,
+        "found_water_doubtful_share": 0.118
+      },
+      "model_iou": 0.916,
+      "baseline_iou": 0.769
+    },
+    "Mekong_382276": {
+      "water_pixels": 9808,
+      "vh_water_median": -25.68,
+      "vv_minus_vh_water_median": 5.9,
+      "fragments": {
+        "components": 6,
+        "largest_component_px": 9048,
+        "share_in_components_below_100px": 0.004,
+        "share_within_3px_of_land": 0.353
+      },
+      "missed": {
+        "pixels": 42,
+        "vh_median": -17.08,
+        "member_std_mean": 0.081,
+        "baseline_catches_share": 0.0,
+        "p_median": 0.304
+      },
+      "found": {
+        "pixels": 9766,
+        "vh_median": -25.7,
+        "member_std_mean": 0.009
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.97,
+        "found_local_std_median": 2.97,
+        "missed_local_std_median": 2.78,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.993,
+        "auc_p": 1.0
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 2440,
+        "doubtful_share_of_valid_s1": 0.009,
+        "missed_water_doubtful_share": 0.905,
+        "false_alarm_doubtful_share": 0.747,
+        "found_water_doubtful_share": 0.107
+      },
+      "model_iou": 0.917,
+      "baseline_iou": 0.683
+    },
+    "Mekong_424793": {
+      "water_pixels": 4003,
+      "vh_water_median": -21.73,
+      "vv_minus_vh_water_median": 6.44,
+      "fragments": {
+        "components": 99,
+        "largest_component_px": 2244,
+        "share_in_components_below_100px": 0.21,
+        "share_within_3px_of_land": 0.85
+      },
+      "missed": {
+        "pixels": 747,
+        "vh_median": -18.53,
+        "member_std_mean": 0.142,
+        "baseline_catches_share": 0.016,
+        "p_median": 0.243
+      },
+      "found": {
+        "pixels": 3256,
+        "vh_median": -22.66,
+        "member_std_mean": 0.044
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.61,
+        "found_local_std_median": 2.78,
+        "missed_local_std_median": 2.11,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.96,
+        "auc_p": 0.992
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 14001,
+        "doubtful_share_of_valid_s1": 0.053,
+        "missed_water_doubtful_share": 0.854,
+        "false_alarm_doubtful_share": 0.873,
+        "found_water_doubtful_share": 0.431
+      },
+      "model_iou": 0.458,
+      "baseline_iou": 0.305
+    },
+    "Nigeria_225131": {
+      "water_pixels": 1131,
+      "vh_water_median": -18.35,
+      "vv_minus_vh_water_median": 6.47,
+      "fragments": {
+        "components": 72,
+        "largest_component_px": 348,
+        "share_in_components_below_100px": 0.575,
+        "share_within_3px_of_land": 0.981
+      },
+      "missed": {
+        "pixels": 1007,
+        "vh_median": -18.0,
+        "member_std_mean": 0.044,
+        "baseline_catches_share": 0.023,
+        "p_median": 0.033
+      },
+      "found": {
+        "pixels": 124,
+        "vh_median": -22.56,
+        "member_std_mean": 0.221
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.18,
+        "found_local_std_median": 2.69,
+        "missed_local_std_median": 2.11,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.798,
+        "auc_p": 0.982
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 597,
+        "doubtful_share_of_valid_s1": 0.002,
+        "missed_water_doubtful_share": 0.258,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 1.0
+      },
+      "model_iou": 0.107,
+      "baseline_iou": 0.048
+    },
+    "Pakistan_70625": {
+      "water_pixels": 4667,
+      "vh_water_median": -23.45,
+      "vv_minus_vh_water_median": 8.54,
+      "fragments": {
+        "components": 4,
+        "largest_component_px": 2595,
+        "share_in_components_below_100px": 0.0,
+        "share_within_3px_of_land": 0.804
+      },
+      "missed": {
+        "pixels": 4659,
+        "vh_median": -23.44,
+        "member_std_mean": 0.077,
+        "baseline_catches_share": 0.484,
+        "p_median": 0.045
+      },
+      "found": {
+        "pixels": 8,
+        "vh_median": -35.98,
+        "member_std_mean": 0.225
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.1,
+        "found_local_std_median": 7.11,
+        "missed_local_std_median": 3.1,
+        "dry_darker_than_-26_share": 0.076
+      },
+      "separability": {
+        "auc_vh": 0.776,
+        "auc_p": 0.904
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 6317,
+        "doubtful_share_of_valid_s1": 0.024,
+        "missed_water_doubtful_share": 0.301,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 1.0
+      },
+      "model_iou": 0.002,
+      "baseline_iou": 0.053
+    },
+    "Paraguay_280900": {
+      "water_pixels": 6585,
+      "vh_water_median": -20.94,
+      "vv_minus_vh_water_median": 6.12,
+      "fragments": {
+        "components": 97,
+        "largest_component_px": 5095,
+        "share_in_components_below_100px": 0.142,
+        "share_within_3px_of_land": 0.983
+      },
+      "missed": {
+        "pixels": 1966,
+        "vh_median": -17.38,
+        "member_std_mean": 0.062,
+        "baseline_catches_share": 0.03,
+        "p_median": 0.045
+      },
+      "found": {
+        "pixels": 4619,
+        "vh_median": -22.54,
+        "member_std_mean": 0.039
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.46,
+        "found_local_std_median": 3.82,
+        "missed_local_std_median": 2.22,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.836,
+        "auc_p": 0.966
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 8193,
+        "doubtful_share_of_valid_s1": 0.031,
+        "missed_water_doubtful_share": 0.36,
+        "false_alarm_doubtful_share": 0.99,
+        "found_water_doubtful_share": 0.605
+      },
+      "model_iou": 0.612,
+      "baseline_iou": 0.196
+    },
+    "Paraguay_790830": {
+      "water_pixels": 31947,
+      "vh_water_median": -28.58,
+      "vv_minus_vh_water_median": 6.5,
+      "fragments": {
+        "components": 18,
+        "largest_component_px": 30762,
+        "share_in_components_below_100px": 0.004,
+        "share_within_3px_of_land": 0.177
+      },
+      "missed": {
+        "pixels": 812,
+        "vh_median": -17.8,
+        "member_std_mean": 0.068,
+        "baseline_catches_share": 0.012,
+        "p_median": 0.074
+      },
+      "found": {
+        "pixels": 31135,
+        "vh_median": -28.68,
+        "member_std_mean": 0.005
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.11,
+        "found_local_std_median": 3.13,
+        "missed_local_std_median": 2.61,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.991,
+        "auc_p": 0.999
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 8001,
+        "doubtful_share_of_valid_s1": 0.031,
+        "missed_water_doubtful_share": 0.456,
+        "false_alarm_doubtful_share": 0.961,
+        "found_water_doubtful_share": 0.054
+      },
+      "model_iou": 0.915,
+      "baseline_iou": 0.906
+    },
+    "Paraguay_1029191": {
+      "water_pixels": 50336,
+      "vh_water_median": -27.96,
+      "vv_minus_vh_water_median": 5.68,
+      "fragments": {
+        "components": 34,
+        "largest_component_px": 38125,
+        "share_in_components_below_100px": 0.011,
+        "share_within_3px_of_land": 0.241
+      },
+      "missed": {
+        "pixels": 1115,
+        "vh_median": -16.37,
+        "member_std_mean": 0.104,
+        "baseline_catches_share": 0.004,
+        "p_median": 0.136
+      },
+      "found": {
+        "pixels": 49221,
+        "vh_median": -28.05,
+        "member_std_mean": 0.008
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.95,
+        "found_local_std_median": 2.96,
+        "missed_local_std_median": 2.31,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.988,
+        "auc_p": 0.997
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 14893,
+        "doubtful_share_of_valid_s1": 0.057,
+        "missed_water_doubtful_share": 0.603,
+        "false_alarm_doubtful_share": 0.891,
+        "found_water_doubtful_share": 0.073
+      },
+      "model_iou": 0.895,
+      "baseline_iou": 0.875
+    },
+    "Paraguay_59731": {
+      "water_pixels": 2770,
+      "vh_water_median": -27.26,
+      "vv_minus_vh_water_median": 5.55,
+      "fragments": {
+        "components": 14,
+        "largest_component_px": 810,
+        "share_in_components_below_100px": 0.055,
+        "share_within_3px_of_land": 0.553
+      },
+      "missed": {
+        "pixels": 57,
+        "vh_median": -17.8,
+        "member_std_mean": 0.115,
+        "baseline_catches_share": 0.035,
+        "p_median": 0.214
+      },
+      "found": {
+        "pixels": 2713,
+        "vh_median": -27.36,
+        "member_std_mean": 0.016
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.99,
+        "found_local_std_median": 2.99,
+        "missed_local_std_median": 3.09,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.99,
+        "auc_p": 0.998
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 3048,
+        "doubtful_share_of_valid_s1": 0.012,
+        "missed_water_doubtful_share": 0.772,
+        "false_alarm_doubtful_share": 0.487,
+        "found_water_doubtful_share": 0.158
+      },
+      "model_iou": 0.657,
+      "baseline_iou": 0.627
+    },
+    "Paraguay_683296": {
+      "water_pixels": 7409,
+      "vh_water_median": -26.8,
+      "vv_minus_vh_water_median": 5.6,
+      "fragments": {
+        "components": 49,
+        "largest_component_px": 5132,
+        "share_in_components_below_100px": 0.063,
+        "share_within_3px_of_land": 0.449
+      },
+      "missed": {
+        "pixels": 1684,
+        "vh_median": -17.46,
+        "member_std_mean": 0.033,
+        "baseline_catches_share": 0.074,
+        "p_median": 0.01
+      },
+      "found": {
+        "pixels": 5725,
+        "vh_median": -27.85,
+        "member_std_mean": 0.009
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.82,
+        "found_local_std_median": 3.07,
+        "missed_local_std_median": 2.14,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.917,
+        "auc_p": 0.963
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 3154,
+        "doubtful_share_of_valid_s1": 0.012,
+        "missed_water_doubtful_share": 0.251,
+        "false_alarm_doubtful_share": 0.936,
+        "found_water_doubtful_share": 0.074
+      },
+      "model_iou": 0.698,
+      "baseline_iou": 0.679
+    },
+    "Paraguay_511199": {
+      "water_pixels": 11544,
+      "vh_water_median": -21.86,
+      "vv_minus_vh_water_median": 9.08,
+      "fragments": {
+        "components": 217,
+        "largest_component_px": 1701,
+        "share_in_components_below_100px": 0.176,
+        "share_within_3px_of_land": 0.824
+      },
+      "missed": {
+        "pixels": 4554,
+        "vh_median": -18.8,
+        "member_std_mean": 0.131,
+        "baseline_catches_share": 0.062,
+        "p_median": 0.179
+      },
+      "found": {
+        "pixels": 6990,
+        "vh_median": -23.26,
+        "member_std_mean": 0.171
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.15,
+        "found_local_std_median": 2.18,
+        "missed_local_std_median": 2.11,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.888,
+        "auc_p": 0.967
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 36912,
+        "doubtful_share_of_valid_s1": 0.141,
+        "missed_water_doubtful_share": 0.71,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.97
+      },
+      "model_iou": 0.469,
+      "baseline_iou": 0.263
+    },
+    "Paraguay_80102": {
+      "water_pixels": 22,
+      "vh_water_median": -18.27,
+      "vv_minus_vh_water_median": 5.16,
+      "fragments": {
+        "components": 4,
+        "largest_component_px": 9,
+        "share_in_components_below_100px": 1.0,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 22,
+        "vh_median": -18.27,
+        "member_std_mean": 0.017,
+        "baseline_catches_share": 0.045,
+        "p_median": 0.02
+      },
+      "found": {
+        "pixels": 0,
+        "vh_median": null,
+        "member_std_mean": null
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.81,
+        "found_local_std_median": null,
+        "missed_local_std_median": 2.81,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.792,
+        "auc_p": 0.979
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 100,
+        "doubtful_share_of_valid_s1": 0.0,
+        "missed_water_doubtful_share": 0.0,
+        "false_alarm_doubtful_share": null,
+        "found_water_doubtful_share": null
+      },
+      "model_iou": 0.0,
+      "baseline_iou": 0.001
+    },
+    "Paraguay_651904": {
+      "water_pixels": 27156,
+      "vh_water_median": -27.4,
+      "vv_minus_vh_water_median": 7.51,
+      "fragments": {
+        "components": 36,
+        "largest_component_px": 20530,
+        "share_in_components_below_100px": 0.008,
+        "share_within_3px_of_land": 0.234
+      },
+      "missed": {
+        "pixels": 2769,
+        "vh_median": -19.62,
+        "member_std_mean": 0.101,
+        "baseline_catches_share": 0.077,
+        "p_median": 0.256
+      },
+      "found": {
+        "pixels": 24387,
+        "vh_median": -28.13,
+        "member_std_mean": 0.029
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 4.85,
+        "found_local_std_median": 5.13,
+        "missed_local_std_median": 2.2,
+        "dry_darker_than_-26_share": 0.006
+      },
+      "separability": {
+        "auc_vh": 0.973,
+        "auc_p": 0.993
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 28359,
+        "doubtful_share_of_valid_s1": 0.108,
+        "missed_water_doubtful_share": 0.964,
+        "false_alarm_doubtful_share": 0.839,
+        "found_water_doubtful_share": 0.192
+      },
+      "model_iou": 0.769,
+      "baseline_iou": 0.68
+    },
+    "Somalia_94102": {
+      "water_pixels": 12694,
+      "vh_water_median": -22.24,
+      "vv_minus_vh_water_median": 5.67,
+      "fragments": {
+        "components": 24,
+        "largest_component_px": 12355,
+        "share_in_components_below_100px": 0.005,
+        "share_within_3px_of_land": 0.397
+      },
+      "missed": {
+        "pixels": 3397,
+        "vh_median": -19.81,
+        "member_std_mean": 0.249,
+        "baseline_catches_share": 0.197,
+        "p_median": 0.156
+      },
+      "found": {
+        "pixels": 9297,
+        "vh_median": -23.22,
+        "member_std_mean": 0.11
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.97,
+        "found_local_std_median": 3.2,
+        "missed_local_std_median": 2.39,
+        "dry_darker_than_-26_share": 0.011
+      },
+      "separability": {
+        "auc_vh": 0.811,
+        "auc_p": 0.997
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 11145,
+        "doubtful_share_of_valid_s1": 0.043,
+        "missed_water_doubtful_share": 0.748,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.672
+      },
+      "model_iou": 0.703,
+      "baseline_iou": 0.236
+    },
+    "Spain_6860600": {
+      "water_pixels": 246,
+      "vh_water_median": -22.23,
+      "vv_minus_vh_water_median": 7.03,
+      "fragments": {
+        "components": 15,
+        "largest_component_px": 39,
+        "share_in_components_below_100px": 1.0,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 184,
+        "vh_median": -20.83,
+        "member_std_mean": 0.086,
+        "baseline_catches_share": 0.234,
+        "p_median": 0.048
+      },
+      "found": {
+        "pixels": 62,
+        "vh_median": -26.7,
+        "member_std_mean": 0.197
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.62,
+        "found_local_std_median": 4.13,
+        "missed_local_std_median": 3.29,
+        "dry_darker_than_-26_share": 0.005
+      },
+      "separability": {
+        "auc_vh": 0.793,
+        "auc_p": 0.947
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 372,
+        "doubtful_share_of_valid_s1": 0.001,
+        "missed_water_doubtful_share": 0.38,
+        "false_alarm_doubtful_share": 0.984,
+        "found_water_doubtful_share": 0.935
+      },
+      "model_iou": 0.201,
+      "baseline_iou": 0.017
+    },
+    "Spain_7558720": {
+      "water_pixels": 2137,
+      "vh_water_median": -20.9,
+      "vv_minus_vh_water_median": 6.82,
+      "fragments": {
+        "components": 147,
+        "largest_component_px": 370,
+        "share_in_components_below_100px": 0.588,
+        "share_within_3px_of_land": 0.954
+      },
+      "missed": {
+        "pixels": 1487,
+        "vh_median": -19.58,
+        "member_std_mean": 0.09,
+        "baseline_catches_share": 0.164,
+        "p_median": 0.08
+      },
+      "found": {
+        "pixels": 650,
+        "vh_median": -23.14,
+        "member_std_mean": 0.168
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.01,
+        "found_local_std_median": 3.51,
+        "missed_local_std_median": 2.77,
+        "dry_darker_than_-26_share": 0.013
+      },
+      "separability": {
+        "auc_vh": 0.819,
+        "auc_p": 0.93
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 11567,
+        "doubtful_share_of_valid_s1": 0.044,
+        "missed_water_doubtful_share": 0.491,
+        "false_alarm_doubtful_share": 0.951,
+        "found_water_doubtful_share": 1.0
+      },
+      "model_iou": 0.148,
+      "baseline_iou": 0.05
+    },
+    "Spain_5650136": {
+      "water_pixels": 104207,
+      "vh_water_median": -30.58,
+      "vv_minus_vh_water_median": 7.74,
+      "fragments": {
+        "components": 182,
+        "largest_component_px": 69842,
+        "share_in_components_below_100px": 0.013,
+        "share_within_3px_of_land": 0.219
+      },
+      "missed": {
+        "pixels": 2903,
+        "vh_median": -19.69,
+        "member_std_mean": 0.148,
+        "baseline_catches_share": 0.076,
+        "p_median": 0.222
+      },
+      "found": {
+        "pixels": 101304,
+        "vh_median": -30.76,
+        "member_std_mean": 0.015
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 4.44,
+        "found_local_std_median": 4.49,
+        "missed_local_std_median": 2.19,
+        "dry_darker_than_-26_share": 0.025
+      },
+      "separability": {
+        "auc_vh": 0.965,
+        "auc_p": 0.983
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 32167,
+        "doubtful_share_of_valid_s1": 0.123,
+        "missed_water_doubtful_share": 0.772,
+        "false_alarm_doubtful_share": 0.801,
+        "found_water_doubtful_share": 0.096
+      },
+      "model_iou": 0.887,
+      "baseline_iou": 0.853
+    },
+    "Spain_7370579": {
+      "water_pixels": 70035,
+      "vh_water_median": -25.16,
+      "vv_minus_vh_water_median": 7.68,
+      "fragments": {
+        "components": 571,
+        "largest_component_px": 18597,
+        "share_in_components_below_100px": 0.073,
+        "share_within_3px_of_land": 0.562
+      },
+      "missed": {
+        "pixels": 20807,
+        "vh_median": -19.71,
+        "member_std_mean": 0.1,
+        "baseline_catches_share": 0.184,
+        "p_median": 0.08
+      },
+      "found": {
+        "pixels": 49228,
+        "vh_median": -26.95,
+        "member_std_mean": 0.073
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.42,
+        "found_local_std_median": 3.77,
+        "missed_local_std_median": 2.71,
+        "dry_darker_than_-26_share": 0.02
+      },
+      "separability": {
+        "auc_vh": 0.887,
+        "auc_p": 0.921
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 67324,
+        "doubtful_share_of_valid_s1": 0.257,
+        "missed_water_doubtful_share": 0.492,
+        "false_alarm_doubtful_share": 0.888,
+        "found_water_doubtful_share": 0.542
+      },
+      "model_iou": 0.603,
+      "baseline_iou": 0.532
+    },
+    "Spain_6095801": {
+      "water_pixels": 22736,
+      "vh_water_median": -22.48,
+      "vv_minus_vh_water_median": 6.78,
+      "fragments": {
+        "components": 379,
+        "largest_component_px": 3414,
+        "share_in_components_below_100px": 0.133,
+        "share_within_3px_of_land": 0.733
+      },
+      "missed": {
+        "pixels": 9920,
+        "vh_median": -18.75,
+        "member_std_mean": 0.077,
+        "baseline_catches_share": 0.095,
+        "p_median": 0.085
+      },
+      "found": {
+        "pixels": 12816,
+        "vh_median": -25.02,
+        "member_std_mean": 0.088
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.89,
+        "found_local_std_median": 3.25,
+        "missed_local_std_median": 2.44,
+        "dry_darker_than_-26_share": 0.024
+      },
+      "separability": {
+        "auc_vh": 0.829,
+        "auc_p": 0.906
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 46328,
+        "doubtful_share_of_valid_s1": 0.177,
+        "missed_water_doubtful_share": 0.509,
+        "false_alarm_doubtful_share": 0.908,
+        "found_water_doubtful_share": 0.81
+      },
+      "model_iou": 0.373,
+      "baseline_iou": 0.262
+    },
+    "Spain_7387658": {
+      "water_pixels": 153006,
+      "vh_water_median": -27.15,
+      "vv_minus_vh_water_median": 8.56,
+      "fragments": {
+        "components": 665,
+        "largest_component_px": 82337,
+        "share_in_components_below_100px": 0.023,
+        "share_within_3px_of_land": 0.41
+      },
+      "missed": {
+        "pixels": 11876,
+        "vh_median": -18.05,
+        "member_std_mean": 0.087,
+        "baseline_catches_share": 0.036,
+        "p_median": 0.185
+      },
+      "found": {
+        "pixels": 141130,
+        "vh_median": -27.66,
+        "member_std_mean": 0.022
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.91,
+        "found_local_std_median": 4.02,
+        "missed_local_std_median": 2.43,
+        "dry_darker_than_-26_share": 0.03
+      },
+      "separability": {
+        "auc_vh": 0.908,
+        "auc_p": 0.939
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 106432,
+        "doubtful_share_of_valid_s1": 0.406,
+        "missed_water_doubtful_share": 0.767,
+        "false_alarm_doubtful_share": 0.893,
+        "found_water_doubtful_share": 0.289
+      },
+      "model_iou": 0.786,
+      "baseline_iou": 0.693
+    },
+    "Sri-Lanka_117737": {
+      "water_pixels": 6731,
+      "vh_water_median": -21.52,
+      "vv_minus_vh_water_median": 8.77,
+      "fragments": {
+        "components": 225,
+        "largest_component_px": 1837,
+        "share_in_components_below_100px": 0.459,
+        "share_within_3px_of_land": 0.889
+      },
+      "missed": {
+        "pixels": 4309,
+        "vh_median": -20.18,
+        "member_std_mean": 0.105,
+        "baseline_catches_share": 0.108,
+        "p_median": 0.152
+      },
+      "found": {
+        "pixels": 2422,
+        "vh_median": -23.98,
+        "member_std_mean": 0.146
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.32,
+        "found_local_std_median": 2.38,
+        "missed_local_std_median": 2.29,
+        "dry_darker_than_-26_share": 0.01
+      },
+      "separability": {
+        "auc_vh": 0.864,
+        "auc_p": 0.886
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 56164,
+        "doubtful_share_of_valid_s1": 0.214,
+        "missed_water_doubtful_share": 0.762,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.994
+      },
+      "model_iou": 0.103,
+      "baseline_iou": 0.111
+    },
+    "Sri-Lanka_649970": {
+      "water_pixels": 17343,
+      "vh_water_median": -20.24,
+      "vv_minus_vh_water_median": 8.36,
+      "fragments": {
+        "components": 480,
+        "largest_component_px": 1145,
+        "share_in_components_below_100px": 0.422,
+        "share_within_3px_of_land": 0.853
+      },
+      "missed": {
+        "pixels": 6499,
+        "vh_median": -18.2,
+        "member_std_mean": 0.107,
+        "baseline_catches_share": 0.013,
+        "p_median": 0.19
+      },
+      "found": {
+        "pixels": 10844,
+        "vh_median": -21.54,
+        "member_std_mean": 0.11
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.11,
+        "found_local_std_median": 2.15,
+        "missed_local_std_median": 2.06,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.889,
+        "auc_p": 0.919
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 66533,
+        "doubtful_share_of_valid_s1": 0.254,
+        "missed_water_doubtful_share": 0.817,
+        "false_alarm_doubtful_share": 0.994,
+        "found_water_doubtful_share": 0.882
+      },
+      "model_iou": 0.288,
+      "baseline_iou": 0.13
+    },
+    "Sri-Lanka_849649": {
+      "water_pixels": 1892,
+      "vh_water_median": -22.22,
+      "vv_minus_vh_water_median": 6.67,
+      "fragments": {
+        "components": 18,
+        "largest_component_px": 1108,
+        "share_in_components_below_100px": 0.162,
+        "share_within_3px_of_land": 0.596
+      },
+      "missed": {
+        "pixels": 298,
+        "vh_median": -17.42,
+        "member_std_mean": 0.07,
+        "baseline_catches_share": 0.007,
+        "p_median": 0.205
+      },
+      "found": {
+        "pixels": 1594,
+        "vh_median": -22.86,
+        "member_std_mean": 0.053
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.39,
+        "found_local_std_median": 2.43,
+        "missed_local_std_median": 2.13,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.973,
+        "auc_p": 0.994
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 5018,
+        "doubtful_share_of_valid_s1": 0.019,
+        "missed_water_doubtful_share": 0.661,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.885
+      },
+      "model_iou": 0.666,
+      "baseline_iou": 0.302
+    },
+    "USA_905409": {
+      "water_pixels": 44467,
+      "vh_water_median": -29.54,
+      "vv_minus_vh_water_median": 9.14,
+      "fragments": {
+        "components": 57,
+        "largest_component_px": 37009,
+        "share_in_components_below_100px": 0.022,
+        "share_within_3px_of_land": 0.123
+      },
+      "missed": {
+        "pixels": 1422,
+        "vh_median": -19.27,
+        "member_std_mean": 0.075,
+        "baseline_catches_share": 0.111,
+        "p_median": 0.108
+      },
+      "found": {
+        "pixels": 43045,
+        "vh_median": -29.7,
+        "member_std_mean": 0.008
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 3.67,
+        "found_local_std_median": 3.7,
+        "missed_local_std_median": 2.93,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.986,
+        "auc_p": 0.997
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 8741,
+        "doubtful_share_of_valid_s1": 0.033,
+        "missed_water_doubtful_share": 0.564,
+        "false_alarm_doubtful_share": 0.966,
+        "found_water_doubtful_share": 0.101
+      },
+      "model_iou": 0.938,
+      "baseline_iou": 0.872
+    },
+    "USA_430764": {
+      "water_pixels": 15439,
+      "vh_water_median": -24.44,
+      "vv_minus_vh_water_median": 8.36,
+      "fragments": {
+        "components": 229,
+        "largest_component_px": 1497,
+        "share_in_components_below_100px": 0.176,
+        "share_within_3px_of_land": 0.769
+      },
+      "missed": {
+        "pixels": 6628,
+        "vh_median": -21.63,
+        "member_std_mean": 0.127,
+        "baseline_catches_share": 0.268,
+        "p_median": 0.142
+      },
+      "found": {
+        "pixels": 8811,
+        "vh_median": -26.34,
+        "member_std_mean": 0.227
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.92,
+        "found_local_std_median": 3.21,
+        "missed_local_std_median": 2.59,
+        "dry_darker_than_-26_share": 0.008
+      },
+      "separability": {
+        "auc_vh": 0.914,
+        "auc_p": 0.967
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 27273,
+        "doubtful_share_of_valid_s1": 0.104,
+        "missed_water_doubtful_share": 0.641,
+        "false_alarm_doubtful_share": 0.995,
+        "found_water_doubtful_share": 0.931
+      },
+      "model_iou": 0.48,
+      "baseline_iou": 0.399
+    },
+    "USA_527077": {
+      "water_pixels": 1646,
+      "vh_water_median": -25.06,
+      "vv_minus_vh_water_median": 7.66,
+      "fragments": {
+        "components": 53,
+        "largest_component_px": 349,
+        "share_in_components_below_100px": 0.545,
+        "share_within_3px_of_land": 0.861
+      },
+      "missed": {
+        "pixels": 906,
+        "vh_median": -22.54,
+        "member_std_mean": 0.116,
+        "baseline_catches_share": 0.405,
+        "p_median": 0.102
+      },
+      "found": {
+        "pixels": 740,
+        "vh_median": -27.97,
+        "member_std_mean": 0.134
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 4.39,
+        "found_local_std_median": 5.45,
+        "missed_local_std_median": 3.75,
+        "dry_darker_than_-26_share": 0.025
+      },
+      "separability": {
+        "auc_vh": 0.885,
+        "auc_p": 0.982
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 2194,
+        "doubtful_share_of_valid_s1": 0.008,
+        "missed_water_doubtful_share": 0.551,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.992
+      },
+      "model_iou": 0.412,
+      "baseline_iou": 0.056
+    },
+    "USA_933610": {
+      "water_pixels": 3823,
+      "vh_water_median": -26.73,
+      "vv_minus_vh_water_median": 7.66,
+      "fragments": {
+        "components": 43,
+        "largest_component_px": 782,
+        "share_in_components_below_100px": 0.158,
+        "share_within_3px_of_land": 0.679
+      },
+      "missed": {
+        "pixels": 698,
+        "vh_median": -21.72,
+        "member_std_mean": 0.117,
+        "baseline_catches_share": 0.269,
+        "p_median": 0.171
+      },
+      "found": {
+        "pixels": 3125,
+        "vh_median": -27.71,
+        "member_std_mean": 0.123
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 4.25,
+        "found_local_std_median": 4.53,
+        "missed_local_std_median": 3.33,
+        "dry_darker_than_-26_share": 0.004
+      },
+      "separability": {
+        "auc_vh": 0.963,
+        "auc_p": 0.993
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 5969,
+        "doubtful_share_of_valid_s1": 0.023,
+        "missed_water_doubtful_share": 0.701,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.926
+      },
+      "model_iou": 0.699,
+      "baseline_iou": 0.356
+    },
+    "USA_595451": {
+      "water_pixels": 20531,
+      "vh_water_median": -27.61,
+      "vv_minus_vh_water_median": 7.16,
+      "fragments": {
+        "components": 174,
+        "largest_component_px": 7030,
+        "share_in_components_below_100px": 0.112,
+        "share_within_3px_of_land": 0.619
+      },
+      "missed": {
+        "pixels": 3553,
+        "vh_median": -15.46,
+        "member_std_mean": 0.04,
+        "baseline_catches_share": 0.027,
+        "p_median": 0.027
+      },
+      "found": {
+        "pixels": 16978,
+        "vh_median": -28.95,
+        "member_std_mean": 0.022
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 4.93,
+        "found_local_std_median": 5.41,
+        "missed_local_std_median": 2.09,
+        "dry_darker_than_-26_share": 0.078
+      },
+      "separability": {
+        "auc_vh": 0.848,
+        "auc_p": 0.918
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 28744,
+        "doubtful_share_of_valid_s1": 0.11,
+        "missed_water_doubtful_share": 0.217,
+        "false_alarm_doubtful_share": 0.433,
+        "found_water_doubtful_share": 0.203
+      },
+      "model_iou": 0.329,
+      "baseline_iou": 0.329
+    },
+    "USA_670826": {
+      "water_pixels": 3010,
+      "vh_water_median": -16.71,
+      "vv_minus_vh_water_median": 6.1,
+      "fragments": {
+        "components": 27,
+        "largest_component_px": 1097,
+        "share_in_components_below_100px": 0.223,
+        "share_within_3px_of_land": 0.992
+      },
+      "missed": {
+        "pixels": 2721,
+        "vh_median": -16.26,
+        "member_std_mean": 0.021,
+        "baseline_catches_share": 0.053,
+        "p_median": 0.007
+      },
+      "found": {
+        "pixels": 289,
+        "vh_median": -26.63,
+        "member_std_mean": 0.153
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.17,
+        "found_local_std_median": 4.01,
+        "missed_local_std_median": 2.07,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.532,
+        "auc_p": 0.728
+      },
+      "doubt": {
+        "chance_threshold": 0.0826,
+        "valid_s1_pixels": 262144,
+        "doubtful_pixels": 1536,
+        "doubtful_share_of_valid_s1": 0.006,
+        "missed_water_doubtful_share": 0.082,
+        "false_alarm_doubtful_share": 1.0,
+        "found_water_doubtful_share": 0.792
+      },
+      "model_iou": 0.094,
+      "baseline_iou": 0.069
+    }
+  }
+}
