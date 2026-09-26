@@ -137,6 +137,8 @@ def evaluate(request: Evaluation) -> dict:
             "building_type": kind, "type_label": rate["label"] if rate else "Тип не определён",
             "type_source": type_source, "area_m2": area, "levels": props["tags"].get("building:levels"),
             "cost_rub_m2": rate["cost_rub_m2"] if rate else None, "damage_ratio": rate["damage_ratio"] if rate else None,
+            "cost_source": ("Ставка пользователя" if rate["cost_rub_m2"] != assumptions.RATES[kind]["cost_rub_m2"] else "Сценарная ставка команды") if rate else None,
+            "damage_source": ("Доля повреждения пользователя" if rate["damage_ratio"] != assumptions.RATES[kind]["damage_ratio"] else "Допущение команды: 30%") if rate else None,
             "exposure_rub": exposure, "conditional_damage_rub": conditional,
             "expected_loss_rub": loss, "status": status, "overlapping_footprint": index in overlaps,
         }})
@@ -156,6 +158,7 @@ def evaluate(request: Evaluation) -> dict:
                     "with_water": sum((f["properties"]["water_fraction"] or 0) > 0 for f in rows),
                     "expected_loss_rub": total},
         "rates": rates, "rate_version": assumptions.VERSION, "rate_source": assumptions.SOURCE,
+        "rate_overrides": {key: value.model_dump() for key, value in request.rate_overrides.items()},
         "type_overrides": request.type_overrides, "method": METHOD,
         "top_building_ids": [f["id"] for f in ranked[:10]],
         "ranking_rule": "По убыванию среднего p воды внутри контура; при равном p — по сценарию ущерба. Без данных радара место не присваивается.",
@@ -218,7 +221,7 @@ def evaluate_buildings(request: Evaluation):
 def package(result: dict) -> bytes:
     target, table = io.BytesIO(), io.StringIO()
     columns = ["id", "name", "building_type", "type_source", "risk_rank", "height_m", "height_source", "area_m2", "radar_coverage", "water_probability_proxy", "water_fraction",
-               "cost_rub_m2", "damage_ratio", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
+               "cost_rub_m2", "cost_source", "damage_ratio", "damage_source", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
     writer = csv.DictWriter(table, fieldnames=columns, extrasaction="ignore")
     writer.writeheader()
     for feature in result["features"]:
@@ -232,7 +235,7 @@ def package(result: dict) -> bytes:
         archive.writestr("buildings.csv", "\ufeff" + table.getvalue())
         archive.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False))
         archive.writestr("rates.json", json.dumps(result["rates"], ensure_ascii=False, indent=2))
-        archive.writestr("README.txt", "Сценарная оценка ущерба зданиям, RUB.\n" + METHOD["formula"] + "\n" + "\n".join(METHOD["limitations"]) + "\nИсточник ставок: " + assumptions.SOURCE)
+        archive.writestr("README.txt", "Сценарная оценка ущерба зданиям, RUB.\n" + METHOD["formula"] + "\n" + "\n".join(METHOD["limitations"]) + "\nИсточник начальных ставок: " + assumptions.SOURCE + "\nПрименённые ставки — rates.json; пользовательские настройки — rate_overrides в manifest.json.\nПроисхождение ставки и доли повреждения каждого здания — cost_source и damage_source в CSV/GeoJSON.")
     return target.getvalue()
 
 

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, toRaw, watch } from 'vue'
 import { Building2, Download, Upload, MapPin } from '@lucide/vue'
 import { buildings, selectedBuilding, topBuildings, loadBuildings, openBuildingDemo, importBuildings, updateRates, updateBuildingType, exportBuildings, buildingStatus } from '../lib/buildings'
 
@@ -18,8 +18,25 @@ const money = value => value == null ? 'Нет оценки' : new Intl.NumberFo
 const number = value => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(value)
 const percent = value => value == null ? 'нет данных' : number(value * 100) + '%'
 const dirtyRates = computed(() => data.value && Object.entries(draft.value).some(([key, value]) => value.cost_rub_m2 !== data.value.rates[key].cost_rub_m2 || value.damage_ratio !== data.value.rates[key].damage_ratio * 100))
-watch(() => data.value?.rates, rates => {
-  if (rates) draft.value = Object.fromEntries(Object.entries(rates).map(([key, r]) => [key, { cost_rub_m2: r.cost_rub_m2, damage_ratio: r.damage_ratio * 100 }]))
+const selectedDraft = computed(() => draft.value[selected.value?.building_type])
+const selectedRateDirty = computed(() => selectedDraft.value && rateDirty(selectedDraft.value, data.value?.rates[selected.value.building_type]))
+const selectedTypeCount = computed(() => data.value?.features.filter(f => f.properties.building_type === selected.value?.building_type).length || 0)
+function rateDirty(row, rate) {
+  return rate && (row.cost_rub_m2 !== rate.cost_rub_m2 || row.damage_ratio !== rate.damage_ratio * 100)
+}
+function rateDraft(rates) {
+  return Object.fromEntries(Object.entries(rates).map(([key, r]) => [key, { cost_rub_m2: r.cost_rub_m2, damage_ratio: r.damage_ratio * 100 }]))
+}
+watch(() => [data.value?.catalog_id, data.value?.rates], ([catalogId, rates], [oldCatalog, oldRates] = []) => {
+  if (!rates) { draft.value = {}; return }
+  const next = rateDraft(rates)
+  // Saving one type must preserve unfinished edits for other types in this scene.
+  if (catalogId === oldCatalog) {
+    for (const [key, row] of Object.entries(draft.value)) {
+      if (rateDirty(row, oldRates?.[key])) next[key] = row
+    }
+  }
+  draft.value = next
 }, { immediate: true })
 watch([filter, search, () => data.value?.catalog_id], () => { limit.value = 40 })
 watch(() => buildings.selectedId, async id => {
@@ -42,16 +59,22 @@ async function upload(event) {
   if (file) await importBuildings(file)
   event.target.value = ''
 }
-async function applyRates() {
+async function applyRates(keys = Object.keys(draft.value)) {
   rateError.value = ''
-  const rates = {}
-  for (const [key, row] of Object.entries(draft.value)) {
+  const rates = { ...buildings.applied.rate_overrides }
+  for (const key of keys) {
+    const row = draft.value[key]
     if (row.cost_rub_m2 === '' || row.damage_ratio === '' || !Number.isFinite(Number(row.cost_rub_m2)) || !Number.isFinite(Number(row.damage_ratio)) || row.cost_rub_m2 < 0 || row.cost_rub_m2 > 10000000 || row.damage_ratio < 0 || row.damage_ratio > 100) {
       rateError.value = 'Ставка: от 0 до 10 000 000 ₽/м². Повреждение: от 0 до 100%.'; return
     }
     rates[key] = { cost_rub_m2: Number(row.cost_rub_m2), damage_ratio: Number(row.damage_ratio) / 100 }
   }
   await updateRates(rates)
+}
+async function resetRates() {
+  rateError.value = ''
+  const result = await updateRates({})
+  if (result && result === toRaw(data.value)) draft.value = rateDraft(result.rates)
 }
 </script>
 
@@ -72,10 +95,11 @@ async function applyRates() {
         <span>Сценарный ущерб · {{ data.summary.estimated }} из {{ data.summary.count }} зданий</span>
         <strong>{{ money(data.summary.expected_loss_rub) }}</strong>
         <span>{{ data.summary.unestimated }} без оценки · {{ data.summary.with_water }} с пересечением маски воды</span>
+        <span v-if="data.summary.count">Оценено {{ percent(data.summary.estimated / data.summary.count) }} зданий. Сумма включает только их.</span>
       </div>
       <p class="building-note">{{ data.source.name }} · контуры {{ (data.source.retrieved_at || data.source.retrieved_date || '').slice(0, 10) }}<br />Радар: {{ data.observed_at.slice(0, 10) }}. Контуры и назначение на дату снимка не подтверждены.</p>
       <p v-if="!data.permanent_separated" class="building-warning">Постоянная вода не отделена: расчёт использует сигнал всей воды.</p>
-      <div class="building-legend"><span class="water-dot">Есть сигнал воды</span><span class="dry-dot">Нет пересечения маски</span><span class="unknown-dot">Нет данных радара</span></div>
+      <div class="building-legend"><span class="water-dot">Пересечение маски воды</span><span class="dry-dot">Нет пересечения маски</span><span class="unknown-dot">Нет данных радара</span></div>
 
       <article v-if="selected" ref="card" class="building-card" data-testid="building-card">
         <span class="building-note">{{ additional ? 'Дополнительное здание · выбрано отдельно от топ‑10' : 'Место в рейтинге: ' + selected.risk_rank }}</span>
@@ -94,21 +118,51 @@ async function applyRates() {
           <div><dt>Покрыто радаром</dt><dd>{{ percent(selected.radar_coverage) }}</dd></div>
           <div><dt>Контур под маской воды</dt><dd>{{ percent(selected.water_fraction) }}</dd></div>
           <div><dt>Средний сигнал воды, p</dt><dd>{{ percent(selected.water_probability_proxy) }}</dd></div>
-          <div><dt>Ставка первого этажа</dt><dd>{{ selected.cost_rub_m2 == null ? 'Выберите тип' : money(selected.cost_rub_m2) + '/м²' }}</dd></div>
-          <div><dt>Стоимость первого этажа</dt><dd>{{ money(selected.exposure_rub) }}</dd></div>
-          <div><dt>Доля повреждения, q</dt><dd>{{ percent(selected.damage_ratio) }}</dd></div>
-          <div><dt>Ущерб при затоплении, V × q</dt><dd>{{ money(selected.conditional_damage_rub) }}</dd></div>
         </dl>
         <p class="building-note">{{ selected.height_source }}. Высота влияет только на вид здания.</p>
-        <div class="building-loss"><span>{{ buildingStatus[selected.status] }}</span><strong>{{ money(selected.expected_loss_rub) }}</strong></div>
-        <p v-if="selected.expected_loss_rub != null" class="building-note">{{ number(selected.area_m2) }} м² × {{ money(selected.cost_rub_m2) }}/м² × {{ percent(selected.damage_ratio) }} × {{ percent(selected.water_probability_proxy) }}</p>
-        <p class="building-note">p — среднее по пикселям внутри контура. Это не подтверждение затопления или повреждения дома.</p>
+        <template v-if="selectedDraft">
+          <h4 class="calculation-heading">Расчёт в три шага</h4>
+          <ol class="calculation-steps" aria-label="Расчёт ущерба здания">
+            <li>
+              <span>Условная стоимость первого этажа</span>
+              <strong>{{ money(selected.exposure_rub) }}</strong>
+              <small>{{ number(selected.area_m2) }} м² × {{ money(selected.cost_rub_m2) }}/м²</small>
+              <p class="building-note">{{ selected.cost_source }}. Верхние этажи, земля и имущество в сумму не входят.</p>
+            </li>
+            <li>
+              <span>Потери при заданном повреждении</span>
+              <strong>{{ money(selected.conditional_damage_rub) }}</strong>
+              <small>{{ money(selected.exposure_rub) }} × {{ percent(selected.damage_ratio) }} повреждения</small>
+              <p class="building-note">{{ selected.damage_source }}. Этот процент задаётся вручную; снимок не измеряет повреждения.</p>
+            </li>
+            <li class="calculation-result">
+              <span>Сценарный ущерб с учётом сигнала воды</span>
+              <strong>{{ money(selected.expected_loss_rub) }}</strong>
+              <small v-if="selected.expected_loss_rub != null">{{ money(selected.conditional_damage_rub) }} × {{ percent(selected.water_probability_proxy) }} сигнала воды</small>
+              <p v-else class="building-note">{{ buildingStatus[selected.status] }}. Для итоговой суммы недостаточно данных.</p>
+            </li>
+          </ol>
+          <p class="building-note">Сигнал воды — среднее значение модели внутри контура. Он не равен вероятности затопления дома. Итог — сценарная сумма, фактический ущерб не подтверждён. Числа на экране округлены; расчёт использует полную точность.</p>
+          <p v-if="selected.water_fraction === 0 && selected.expected_loss_rub > 0" class="building-warning">Маска воды не пересекает здание. Сумма получается из ненулевого сигнала модели ниже порога маски.</p>
+          <details class="building-details">
+            <summary>Изменить расчёт для этого типа</summary>
+            <p class="building-note">{{ selected.type_label }}. Зданий этого типа: {{ selectedTypeCount }}. Ставка и повреждение применятся ко всем зданиям этого типа.</p>
+            <div class="building-inline-rates">
+              <label>Ставка типа, ₽/м²<input v-model.number="selectedDraft.cost_rub_m2" type="number" min="0" max="10000000" aria-label="Ставка выбранного типа, ₽/м²" :disabled="buildings.busy" /></label>
+              <label>Повреждение, %<input v-model.number="selectedDraft.damage_ratio" type="number" min="0" max="100" aria-label="Повреждение выбранного типа, %" :disabled="buildings.busy" /></label>
+            </div>
+            <p v-if="selectedRateDirty" class="building-note">Выше показан последний применённый расчёт. Нажмите кнопку, чтобы пересчитать.</p>
+            <p v-if="rateError" role="alert" class="error-note">{{ rateError }}</p>
+            <button class="tonal-button" :disabled="buildings.busy || !selectedRateDirty" @click="applyRates([selected.building_type])">Применить к этому типу</button>
+          </details>
+        </template>
+        <div v-else class="building-loss"><span>Выберите тип здания выше, чтобы подобрать ставку и рассчитать ущерб.</span><strong>Нет оценки</strong></div>
         <button class="ghost-button" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button>
       </article>
 
       <div class="building-filters">
         <input v-model="search" type="search" placeholder="Название, тип или ID" aria-label="Поиск здания" />
-        <select v-model="filter" aria-label="Фильтр зданий"><option value="all">Все типы</option><option value="water">С сигналом воды</option><option value="unknown">Неизвестный тип</option><option value="missing">Без оценки</option></select>
+        <select v-model="filter" aria-label="Фильтр зданий"><option value="all">Все типы</option><option value="water">Под маской воды</option><option value="unknown">Неизвестный тип</option><option value="missing">Без оценки</option></select>
       </div>
       <div class="building-list-mode" role="group" aria-label="Список зданий">
         <button class="ghost-button" :aria-pressed="topMode" @click="listMode = 'top'; filter = 'all'; search = ''">Топ‑10</button>
@@ -136,7 +190,7 @@ async function applyRates() {
         </div>
         <p v-if="dirtyRates" class="building-note">Изменения ещё не применены к расчёту.</p>
         <p v-if="rateError" role="alert" class="error-note">{{ rateError }}</p>
-        <div class="building-actions"><button class="tonal-button" :disabled="buildings.busy || !dirtyRates" @click="applyRates">Применить ставки</button><button class="ghost-button" :disabled="buildings.busy" @click="updateRates({})">Сбросить ставки</button></div>
+        <div class="building-actions"><button class="tonal-button" :disabled="buildings.busy || !dirtyRates" @click="applyRates()">Применить ставки</button><button class="ghost-button" :disabled="buildings.busy" @click="resetRates">Сбросить ставки</button></div>
       </details>
 
       <details class="building-details">
@@ -166,6 +220,14 @@ async function applyRates() {
 .building-card h3 { margin: 0; font-size: 15px; overflow-wrap: anywhere; }.building-card label { display: grid; gap: 5px; font-size: 11px; }
 .building-facts { margin: 0; display: grid; gap: 7px; font-size: 11px; }.building-facts div { display: flex; justify-content: space-between; gap: 8px; }.building-facts dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }.building-facts dt { opacity: .75; }
 .building-loss { display: grid; gap: 5px; border-top: 1px solid #82939840; padding-top: 10px; font-size: 11px; }.building-loss strong { font-size: 21px; }
+.calculation-heading { margin: 6px 0 0; font-size: 13px; }
+.calculation-steps { list-style: none; counter-reset: calculation; display: grid; gap: 9px; margin: 0; padding: 0; }
+.calculation-steps li { counter-increment: calculation; position: relative; display: grid; gap: 6px; padding: 12px 10px 12px 38px; border-radius: 10px; background: #8293980c; font-size: 11px; }
+.calculation-steps li::before { content: counter(calculation); position: absolute; left: 10px; top: 12px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #42858e20; font-size: 10px; }
+.calculation-steps strong { font-size: 18px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.calculation-steps small { font-size: 10px; line-height: 1.5; opacity: .8; }
+.calculation-steps .calculation-result { background: #42858e18; }.calculation-result strong { font-size: 21px; }
+.building-inline-rates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin: 10px 0; }
 .building-details { border-top: 1px solid #82939840; padding-top: 11px; }.building-details summary { cursor: pointer; font-size: 12px; font-weight: 600; }.building-details p { margin: 10px 0; }
 .building-rate-row, .building-rate-head { display: grid; grid-template-columns: minmax(0, 1fr) 88px 60px; gap: 6px; align-items: center; margin: 7px 0; font-size: 10px; }
 .buildings-view input, .buildings-view select { width: 100%; min-width: 0; border: 1px solid #82939860; border-radius: 7px; padding: 8px; background: color-mix(in srgb, var(--panel, #f2f4ef) 55%, transparent); color: inherit; font: inherit; box-sizing: border-box; }
