@@ -113,7 +113,95 @@ function coordinates(bounds) {
   const [w, s, e, n] = bounds
   return [[w, n], [e, n], [e, s], [w, s]]
 }
-function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (state.theme === 'dark' ? 'dark' : 'positron') }
+// «Схема» — данные OSM из OpenFreeMap в своей палитре, как привычные карты: бледный positron
+// и стандартная liberty не читались: дороги и реки терялись на почти белом фоне.
+function styleUrl() { return 'https://tiles.openfreemap.org/styles/liberty' }
+/*
+ * Палитра подложки поверх liberty, днём по Google Картам: тёплая светлая земля, мятная зелень,
+ * бирюзовая вода; синий паводок и янтарные объекты на ней остаются главными.
+ * Первое совпадение по типу и id слоя выигрывает; пустой набор оставляет слой как есть
+ * (щиты с номерами дорог).
+ */
+const PALETTE = {
+  // Оттенки сняты с Google Карт в той же точке (Нигерия, река Кадуна): земля, зелень, вода,
+  // посёлки, серо-голубые дороги и магистрали с окантовкой, тёмные подписи.
+  light: [
+    [/^background$/, 'background', { 'background-color': '#f4efe3' }],
+    [/^water$/, 'fill', { 'fill-color': '#90d9ed' }],
+    [/^(park|landcover_wood|landcover_grass)$/, 'fill', { 'fill-color': '#d3f7e0', 'fill-opacity': 1 }],
+    [/^landcover_wetland$/, 'fill', { 'fill-color': '#c8efe0' }],
+    [/^landcover_sand$/, 'fill', { 'fill-color': '#f1e9d2' }],
+    [/^landuse_residential$/, 'fill', { 'fill-color': '#f5f3f2', 'fill-opacity': 1 }],
+    [/^building$/, 'fill', { 'fill-color': '#e8e9ed', 'fill-outline-color': '#dadce0' }],
+    [/^building-3d$/, 'fill-extrusion', { 'fill-extrusion-color': '#e8e9ed' }],
+    [/^waterway/, 'line', { 'line-color': '#90d9ed' }],
+    [/^park_outline$/, 'line', { 'line-opacity': 0 }],
+    [/^boundary/, 'line', { 'line-color': '#9aa0a6' }],
+    [/rail/, 'line', { 'line-color': '#b8bec6' }],
+    [/(motorway|trunk_primary)_casing$/, 'line', { 'line-color': '#6c89ae' }],
+    [/secondary_tertiary_casing$/, 'line', { 'line-color': '#c3ceda' }],
+    [/casing$/, 'line', { 'line-opacity': 0 }],
+    [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#93abc6' }],
+    [/secondary_tertiary$/, 'line', { 'line-color': '#ffffff' }],
+    [/./, 'line', { 'line-color': '#ced8e0' }],
+    [/shield/, 'symbol', {}],
+    [/^water/, 'symbol', { 'text-color': '#2a7d96', 'text-halo-color': '#d9f2f9' }],
+    [/./, 'symbol', { 'text-color': '#2b2c30', 'text-halo-color': '#fcfcf8', 'text-halo-width': 1.4 }],
+  ],
+  // Ночью та же схема, как ночной режим привычных карт: готовые тёмные стили OpenFreeMap
+  // (dark, fiord) слишком тусклые, дорог в них не видно.
+  dark: [
+    [/^background$/, 'background', { 'background-color': '#1b2229' }],
+    [/^natural_earth$/, 'raster', { 'raster-opacity': 0.12 }],
+    [/^water$/, 'fill', { 'fill-color': '#0f2d48' }],
+    [/^(park|landcover_wood|landcover_grass)$/, 'fill', { 'fill-color': '#1c3226' }],
+    [/^building$/, 'fill', { 'fill-color': '#2a353f', 'fill-outline-color': '#34414d' }],
+    [/./, 'fill', { 'fill-color': '#212a32' }],
+    [/^building-3d$/, 'fill-extrusion', { 'fill-extrusion-color': '#2a353f' }],
+    [/^waterway/, 'line', { 'line-color': '#1d5282' }],
+    [/^park_outline$/, 'line', { 'line-opacity': 0 }],
+    [/^boundary/, 'line', { 'line-color': '#6a7a89' }],
+    [/rail/, 'line', { 'line-color': '#4b5663' }],
+    [/(motorway|trunk_primary)_casing$/, 'line', { 'line-color': '#4a3a1f' }],
+    [/casing$/, 'line', { 'line-color': '#12181e' }],
+    [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#b08a45' }],
+    [/(secondary_tertiary|_link)$/, 'line', { 'line-color': '#6b7682' }],
+    [/./, 'line', { 'line-color': '#434f5b' }],
+    [/shield/, 'symbol', {}],
+    [/^water/, 'symbol', { 'text-color': '#7fb2de', 'text-halo-color': '#0f2d48' }],
+    [/./, 'symbol', { 'text-color': '#d3dbe3', 'text-halo-color': '#12181e', 'text-halo-width': 1.4 }],
+  ],
+}
+function paintBasemap() {
+  const rules = PALETTE[theme()]
+  for (const layer of map.getStyle().layers) {
+    const rule = rules.find(([pattern, type]) => type === layer.type && pattern.test(layer.id))
+    for (const [key, value] of Object.entries(rule?.[2] || {})) map.setPaintProperty(layer.id, key, value)
+  }
+}
+/*
+ * Отмывка рельефа под дорогами и водой: в сельских районах, где в OSM мало объектов,
+ * именно она делает схему живой, как рельеф в привычных картах. Ночью тайлы затемняем,
+ * иначе серая отмывка высветлила бы тёмный фон.
+ */
+const reliefTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}'
+function addRelief() {
+  const before = map.getStyle().layers.find(layer => /^waterway|^water$/.test(layer.id))?.id
+  map.addSource('relief', { type: 'raster', tiles: [reliefTiles], tileSize: 256, maxzoom: 16,
+    attribution: 'Relief © Esri, USGS, NGA, NASA, CGIAR' })
+  const dark = state.theme === 'dark'
+  map.addLayer({ id: 'relief-layer', type: 'raster', source: 'relief', minzoom: 5,
+    paint: { 'raster-opacity': dark ? 0.5 : 0.2, 'raster-brightness-max': dark ? 0.32 : 1, 'raster-fade-duration': 200 } }, before)
+}
+// Подписи по-русски, где в OSM есть русское имя, иначе латиницей: по умолчанию стиль пишет
+// латиницу и местное письмо в две строки. Номера дорог (ref) не трогаем.
+const LABEL = ['coalesce', ['get', 'name:ru'], ['get', 'name:latin'], ['get', 'name']]
+function localizeLabels() {
+  for (const layer of map.getStyle().layers) {
+    const field = layer.type === 'symbol' && layer.layout?.['text-field']
+    if (field && JSON.stringify(field).includes('"name')) map.setLayoutProperty(layer.id, 'text-field', LABEL)
+  }
+}
 function installFallbackStyle() {
   if (!map || ready || fallbackStyle) return
   fallbackStyle = true
@@ -690,7 +778,15 @@ onMounted(() => {
     if (error.error?.message?.includes('tiles.openfreemap.org/styles/')) installFallbackStyle()
     console.warn('Map layer:', error.error)
   })
-  map.on('style.load', () => { clearTimeout(styleTimer); buildOverlays() })
+  map.on('style.load', () => {
+    clearTimeout(styleTimer)
+    if (!fallbackStyle) {
+      localizeLabels()
+      paintBasemap()
+      addRelief()
+    }
+    buildOverlays()
+  })
   armStyleFallback()
   // Порог по реальному масштабу, а не по кнопке «Глобус»: выключается и при отдалении колесом.
   const GLOBE_ZOOM = 5
