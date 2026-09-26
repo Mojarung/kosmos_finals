@@ -179,5 +179,23 @@
       },
       "rule": "pixels of JRCWaterHand permanent water removed from evaluation"
     }
+  },
+  "rtc_transfer": {
+    "rules": {
+      "median": "median GRD dB per 0.5 dB bin of same-pass RTC dB, monotonic; train chips only",
+      "quantile": "RTC dB quantiles 0.5..99.5% mapped onto GRD dB quantiles of the same pixels; train chips only"
+    },
+    "fit_chips": 13,
+    "check_chips": 11,
+    "water_weighted_iou": {
+      "grd_model": 0.6841,
+      "grd_baseline": 0.5151,
+      "rtc_model_raw": 0.1835,
+      "rtc_model_median": 0.5808,
+      "rtc_model_quantile": 0.6374,
+      "rtc_baseline_raw": 0.1015,
+      "rtc_baseline_quantile": 0.4842
+    },
+    "mapping": "quantile"
   }
 }

@@ -10,6 +10,8 @@ const quality = computed(() => state.analysis.quality)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
 const flood = computed(() => quality.value.flood_only?.test_core)
 const proxy = computed(() => state.analysis.asset_proxy_check)
+// Как модель переносится на Sentinel-1 RTC: те же снимки test_core с разметкой, но из каталога RTC.
+const transfer = computed(() => quality.value.rtc_transfer)
 const METRICS = [
   ['f1', 'F1', 'Среднее точности и полноты: одна цифра на оба вида ошибок'],
   ['recall', 'Полнота', 'Какую долю настоящей воды нашёл метод'],
@@ -50,6 +52,12 @@ function openWeak() {
   <section class="block">
     <span class="caption">{{ isLive ? 'В этой области нет ручной разметки' : 'На этом снимке' }}</span>
     <p v-if="isLive" class="source-line">Точность на новом снимке не измерена. Цифры выше относятся к независимой проверке Sen1Floods11, а не к этой территории.</p>
+    <div v-if="isLive && transfer" class="mini-rows"
+      v-tip="`Те же снимки test_core, но в виде Sentinel‑1 RTC, как у выбранной рамки. Перевод яркости RTC в шкалу обучения подобран на ${transfer.fit_chips} снимках train. Вес снимка — число пикселей воды`">
+      <div><span>Модель на тех же снимках, GRD</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou.grd_model, 1) }}</b></div>
+      <div><span>На RTC без перевода</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou.rtc_model_raw, 1) }}</b></div>
+      <div><span>На RTC после перевода</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou[transfer.mapping === 'median' ? 'rtc_model_median' : 'rtc_model_quantile'], 1) }}</b></div>
+    </div>
     <div v-else class="mini-rows">
       <div><span>IoU, порог → модель</span><span class="compare tabular">{{ percent(region.baseline_quality?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality?.iou, 1) }}</b></span></div>
       <div v-if="region.model_quality_flood" v-tip="'Без пикселей постоянной воды JRC'"><span>Только паводок</span><span class="compare tabular">{{ percent(region.baseline_quality_flood?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality_flood?.iou, 1) }}</b></span></div>

@@ -137,3 +137,39 @@ def test_region_export_matches_the_screen_and_validates(tmp_path):
     assert ranked == [asset["id"] for asset in shown["assets"] if asset["loss_status"] != "no_data"]
     assert meta["pricing"]["discount_group_id"] == shown["strategies"]["C"]["quote"]["discount_group_id"]
     assert {row["name"] for row in meta["parameters"]} >= {"doubt_threshold", "freshness_coef_T", "budget_rub"}
+
+
+def test_rtc_harmonization_maps_bands_and_keeps_nodata(tmp_path, monkeypatch):
+    from app import live
+    vv = np.array([[-20.0, np.nan], [-10.0, -5.0]], dtype=np.float32)
+    vh = np.array([[-24.0, -15.0], [np.nan, -12.0]], dtype=np.float32)
+    monkeypatch.setattr(live, "HARMONIZATION", tmp_path / "missing.json")
+    same_vv, same_vh = live.harmonize(vv, vh)
+    assert np.array_equal(same_vv, vv, equal_nan=True) and np.array_equal(same_vh, vh, equal_nan=True)
+    table = {"vv": {"rtc_db": [-25.0, -5.0], "grd_db": [-27.0, -6.0]},
+             "vh": {"rtc_db": [-30.0, -10.0], "grd_db": [-36.0, -12.0]}}
+    path = tmp_path / "harmonization.json"
+    path.write_text(json.dumps(table), encoding="utf-8")
+    monkeypatch.setattr(live, "HARMONIZATION", path)
+    mapped_vv, mapped_vh = live.harmonize(vv, vh)
+    assert np.isnan(mapped_vv[0, 1]) and np.isnan(mapped_vh[1, 0])
+    assert mapped_vh[0, 0] < -24 and mapped_vv[1, 1] == np.float32(-6.0)
+    assert mapped_vh[0, 0] < mapped_vh[0, 1] < mapped_vh[1, 1]
+
+
+def test_vector_prices_match_exact_quotes_for_every_basket():
+    from app.planning import quote
+    ctx = context("Nigeria_812045", None)
+    space = ctx.space
+    prices = space.prices(1.0)
+    for index in np.random.default_rng(3).choice(len(space.subsets), size=400, replace=False):
+        assert abs(prices[index] - quote(space.selected(int(index)))["total_rub"]) < 0.011
+
+
+def test_plan_never_exceeds_budget_near_price_boundaries():
+    ctx = context("Nigeria_812045", None)
+    prices = np.unique(np.round(ctx.space.prices(1.0), 2))
+    for budget in prices[1:40]:
+        index = ctx.space.best(float(budget), "risk", 8, None)
+        assert index is not None
+        assert quote(ctx.space.selected(index))["total_rub"] <= float(budget)

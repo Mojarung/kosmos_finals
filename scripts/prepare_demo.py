@@ -72,6 +72,11 @@ def write_quality() -> None:
             "model": methods["no_jrc_permanent_water/main"]["overall"]["micro"],
             "rule": "pixels of JRCWaterHand permanent water removed from evaluation",
         }
+    transfer_path = ROOT / "ml/artifacts/evaluation/rtc_transfer.json"
+    if transfer_path.exists():
+        transfer = json.loads(transfer_path.read_text(encoding="utf-8"))
+        quality["rtc_transfer"] = {key: transfer[key] for key in ("rules", "fit_chips", "check_chips", "water_weighted_iou")}
+        quality["rtc_transfer"]["mapping"] = transfer.get("shipped_mapping")
     errors_path = ROOT / "ml/artifacts/evaluation/error_analysis.json"
     if errors_path.exists():
         errors = json.loads(errors_path.read_text(encoding="utf-8"))

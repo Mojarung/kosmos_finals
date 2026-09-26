@@ -32,6 +32,9 @@ SAS = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc"
 ROOT = Path(__file__).resolve().parents[2]
 MODEL = Path(os.environ.get("MODEL_DIR", ROOT / "ml" / "artifacts" / "model"))
 CALIBRATION = Path(os.environ.get("CALIBRATION_FILE", ROOT / "ml" / "artifacts" / "evaluation" / "calibration.json"))
+# RTC gamma0 of Planetary Computer is brighter over water than the Sen1Floods11 GRD the model
+# learned on; this per-band mapping (fitted on train chips) brings it back to GRD dB.
+HARMONIZATION = Path(os.environ.get("RTC_HARMONIZATION_FILE", ROOT / "ml" / "artifacts" / "rtc" / "harmonization.json"))
 GRID = 512
 GEOD = Geod(ellps="WGS84")
 _lock = threading.Lock()
@@ -137,6 +140,23 @@ def _read_band(href: str, token: str, bounds: list[float]) -> np.ndarray:
     return (10 * np.log10(linear)).astype(np.float32)
 
 
+def harmonization() -> dict | None:
+    return json.loads(HARMONIZATION.read_text(encoding="utf-8")) if HARMONIZATION.is_file() else None
+
+
+def harmonize(vv: np.ndarray, vh: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Map RTC dB to Sen1Floods11 GRD dB band by band; unchanged when no mapping is shipped."""
+    table = harmonization()
+    if table is None:
+        return vv, vh
+    mapped = []
+    for band, values in (("vv", vv), ("vh", vh)):
+        curve = table[band]
+        converted = np.interp(values, curve["rtc_db"], curve["grd_db"]).astype(np.float32)
+        mapped.append(np.where(np.isfinite(values), converted, np.nan).astype(np.float32))
+    return mapped[0], mapped[1]
+
+
 def _ensemble():
     global _members
     if _members is None:
@@ -240,7 +260,8 @@ def prepare(bounds: list[float], item_id: str) -> dict:
     feature = features[0]
     cache_key = b"live-v4:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
-    cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()).digest()
+    cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()
+                                + (HARMONIZATION.read_bytes() if HARMONIZATION.is_file() else b"")).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]
     scene_id = f"live_{digest}"
     folder = LIVE_DIR / scene_id
@@ -266,6 +287,7 @@ def prepare(bounds: list[float], item_id: str) -> dict:
                 passport += _passport(source, np.where(fill, source_vv, np.nan), np.where(fill, source_vh, np.nan))
             if valid.all():
                 break
+        vv, vh = harmonize(vv, vh)
         s1 = np.stack([vv, vh])
         if valid.mean() < 0.05:
             raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
@@ -308,6 +330,7 @@ def prepare(bounds: list[float], item_id: str) -> dict:
             "pixel_size_m_approx": round((area * 1_000_000 / (GRID * GRID)) ** 0.5, 1),
             "portfolio_status": "scenario_locations_and_values",
             "reference_status": "no_manual_label",
+            "radiometry": "rtc_harmonized_to_sen1floods11_grd" if harmonization() else "rtc_as_is",
             "permanent_status": "not_separated",
         }
         (folder / "metadata.json").write_text(json.dumps(metadata_record, ensure_ascii=False, indent=2), encoding="utf-8")
