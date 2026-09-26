@@ -25,7 +25,8 @@ export function toggleTheme(event) {
   const next = state.theme === 'dark' ? 'light' : 'dark'
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const rect = event?.currentTarget?.getBoundingClientRect()
-  if (!document.startViewTransition || reduced || !rect) {
+  // Скрытая вкладка отклоняет View Transition (InvalidStateError): тогда тема меняется без круга.
+  if (!document.startViewTransition || reduced || !rect || document.hidden) {
     if (!reduced) {
       const root = document.documentElement
       root.classList.add('theme-anim')
@@ -47,11 +48,13 @@ export function toggleTheme(event) {
     // Пересчёт стилей, пока переходы выключены: цвета встают сразу, а не после снятия класса.
     void getComputedStyle(root).color
   })
-  transition.finished.finally(() => root.classList.remove('theme-switching'))
+  // Пропущенный переход (вкладку скрыли посреди анимации) отклоняет ready: тема уже применена,
+  // поэтому отказ гасим, а не оставляем необработанным в консоли.
+  transition.finished.catch(() => {}).finally(() => root.classList.remove('theme-switching'))
   transition.ready.then(() => {
     document.documentElement.animate(
       { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
       { duration: 900, easing: 'cubic-bezier(0.2, 0, 0, 1)', pseudoElement: '::view-transition-new(root)' },
     )
-  })
+  }).catch(() => {})
 }
