@@ -18,6 +18,12 @@ DATA_DIR = Path(os.environ.get("DEMO_DATA_DIR", ROOT / "data" / "demo"))
 RUNTIME_DIR = Path(os.environ.get("FLOODVALUE_RUNTIME_DIR", ROOT / "data" / "runtime"))
 LIVE_DIR = Path(os.environ.get("LIVE_DATA_DIR", ROOT / "data" / "live"))
 _write_lock = threading.Lock()
+# Caches outside this module that read scene files register here to be cleared with ours.
+_refresh_hooks: list = []
+
+
+def on_refresh(clear) -> None:
+    _refresh_hooks.append(clear)
 
 
 @lru_cache(maxsize=1)
@@ -63,8 +69,10 @@ def scene_dir(scene_id: str) -> Path:
 
 def refresh() -> None:
     """Forget cached catalog and scene files, e.g. after a live scene was added."""
-    for cached in (_demo_catalog, _runtime_scenes, metadata, mask, float_map):
+    for cached in (_demo_catalog, _runtime_scenes, metadata, mask, float_map, permanent_mask):
         cached.cache_clear()
+    for clear in _refresh_hooks:
+        clear()
 
 
 def register_runtime_scene(row: dict) -> None:
@@ -101,6 +109,19 @@ def mask(scene_id: str, name: str) -> bytes:
     info = metadata(scene_id)
     if len(values) != info["width"] * info["height"]:
         raise ValueError(f"Invalid {name} mask dimensions")
+    return values
+
+
+@lru_cache(maxsize=32)
+def permanent_mask(scene_id: str) -> bytes | None:
+    """JRC permanent water on the scene grid: 1 permanent, 0 not, 255 no radar. None if not separated."""
+    path = scene_dir(scene_id) / "permanent_mask.bin"
+    if not path.is_file():
+        return None
+    values = path.read_bytes()
+    info = metadata(scene_id)
+    if len(values) != info["width"] * info["height"]:
+        raise ValueError("Invalid permanent water mask dimensions")
     return values
 
 

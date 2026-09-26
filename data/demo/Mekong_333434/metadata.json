@@ -66,7 +66,8 @@
       "p_window3": 0.00602,
       "uncertainty_window3": 0.00078,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A02",
@@ -83,7 +84,8 @@
       "p_window3": 0.00925,
       "uncertainty_window3": 0.00058,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A03",
@@ -100,7 +102,8 @@
       "p_window3": 0.01178,
       "uncertainty_window3": 0.00648,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A04",
@@ -117,7 +120,8 @@
       "p_window3": 0.00337,
       "uncertainty_window3": 0.00038,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A05",
@@ -134,7 +138,8 @@
       "p_window3": 0.06018,
       "uncertainty_window3": 0.01789,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A06",
@@ -151,7 +156,8 @@
       "p_window3": 0.00748,
       "uncertainty_window3": 0.00253,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A07",
@@ -168,7 +174,8 @@
       "p_window3": 0.12139,
       "uncertainty_window3": 0.03124,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A08",
@@ -185,7 +192,8 @@
       "p_window3": 0.12648,
       "uncertainty_window3": 0.05743,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A09",
@@ -202,7 +210,8 @@
       "p_window3": 0.00973,
       "uncertainty_window3": 0.0013,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     },
     {
       "id": "A10",
@@ -219,7 +228,8 @@
       "p_window3": 0.00566,
       "uncertainty_window3": 0.00082,
       "baseline_water_at_point": false,
-      "status": "ok"
+      "status": "ok",
+      "permanent_water_at_point": false
     }
   ],
   "source_manifest": [
@@ -242,6 +252,16 @@
       "role": "diagnostic_label_only",
       "gcs_generation": "1601572623529620",
       "published_at": "2020-10-01T17:17:03.529Z"
+    },
+    {
+      "name": "Mekong_333434_JRCWaterHand.tif",
+      "url": "https://storage.googleapis.com/sen1floods11/v1.1/data/flood_events/HandLabeled/JRCWaterHand/Mekong_333434_JRCWaterHand.tif",
+      "sha256": "385d1da22d0bbda33c12b6c198f6d6a8c3d8f092b2dc67e4c0735e6b9068a3a6",
+      "version": "v1.1",
+      "layer": "JRCWaterHand",
+      "role": "permanent_water_reference",
+      "gcs_generation": "1601572619558256",
+      "published_at": "2020-10-01T17:16:59.558Z"
     }
   ],
   "inference_manifest": {
@@ -251,5 +271,14 @@
     "baseline_mask.tif": "74bfde4d5c28308384befa22661b824f871849859d6dbb5ded61fdbacb162ce2"
   },
   "probability_status": "frozen_ensemble_calibrated_on_validation",
-  "reference_status": "manual_label_for_diagnostics_only"
+  "reference_status": "manual_label_for_diagnostics_only",
+  "permanent_rule": "JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water minus this layer; a portfolio point on it gets EL = 0 with status permanent_water",
+  "permanent_period_note": "Observations up to 2018: fully before 2019 events; for 2016-2018 events the period ends near the event, but water in both 1984 and 2018 selects long-lived water bodies",
+  "permanent_water_pixels": 9,
+  "permanent_water_area_km2": 0.001,
+  "flood_water_pixels": 4237,
+  "flood_water_area_km2": 0.41,
+  "permanent_manifest": {
+    "permanent_water.tif": "b18dcbf2efb2cc35d4ce963c5eabfe9f6e8fd4f0ce75aafffbc83247648bae29"
+  }
 }

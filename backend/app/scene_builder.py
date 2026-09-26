@@ -30,6 +30,11 @@ INFERENCE_FILES = ("flood_probability.tif", "flood_mask.tif", "flood_uncertainty
 INDEPENDENT_PARTS = {"test_core", "bolivia", None}
 PROBABILITY_RULE = ("flood_probability.tif value in the pixel that contains the asset point; "
                     "valid 3x3 mean kept as a robustness check (p_window3)")
+PERMANENT_RULE = ("JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global "
+                  "Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water "
+                  "minus this layer; a portfolio point on it gets EL = 0 with status permanent_water")
+PERMANENT_PERIOD_NOTE = ("Observations up to 2018: fully before 2019 events; for 2016-2018 events the period ends "
+                         "near the event, but water in both 1984 and 2018 selects long-lived water bodies")
 PORTFOLIO_RULE = ("numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without "
                   "replacement, one per case asset type in table order; independent of p, masks and labels")
 ASSET_TYPES = [
@@ -59,6 +64,7 @@ class SceneSpec:
     origin: str = "demo"
     # file name -> {"generation", "updated", "md5_b64"} from ml/data/.../download_manifest.json
     source_meta: dict = field(default_factory=dict)
+    jrc_path: Path | None = None
 
 
 def checksum(path: Path) -> str:
@@ -252,9 +258,59 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
         "probability_status": "frozen_ensemble_calibrated_on_validation",
         "reference_status": "manual_label_for_diagnostics_only" if spec.label_path else "no_manual_label",
     }
+    if spec.jrc_path is not None:
+        meta = add_permanent_water(out_dir, spec.jrc_path, meta, spec.source_meta)
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return {"chip_id": spec.chip_id, "event": spec.event, "observed_at": spec.observed_at,
             "bbox": meta["bbox"], "model_water_area_km2": meta["model_water_area_km2"],
             "reference_water_area_km2": meta["water_area_km2"],
             "model_iou": meta["model_quality"]["iou"] if meta["model_quality"] else None,
+            "flood_water_area_km2": meta.get("flood_water_area_km2"),
             "split_part": spec.split_part, "metrics_independent": independent, "origin": spec.origin}
+
+
+def add_permanent_water(out_dir: Path, jrc_path: Path, meta: dict, source_meta: dict | None = None) -> dict:
+    """Subtract JRC permanent water from a built scene; returns the updated metadata.
+
+    Writes permanent_water.tif (same grid as the model rasters, 255 where S1 is invalid),
+    permanent_mask.bin for the API and permanent.png for the map. The model rasters
+    and their checksums do not change.
+    """
+    with rasterio.open(out_dir / "flood_mask.tif") as model_raster:
+        prediction = model_raster.read(1)
+        profile = model_raster.profile
+        transform, crs = model_raster.transform, model_raster.crs
+    with rasterio.open(jrc_path) as jrc:
+        if jrc.count != 1 or not _same_grid(jrc, transform, crs):
+            raise ValueError(f"{jrc_path.name}: JRC grid differs from S1")
+        permanent_raw = jrc.read(1)
+    radar_valid = prediction != 255
+    permanent = radar_valid & (permanent_raw == 1)
+    layer = np.where(radar_valid, permanent, 255).astype(np.uint8)
+    (out_dir / "permanent_mask.bin").write_bytes(np.ascontiguousarray(layer).tobytes())
+    with rasterio.open(out_dir / "permanent_water.tif", "w", **{**profile, "dtype": "uint8", "nodata": 255,
+                                                                "compress": "deflate"}) as target:
+        target.write(layer, 1)
+    render_layer(permanent, (18, 58, 118), 220, out_dir / "permanent.png")
+    pixel_area = meta["area_km2"] / (meta["width"] * meta["height"])
+    water = prediction == 1
+    assets = []
+    for asset in meta["assets"]:
+        on_permanent = bool(permanent[asset["row"], asset["col"]]) if asset.get("p_flood") is not None else None
+        assets.append({**asset, "permanent_water_at_point": on_permanent})
+    meta_source = (source_meta or {}).get(jrc_path.name, {})
+    manifest = [item for item in meta["source_manifest"] if item.get("layer") != "JRCWaterHand"]
+    manifest.append({
+        "name": jrc_path.name, "url": f"{SOURCE_ROOT}/JRCWaterHand/{jrc_path.name}", "sha256": checksum(jrc_path),
+        "version": DATASET_VERSION, "layer": "JRCWaterHand", "role": "permanent_water_reference",
+        "gcs_generation": meta_source.get("generation"), "published_at": meta_source.get("updated"),
+    })
+    return {
+        **meta, "assets": assets, "source_manifest": manifest,
+        "permanent_rule": PERMANENT_RULE, "permanent_period_note": PERMANENT_PERIOD_NOTE,
+        "permanent_water_pixels": int(permanent.sum()),
+        "permanent_water_area_km2": round(int(permanent.sum()) * pixel_area, 3),
+        "flood_water_pixels": int((water & ~permanent).sum()),
+        "flood_water_area_km2": round(int((water & ~permanent).sum()) * pixel_area, 3),
+        "permanent_manifest": {"permanent_water.tif": checksum(out_dir / "permanent_water.tif")},
+    }

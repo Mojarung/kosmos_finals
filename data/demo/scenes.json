@@ -16,7 +16,8 @@
       "model_iou": 0.9211,
       "split_part": "test_core",
       "metrics_independent": true,
-      "origin": "demo"
+      "origin": "demo",
+      "flood_water_area_km2": 13.177
     },
     {
       "chip_id": "Ghana_313799",
@@ -33,7 +34,8 @@
       "model_iou": 0.2245,
       "split_part": "test_core",
       "metrics_independent": true,
-      "origin": "demo"
+      "origin": "demo",
+      "flood_water_area_km2": 0.359
     },
     {
       "chip_id": "Mekong_333434",
@@ -50,7 +52,8 @@
       "model_iou": 0.2661,
       "split_part": "test_core",
       "metrics_independent": true,
-      "origin": "demo"
+      "origin": "demo",
+      "flood_water_area_km2": 0.41
     }
   ]
 }

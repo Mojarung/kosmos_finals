@@ -37,7 +37,7 @@ def runtime(tmp_path, monkeypatch):
 
     def fake_fetch(chip_id, layer, target):
         files = make_chip(source, chip_id)
-        path = files["s1"] if layer == "S1Hand" else files["label"]
+        path = {"S1Hand": files["s1"], "LabelHand": files["label"], "JRCWaterHand": files["jrc"]}[layer]
         shutil.copyfile(path, target / path.name)
         return target / path.name
 
@@ -82,6 +82,8 @@ def test_live_ingest_builds_scene_visible_to_api(runtime):
         run = json.loads(archive.read("run_metadata.json"))
     assert run["split_part"] == "train" and run["metrics_independent"] is False
     assert run["portfolio_seed"] == ingest.LIVE_SEED
+    assert run["permanent_water"]["status"] == "jrc_waterhand"
+    assert analysis.json()["region"]["permanent_water_area_km2"] > 0
     assert client.get(f"/api/jobs/{job['id']}").json()["stage"] == "done"
 
 

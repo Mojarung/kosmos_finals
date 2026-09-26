@@ -36,7 +36,7 @@ MODEL_TIMEOUT_S = 600
 DOWNLOAD_TIMEOUT_S = 60
 STAGE_MESSAGES = {
     "queued": "В очереди",
-    "download": "Скачиваем S1 и ручную метку Sen1Floods11 v1.1",
+    "download": "Скачиваем S1, ручную метку и постоянную воду JRC из Sen1Floods11 v1.1",
     "inference": "Ансамбль U-Net считает вероятность, маску и разброс",
     "prepare": "Размещаем 10 объектов, строим зоны и слои карты",
 }
@@ -146,6 +146,11 @@ def _work(job_id: str, record: dict) -> None:
                 label_path = None
             except OSError as error:
                 raise _JobError(f"Не удалось скачать ручную метку: {error}") from error
+            # Without JRC the scene still builds; the map then shows all water, and says so.
+            try:
+                jrc_path: Path | None = _fetch(chip_id, "JRCWaterHand", scratch)
+            except (OSError, urllib.error.URLError):
+                jrc_path = None
             mark = _stage(job_id, "inference", mark)
             inference_dir = scratch / "inference"
             try:
@@ -159,7 +164,7 @@ def _work(job_id: str, record: dict) -> None:
             spec = SceneSpec(chip_id=chip_id, event=record["event"], observed_at=record["observed_at"],
                              seed=LIVE_SEED, s1_path=s1_path, label_path=label_path,
                              inference_dir=inference_dir, split_part=record["split_part"], origin="live",
-                             source_meta=_source_meta(scratch))
+                             source_meta=_source_meta(scratch), jrc_path=jrc_path)
             try:
                 row = build_scene(spec, staging)
             except (OSError, ValueError) as error:
