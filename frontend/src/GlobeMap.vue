@@ -4,8 +4,9 @@ import * as maplibregl from 'maplibre-gl'
 import { ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { state } from './store'
+import { calibrationChecked, state } from './store'
 import { compactRub, number, percent } from './lib/format'
+import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
 import { WaterLayer } from './lib/waterLayer'
 import { bindTip } from './lib/tip'
@@ -44,6 +45,8 @@ const rasterNames = ['radar', 'probability', 'baseline', 'reference', 'uncertain
 const rasterFile = { radar: 'radar', probability: 'probability', baseline: 'baseline', reference: 'reference', uncertainty: 'doubt' }
 const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const water = new WaterLayer('water-layer', { onError: error => console.warn(error) })
+// Прозрачный пиксель: слой «нет сигнала» пуст, пока поле воды для снимка не готово.
+const EMPTY_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 // Цвета оверлеев в тон интерфейсу: объекты и их зоны янтарные, как риск, неуверенность фиолетовая.
 const COLORS = {
@@ -66,18 +69,37 @@ let waterToken = 0
 async function loadWater(chip, reveal) {
   const token = ++waterToken
   water.clear()
+  setNoData(null, chip.bbox)
   try {
     const permanent = ['jrc_waterhand', 'jrc_gsw'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
-    const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent)
+    const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent, layerUrl(chip.chip_id, 'radar'))
     if (token !== waterToken) return false
     const [w, s, e, n] = chip.bbox
     const meters = (e - w) * 111320 * Math.cos(((s + n) / 2) * Math.PI / 180) / field.width
     water.setScene(field, chip.bbox, meters, { reveal })
+    setNoData(field.noData, chip.bbox)
     return true
   } catch (error) {
     console.warn('Water field:', error)
     return false
   }
+}
+/*
+ * Пиксели без сигнала радара закрашены серым поверх данных: иначе сквозь них видна
+ * подложка, и шов на стыке кадров Sentinel-1 выглядел как дорога поверх паводка.
+ */
+function setNoData(noData, bbox) {
+  state.radarGaps = noData?.count || 0
+  if (!ready) return
+  map.getSource('nodata')?.updateImage({ url: noData?.url || EMPTY_IMAGE, coordinates: coordinates(bbox) })
+  syncNoData()
+}
+function syncNoData() {
+  if (!ready || !map.getLayer('nodata-layer')) return
+  const pending = ['searching', 'preparing', 'error'].includes(state.liveStatus)
+  const shown = state.radarGaps > 0 && state.layerMode !== 'none' && !pending
+  map.setLayoutProperty('nodata-layer', 'visibility', shown ? 'visible' : 'none')
+  map.setPaintProperty('nodata-layer', 'raster-opacity', phase !== null ? 0 : state.overlayOpacity / 100)
 }
 function polygon(bounds) {
   const [w, s, e, n] = bounds
@@ -125,6 +147,9 @@ function buildOverlays() {
   }
   water.set({ theme: theme() })
   map.addLayer(water, before)
+  map.addSource('nodata', { type: 'image', url: EMPTY_IMAGE, coordinates: imageCoords })
+  map.addLayer({ id: 'nodata-layer', type: 'raster', source: 'nodata', layout: { visibility: 'none' },
+    paint: { 'raster-resampling': 'nearest', 'raster-fade-duration': 0, 'raster-opacity-transition': { duration: 350 } } }, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
   const zoneColor = ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]
@@ -153,13 +178,6 @@ function buildOverlays() {
   // Проекция всегда глобус: на крупном масштабе MapLibre сам рисует его плоским,
   // а при отдалении колесом карта плавно сворачивается в шар.
   map.setProjection({ type: 'globe' })
-  // MapLibre раскрывает длинную атрибуцию при добавлении нового raster-source.
-  // Оставляем доступную кнопку «i», а сам текст показываем по запросу.
-  requestAnimationFrame(() => {
-    const attribution = map?.getContainer().querySelector('.maplibregl-ctrl-attrib')
-    attribution?.removeAttribute('open')
-    attribution?.classList.remove('maplibregl-compact-show')
-  })
   ready = true
   syncMap()
   emit('ready')
@@ -226,6 +244,7 @@ function syncMap() {
   if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
     for (const name of rasterNames) map.setLayoutProperty(name + '-layer', 'visibility', 'none')
     water.set({ visible: false })
+    syncNoData()
     setData('chip', empty)
     setData('zones', empty)
     setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
@@ -261,6 +280,7 @@ function syncMap() {
     map.setPaintProperty(name + '-layer', 'raster-opacity', hidden ? 0 : state.overlayOpacity / 100)
   }
   water.set({ visible: state.layerMode === 'model' && !hidden, opacity: state.overlayOpacity / 100 })
+  syncNoData()
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
@@ -626,7 +646,8 @@ onMounted(() => {
     maxTileCacheSize: 300, maxTileCacheZoomLevels: 16,
   })
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
+  // Атрибуцию подложки показывает строка под картой (App.vue, .map-credits): кнопка «i»
+  // MapLibre пряталась под панелью решения, а на телефоне была выключена совсем.
   map.on('error', error => {
     // MapLibre считает errored-тайл «загруженным» в areTilesLoaded().
     if (error.tile) tileErrorSeen = true
@@ -755,6 +776,7 @@ watch(() => state.drawing, value => {
           <div v-tip="state.analysis?.chip.source_kind === 'live_sentinel1_rtc' ? 'Для нового снимка ручной разметки нет' : 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water3(probe.reference_water) }}</b></div>
           <div v-tip="'Насколько расходятся пять моделей ансамбля, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
         </div>
+        <p v-if="!calibrationChecked" class="pixel-calib"><CalibrationBadge /></p>
         <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>
       </template>
       <p v-else class="pixel-message">{{ PROBE_MESSAGES[probe?.status] || PROBE_MESSAGES.error }}</p>
