@@ -1,0 +1,1577 @@
+[
+  {
+    "name": "Ghana_313799",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 244464,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.5704206875088857,
+    "radar_rot4_seconds_per_chip_batch": 1.0098685729899444,
+    "both_optical_seconds": 0.3084681669715792
+  },
+  {
+    "name": "Ghana_1078550",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.5704206875088857,
+    "radar_rot4_seconds_per_chip_batch": 1.0098685729899444,
+    "both_optical_seconds": 0.2875262500019744
+  },
+  {
+    "name": "Ghana_97059",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 27394,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.5704206875088857,
+    "radar_rot4_seconds_per_chip_batch": 1.0098685729899444,
+    "both_optical_seconds": 0.3120251249638386
+  },
+  {
+    "name": "Ghana_866994",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 117511,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.5704206875088857,
+    "radar_rot4_seconds_per_chip_batch": 1.0098685729899444,
+    "both_optical_seconds": 0.2547383749624714
+  },
+  {
+    "name": "Ghana_406026",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.10943763524119277,
+    "radar_rot4_seconds_per_chip_batch": 0.9009361249918584,
+    "both_optical_seconds": 0.21221725002396852
+  },
+  {
+    "name": "Ghana_53713",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.10943763524119277,
+    "radar_rot4_seconds_per_chip_batch": 0.9009361249918584,
+    "both_optical_seconds": 0.21909800003049895
+  },
+  {
+    "name": "Ghana_83483",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 0,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.10943763524119277,
+    "radar_rot4_seconds_per_chip_batch": 0.9009361249918584,
+    "both_optical_seconds": 0.22764450003160164
+  },
+  {
+    "name": "Ghana_167233",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.10943763524119277,
+    "radar_rot4_seconds_per_chip_batch": 0.9009361249918584,
+    "both_optical_seconds": 0.20754774997476488
+  },
+  {
+    "name": "India_900498",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 261992,
+    "valid_pixels": 261992,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1055616147496039,
+    "radar_rot4_seconds_per_chip_batch": 1.0208740519883577,
+    "both_optical_seconds": 6.233725291967858
+  },
+  {
+    "name": "India_591317",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 246049,
+    "valid_pixels": 246049,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1055616147496039,
+    "radar_rot4_seconds_per_chip_batch": 1.0208740519883577,
+    "both_optical_seconds": 6.17739512497792
+  },
+  {
+    "name": "India_79637",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1055616147496039,
+    "radar_rot4_seconds_per_chip_batch": 1.0208740519883577,
+    "both_optical_seconds": 6.677037915971596
+  },
+  {
+    "name": "India_952728",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 188716,
+    "valid_pixels": 188716,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1055616147496039,
+    "radar_rot4_seconds_per_chip_batch": 1.0208740519883577,
+    "both_optical_seconds": 6.592165209003724
+  },
+  {
+    "name": "India_828067",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 183120,
+    "valid_pixels": 183120,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11387000000104308,
+    "radar_rot4_seconds_per_chip_batch": 0.8875367812433979,
+    "both_optical_seconds": 7.3907421250478365
+  },
+  {
+    "name": "India_570384",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 242000,
+    "valid_pixels": 242000,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11387000000104308,
+    "radar_rot4_seconds_per_chip_batch": 0.8875367812433979,
+    "both_optical_seconds": 6.476097458042204
+  },
+  {
+    "name": "India_44475",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 260175,
+    "valid_pixels": 260175,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11387000000104308,
+    "radar_rot4_seconds_per_chip_batch": 0.8875367812433979,
+    "both_optical_seconds": 5.862575207953341
+  },
+  {
+    "name": "India_80221",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 151793,
+    "valid_pixels": 151793,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11387000000104308,
+    "radar_rot4_seconds_per_chip_batch": 0.8875367812433979,
+    "both_optical_seconds": 6.049288666981738
+  },
+  {
+    "name": "India_1018327",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262142,
+    "valid_pixels": 262142,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.17027969774790108,
+    "radar_rot4_seconds_per_chip_batch": 1.0469415209954605,
+    "both_optical_seconds": 7.093692332971841
+  },
+  {
+    "name": "India_592446",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 224355,
+    "valid_pixels": 224355,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.17027969774790108,
+    "radar_rot4_seconds_per_chip_batch": 1.0469415209954605,
+    "both_optical_seconds": 5.8843479579663835
+  },
+  {
+    "name": "India_772630",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 155332,
+    "valid_pixels": 155332,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.17027969774790108,
+    "radar_rot4_seconds_per_chip_batch": 1.0469415209954605,
+    "both_optical_seconds": 6.023326624999754
+  },
+  {
+    "name": "India_399883",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262119,
+    "valid_pixels": 262119,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.17027969774790108,
+    "radar_rot4_seconds_per_chip_batch": 1.0469415209954605,
+    "both_optical_seconds": 6.691230249998625
+  },
+  {
+    "name": "Mekong_333434",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 203133,
+    "valid_pixels": 203133,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1164674167521298,
+    "radar_rot4_seconds_per_chip_batch": 0.9176587605034001,
+    "both_optical_seconds": 7.5552223330014385
+  },
+  {
+    "name": "Mekong_254910",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 205495,
+    "valid_pixels": 205495,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1164674167521298,
+    "radar_rot4_seconds_per_chip_batch": 0.9176587605034001,
+    "both_optical_seconds": 7.326018874999136
+  },
+  {
+    "name": "Nigeria_417184",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/21",
+      "s2_date": "2018/09/20"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 50135,
+    "valid_pixels": 50135,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1164674167521298,
+    "radar_rot4_seconds_per_chip_batch": 0.9176587605034001,
+    "both_optical_seconds": 7.685789624985773
+  },
+  {
+    "name": "Nigeria_812045",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/21",
+      "s2_date": "2018/09/20"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 236584,
+    "valid_pixels": 236584,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1164674167521298,
+    "radar_rot4_seconds_per_chip_batch": 0.9176587605034001,
+    "both_optical_seconds": 10.057623333996162
+  },
+  {
+    "name": "Nigeria_22088",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/09/21",
+      "s2_date": "2018/09/20"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 209501,
+    "valid_pixels": 209501,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15967227074725088,
+    "radar_rot4_seconds_per_chip_batch": 1.0908392812416423,
+    "both_optical_seconds": 11.5811006250442
+  },
+  {
+    "name": "Pakistan_849790",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 257239,
+    "valid_pixels": 257239,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15967227074725088,
+    "radar_rot4_seconds_per_chip_batch": 1.0908392812416423,
+    "both_optical_seconds": 10.620220000040717
+  },
+  {
+    "name": "Pakistan_664885",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 73010,
+    "valid_pixels": 73010,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15967227074725088,
+    "radar_rot4_seconds_per_chip_batch": 1.0908392812416423,
+    "both_optical_seconds": 8.364776875008829
+  },
+  {
+    "name": "Pakistan_694942",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 191444,
+    "valid_pixels": 191444,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15967227074725088,
+    "radar_rot4_seconds_per_chip_batch": 1.0908392812416423,
+    "both_optical_seconds": 7.937161957961507
+  },
+  {
+    "name": "Pakistan_528249",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 76982,
+    "valid_pixels": 76982,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15122376024373807,
+    "radar_rot4_seconds_per_chip_batch": 0.9957180625060573,
+    "both_optical_seconds": 8.954673542000819
+  },
+  {
+    "name": "Pakistan_167553",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 247105,
+    "valid_pixels": 247105,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15122376024373807,
+    "radar_rot4_seconds_per_chip_batch": 0.9957180625060573,
+    "both_optical_seconds": 8.72221829101909
+  },
+  {
+    "name": "Paraguay_913449",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15122376024373807,
+    "radar_rot4_seconds_per_chip_batch": 0.9957180625060573,
+    "both_optical_seconds": 9.099204999976791
+  },
+  {
+    "name": "Paraguay_232281",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 261391,
+    "valid_pixels": 261391,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15122376024373807,
+    "radar_rot4_seconds_per_chip_batch": 0.9957180625060573,
+    "both_optical_seconds": 8.850663167017046
+  },
+  {
+    "name": "Paraguay_271769",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12104143749456853,
+    "radar_rot4_seconds_per_chip_batch": 0.9953261979972012,
+    "both_optical_seconds": 7.546464207989629
+  },
+  {
+    "name": "Paraguay_40936",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 215331,
+    "valid_pixels": 215331,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12104143749456853,
+    "radar_rot4_seconds_per_chip_batch": 0.9953261979972012,
+    "both_optical_seconds": 10.025013707985636
+  },
+  {
+    "name": "Paraguay_34417",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 0,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12104143749456853,
+    "radar_rot4_seconds_per_chip_batch": 0.9953261979972012,
+    "both_optical_seconds": 9.463932542013936
+  },
+  {
+    "name": "Paraguay_868895",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 175465,
+    "valid_pixels": 175465,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12104143749456853,
+    "radar_rot4_seconds_per_chip_batch": 0.9953261979972012,
+    "both_optical_seconds": 9.523071959032677
+  },
+  {
+    "name": "Somalia_699062",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 203209,
+    "valid_pixels": 203209,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15148311475059018,
+    "radar_rot4_seconds_per_chip_batch": 1.0807625937450211,
+    "both_optical_seconds": 8.13302345899865
+  },
+  {
+    "name": "Somalia_60129",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 222316,
+    "valid_pixels": 222316,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15148311475059018,
+    "radar_rot4_seconds_per_chip_batch": 1.0807625937450211,
+    "both_optical_seconds": 6.977704125049058
+  },
+  {
+    "name": "Somalia_685158",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 184172,
+    "valid_pixels": 184172,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15148311475059018,
+    "radar_rot4_seconds_per_chip_batch": 1.0807625937450211,
+    "both_optical_seconds": 8.37285545800114
+  },
+  {
+    "name": "Somalia_166342",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 220577,
+    "valid_pixels": 220577,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.15148311475059018,
+    "radar_rot4_seconds_per_chip_batch": 1.0807625937450211,
+    "both_optical_seconds": 7.399785208981484
+  },
+  {
+    "name": "Somalia_322855",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 255044,
+    "valid_pixels": 255044,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11937697924440727,
+    "radar_rot4_seconds_per_chip_batch": 0.9624013022548752,
+    "both_optical_seconds": 7.054610958031844
+  },
+  {
+    "name": "Sri-Lanka_1049830",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 190233,
+    "valid_pixels": 190233,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11937697924440727,
+    "radar_rot4_seconds_per_chip_batch": 0.9624013022548752,
+    "both_optical_seconds": 7.573236958007328
+  },
+  {
+    "name": "Sri-Lanka_534068",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11937697924440727,
+    "radar_rot4_seconds_per_chip_batch": 0.9624013022548752,
+    "both_optical_seconds": 7.298123332962859
+  },
+  {
+    "name": "Sri-Lanka_922192",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 239783,
+    "valid_pixels": 239783,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11937697924440727,
+    "radar_rot4_seconds_per_chip_batch": 0.9624013022548752,
+    "both_optical_seconds": 7.9846174999838695
+  },
+  {
+    "name": "Sri-Lanka_377277",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 259388,
+    "valid_pixels": 259388,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12094335425354075,
+    "radar_rot4_seconds_per_chip_batch": 0.9689392709988169,
+    "both_optical_seconds": 7.459308999998029
+  },
+  {
+    "name": "Sri-Lanka_450918",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 99126,
+    "valid_pixels": 99126,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12094335425354075,
+    "radar_rot4_seconds_per_chip_batch": 0.9689392709988169,
+    "both_optical_seconds": 6.01969970803475
+  },
+  {
+    "name": "Sri-Lanka_713926",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262104,
+    "valid_pixels": 262104,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12094335425354075,
+    "radar_rot4_seconds_per_chip_batch": 0.9689392709988169,
+    "both_optical_seconds": 6.95372354099527
+  },
+  {
+    "name": "USA_350244",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262120,
+    "valid_pixels": 262120,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12094335425354075,
+    "radar_rot4_seconds_per_chip_batch": 0.9689392709988169,
+    "both_optical_seconds": 8.840561707969755
+  },
+  {
+    "name": "USA_66511",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262136,
+    "valid_pixels": 262136,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1135400312487036,
+    "radar_rot4_seconds_per_chip_batch": 0.9411891874915455,
+    "both_optical_seconds": 6.518056458036881
+  },
+  {
+    "name": "USA_519181",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262127,
+    "valid_pixels": 262127,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1135400312487036,
+    "radar_rot4_seconds_per_chip_batch": 0.9411891874915455,
+    "both_optical_seconds": 7.324022833025083
+  },
+  {
+    "name": "USA_778194",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262070,
+    "valid_pixels": 262070,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1135400312487036,
+    "radar_rot4_seconds_per_chip_batch": 0.9411891874915455,
+    "both_optical_seconds": 6.862530624959618
+  },
+  {
+    "name": "USA_67102",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262091,
+    "valid_pixels": 262091,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1135400312487036,
+    "radar_rot4_seconds_per_chip_batch": 0.9411891874915455,
+    "both_optical_seconds": 6.627098082972225
+  },
+  {
+    "name": "USA_1049586",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262061,
+    "valid_pixels": 262061,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12700313550885767,
+    "radar_rot4_seconds_per_chip_batch": 1.0293409062578576,
+    "both_optical_seconds": 9.597922625020146
+  },
+  {
+    "name": "USA_504150",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262126,
+    "valid_pixels": 262126,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12700313550885767,
+    "radar_rot4_seconds_per_chip_batch": 1.0293409062578576,
+    "both_optical_seconds": 7.131248833029531
+  },
+  {
+    "name": "USA_758178",
+    "part": "test_core",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262133,
+    "valid_pixels": 262133,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12700313550885767,
+    "radar_rot4_seconds_per_chip_batch": 1.0293409062578576,
+    "both_optical_seconds": 6.832381665997673
+  },
+  {
+    "name": "Ghana_359826",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12700313550885767,
+    "radar_rot4_seconds_per_chip_batch": 1.0293409062578576,
+    "both_optical_seconds": 0.23112029198091477
+  },
+  {
+    "name": "Ghana_319168",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 171624,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1231286352413008,
+    "radar_rot4_seconds_per_chip_batch": 1.050581728995894,
+    "both_optical_seconds": 0.21862291701836511
+  },
+  {
+    "name": "Ghana_141271",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/09/18",
+      "s2_date": "2018/09/19"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1231286352413008,
+    "radar_rot4_seconds_per_chip_batch": 1.050581728995894,
+    "both_optical_seconds": 0.22850383399054408
+  },
+  {
+    "name": "India_747992",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262087,
+    "valid_pixels": 262087,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1231286352413008,
+    "radar_rot4_seconds_per_chip_batch": 1.050581728995894,
+    "both_optical_seconds": 7.0799679170013405
+  },
+  {
+    "name": "India_631692",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2016/08/12",
+      "s2_date": "2016/08/12"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1231286352413008,
+    "radar_rot4_seconds_per_chip_batch": 1.050581728995894,
+    "both_optical_seconds": 6.655326500011142
+  },
+  {
+    "name": "Mekong_45934",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 261859,
+    "valid_pixels": 261859,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11496687500039116,
+    "radar_rot4_seconds_per_chip_batch": 0.9282415729976492,
+    "both_optical_seconds": 6.291184249974322
+  },
+  {
+    "name": "Mekong_1443339",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262135,
+    "valid_pixels": 262135,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11496687500039116,
+    "radar_rot4_seconds_per_chip_batch": 0.9282415729976492,
+    "both_optical_seconds": 6.937635540962219
+  },
+  {
+    "name": "Mekong_382276",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262111,
+    "valid_pixels": 262111,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11496687500039116,
+    "radar_rot4_seconds_per_chip_batch": 0.9282415729976492,
+    "both_optical_seconds": 6.694100666965824
+  },
+  {
+    "name": "Mekong_424793",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/08/05",
+      "s2_date": "2018/08/04"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 258487,
+    "valid_pixels": 258487,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11496687500039116,
+    "radar_rot4_seconds_per_chip_batch": 0.9282415729976492,
+    "both_optical_seconds": 7.763794958009385
+  },
+  {
+    "name": "Nigeria_225131",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/09/21",
+      "s2_date": "2018/09/20"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 241255,
+    "valid_pixels": 241255,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.14396060399303678,
+    "radar_rot4_seconds_per_chip_batch": 0.9145717395003885,
+    "both_optical_seconds": 6.089902333973441
+  },
+  {
+    "name": "Pakistan_70625",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2017/06/28",
+      "s2_date": "2017/06/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.14396060399303678,
+    "radar_rot4_seconds_per_chip_batch": 0.9145717395003885,
+    "both_optical_seconds": 6.453553542029113
+  },
+  {
+    "name": "Paraguay_280900",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262142,
+    "valid_pixels": 262142,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.14396060399303678,
+    "radar_rot4_seconds_per_chip_batch": 0.9145717395003885,
+    "both_optical_seconds": 6.911409792024642
+  },
+  {
+    "name": "Paraguay_790830",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 261199,
+    "valid_pixels": 261199,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.14396060399303678,
+    "radar_rot4_seconds_per_chip_batch": 0.9145717395003885,
+    "both_optical_seconds": 6.518900791008491
+  },
+  {
+    "name": "Paraguay_1029191",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 253937,
+    "valid_pixels": 253937,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11460511450422928,
+    "radar_rot4_seconds_per_chip_batch": 1.09293014575087,
+    "both_optical_seconds": 7.479769334022421
+  },
+  {
+    "name": "Paraguay_59731",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 255656,
+    "valid_pixels": 255656,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11460511450422928,
+    "radar_rot4_seconds_per_chip_batch": 1.09293014575087,
+    "both_optical_seconds": 6.180536166008096
+  },
+  {
+    "name": "Paraguay_683296",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 259578,
+    "valid_pixels": 259578,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11460511450422928,
+    "radar_rot4_seconds_per_chip_batch": 1.09293014575087,
+    "both_optical_seconds": 6.51609708298929
+  },
+  {
+    "name": "Paraguay_511199",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11460511450422928,
+    "radar_rot4_seconds_per_chip_batch": 1.09293014575087,
+    "both_optical_seconds": 7.063738375029061
+  },
+  {
+    "name": "Paraguay_80102",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262143,
+    "valid_pixels": 262143,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12824176051071845,
+    "radar_rot4_seconds_per_chip_batch": 0.9204559789941413,
+    "both_optical_seconds": 6.192866750003304
+  },
+  {
+    "name": "Paraguay_651904",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/10/31",
+      "s2_date": "2018/10/31"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12824176051071845,
+    "radar_rot4_seconds_per_chip_batch": 0.9204559789941413,
+    "both_optical_seconds": 6.765443334006704
+  },
+  {
+    "name": "Somalia_94102",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2018/05/07",
+      "s2_date": "2018/05/05"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 241360,
+    "valid_pixels": 241360,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12824176051071845,
+    "radar_rot4_seconds_per_chip_batch": 0.9204559789941413,
+    "both_optical_seconds": 6.135859458998311
+  },
+  {
+    "name": "Spain_6860600",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 261969,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12824176051071845,
+    "radar_rot4_seconds_per_chip_batch": 0.9204559789941413,
+    "both_optical_seconds": 0.4690536670386791
+  },
+  {
+    "name": "Spain_7558720",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 261984,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1704772397497436,
+    "radar_rot4_seconds_per_chip_batch": 1.0317889167490648,
+    "both_optical_seconds": 0.21823183301603422
+  },
+  {
+    "name": "Spain_5650136",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 171596,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1704772397497436,
+    "radar_rot4_seconds_per_chip_batch": 1.0317889167490648,
+    "both_optical_seconds": 0.21476341597735882
+  },
+  {
+    "name": "Spain_7370579",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262045,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1704772397497436,
+    "radar_rot4_seconds_per_chip_batch": 1.0317889167490648,
+    "both_optical_seconds": 0.2288001250126399
+  },
+  {
+    "name": "Spain_6095801",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262062,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.1704772397497436,
+    "radar_rot4_seconds_per_chip_batch": 1.0317889167490648,
+    "both_optical_seconds": 0.22432341700186953
+  },
+  {
+    "name": "Spain_7387658",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/09/17",
+      "s2_date": "2019/09/18"
+    },
+    "optical_allowed_by_date": false,
+    "optical_valid_pixels": 0,
+    "valid_pixels": 262057,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12192221875011455,
+    "radar_rot4_seconds_per_chip_batch": 0.9901245104992995,
+    "both_optical_seconds": 0.2368147499510087
+  },
+  {
+    "name": "Sri-Lanka_117737",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12192221875011455,
+    "radar_rot4_seconds_per_chip_batch": 0.9901245104992995,
+    "both_optical_seconds": 7.187245209002867
+  },
+  {
+    "name": "Sri-Lanka_649970",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 260855,
+    "valid_pixels": 260855,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12192221875011455,
+    "radar_rot4_seconds_per_chip_batch": 0.9901245104992995,
+    "both_optical_seconds": 7.360558709013276
+  },
+  {
+    "name": "Sri-Lanka_849649",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2017/05/30",
+      "s2_date": "2017/05/28"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 218207,
+    "valid_pixels": 218207,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12192221875011455,
+    "radar_rot4_seconds_per_chip_batch": 0.9901245104992995,
+    "both_optical_seconds": 7.11630229203729
+  },
+  {
+    "name": "USA_905409",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262099,
+    "valid_pixels": 262099,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12034004174347501,
+    "radar_rot4_seconds_per_chip_batch": 0.995531708249473,
+    "both_optical_seconds": 6.58251904201461
+  },
+  {
+    "name": "USA_430764",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262137,
+    "valid_pixels": 262137,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12034004174347501,
+    "radar_rot4_seconds_per_chip_batch": 0.995531708249473,
+    "both_optical_seconds": 6.8307726249913685
+  },
+  {
+    "name": "USA_527077",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262127,
+    "valid_pixels": 262127,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12034004174347501,
+    "radar_rot4_seconds_per_chip_batch": 0.995531708249473,
+    "both_optical_seconds": 7.070927708002273
+  },
+  {
+    "name": "USA_933610",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262027,
+    "valid_pixels": 262027,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12034004174347501,
+    "radar_rot4_seconds_per_chip_batch": 0.995531708249473,
+    "both_optical_seconds": 7.056617000023834
+  },
+  {
+    "name": "USA_595451",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262136,
+    "valid_pixels": 262136,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13020519800193142,
+    "radar_rot4_seconds_per_chip_batch": 1.0181663750117877,
+    "both_optical_seconds": 6.88401999999769
+  },
+  {
+    "name": "USA_670826",
+    "part": "test_adjacent",
+    "dates": {
+      "s1_date": "2019/05/22",
+      "s2_date": "2019/05/22"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262132,
+    "valid_pixels": 262132,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13020519800193142,
+    "radar_rot4_seconds_per_chip_batch": 1.0181663750117877,
+    "both_optical_seconds": 6.553732333006337
+  },
+  {
+    "name": "Bolivia_103757",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 88013,
+    "valid_pixels": 88077,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13020519800193142,
+    "radar_rot4_seconds_per_chip_batch": 1.0181663750117877,
+    "both_optical_seconds": 6.0283776670112275
+  },
+  {
+    "name": "Bolivia_129334",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 237065,
+    "valid_pixels": 237065,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13020519800193142,
+    "radar_rot4_seconds_per_chip_batch": 1.0181663750117877,
+    "both_optical_seconds": 7.429464875021949
+  },
+  {
+    "name": "Bolivia_195474",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 261335,
+    "valid_pixels": 261335,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12575488550646696,
+    "radar_rot4_seconds_per_chip_batch": 0.9633861562615493,
+    "both_optical_seconds": 6.61647475004429
+  },
+  {
+    "name": "Bolivia_23014",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 182995,
+    "valid_pixels": 182995,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12575488550646696,
+    "radar_rot4_seconds_per_chip_batch": 0.9633861562615493,
+    "both_optical_seconds": 8.487866083043627
+  },
+  {
+    "name": "Bolivia_233925",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 146294,
+    "valid_pixels": 146294,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12575488550646696,
+    "radar_rot4_seconds_per_chip_batch": 0.9633861562615493,
+    "both_optical_seconds": 7.081374416011386
+  },
+  {
+    "name": "Bolivia_242570",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 175507,
+    "valid_pixels": 175507,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.12575488550646696,
+    "radar_rot4_seconds_per_chip_batch": 0.9633861562615493,
+    "both_optical_seconds": 7.831714792002458
+  },
+  {
+    "name": "Bolivia_290290",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 204633,
+    "valid_pixels": 204633,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13675514575152192,
+    "radar_rot4_seconds_per_chip_batch": 0.9918145417468622,
+    "both_optical_seconds": 6.52590233401861
+  },
+  {
+    "name": "Bolivia_294583",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 130472,
+    "valid_pixels": 130472,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13675514575152192,
+    "radar_rot4_seconds_per_chip_batch": 0.9918145417468622,
+    "both_optical_seconds": 7.289820458972827
+  },
+  {
+    "name": "Bolivia_312675",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 158008,
+    "valid_pixels": 158008,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13675514575152192,
+    "radar_rot4_seconds_per_chip_batch": 0.9918145417468622,
+    "both_optical_seconds": 6.6480445839697495
+  },
+  {
+    "name": "Bolivia_314919",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 188845,
+    "valid_pixels": 188845,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.13675514575152192,
+    "radar_rot4_seconds_per_chip_batch": 0.9918145417468622,
+    "both_optical_seconds": 6.948227374989074
+  },
+  {
+    "name": "Bolivia_360519",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 243678,
+    "valid_pixels": 243678,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11926665625651367,
+    "radar_rot4_seconds_per_chip_batch": 0.9673964480025461,
+    "both_optical_seconds": 6.693094415997621
+  },
+  {
+    "name": "Bolivia_379434",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 262144,
+    "valid_pixels": 262144,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11926665625651367,
+    "radar_rot4_seconds_per_chip_batch": 0.9673964480025461,
+    "both_optical_seconds": 7.12147845805157
+  },
+  {
+    "name": "Bolivia_432776",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 155397,
+    "valid_pixels": 155397,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11926665625651367,
+    "radar_rot4_seconds_per_chip_batch": 0.9673964480025461,
+    "both_optical_seconds": 8.315904583025258
+  },
+  {
+    "name": "Bolivia_60373",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 199019,
+    "valid_pixels": 199019,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.11926665625651367,
+    "radar_rot4_seconds_per_chip_batch": 0.9673964480025461,
+    "both_optical_seconds": 6.834783542028163
+  },
+  {
+    "name": "Bolivia_76104",
+    "part": "bolivia",
+    "dates": {
+      "s1_date": "2018/02/15",
+      "s2_date": "2018/02/15"
+    },
+    "optical_allowed_by_date": true,
+    "optical_valid_pixels": 190965,
+    "valid_pixels": 190965,
+    "device": "mps",
+    "service_seconds_per_chip_batch": 0.6713244169950485,
+    "radar_rot4_seconds_per_chip_batch": 2.630167333991267,
+    "both_optical_seconds": 6.690209833031986
+  }
+]

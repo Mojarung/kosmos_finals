@@ -1,0 +1,648 @@
+{
+  "status": "exploratory; never used for tuning",
+  "slices": {
+    "test_core:optical_missing": {
+      "service_s1": {
+        "tp": 80346,
+        "fp": 11738,
+        "fn": 46270,
+        "tn": 1299591,
+        "n_pixels": 1437945,
+        "iou": 0.5807276985125114,
+        "f1": 0.7347599451303155,
+        "precision": 0.8725294296511881,
+        "recall": 0.6345643520566121,
+        "brier": 0.03816609615781297,
+        "ece": 0.034934521755563705
+      },
+      "previous_s1s2": {
+        "tp": 80061,
+        "fp": 11660,
+        "fn": 46555,
+        "tn": 1299669,
+        "n_pixels": 1437945,
+        "iou": 0.5789941855419596,
+        "f1": 0.7333708899545198,
+        "precision": 0.8728753502469445,
+        "recall": 0.632313451696468,
+        "brier": 0.03870796496936875,
+        "ece": 0.03738473553722739
+      },
+      "latest_s1s2": {
+        "tp": 80132,
+        "fp": 11673,
+        "fn": 46484,
+        "tn": 1299656,
+        "n_pixels": 1437945,
+        "iou": 0.5794531741497878,
+        "f1": 0.7337389719852945,
+        "precision": 0.8728500626327542,
+        "recall": 0.6328742023125039,
+        "brier": 0.03876412619963759,
+        "ece": 0.0376110158321519
+      },
+      "latest_no_s2": {
+        "tp": 80132,
+        "fp": 11673,
+        "fn": 46484,
+        "tn": 1299656,
+        "n_pixels": 1437945,
+        "iou": 0.5794531741497878,
+        "f1": 0.7337389719852945,
+        "precision": 0.8728500626327542,
+        "recall": 0.6328742023125039,
+        "brier": 0.03876412619963759,
+        "ece": 0.0376110158321519
+      }
+    },
+    "test_core_no_development_neighbours": {
+      "service_s1": {
+        "tp": 697499,
+        "fp": 184627,
+        "fn": 255652,
+        "tn": 8274711,
+        "n_pixels": 9412489,
+        "iou": 0.6130361107351346,
+        "f1": 0.7601021535168806,
+        "precision": 0.7907022352815811,
+        "recall": 0.7317822674476552,
+        "brier": 0.03623764956973665,
+        "ece": 0.012562670711774263
+      },
+      "previous_s1s2": {
+        "tp": 789128,
+        "fp": 55755,
+        "fn": 164023,
+        "tn": 8403583,
+        "n_pixels": 9412489,
+        "iou": 0.7821620646522074,
+        "f1": 0.8777676061742993,
+        "precision": 0.9340086142104883,
+        "recall": 0.8279149893353729,
+        "brier": 0.01895156573142986,
+        "ece": 0.008411080772565773
+      },
+      "latest_s1s2": {
+        "tp": 792165,
+        "fp": 58113,
+        "fn": 160986,
+        "tn": 8401225,
+        "n_pixels": 9412489,
+        "iou": 0.7833414419973419,
+        "f1": 0.8785097722172595,
+        "precision": 0.9316541178296981,
+        "recall": 0.8311012630737418,
+        "brier": 0.018885559832994808,
+        "ece": 0.008492651369784339
+      },
+      "latest_no_s2": {
+        "tp": 717143,
+        "fp": 189178,
+        "fn": 236008,
+        "tn": 8270160,
+        "n_pixels": 9412489,
+        "iou": 0.6277902425658457,
+        "f1": 0.7713404665410396,
+        "precision": 0.7912682151246634,
+        "recall": 0.7523918036071934,
+        "brier": 0.03712914443038537,
+        "ece": 0.02358991557272696
+      }
+    },
+    "test_core:optical_available": {
+      "service_s1": {
+        "tp": 1154880,
+        "fp": 238741,
+        "fn": 240335,
+        "tn": 8488044,
+        "n_pixels": 10122000,
+        "iou": 0.7067999383092323,
+        "f1": 0.8282165032293043,
+        "precision": 0.8286901532052114,
+        "recall": 0.827743394387245,
+        "brier": 0.03570421736284642,
+        "ece": 0.009411540618306628
+      },
+      "previous_s1s2": {
+        "tp": 1265319,
+        "fp": 51755,
+        "fn": 129896,
+        "tn": 8675030,
+        "n_pixels": 10122000,
+        "iou": 0.8744611152961015,
+        "f1": 0.933026679679046,
+        "precision": 0.9607045617786093,
+        "recall": 0.906898936723014,
+        "brier": 0.013869467567349237,
+        "ece": 0.005594965816480203
+      },
+      "latest_s1s2": {
+        "tp": 1268748,
+        "fp": 54566,
+        "fn": 126467,
+        "tn": 8672219,
+        "n_pixels": 10122000,
+        "iou": 0.8751307956167172,
+        "f1": 0.933407736316221,
+        "precision": 0.9587656444351076,
+        "recall": 0.9093566224560372,
+        "brier": 0.01379056477156765,
+        "ece": 0.00559083817728111
+      },
+      "latest_no_s2": {
+        "tp": 1174247,
+        "fp": 241732,
+        "fn": 220968,
+        "tn": 8485053,
+        "n_pixels": 10122000,
+        "iou": 0.7173396573010611,
+        "f1": 0.8354080152419221,
+        "precision": 0.8292827789112691,
+        "recall": 0.8416244091412435,
+        "brier": 0.03701391783404024,
+        "ece": 0.022596480705662045
+      }
+    },
+    "test_adjacent:optical_missing": {
+      "service_s1": {
+        "tp": 327183,
+        "fp": 64436,
+        "fn": 69837,
+        "tn": 1716169,
+        "n_pixels": 2177625,
+        "iou": 0.7090231788079471,
+        "f1": 0.829740857350448,
+        "precision": 0.835462528631144,
+        "recall": 0.8240970228200091,
+        "brier": 0.045104925131309974,
+        "ece": 0.017767542020013943
+      },
+      "previous_s1s2": {
+        "tp": 321936,
+        "fp": 59366,
+        "fn": 75084,
+        "tn": 1721239,
+        "n_pixels": 2177625,
+        "iou": 0.7054028826475834,
+        "f1": 0.8272565853207284,
+        "precision": 0.8443071371249036,
+        "recall": 0.8108810639262506,
+        "brier": 0.04789821935083435,
+        "ece": 0.03280566977823242
+      },
+      "latest_s1s2": {
+        "tp": 322801,
+        "fp": 60138,
+        "fn": 74219,
+        "tn": 1720467,
+        "n_pixels": 2177625,
+        "iou": 0.7061037978116975,
+        "f1": 0.8277383811200333,
+        "precision": 0.8429567111210924,
+        "recall": 0.8130597954762985,
+        "brier": 0.04808369620316992,
+        "ece": 0.033727332208837335
+      },
+      "latest_no_s2": {
+        "tp": 322801,
+        "fp": 60138,
+        "fn": 74219,
+        "tn": 1720467,
+        "n_pixels": 2177625,
+        "iou": 0.7061037978116975,
+        "f1": 0.8277383811200333,
+        "precision": 0.8429567111210924,
+        "recall": 0.8130597954762985,
+        "brier": 0.04808369620316992,
+        "ece": 0.033727332208837335
+      }
+    },
+    "test_adjacent:optical_available": {
+      "service_s1": {
+        "tp": 430140,
+        "fp": 110299,
+        "fn": 166017,
+        "tn": 5999933,
+        "n_pixels": 6706389,
+        "iou": 0.6088701914910483,
+        "f1": 0.7568916307993342,
+        "precision": 0.7959085114138691,
+        "recall": 0.7215213442096629,
+        "brier": 0.031182664367650072,
+        "ece": 0.015628078071074206
+      },
+      "previous_s1s2": {
+        "tp": 568058,
+        "fp": 10355,
+        "fn": 28099,
+        "tn": 6099877,
+        "n_pixels": 6706389,
+        "iou": 0.9365981217189437,
+        "f1": 0.9672612104855394,
+        "precision": 0.9820975669633981,
+        "recall": 0.9528664429001086,
+        "brier": 0.005530041626494867,
+        "ece": 0.006037852801249527
+      },
+      "latest_s1s2": {
+        "tp": 569152,
+        "fp": 10900,
+        "fn": 27005,
+        "tn": 6099332,
+        "n_pixels": 6706389,
+        "iou": 0.9375594054594544,
+        "f1": 0.9677735844565039,
+        "precision": 0.9812085812996076,
+        "recall": 0.9547015299660996,
+        "brier": 0.005449070564833391,
+        "ece": 0.006107580168457446
+      },
+      "latest_no_s2": {
+        "tp": 432544,
+        "fp": 108202,
+        "fn": 163613,
+        "tn": 6002030,
+        "n_pixels": 6706389,
+        "iou": 0.6140959368731003,
+        "f1": 0.760916278697479,
+        "precision": 0.799902357114061,
+        "recall": 0.7255538390054969,
+        "brier": 0.032146262992989755,
+        "ece": 0.023944911082899836
+      }
+    },
+    "bolivia:optical_available": {
+      "service_s1": {
+        "tp": 346571,
+        "fp": 73880,
+        "fn": 105266,
+        "tn": 2298653,
+        "n_pixels": 2824370,
+        "iou": 0.6592349115588806,
+        "f1": 0.7946251696687333,
+        "precision": 0.8242839236914646,
+        "recall": 0.7670266047269259,
+        "brier": 0.04837953581869835,
+        "ece": 0.017346569926718788
+      },
+      "previous_s1s2": {
+        "tp": 389937,
+        "fp": 14140,
+        "fn": 61900,
+        "tn": 2358393,
+        "n_pixels": 2824370,
+        "iou": 0.8368159801878633,
+        "f1": 0.9111592987145904,
+        "precision": 0.9650066695209082,
+        "recall": 0.8630036938099359,
+        "brier": 0.02282693717117747,
+        "ece": 0.01591260964555049
+      },
+      "latest_s1s2": {
+        "tp": 389660,
+        "fp": 13524,
+        "fn": 62177,
+        "tn": 2359009,
+        "n_pixels": 2824370,
+        "iou": 0.8373284396414826,
+        "f1": 0.9114629933065972,
+        "precision": 0.9664570022619945,
+        "recall": 0.8623906408727041,
+        "brier": 0.02279463106978832,
+        "ece": 0.016632615096318894
+      },
+      "latest_no_s2": {
+        "tp": 354516,
+        "fp": 75435,
+        "fn": 97321,
+        "tn": 2297098,
+        "n_pixels": 2824370,
+        "iou": 0.6723588584260116,
+        "f1": 0.8040844284567266,
+        "precision": 0.8245497742766036,
+        "recall": 0.784610379406733,
+        "brier": 0.048285333405309556,
+        "ece": 0.02692093476481302
+      }
+    },
+    "bolivia:optical_missing": {
+      "service_s1": {
+        "tp": 64,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "n_pixels": 64,
+        "iou": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "brier": 0.005947154733580706,
+        "ece": 0.07647200208157301
+      },
+      "previous_s1s2": {
+        "tp": 64,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "n_pixels": 64,
+        "iou": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "brier": 0.0013475578793119558,
+        "ece": 0.035605538636446
+      },
+      "latest_s1s2": {
+        "tp": 64,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "n_pixels": 64,
+        "iou": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "brier": 0.0008518716952543026,
+        "ece": 0.02823608834296465
+      },
+      "latest_no_s2": {
+        "tp": 64,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0,
+        "n_pixels": 64,
+        "iou": 1.0,
+        "f1": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "brier": 0.0008518716952543026,
+        "ece": 0.02823608834296465
+      }
+    }
+  },
+  "fixed_portfolio_proxy": {
+    "test_core": {
+      "service_s1": {
+        "labelled_points": 457,
+        "points": 550,
+        "mae_per_labelled_asset_rub": 214249.37305403405,
+        "exposure_weighted_absolute_probability_error": 0.060190547418512055,
+        "signed_proxy_error_rub": 16395620.500063524
+      },
+      "previous_s1s2": {
+        "labelled_points": 457,
+        "points": 550,
+        "mae_per_labelled_asset_rub": 94538.55780264894,
+        "exposure_weighted_absolute_probability_error": 0.026559366149757523,
+        "signed_proxy_error_rub": -1809487.5756101827
+      },
+      "latest_s1s2": {
+        "labelled_points": 457,
+        "points": 550,
+        "mae_per_labelled_asset_rub": 92034.24764923801,
+        "exposure_weighted_absolute_probability_error": 0.025855813103646503,
+        "signed_proxy_error_rub": -207363.78077253938
+      },
+      "latest_no_s2": {
+        "labelled_points": 457,
+        "points": 550,
+        "mae_per_labelled_asset_rub": 180223.14219801826,
+        "exposure_weighted_absolute_probability_error": 0.05063132475840311,
+        "signed_proxy_error_rub": 16486255.531232018
+      }
+    },
+    "test_adjacent": {
+      "service_s1": {
+        "labelled_points": 339,
+        "points": 350,
+        "mae_per_labelled_asset_rub": 226021.55079394113,
+        "exposure_weighted_absolute_probability_error": 0.0644309668004928,
+        "signed_proxy_error_rub": -11139538.80952904
+      },
+      "previous_s1s2": {
+        "labelled_points": 339,
+        "points": 350,
+        "mae_per_labelled_asset_rub": 99429.056280881,
+        "exposure_weighted_absolute_probability_error": 0.028343802622955487,
+        "signed_proxy_error_rub": -10956480.337842187
+      },
+      "latest_s1s2": {
+        "labelled_points": 339,
+        "points": 350,
+        "mae_per_labelled_asset_rub": 99521.93872215723,
+        "exposure_weighted_absolute_probability_error": 0.028370280210907584,
+        "signed_proxy_error_rub": -11732367.417296518
+      },
+      "latest_no_s2": {
+        "labelled_points": 339,
+        "points": 350,
+        "mae_per_labelled_asset_rub": 209907.30572539123,
+        "exposure_weighted_absolute_probability_error": 0.05983735001758125,
+        "signed_proxy_error_rub": -13952127.506908072
+      }
+    },
+    "bolivia": {
+      "service_s1": {
+        "labelled_points": 114,
+        "points": 150,
+        "mae_per_labelled_asset_rub": 288032.85784445493,
+        "exposure_weighted_absolute_probability_error": 0.07786517854936652,
+        "signed_proxy_error_rub": -1974806.56435946
+      },
+      "previous_s1s2": {
+        "labelled_points": 114,
+        "points": 150,
+        "mae_per_labelled_asset_rub": 64391.74773635737,
+        "exposure_weighted_absolute_probability_error": 0.017407301972835524,
+        "signed_proxy_error_rub": -265787.5964341656
+      },
+      "latest_s1s2": {
+        "labelled_points": 114,
+        "points": 150,
+        "mae_per_labelled_asset_rub": 59098.43419446445,
+        "exposure_weighted_absolute_probability_error": 0.015976337439338267,
+        "signed_proxy_error_rub": 280847.9973449721
+      },
+      "latest_no_s2": {
+        "labelled_points": 114,
+        "points": 150,
+        "mae_per_labelled_asset_rub": 251973.94722563968,
+        "exposure_weighted_absolute_probability_error": 0.06811721599175462,
+        "signed_proxy_error_rub": 54301.49098610855
+      }
+    }
+  },
+  "proxy_rule": "10 seeded points on finite S1; if <10 finite pixels, sample the full grid and keep unassessed slots. Independent of labels/p; compare p*V*q with y*V*q only at labelled points; no claim of actual loss",
+  "worst_latest_chips_by_iou": [
+    {
+      "part": "test_core",
+      "chip": "Ghana_97059",
+      "event": "Ghana",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 362,
+      "fn": 0,
+      "tn": 27032,
+      "n_pixels": 27394,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": null,
+      "brier": 0.01113598249765472,
+      "ece": 0.013853863881679534
+    },
+    {
+      "part": "test_core",
+      "chip": "Pakistan_528249",
+      "event": "Pakistan",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 653,
+      "fn": 0,
+      "tn": 76329,
+      "n_pixels": 76982,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": null,
+      "brier": 0.004776889293736939,
+      "ece": 0.014381488976885152
+    },
+    {
+      "part": "test_core",
+      "chip": "Somalia_60129",
+      "event": "Somalia",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 0,
+      "fn": 677,
+      "tn": 221639,
+      "n_pixels": 222316,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": null,
+      "recall": 0.0,
+      "brier": 0.003025914895281365,
+      "ece": 0.0019635158271962875
+    },
+    {
+      "part": "test_core",
+      "chip": "Somalia_166342",
+      "event": "Somalia",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 0,
+      "fn": 12,
+      "tn": 220565,
+      "n_pixels": 220577,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": null,
+      "recall": 0.0,
+      "brier": 0.0002063239656038692,
+      "ece": 0.005310217718839108
+    },
+    {
+      "part": "test_adjacent",
+      "chip": "Ghana_141271",
+      "event": "Ghana",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 0,
+      "fn": 1636,
+      "tn": 260508,
+      "n_pixels": 262144,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": null,
+      "recall": 0.0,
+      "brier": 0.006044839122969754,
+      "ece": 0.005021076494270568
+    },
+    {
+      "part": "bolivia",
+      "chip": "Bolivia_233925",
+      "event": "Bolivia",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 59,
+      "fn": 1,
+      "tn": 146234,
+      "n_pixels": 146294,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "brier": 0.0004776659652190928,
+      "ece": 0.003427682695195919
+    },
+    {
+      "part": "bolivia",
+      "chip": "Bolivia_76104",
+      "event": "Bolivia",
+      "model": "latest_s1s2",
+      "tp": 0,
+      "fp": 8,
+      "fn": 5,
+      "tn": 190952,
+      "n_pixels": 190965,
+      "iou": 0.0,
+      "f1": 0.0,
+      "precision": 0.0,
+      "recall": 0.0,
+      "brier": 8.057946112242706e-05,
+      "ece": 0.002033387796498921
+    },
+    {
+      "part": "test_core",
+      "chip": "Pakistan_167553",
+      "event": "Pakistan",
+      "model": "latest_s1s2",
+      "tp": 2,
+      "fp": 7,
+      "fn": 1456,
+      "tn": 245640,
+      "n_pixels": 247105,
+      "iou": 0.0013651877133105802,
+      "f1": 0.0027266530334014998,
+      "precision": 0.2222222222222222,
+      "recall": 0.0013717421124828531,
+      "brier": 0.005772288483957553,
+      "ece": 0.0007534922584954072
+    },
+    {
+      "part": "bolivia",
+      "chip": "Bolivia_195474",
+      "event": "Bolivia",
+      "model": "latest_s1s2",
+      "tp": 4,
+      "fp": 4,
+      "fn": 1547,
+      "tn": 259780,
+      "n_pixels": 261335,
+      "iou": 0.002572347266881029,
+      "f1": 0.005131494547787043,
+      "precision": 0.5,
+      "recall": 0.0025789813023855577,
+      "brier": 0.005808142129238222,
+      "ece": 0.00233711524691079
+    },
+    {
+      "part": "test_core",
+      "chip": "Mekong_254910",
+      "event": "Mekong",
+      "model": "latest_s1s2",
+      "tp": 89,
+      "fp": 2413,
+      "fn": 46,
+      "tn": 202947,
+      "n_pixels": 205495,
+      "iou": 0.034929356357927786,
+      "f1": 0.06750094804702313,
+      "precision": 0.03557154276578737,
+      "recall": 0.6592592592592592,
+      "brier": 0.00687187465289858,
+      "ece": 0.021036126755344296
+    }
+  ]
+}
