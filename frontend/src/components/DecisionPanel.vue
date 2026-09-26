@@ -1,6 +1,7 @@
 <script setup>
 import { gsap } from 'gsap'
-import { ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { reducedMotion, useDisclosureMotion } from '../lib/panelMotion'
 import { Activity, ChevronRight, Download, Globe2, Maximize2, Minimize2 } from '@lucide/vue'
 import AssetsView from './AssetsView.vue'
 import BubbleTabs from './BubbleTabs.vue'
@@ -17,14 +18,25 @@ const TABS = [
   { value: 'plan', label: 'Съёмка', hint: 'Какие снимки купить под бюджет и срок, и почему именно их' },
   { value: 'projects', label: 'Проекты', hint: 'Свои объекты и история решений' },
 ]
-const expanded = ref(false)
+const expanded = computed({ get: () => state.decisionExpanded, set: value => { state.decisionExpanded = value } })
+const layoutClass = computed(() => [expanded.value && 'decision-expanded', state.tab === 'plan' && state.procurementOpen && 'procurement-expanded', state.procurementMapMode && 'procurement-map-mode'].filter(Boolean).join(' '))
+const disclosures = useDisclosureMotion()
 const scroller = ref(null)
 const content = ref(null)
 
-watch(() => state.tab, () => {
+watch(() => state.tab, (tab, previous) => {
+  disclosures.stop()
   scroller.value?.scrollTo({ top: 0 })
-  if (content.value) gsap.from(content.value, { y: 12, opacity: 0, duration: 0.35, ease: 'power2.out', clearProps: 'all' })
+  if (!content.value) return
+  gsap.killTweensOf(content.value)
+  gsap.set(content.value, { clearProps: 'transform,opacity' })
+  if (!reducedMotion()) {
+    const direction = TABS.findIndex(item => item.value === tab) > TABS.findIndex(item => item.value === previous) ? 1 : -1
+    gsap.fromTo(content.value, { x: direction * 10, opacity: 0 }, { x: 0, opacity: 1, duration: .24, ease: 'power2.out', clearProps: 'transform,opacity' })
+  }
 }, { flush: 'post' })
+
+onBeforeUnmount(() => gsap.killTweensOf(content.value))
 
 function back() {
   resetRegion()
@@ -33,7 +45,7 @@ function back() {
 </script>
 
 <template>
-  <MorphPanel :open="state.decisionOpen" class="decision-panel" :layout-key="String(expanded)" :class="{ 'decision-expanded': expanded, 'procurement-expanded': state.tab === 'plan' && state.procurementOpen, 'procurement-map-mode': state.procurementMapMode }" data-enter>
+  <MorphPanel :open="state.decisionOpen" class="decision-panel" :layout-class="layoutClass" data-enter>
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
         <Activity :size="16" class="accent" />
@@ -48,7 +60,7 @@ function back() {
       <button class="ghost-icon small" v-tip="'Свернуть, карта станет шире'" aria-label="Свернуть панель" @click="state.decisionOpen = false"><ChevronRight :size="17" /></button>
     </header>
 
-    <div ref="scroller" class="panel-scroll">
+    <div ref="scroller" class="panel-scroll" @click="disclosures.click">
       <div v-if="state.error" class="error-note">{{ state.error }} <button @click="fetchAnalysis">Повторить</button></div>
       <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="empty">
         <Globe2 :size="26" />
@@ -71,7 +83,7 @@ function back() {
       <div v-else-if="hasData" ref="content" :class="{ dimmed: state.loading }">
         <AssetsView v-if="state.tab === 'assets'" @asset="id => emit('asset', id)" />
         <PlanView v-else-if="state.tab === 'plan'" @zone="id => emit('zone', id)" />
-        <ProjectView v-else />
+        <ProjectView v-else-if="state.tab === 'projects'" />
       </div>
       <Transition name="pop">
         <div v-if="state.loading && state.analysis" class="corner-loader"><MorphLoader :size="26" /></div>

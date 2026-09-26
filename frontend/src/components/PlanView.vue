@@ -1,4 +1,5 @@
 <script setup>
+import Reveal from './Reveal.vue'
 import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
@@ -321,7 +322,7 @@ function hover(id) { state.hoverZoneId = id }
       <button v-for="row in (state.strategy === 'C' ? chosen : decisions.filter(item => plan.zone_ids.includes(item.zone_id)))"
         :key="row.zone_id" class="zone-item chosen" :class="row.kind"
         @pointerenter="hover(row.zone_id)" @pointerleave="hover(null)" @focus="hover(row.zone_id)" @blur="hover(null)"
-        @click="emit('zone', row.zone_id)">
+        :aria-pressed="state.selectedZoneId === row.zone_id" @click="emit('zone', row.zone_id)">
         <i class="zone-swatch"></i>
         <span class="zone-text">
           <strong>{{ zoneTitle(row.zone) }}</strong>
@@ -337,11 +338,11 @@ function hover(id) { state.hoverZoneId = id }
         {{ showRejected ? 'Скрыть зоны, которые не вошли' : 'Показать зоны, которые не вошли' }} ({{ rejected.length }})
         <ChevronDown :size="14" :class="{ up: showRejected }" class="link-caret" />
       </button>
-      <Transition name="expand">
+      <Reveal>
         <div v-if="showRejected" class="zone-list">
           <button v-for="row in rejected" :key="row.zone_id" class="zone-item" :class="row.kind"
             @pointerenter="hover(row.zone_id)" @pointerleave="hover(null)" @focus="hover(row.zone_id)" @blur="hover(null)"
-            @click="emit('zone', row.zone_id)">
+            :aria-pressed="state.selectedZoneId === row.zone_id" @click="emit('zone', row.zone_id)">
             <i class="zone-swatch"></i>
             <span class="zone-text">
               <strong>{{ zoneTitle(row.zone) }}</strong>
@@ -352,7 +353,7 @@ function hover(id) { state.hoverZoneId = id }
             <span class="tabular zone-area">{{ km(row.area_km2) }}</span>
           </button>
         </div>
-      </Transition>
+      </Reveal>
     </template>
     <p v-if="archive" class="source-line archive-note"
       v-tip="'Кадр снят до события, поэтому воду на момент паводка не показывает. Его можно купить для сравнения, но в охват ущерба и сомнений он не идёт'">

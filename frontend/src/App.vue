@@ -60,7 +60,11 @@ function chooseAsset(id) {
 }
 function chooseZone(id) {
   const zone = state.analysis?.zones.find(item => item.id === id)
-  if (zone) mapRef.value?.focusZone(zone)
+  if (!zone) return
+  state.selectedZoneId = id
+  state.decisionExpanded = false
+  if (window.innerWidth < 1024) state.decisionOpen = false
+  mapRef.value?.focusZone(zone)
 }
 function finishDrawing() {
   state.drawing = false

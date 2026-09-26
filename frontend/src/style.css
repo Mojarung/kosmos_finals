@@ -326,7 +326,7 @@ html.map-moving .panel {
 /* ---------- Панели ---------- */
 .panels { flex: 1; min-height: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .morph { display: flex; flex-direction: column; overflow: hidden; }
-.morph-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.morph-body, .morph-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .observe-panel:not(.pill) { width: 336px; max-height: 100%; }
 .decision-panel:not(.pill) { width: 356px; max-height: 100%; }
 .morph.pill { width: fit-content; }
@@ -522,17 +522,6 @@ html.map-moving .panel {
 .zone-rows .row { min-height: 34px; font-size: 13px; }
 .zone-rows .row > strong { font-size: 13px; }
 
-/* ---------- Качество ---------- */
-.ring-gauge { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: none; }
-.ring { position: relative; }
-.ring svg { transform: rotate(-90deg); display: block; }
-.ring-track { fill: none; stroke: var(--surface-3); stroke-width: 9; }
-.ring-value { fill: none; stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 1s var(--ease-emphasized); }
-.ring > span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; font-weight: 650; }
-.ring-label { font-size: 12px; color: var(--muted-foreground); text-align: center; line-height: 1.2; max-width: 96px; }
-.ring-pair { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
-.gain { margin-top: 10px; text-align: center; font-size: 14px; font-weight: 600; color: var(--reference); }
-
 /* ---------- Низ экрана и карта ---------- */
 /* Три колонки, как в шапке: слева атрибуция подложки, по центру пульт карты, справа место кнопок масштаба. */
 .bottom-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 12px; }
@@ -711,8 +700,6 @@ html.map-moving .panel {
 }
 
 /* ---------- Переходы Vue ---------- */
-.expand-enter-active, .expand-leave-active { transition: opacity 0.25s var(--ease-standard), max-height 0.4s var(--ease-emphasized), padding 0.4s var(--ease-emphasized); max-height: 420px; }
-.expand-enter-from, .expand-leave-to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; }
 .swap-enter-active, .swap-leave-active { transition: opacity 0.2s, transform 0.3s var(--ease-emphasized); }
 .swap-enter-from { opacity: 0; transform: translateY(8px); }
 .swap-leave-to { opacity: 0; transform: translateY(-4px); }
@@ -916,8 +903,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .disclosure { border-top: 1px solid var(--border); padding: 0 !important; }
 .disclosure > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; padding: 15px 0; font-weight: 600; font-size: 14px; }
 .disclosure > summary::-webkit-details-marker { display: none; }
-.disclosure > summary::after { content: '+'; font-size: 20px; color: var(--muted-foreground); font-weight: 400; }
-.disclosure[open] > summary::after { content: '−'; }
+.disclosure > summary::after { content: ''; width: 7px; height: 7px; flex: 0 0 7px; margin-right: 4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; color: var(--muted-foreground); transform: rotate(45deg); transition: transform .22s ease; }
+.disclosure[open] > summary::after { transform: rotate(225deg); }
 .disclosure > .disclosure-body { padding-bottom: 14px; }
 .disclosure > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .panel-summary { display: flex; justify-content: space-between; gap: 18px; align-items: baseline; margin: 4px 0 12px; }
@@ -951,4 +938,15 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
  .decision-expanded .voi > .voi-intro { position: sticky; top: 0; }
  .decision-expanded .voi-output { grid-column: 2; grid-row: 1 / span 3; min-width: 0; }
  .decision-expanded .voi-control { align-items: flex-start; flex-direction: column; }
+}
+
+.decision-panel .voi-zone { padding-inline: 10px; }
+
+/* Short, interruptible feedback; the map retains a solid outline after selection. */
+.decision-panel .zone-item, .decision-panel .voi-zone { transition: background-color .18s, border-color .18s, box-shadow .18s, transform .18s; }
+.decision-panel .zone-item:active, .decision-panel .voi-zone:active { transform: translateY(1px); }
+.decision-panel .zone-item[aria-pressed="true"], .decision-panel .voi-zone[aria-pressed="true"] { background: color-mix(in srgb, var(--reference) 9%, var(--surface-1)); box-shadow: inset 3px 0 var(--reference); border-color: var(--reference); }
+.decision-panel .voi-track > span { transition: width .3s cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .decision-panel *, .decision-panel *::after { transition: none !important; animation: none !important; }
 }

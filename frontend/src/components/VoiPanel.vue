@@ -135,7 +135,7 @@ function reason(zone) {
         <p class="panel-note">Нажмите на зону, чтобы найти её на карте.</p>
         <div v-if="!chosen.length" class="panel-note">Нет выгодных зон при этих условиях.</div>
         <div class="voi-zones">
-          <button v-for="zone in chosen" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)" @pointerenter="state.hoverZoneId = zone.zone_id" @pointerleave="state.hoverZoneId = null" @focus="state.hoverZoneId = zone.zone_id" @blur="state.hoverZoneId = null">
+          <button v-for="zone in chosen" :key="zone.zone_id" class="voi-zone" :aria-pressed="state.selectedZoneId === zone.zone_id" @click="emit('zone', zone.zone_id)" @pointerenter="state.hoverZoneId = zone.zone_id" @pointerleave="state.hoverZoneId = null" @focus="state.hoverZoneId = zone.zone_id" @blur="state.hoverZoneId = null">
             <span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ plural(zone.asset_ids.length, ['объект', 'объекта', 'объектов']) }}</small>
               <span class="voi-zone-bars" aria-label="Польза и цена зоны отдельно">
                 <span><small>Польза {{ rub(zone.voi_alone_rub) }}</small><span class="voi-track"><span class="voi-benefit-bar" :style="{ width: zoneWidth(zone, zone.voi_alone_rub) }" /></span></span>
@@ -145,7 +145,7 @@ function reason(zone) {
           </button>
         </div>
         <button v-if="rejected.length" class="voi-more" :aria-expanded="showRejected" @click="showRejected = !showRejected">{{ showRejected ? 'Скрыть' : 'Показать' }} остальные зоны ({{ rejected.length }})</button>
-        <div v-if="showRejected" class="voi-zones"><button v-for="zone in rejected" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)"><span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ reason(zone) }}</small><small>Польза {{ rub(zone.voi_alone_rub) }} · цена {{ rub(zone.price_alone_rub) }}</small></span></button></div>
+        <div v-if="showRejected" class="voi-zones"><button v-for="zone in rejected" :key="zone.zone_id" class="voi-zone" :aria-pressed="state.selectedZoneId === zone.zone_id" @click="emit('zone', zone.zone_id)"><span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ reason(zone) }}</small><small>Польза {{ rub(zone.voi_alone_rub) }} · цена {{ rub(zone.price_alone_rub) }}</small></span></button></div>
       </div></details>
       <details class="disclosure"><summary>Расходы до и после</summary><div class="disclosure-body">
         <div class="voi-totals"><div><span>Решения без снимков</span><b>{{ rub(result.plan.action_cost_before_rub) }}</b></div><div><span>Решения со снимками</span><b>{{ rub(result.plan.action_cost_after_observation_rub) }}</b></div><div><span>Снимки и обработка</span><b>{{ rub(result.plan.decision_cost_rub) }}</b></div></div>

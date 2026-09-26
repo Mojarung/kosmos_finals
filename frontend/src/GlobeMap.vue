@@ -19,6 +19,7 @@ const emit = defineEmits(['region', 'asset', 'draw-complete', 'ready'])
 const container = ref(null)
 const dragging = ref(false)
 const mapError = ref(false)
+const mapUnavailable = ref(false)
 const probe = ref(null)
 const probeLoading = ref(false)
 const veiled = ref(false)
@@ -141,7 +142,7 @@ function buildOverlays() {
   if (!map) return
   const c = COLORS[theme()]
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones', 'probe', 'journey']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey']) map.addSource(id, { type: 'geojson', data: empty })
   map.addSource('satellite', {
     type: 'raster', tiles: [satelliteTiles], tileSize: 256,
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community',
@@ -176,6 +177,10 @@ function buildOverlays() {
       'line-width': ['case', ['==', ['get', 'hover'], 1], 3.2, ['==', ['get', 'active'], 1], 2.2, 1],
       'line-opacity': ['case', ['==', ['get', 'active'], 1], 1, 0.55],
       'line-dasharray': [2, 1.3] } }, before)
+  map.addLayer({ id: 'focused-zone-halo', type: 'line', source: 'focused-zone',
+    paint: { 'line-color': c.object, 'line-width': 11, 'line-opacity': .18 } }, before)
+  map.addLayer({ id: 'focused-zone-outline', type: 'line', source: 'focused-zone',
+    paint: { 'line-color': c.object, 'line-width': 3, 'line-opacity': .95 } }, before)
   map.addLayer({ id: 'region-fill', type: 'fill', source: 'region', paint: { 'fill-color': c.region, 'fill-opacity': 0.12 } }, before)
   map.addLayer({ id: 'region-outline', type: 'line', source: 'region', paint: { 'line-color': c.regionLine, 'line-width': 2.5 } }, before)
   map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview', paint: { 'fill-color': c.region, 'fill-opacity': 0.1 } }, before)
@@ -304,6 +309,8 @@ function syncMap() {
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
   setData('zones', hidden ? empty : collection(zoneFeatures()))
+  const focused = state.analysis.zones.find(zone => zone.id === state.selectedZoneId)
+  setData('focused-zone', hidden || !focused ? empty : collection([{ type: 'Feature', geometry: focused.geometry, properties: {} }]))
   if (!hidden) updateMarkers()
   else for (const entry of markers.values()) entry.element.style.visibility = 'hidden'
   if (!hidden) for (const entry of markers.values()) entry.element.style.visibility = ''
@@ -569,9 +576,11 @@ function scheduleWarmUp() {
     const key = `${state.analysis.chip.chip_id}|${state.basemap}|${Math.round(zoom)}`
     if (key === warmedKey) return
     warmedKey = key
-    preloadGlobe(map, center, zoom).then(() => preloadTilt(map, center, zoom))
+    preloadGlobe(map, center, zoom).then(() => ready && preloadTilt(map, center, zoom))
+      .catch(error => console.warn('Map warm-up:', error))
     const nextScenes = state.analysis.scenes.filter(scene => scene.chip_id !== state.analysis.chip.chip_id).slice(0, 3)
     nextScenes.reduce((previous, scene) => previous.then(() => {
+      if (!ready) return
       const [west, south, east, north] = scene.bbox
       const camera = map.cameraForBounds([[west, south], [east, north]], { padding: padding(), maxZoom: 14.2 })
       return preloadScene(map, scene, camera?.zoom ?? 13)
@@ -590,7 +599,7 @@ function focusAsset(asset) {
 function focusZone(zone) {
   if (!map || !zone) return
   const [w, s, e, n] = zone.bounds
-  const options = { padding: padding(), maxZoom: 14.6, duration: reducedMotion() ? 0 : 750, essential: false }
+  const options = { padding: padding(), maxZoom: 14.6, duration: reducedMotion() ? 0 : 650, easing: t => 1 - Math.pow(1 - t, 3), essential: false }
   if (state.globeView) return veiledMove(() => map.fitBounds([[w, s], [e, n]], { ...options, duration: 0 }))
   map.fitBounds([[w, s], [e, n]], options)
 }
@@ -655,15 +664,22 @@ function finishSelection(end) {
 }
 
 onMounted(() => {
-  map = new maplibregl.Map({
-    container: container.value, style: styleUrl(),
-    center: [5.818, 9.084], zoom: 11.2, minZoom: 1, maxZoom: 17,
-    attributionControl: false, canvasContextAttributes: { antialias: true },
-    // По умолчанию MapLibre держит в памяти тайлы не дальше 5 зумов от текущего.
-    // Глобус (зум ~2) и снимок (~14) разделяют 12 зумов, и глобус вычищался при
-    // каждом возврате к снимку. 300 готовых тайлов на все зумы — десятки МБ.
-    maxTileCacheSize: 300, maxTileCacheZoomLevels: 16,
-  })
+  try {
+    map = new maplibregl.Map({
+      container: container.value, style: styleUrl(),
+      center: [5.818, 9.084], zoom: 11.2, minZoom: 1, maxZoom: 17,
+      attributionControl: false, canvasContextAttributes: { antialias: true },
+      // По умолчанию MapLibre держит в памяти тайлы не дальше 5 зумов от текущего.
+      // Глобус (зум ~2) и снимок (~14) разделяют 12 зумов, и глобус вычищался при
+      // каждом возврате к снимку. 300 готовых тайлов на все зумы — десятки МБ.
+      maxTileCacheSize: 300, maxTileCacheZoomLevels: 16,
+    })
+  } catch (error) {
+    mapUnavailable.value = true
+    console.warn('Map initialization:', error.message)
+    emit('ready')
+    return
+  }
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
   // Атрибуцию подложки показывает строка под картой (App.vue, .map-credits): кнопка «i»
   // MapLibre пряталась под панелью решения, а на телефоне была выключена совсем.
@@ -729,8 +745,8 @@ onMounted(() => {
   })
   map.on('touchend', event => { if (dragStart) finishSelection(event.lngLat) })
 })
-onBeforeUnmount(() => { clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
-watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId,
+onBeforeUnmount(() => { ready = false; flight++; clearTimeout(warmTimer); clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
+watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId, state.selectedZoneId,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab,
   state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
@@ -806,5 +822,6 @@ watch(() => state.drawing, value => {
       <p v-else class="pixel-message">{{ PROBE_MESSAGES[probe?.status] || PROBE_MESSAGES.error }}</p>
     </div>
   </Transition>
-  <div v-if="mapError" class="panel capsule map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
+  <div v-if="mapUnavailable" class="panel capsule map-warning" role="status">Карта недоступна: браузер не запустил WebGL. Расчёты и выгрузка работают.</div>
+  <div v-else-if="mapError" class="panel capsule map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
 </template>

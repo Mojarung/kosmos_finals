@@ -27,6 +27,7 @@ export const state = reactive({
   selectedAssetId: null,
   // Зона под курсором в списке плана: карта подсвечивает её контур.
   hoverZoneId: null,
+  selectedZoneId: null,
   mustCover: null,
   layerMode: 'model',
   // Сколько пикселей снимка без сигнала радара: карта рисует их серым, легенда называет.
@@ -46,6 +47,7 @@ export const state = reactive({
   tab: 'assets',
   observeOpen: true,
   decisionOpen: true,
+  decisionExpanded: false,
 })
 
 export const hasData = computed(() => !['searching', 'preparing', 'error'].includes(state.liveStatus) &&
@@ -298,3 +300,5 @@ export async function runChip(chipId) {
     ingest.job = { stage: 'error', message: 'Расчёт не запустился: ' + cause.message, timings: {} }
   }
 }
+
+watch(() => [state.sceneId, state.region, state.tab], () => { state.selectedZoneId = null; state.hoverZoneId = null })

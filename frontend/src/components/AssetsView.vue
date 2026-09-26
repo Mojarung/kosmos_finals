@@ -1,4 +1,5 @@
 <script setup>
+import Reveal from './Reveal.vue'
 import { computed } from 'vue'
 import { ArrowRight, Check, ChevronRight, Pin } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
@@ -102,7 +103,7 @@ function select(asset) {
         <ChevronRight :size="16" class="row-chevron" />
       </button>
 
-      <Transition name="expand">
+      <Reveal>
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
           <p v-if="asset.flood_loss_status === 'permanent_water'" class="source-line">Точка на постоянной воде JRC. Обязательный ущерб p × V × q: {{ compactRub(asset.expected_loss_rub) }}; дополнительная оценка только паводка: {{ compactRub(asset.flood_expected_loss_rub) }}.</p>
           <div class="mini-rows">
@@ -124,7 +125,7 @@ function select(asset) {
             {{ state.mustCover === asset.id ? 'Убрать из обязательных' : 'Обязательно доснять' }}
           </button>
         </div>
-      </Transition>
+      </Reveal>
     </template>
   </div>
 
