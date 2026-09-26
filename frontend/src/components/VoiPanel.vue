@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { compactRub, plural, rub } from '../lib/format'
 import Money from './Money.vue'
+import InformationValueResult from './InformationValueResult.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import { state } from '../store'
 
@@ -114,18 +115,7 @@ function reason(zone) {
     <p v-if="loading" class="block" role="status">Считаем…</p>
     <div v-if="error" class="block error-note" role="alert">{{ error }} <button @click="load">Повторить</button></div>
     <div v-if="result" class="voi-output" :class="{ dimmed: loading }" :inert="loading || undefined">
-      <section class="block voi-result">
-        <h3 v-if="result.plan.zone_ids.length">{{ plural(result.plan.zone_ids.length, ['зона', 'зоны', 'зон']) }} за {{ rub(result.plan.derived_budget_rub) }}</h3>
-        <h3 v-else>Заказ не окупается</h3>
-        <figure class="voi-chart" data-testid="voi-chart" aria-label="Ожидаемая экономия на решениях и цена снимков в рублях">
-          <figcaption>Экономия и цена <small>ожидаемые суммы, ₽</small></figcaption>
-          <div class="voi-chart-line"><span>Экономия на решениях</span><b><Money :value="result.plan.voi_rub" compact /></b><div class="voi-track"><span class="voi-benefit-bar" :style="{ width: barWidth(result.plan.voi_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
-          <div class="voi-chart-line"><span>Цена снимков</span><b><Money :value="result.plan.derived_budget_rub" compact /></b><div class="voi-track"><span class="voi-price-bar" :style="{ width: barWidth(result.plan.derived_budget_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
-        </figure>
-        <div class="voi-totals"><div class="voi-net"><span>Выгода после снимков</span><b><Money :value="result.plan.net_after_data_rub" /></b></div></div>
-        <p class="panel-note">Сценарий: снимок помогает избежать лишних выездов и пропусков затопленных объектов. Обработка — ещё {{ rub(result.plan.other_cost_rub) }}.</p>
-        <p v-if="result.status === 'no_positive_net_basket' && state.mustCover" class="panel-note">Проверить обязательный объект с положительной выгодой в этот срок не получится.</p>
-      </section>
+      <InformationValueResult :result="result" :required-id="state.mustCover" />
       <details class="disclosure voi-settings"><summary>Условия расчёта</summary><div class="disclosure-body voi-intro">
         <label for="voi-must-cover">Обязательно проверить</label>
         <select id="voi-must-cover" v-model="mustCoverModel" aria-label="Обязательный объект"><option value="">Без условия</option><option v-for="asset in state.analysis?.assets || []" :key="asset.id" :value="asset.id">{{ asset.name }}</option></select>
@@ -156,13 +146,13 @@ function reason(zone) {
   </div>
 </template>
 
-<style scoped>
+<style>
 .voi h3 { margin: 6px 0 8px; font-size: 18px; letter-spacing: -.3px; }
 .voi p { font-size: 12px; line-height: 1.5; }
 .voi-intro label { display: block; margin: 14px 0 5px; font-size: 12px; font-weight: 650; }
 .voi-intro select { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; font-size: 12px; }
 .voi-control { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; }
-.voi-control :deep(.bubble-tabs) { flex-shrink: 0; }
+.voi-control .bubble-tabs { flex-shrink: 0; }
 .scenario-label { margin-left: 4px; color: var(--muted-foreground); font-size: 10px; font-weight: 400; }
 .voi-intro input { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
 .voi-hint { color: var(--muted-foreground); font-size: 11px !important; }
@@ -199,7 +189,7 @@ function reason(zone) {
 .voi-caution { display: flex; gap: 6px; color: var(--muted-foreground); font-size: 11px !important; }
 </style>
 
-<style scoped>
+<style>
 .voi-result { border-left: 0; }
 .voi-chart { padding: 0; border: 0; background: none; }
 .voi-chart-line { grid-template-columns: 1fr auto; font-size: 13px; margin-top: 14px; }

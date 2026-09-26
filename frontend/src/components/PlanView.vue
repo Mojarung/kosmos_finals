@@ -9,6 +9,7 @@ import BacktestPanel from './BacktestPanel.vue'
 import EconomicScenario from './EconomicScenario.vue'
 import VoiPanel from './VoiPanel.vue'
 import BuildingPlanView from './BuildingPlanView.vue'
+import BudgetPlanSummary from './BudgetPlanSummary.vue'
 import { buildingPlanMode } from '../lib/buildingPlans'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
@@ -271,8 +272,6 @@ function hover(id) { state.hoverZoneId = id }
 
 <template>
   <BubbleTabs v-if="!state.procurementProjectId" v-model="state.objectMode" :options="[{ value: 'buildings', label: 'Здания' }, { value: 'points', label: 'Точки' }]" stretch label="Объекты для съёмки" />
-  <BuildingPlanView v-if="buildingPlanMode" @zone="id => emit('zone', id)" />
-  <template v-else>
   <div class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
     <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen && !state.suppliersOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
@@ -282,64 +281,18 @@ function hover(id) { state.hoverZoneId = id }
     <button aria-label="Поставщики" :class="{ active: state.suppliersOpen }" v-tip="'Где купить снимки плана, в том числе из России, и загрузка полученных файлов из папки'"
       @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
-  <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
-  <SuppliersView v-else-if="state.suppliersOpen" />
-  <template v-else>
-  <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
+  <div v-if="!state.procurementOpen && !state.suppliersOpen" class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
     <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>
     <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'">По ценности информации</button>
   </div>
+  <BuildingPlanView v-if="buildingPlanMode" @zone="id => emit('zone', id)" />
+  <template v-else>
+  <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
+  <SuppliersView v-else-if="state.suppliersOpen" />
+  <template v-else>
   <VoiPanel v-show="procurementMethod === 'value'" :active="procurementMethod === 'value'" @zone="id => emit('zone', id)" />
   <template v-if="procurementMethod === 'budget'">
-  <section class="block">
-    <label class="budget-label" for="budget">
-      <span class="caption">Бюджет на снимки</span>
-      <span class="budget-value"><AnimatedNumber :value="state.budget" :duration="0.4" /> ₽</span>
-    </label>
-    <input id="budget" v-model.number="state.budget" class="range" type="range" min="0" :max="maxBudget" step="250"
-      :style="{ '--progress': Math.min(state.budget / maxBudget * 100, 100) + '%' }" />
-    <div class="control-row">
-      <span v-tip="`Через сколько часов нужно решение. Оптика 1 м приходит через ${deliveryHours.optical} ч, радар 3 м через ${deliveryHours.sar} ч: оба срока сценарные. Если оптика не успевает, план берёт радар`">Решение нужно через</span>
-      <BubbleTabs v-model="state.deadline" :options="deadlineOptions" size="sm" label="Срок решения" />
-    </div>
-    <div class="control-row">
-      <span>Что важнее</span>
-      <BubbleTabs v-model="state.priority" :options="PRIORITIES" size="sm" label="Цель плана" />
-    </div>
-
-    <div v-if="state.mustCover" class="constraint">
-      <Pin :size="14" />Обязательно: {{ analysis.assets.find(a => a.id === state.mustCover)?.name || state.mustCover }}
-      <button class="ghost-icon tiny" aria-label="Снять условие" @click="state.mustCover = null"><X :size="14" /></button>
-    </div>
-  </section>
-
-  <div class="rows strategy-rows" role="radiogroup" aria-label="Вариант закупки">
-    <button v-for="key in ['A', 'B', 'C']" :key="key" class="row strategy-row" :data-key="key"
-      role="radio" :aria-checked="state.strategy === key" :tabindex="state.strategy === key ? 0 : -1"
-      :class="{ selected: state.strategy === key }" @click="pick(key)" @keydown="strategyKeydown($event, key)">
-      <span class="strategy-key">{{ key }}</span>
-      <span class="asset-main">
-        <strong>{{ STRATEGIES[key].name }}</strong>
-        <small class="strategy-line">{{ STRATEGIES[key].line }}</small>
-        <span class="strategy-meters">
-          <span class="meter coverage" v-tip="'Доля ожидаемого ущерба в зонах заказа'"><span :style="{ transform: `scaleX(${analysis.strategies[key].coverage_share || 0})` }"></span></span>
-          <span class="meter doubt" v-tip="'Доля сомнительной площади в зонах заказа'"><span :style="{ transform: `scaleX(${analysis.strategies[key].covered_doubt_share || 0})` }"></span></span>
-        </span>
-      </span>
-      <span class="strategy-cost">
-        <strong class="tabular"><Money :value="analysis.strategies[key].data_cost_rub" compact /></strong>
-        <small :class="{ warn: warn(key) }" v-tip="statusTip(key)">{{ status(key) }}</small>
-      </span>
-    </button>
-  </div>
-  <p class="meter-key"><i class="coverage"></i>ущерб в зонах <i class="doubt"></i>сомнения в зонах</p>
-
-  <section class="block">
-    <div class="panel-summary"><strong><Money :value="plan?.data_cost_rub" /></strong><span>{{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }} · {{ plural(plan?.covered_asset_ids?.length || 0, ['объект', 'объекта', 'объектов']) }}</span></div>
-    <p class="panel-note">В заказе {{ percent(plan?.coverage_share) }} суммы ожидаемого ущерба и {{ percent(plan?.covered_doubt_share) }} сомнительной площади.</p>
-  </section>
-  <p v-if="plan?.coverage_share == null" class="warn-note">В области нет объектов с оценённым ущербом, долю считать не от чего.</p>
-  <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
+  <BudgetPlanSummary :strategies="analysis.strategies" :plan="plan" :max-budget="maxBudget" :required-id="state.mustCover" :required-label="analysis.assets.find(a => a.id === state.mustCover)?.name || state.mustCover" :covered-count="plan?.covered_asset_ids?.length || 0" :delivery-hours="deliveryHours" @clear-required="state.mustCover = null" />
 
   <BacktestPanel :scene-id="state.sceneId" />
 

@@ -13,6 +13,7 @@ import ProjectView from './ProjectView.vue'
 import { exportDecision, fetchAnalysis, hasData, resetRegion, retryRegion, state } from '../store'
 import { compactRub } from '../lib/format'
 import { buildingMode, buildings } from '../lib/buildings'
+import { buildingPlanMode, buildingPlan, downloadBuildingPlan } from '../lib/buildingPlans'
 
 const emit = defineEmits(['asset', 'zone', 'building', 'reset'])
 const TABS = [
@@ -97,8 +98,9 @@ function back() {
       </Transition>
     </div>
 
-    <footer v-if="!buildingMode && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
-      <a v-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref" download @click="!state.voiExportHref && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
+    <footer v-if="(!buildingMode || buildingPlanMode) && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
+      <button v-if="buildingPlanMode" class="primary-button wide" :disabled="!buildingPlan.result || buildingPlan.busy || buildings.busy || buildingPlan.exporting" @click="downloadBuildingPlan"><Download :size="17" />{{ buildingPlan.exporting ? 'Готовим…' : state.procurementMethod === 'value' ? 'Скачать расчёт зон и допущения' : 'Скачать решение' }}</button>
+      <a v-else-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref" download @click="!state.voiExportHref && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
       <button v-else class="primary-button wide" :disabled="!hasData" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
         <Download :size="17" />Скачать решение
       </button>
