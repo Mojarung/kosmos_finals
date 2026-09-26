@@ -6,10 +6,15 @@ import csv
 import hashlib
 import io
 import json
+import os
+import subprocess
 import zipfile
 from datetime import datetime, timezone
+from functools import lru_cache
+from pathlib import Path
 
 from .analysis import context
+from .layers import overlay_png
 from .catalog import metadata, scene_dir
 from .planning import (BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, SUITABILITY_RULE, USAGE_COEF,
                        as_polygon)
@@ -63,6 +68,45 @@ def _csv(headers: list[str], rows: list[list[object]]) -> str:
     return output.getvalue()
 
 
+REPOSITORY = "https://gitverse.ru/hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21"
+MIRROR = "https://github.com/Mojarung/kosmos_finals"
+ROOT = Path(__file__).resolve().parents[2]
+# Sources behind the frozen model, not behind this chip: its training data and encoder init.
+MODEL_SOURCES = [
+    {"name": "Sen1Floods11 v1.1 hand-labelled chips (train, valid, test_core, test_adjacent, bolivia)",
+     "version": "Sen1Floods11_v1.1", "url": "https://github.com/cloudtostreet/Sen1Floods11",
+     "role": "training_and_evaluation", "split": "ml/artifacts/split.json",
+     "checksums": "ml/artifacts/download_manifest.json (md5 of 1343 bucket objects, downloaded 2026-09-25)",
+     "license": "not_confirmed_by_dataset_publisher"},
+    {"name": "ResNet34 ImageNet encoder weights", "version": "segmentation-models-pytorch 0.5.0",
+     "url": "https://huggingface.co/smp-hub/resnet34.imagenet", "role": "pretrained_initialisation",
+     "license": "not_verified", "limitation": "used only to initialise training; shipped weights are ours"},
+]
+
+
+@lru_cache(maxsize=1)
+def revision() -> str | None:
+    """Commit of the running code: FLOODVALUE_COMMIT from the image build, else git in a checkout."""
+    commit = os.environ.get("FLOODVALUE_COMMIT", "").strip()
+    if commit:
+        return commit
+    try:
+        found = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True,
+                               timeout=5, check=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return found.stdout.strip() or None
+
+
+@lru_cache(maxsize=1)
+def model_weights() -> list[dict]:
+    card = ROOT / "ml/artifacts/model/model_card.json"
+    if not card.is_file():
+        return []
+    members = json.loads(card.read_text(encoding="utf-8")).get("members", [])
+    return [{"dir": member["dir"], "sha256": member["sha256"]} for member in members]
+
+
 def _blank(value: object) -> object:
     return "" if value is None else value
 
@@ -104,7 +148,7 @@ def package(result: dict) -> io.BytesIO:
             "role": "model_input" if live or "S1Hand" in item["name"] else "diagnostic_label_only",
             "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
             **item,
-        } for item in info["source_manifest"]])
+        } for item in info["source_manifest"]] + MODEL_SOURCES)
         json_file("selected_region.geojson", {"type": "FeatureCollection", "features": [{
             "type": "Feature", "geometry": as_polygon(result["region"]["bounds"]),
             "properties": {"area_km2": result["region"]["area_km2"],
@@ -216,31 +260,41 @@ def package(result: dict) -> io.BytesIO:
              for key, item in strategies.items()]))
         quality = result["quality"]
         metrics_rows = []
+
+        def metric_row(part: str, event: str, water: str, method: str, scored: dict, pixels: int) -> list:
+            return [part, event, water, method, scored["iou"], scored["f1"], scored["precision"], scored["recall"],
+                    pixels, _blank(scored.get("tp")), _blank(scored.get("fp")), _blank(scored.get("fn"))]
+
         for part in ("test_core", "bolivia"):
             for method in ("baseline", "model"):
                 scored = quality["parts"][part][method]
-                metrics_rows.append([part, "all_water", method, scored["iou"], scored["f1"],
-                                     scored["precision"], scored["recall"], scored["n_pixels"]])
+                metrics_rows.append(metric_row(part, "ALL", "all_water", method, scored, scored["n_pixels"]))
+            for event, block in (quality.get("events") or {}).get(part, {}).items():
+                for method in ("baseline", "model"):
+                    metrics_rows.append(metric_row(part, event, "all_water", method, block[method],
+                                                   block[method]["n_pixels"]))
         for part, methods in (quality.get("flood_only") or {}).items():
             for method in ("baseline", "model"):
                 scored = methods[method]
-                metrics_rows.append([part, "without_jrc_permanent_water", method, scored["iou"], scored["f1"],
-                                     scored["precision"], scored["recall"], scored["n_pixels"]])
+                metrics_rows.append(metric_row(part, "ALL", "without_jrc_permanent_water", method, scored,
+                                               scored["n_pixels"]))
         for method, key, water in (("baseline", "baseline_quality", "all_water"), ("model", "model_quality", "all_water"),
                                    ("baseline", "baseline_quality_flood", "without_jrc_permanent_water"),
                                    ("model", "model_quality_flood", "without_jrc_permanent_water")):
             scored = result["region"][key]
             if scored:
-                metrics_rows.append(["selected_region", water, method, scored["iou"], scored["f1"],
-                                     scored["precision"], scored["recall"], scored["valid_pixels"]])
+                metrics_rows.append(metric_row("selected_region", scene_id, water, method, scored,
+                                               scored["valid_pixels"]))
         archive.writestr("metrics.csv", _csv(
-            ["part", "water", "method", "iou", "f1", "precision", "recall", "n_pixels"], metrics_rows))
+            ["part", "event", "water", "method", "iou", "f1", "precision", "recall", "n_pixels", "tp", "fp", "fn"],
+            metrics_rows))
         run_signature = json.dumps({"chip": scene_id, "inputs": inputs,
                                     "region": result["region"]["bounds"]}, sort_keys=True)
         json_file("run_metadata.json", {
             "run_id": hashlib.sha256(run_signature.encode()).hexdigest()[:16],
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "chip_id": scene_id, "event_id": info["event"],
+            "chip_id": scene_id, "event_id": scene_id.split("_")[0] if not live else scene_id,
+            "event_name": info["event"],
             "s1_source_files": [item["name"] for item in info["source_manifest"]
                                 if live or item.get("layer") == "S1Hand" or "S1Hand" in item["name"]],
             "portfolio_seed": info["portfolio_seed"],
@@ -252,12 +306,16 @@ def package(result: dict) -> io.BytesIO:
                                 "rule": info.get("permanent_rule"), "period_note": info.get("permanent_period_note"),
                                 "file": "permanent_water.tif" if info.get("permanent_rule") else None},
             "doubt_rule": DOUBT_RULE, "uncertainty_zone_rule": ZONE_RULE,
-            "model": "5 member S1-only U-Net ensemble, Platt calibrated on validation",
-            "model_weights": "ml/artifacts/model/model_card.json",
-            "baseline": "VH threshold -23.6 dB fixed on validation",
-            "repository": "https://github.com/Mojarung/kosmos_finals",
-            "gitverse_commit": None,
-            "gitverse_status": "pending_team_publication",
+            "model": "5 member S1-only U-Net ResNet34 ensemble, Platt calibrated on validation",
+            "model_weights": {"card": "ml/artifacts/model/model_card.json", "sha256": model_weights()},
+            "baseline": "VH < -23.6 dB: threshold fitted on train, channel chosen on validation "
+                        "(ml/artifacts/baseline/baseline.json)",
+            "repository": REPOSITORY, "mirror": MIRROR,
+            "gitverse_commit": revision(),
+            "gitverse_status": "published" if revision() else "commit_not_recorded_in_this_build",
+            "metrics_files": ["metrics.csv", "ml/artifacts/evaluation/metrics.csv",
+                              "ml/artifacts/evaluation/evaluation.json", "ml/artifacts/evaluation/doubt_threshold.json",
+                              "ml/artifacts/evaluation/summary.md"],
             "split": "ml/artifacts/split.json: authors' v1.1 lists; test chips touching train chips moved to test_adjacent",
             "split_part": info.get("split_part", "test_core"),
             "metrics_independent": info.get("metrics_independent", True),
@@ -306,8 +364,13 @@ def package(result: dict) -> io.BytesIO:
             "decision_evidence": result["decision_evidence"],
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
             "commands": ["git lfs pull", "uv sync --project ml", "uv sync --project backend --extra demo",
+                         "cd ml && uv run floodvalue download && uv run floodvalue split && uv run floodvalue baseline",
+                         "cd ml && sh scripts/train_experiments.sh && sh scripts/train_final.sh && uv run floodvalue evaluate",
+                         "cd ml && uv run python scripts/doubt_threshold.py",
                          "uv run --project ml floodvalue infer --s1 data/source/CHIP_S1Hand.tif --out data/inference/CHIP",
                          "uv run --project backend --extra demo python scripts/prepare_demo.py",
+                         "docker compose up --build",
+                         "curl -o floodvalue-CHIP.zip 'http://localhost:18080/api/export?scene_id=CHIP&budget=6500'",
                          "uv run --project backend --extra demo python scripts/validate_package.py floodvalue-CHIP.zip"],
             "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
                                                                   "processed_at": info.get("processed_at")}),
@@ -317,6 +380,8 @@ def package(result: dict) -> io.BytesIO:
             names.append("permanent_water.tif")
         for name in names:
             archive.write(scene_dir(scene_id) / name, arcname=name)
+        archive.writestr("zones_overlay.png", overlay_png(scene_id, info["bbox"], zones, strategies["C"]["zone_ids"],
+                                                          all_assets))
         archive.writestr("README.txt",
                          "FloodValue: один согласованный комплект для выбранного чипа и бюджета.\n"
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
@@ -325,6 +390,7 @@ def package(result: dict) -> io.BytesIO:
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
                          "Ручная метка использована только для проверки качества.\n"
                          "zone_decisions.csv: почему каждая зона вошла или не вошла в заказ C.\n"
+                         "zones_overlay.png: зоны каталога и план C поверх исходного снимка VH.\n"
                          "sensitivity.csv: каждый вход меняется на ±20% по одному при фиксированной карте и портфеле.\n"
                          "Проверка перед реальным заказом: актуальная редакция ПП 840 и котировка поставщика.\n")
     output.seek(0)

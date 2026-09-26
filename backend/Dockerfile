@@ -19,6 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 libgo
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
+# Commit of the code in the image, for run_metadata.json: the image has no .git.
+# FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build
+ARG FLOODVALUE_COMMIT=""
+ENV FLOODVALUE_COMMIT=${FLOODVALUE_COMMIT}
 ENV PATH="/app/backend/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/ml/src \
