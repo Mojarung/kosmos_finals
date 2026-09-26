@@ -26,8 +26,9 @@ REQUIRED = {
     "baseline_mask.tif", "assets.geojson", "assets.csv", "asset_loss.csv",
     "candidate_orders.geojson", "procurement_plan.csv", "strategy_comparison.csv",
     "strategy_plans.json", "sensitivity.csv", "metrics.csv", "run_metadata.json",
-    "source_manifest.json", "analysis.json",
+    "source_manifest.json", "analysis.json", "zone_decisions.csv",
 }
+LOSS_STATUSES = {"ok", "partial", "no_data", "permanent_water"}
 
 
 def require(condition: bool, message: str) -> None:
@@ -76,19 +77,19 @@ def validate(path: str | Path) -> dict:
                 "Chip IDs differ")
         by_id = {row["asset_id"]: row for row in assets}
         for row in losses:
-            require(row["status"] in {"ok", "partial", "no_data"}, "Invalid loss status")
+            require(row["status"] in LOSS_STATUSES, "Invalid loss status")
             if row["status"] == "no_data":
                 require(row["p_flood"] == row["expected_loss_rub"] == "", "No-data loss is filled")
+                continue
+            if row["status"] == "permanent_water":
+                require(float(row["expected_loss_rub"]) == 0 and row["permanent_water_at_point"] == "True",
+                        f"{row['asset_id']}: loss on permanent water must be 0")
                 continue
             probability = float(row["p_flood"])
             require(0 <= probability <= 1, "Probability outside [0,1]")
             asset = by_id[row["asset_id"]]
             expected = probability * float(asset["asset_value_rub"]) * float(asset["vulnerability_coef"])
             close(float(row["expected_loss_rub"]), expected, f"EL {row['asset_id']}")
-        require(len(sensitivity) >= 60, "Sensitivity is incomplete")
-        require({json.loads(row["changed_inputs_json"])["input"] for row in sensitivity
-                 if row["scenario_id"].startswith("asset_")} == {"p", "V", "q"},
-                "p/V/q sensitivity missing")
         require({json.loads(row["changed_inputs_json"])["input"] for row in sensitivity
                  if row["scenario_id"].startswith("plan_")} == {"budget", "tariff"},
                 "Budget/tariff sensitivity missing")
@@ -110,7 +111,7 @@ def validate(path: str | Path) -> dict:
             close(float(feature["properties"]["area_km2"]), area, "Zone area", 0.00051)
             zone_id = feature["properties"]["candidate_id"]
             require(zone_id not in zones, "Duplicate candidate ID")
-            zones[zone_id] = feature["properties"]
+            zones[zone_id] = {**feature["properties"], "_bounds": [west, south, east, north]}
 
         require(set(comparison) == set(plans) == {"A", "B", "C"}, "A/B/C strategies missing")
         require(not plans["A"] and float(comparison["A"]["data_cost_rub"]) == 0,
@@ -119,7 +120,7 @@ def validate(path: str | Path) -> dict:
             selected = plans[strategy]
             require(len(selected) == len(set(selected)) and set(selected) <= set(zones),
                     f"{strategy}: invalid zones")
-            priced = quote([zones[zone_id] | {"id": zone_id} for zone_id in selected])
+            priced = quote([{"id": zone_id, "area_km2": zones[zone_id]["area_km2"]} for zone_id in selected])
             close(float(comparison[strategy]["data_cost_rub"]), priced["total_rub"],
                   f"{strategy}: total price")
             lines = [line for line in orders if line["strategy"] == strategy]
@@ -159,6 +160,41 @@ def validate(path: str | Path) -> dict:
                     and p_mask[pixel_row, pixel_col], f"{row['asset_id']}: asset pixel outside valid S1")
             close(float(row["p_flood"]), float(probability[pixel_row, pixel_col]),
                   f"{row['asset_id']}: p_flood differs from flood_probability.tif at the asset pixel", 1e-5)
+        groups = {line["discount_group_id"] for line in orders}
+        require(len(groups) <= 1 and (not groups or groups == {meta["pricing"]["discount_group_id"]}),
+                "Discount group differs between lines and run metadata")
+        decisions = {row["candidate_id"]: row for row in rows(archive, "zone_decisions.csv")}
+        require(set(decisions) == set(zones), "Zone decisions do not match the candidate catalog")
+        require({key for key, row in decisions.items() if row["selected_in_c"] == "true"} == set(plans["C"]),
+                "Zone decisions disagree with plan C")
+        region_assets = {row["asset_id"]: row for row in losses if row["in_region"] == "true"}
+        estimated = sum(float(row["expected_loss_rub"]) for row in region_assets.values() if row["expected_loss_rub"])
+        for strategy in ("B", "C"):
+            covered = {asset_id for asset_id, row in region_assets.items() if any(
+                float(zones[zone_id]["_bounds"][0]) <= float(by_id[asset_id]["longitude"]) <= float(zones[zone_id]["_bounds"][2])
+                and float(zones[zone_id]["_bounds"][1]) <= float(by_id[asset_id]["latitude"]) <= float(zones[zone_id]["_bounds"][3])
+                for zone_id in plans[strategy])}
+            covered_loss = sum(float(region_assets[a]["expected_loss_rub"] or 0) for a in covered)
+            if strategy == "C" or comparison["B"]["covered_expected_loss_rub"] not in {"0", "0.0"}:
+                close(float(comparison[strategy]["covered_expected_loss_rub"]), covered_loss, f"{strategy}: covered EL")
+                require(int(comparison[strategy]["covered_asset_count"]) == len(covered), f"{strategy}: covered assets")
+            share = comparison[strategy]["coverage_share"]
+            require((share == "") == (estimated == 0), f"{strategy}: coverage share must be empty only without exposure")
+            if share:
+                close(float(share), float(comparison[strategy]["covered_expected_loss_rub"]) / estimated,
+                      f"{strategy}: coverage share", 0.0001)
+            doubt = comparison[strategy]["covered_doubt_share"]
+            require(doubt == "" or 0 <= float(doubt) <= 1, f"{strategy}: doubt share outside [0,1]")
+        region_ok = [row["asset_id"] for row in losses if row["in_region"] == "true" and row["status"] != "no_data"]
+        ranked = sorted((row for row in losses if row["rank"]), key=lambda row: int(row["rank"]))
+        require([row["asset_id"] for row in ranked] == region_ok and all(
+            float(a["expected_loss_rub"]) >= float(b["expected_loss_rub"]) for a, b in zip(ranked, ranked[1:])),
+            "Ranks must order region assets by expected loss")
+        asset_scenarios = [row for row in sensitivity if row["scenario_id"].startswith("asset_")]
+        require({json.loads(row["changed_inputs_json"])["asset_id"] for row in asset_scenarios} == set(region_ok)
+                and len(asset_scenarios) == 6 * len(region_ok), "Sensitivity must cover every region asset ±20% p/V/q")
+        require(not region_ok or {json.loads(row["changed_inputs_json"])["input"] for row in asset_scenarios}
+                == {"p", "V", "q"}, "p/V/q sensitivity missing")
         return {"status": "ok", "chip_id": meta["chip_id"], "assets": len(assets),
                 "zones": len(zones), "valid_pixels": int(p_mask.sum()),
                 "budget_rub": budget, "files": len(archive.namelist())}
