@@ -10,6 +10,7 @@ const GAP_PX = 10
 const EDGE_PX = 8
 // На касании подсказка открывается тапом по строке без собственного действия и сама гаснет.
 const TOUCH_HOLD_MS = 3200
+const TIP_ID = 'app-tip'
 let touchTimer
 
 const texts = new WeakMap()
@@ -23,11 +24,20 @@ let guarded = false
 function ensureBubble() {
   if (!bubble) {
     bubble = document.createElement('div')
+    bubble.id = TIP_ID
     bubble.className = 'tip'
     bubble.setAttribute('role', 'tooltip')
+    bubble.setAttribute('aria-hidden', 'true')
     document.body.append(bubble)
   }
   return bubble
+}
+
+// Открытая подсказка читается как описание своего элемента, закрытая со старым текстом не читается вовсе.
+function describe(el, open) {
+  if (!el) return
+  if (open) el.setAttribute('aria-describedby', TIP_ID)
+  else if (el.getAttribute('aria-describedby') === TIP_ID) el.removeAttribute('aria-describedby')
 }
 
 function place(target) {
@@ -53,6 +63,7 @@ function show(target) {
   if (!text || !target.isConnected) return hide()
   const tip = ensureBubble()
   const wasOpen = tip.dataset.open === 'true'
+  if (owner !== target) describe(owner, false)
   owner = target
   tip.textContent = text
   place(target)
@@ -60,6 +71,8 @@ function show(target) {
   // иначе переход по left/top протащил бы её через экран от прошлой точки.
   if (!wasOpen) void tip.offsetWidth
   tip.dataset.open = 'true'
+  tip.removeAttribute('aria-hidden')
+  describe(target, true)
 }
 
 function hide() {
@@ -67,8 +80,12 @@ function hide() {
   clearTimeout(hideTimer)
   hideTimer = undefined
   if (owner) closedAt = performance.now()
+  describe(owner, false)
   owner = null
-  if (bubble) bubble.dataset.open = 'false'
+  if (bubble) {
+    bubble.dataset.open = 'false'
+    bubble.setAttribute('aria-hidden', 'true')
+  }
 }
 
 function interactive(target) {
