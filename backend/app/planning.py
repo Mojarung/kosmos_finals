@@ -9,6 +9,7 @@ from math import cos, pi
 import numpy as np
 from pyproj import Transformer
 
+from .reliability import p_check
 from .zoning import DOUBT_THRESHOLD
 
 
@@ -388,6 +389,8 @@ def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
             "map_error_probability": map_error_probability(p, threshold),
             # Rank follows EL; a doubtful point needs a look whatever its rank.
             "map_doubtful": None if p is None else map_error_probability(p, threshold) >= DOUBT_THRESHOLD,
+            # Where test_core showed calibrated p above or below the observed water share; EL keeps p.
+            "p_check": p_check(p),
             "probability_status": "frozen_ensemble",
         })
     return sorted(result, key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))

@@ -32,6 +32,24 @@ const doubtHint = computed(() => {
   return `Порог сомнений выбран на validation (шанс ошибки ≥ ${threshold == null ? 'н/д' : number(threshold, 4)}). `
     + `На независимом test_core сомнительны ${percent(q.doubtful_share, 1)} пикселей, из них ошибается ${percent(q.doubtful_error_rate, 1)}, в среднем ${percent(q.error_rate, 1)}`
 })
+/*
+ * Общая ECE мала за счёт уверенных пикселей. В середине шкалы на test_core p заметно выше доли воды,
+ * ниже 0,4 немного ниже (ml/artifacts/evaluation/reliability_test_core.json). Оператор видит это здесь,
+ * а объекты с такой p помечены в списке.
+ */
+const bias = computed(() => state.analysis.calibration_bias)
+const worstGap = computed(() => bias.value ? Math.round((bias.value.worst_bin.mean_p - bias.value.worst_bin.observed_water_share) * 100) : null)
+const biasHint = computed(() => {
+  const b = bias.value
+  if (!b) return ''
+  const parts = []
+  if (b.overestimated_p) parts.push(`при p от ${number(b.overestimated_p[0], 2)} до ${number(b.overestimated_p[1], 2)} воды меньше, чем обещает p: при p около ${number(b.worst_bin.mean_p, 2)} водой были ${percent(b.worst_bin.observed_water_share)} пикселей`)
+  if (b.underestimated_p) parts.push(`при p от ${number(b.underestimated_p[0], 2)} до ${number(b.underestimated_p[1], 2)} воды больше, чем обещает p`)
+  return `Общая ошибка калибровки держится на уверенных пикселях. На независимом test_core ${parts.join('; ')}. `
+    + `Ошибка калибровки на пикселях с 0,05 < p < 0,95: ${number(b.ece_mid_range, 3)}, на validation ${number(b.validation_ece_mid_range, 3)}. `
+    + 'Platt с двумя параметрами этот изгиб не убирает. Объекты с такой p помечены в списке, ущерб считается по p, как требует кейс'
+})
+const limits = computed(() => state.analysis.limitations || [])
 const METRICS = [
   ['f1', 'F1', 'Среднее точности и полноты: одна цифра на оба вида ошибок'],
   ['recall', 'Полнота', 'Какую долю настоящей воды нашёл метод'],
@@ -94,6 +112,7 @@ function openWeak() {
     </template>
     <div class="mini-rows">
       <div v-tip="'Ошибка калибровки ECE: насколько вероятность совпадает с реальной частотой воды. Чем меньше, тем лучше'"><span>Ошибка калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
+      <div v-if="worstGap" v-tip="biasHint"><span>p в середине шкалы</span><b class="tabular">{{ worstGap > 0 ? 'завышена' : 'занижена' }} до {{ Math.abs(worstGap) }} п.п.</b></div>
       <div v-tip="'Как хорошо шанс ошибки карты отличает ошибочные пиксели от верных. 0,5 значит наугад, 1 значит без промахов. По этой мере строятся сомнительные участки. Мера и порог выбраны на validation, здесь проверка на test_core'"><span>Сомнения находят ошибки</span><b class="tabular">AUROC {{ number(testQuality.doubt_error_auroc ?? testQuality.uncertainty_error_auroc, 3) }}</b></div>
       <div v-if="testQuality.doubtful_error_rate != null" v-tip="doubtHint"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(testQuality.doubtful_error_rate, 1) }}</b></div>
       <div v-tip="'Паводок в Боливии, которого не было в обучении'"><span>Новое событие, Боливия</span><b class="tabular">IoU {{ percent(quality.parts.bolivia.model.iou, 1) }}</b></div>
@@ -129,7 +148,12 @@ function openWeak() {
   <p v-if="state.analysis.chip.timing?.analysis_mode === 'retrospective_dataset_demo'" class="source-line" v-tip="state.analysis.chip.timing.water_reference_note">
     <Info :size="14" />Исторический пример: данные JRC могли включать наблюдения после паводка
   </p>
-  <p class="source-line" v-tip="'Ручная разметка Sen1Floods11 не делит воду на постоянную и паводок; постоянная вода берётся из слоя JRC. Учебные объекты и тариф не подтверждают реальный ущерб'">
-    <Info :size="14" />Ограничения оценки
-  </p>
+  <!-- Тот же список лежит в run_metadata.json выгрузки; по умолчанию свёрнут, чтобы не занимать панель. -->
+  <details class="block price-details limits-details">
+    <summary><Info :size="14" />Ограничения оценки · {{ limits.length + 1 }}</summary>
+    <ul class="limits-list">
+      <li>Ручная разметка Sen1Floods11 не делит воду на постоянную и паводок; постоянная вода берётся из слоя JRC.</li>
+      <li v-for="line in limits" :key="line">{{ line }}</li>
+    </ul>
+  </details>
 </template>

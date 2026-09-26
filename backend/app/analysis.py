@@ -15,6 +15,7 @@ from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candi
 from .sensitivity import asset_sensitivity, plan_sensitivity
 from .temporal import scene_timing
 from .costs import decision_costs
+from .reliability import BIAS, LIMITATION as CALIBRATION_LIMITATION
 from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
                      uncertainty_zones, union_share)
 
@@ -415,6 +416,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
+        "calibration_bias": BIAS,
         "asset_proxy_check": reference_proxy_check() if live else asset_proxy_check(scene_id),
         "limitations": _limitations(info, region),
     }
@@ -435,6 +437,8 @@ def _limitations(info: dict, region: dict) -> list[str]:
         "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
     ]
+    if CALIBRATION_LIMITATION:
+        rows.append(CALIBRATION_LIMITATION)
     if live:
         rows += ["Для нового региона нет ручной метки: локальные IoU/F1 не вычисляются.",
                  "Модель обучена на Sen1Floods11; перенос на RTC другого времени и места требует полевой проверки."]

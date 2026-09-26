@@ -380,12 +380,13 @@ def package(result: dict) -> io.BytesIO:
         archive.writestr("asset_loss.csv", _csv(
             ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status",
              "p_window3", "permanent_water_at_point", "flood_expected_loss_rub", "ensemble_spread",
-             "exposure_rub", "map_doubtful"],
+             "exposure_rub", "map_doubtful", "p_calibration_status"],
             [[asset["id"], scene_id, _blank(asset["p_flood"]), _blank(asset["case_expected_loss_rub"]),
               _blank(asset["map_error_probability"]), region_rank.get(asset["id"], ""),
               str(asset["id"] in region_ids).lower(), asset["case_loss_status"], _blank(asset.get("p_window3")),
               _blank(asset.get("permanent_water_at_point")), _blank(asset["flood_expected_loss_rub"]),
-              _blank(asset["uncertainty"]), asset["exposure_rub"], _blank(asset["map_doubtful"])]
+              _blank(asset["uncertainty"]), asset["exposure_rub"], _blank(asset["map_doubtful"]),
+              (asset.get("p_check") or {}).get("status", "")]
              for asset in all_assets]))
         asset_rows = result["sensitivity"]["asset"]
         replans = asset_plan_sensitivity(ctx.space, asset_rows, inputs["budget_rub"], inputs["priority"],
@@ -580,6 +581,8 @@ def package(result: dict) -> io.BytesIO:
             "sensitivity_method": result["sensitivity"]["method"],
             "decision_evidence": result["decision_evidence"],
             "decision_cost_rule": COST_RULE,
+            "calibration_bias": result["calibration_bias"],
+            "limitations": result["limitations"],
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
             "commands": _commands(scene_id, info, inputs, live),
             "commands_note": ("Run from the repository root on Linux or macOS (Windows: pass FLOODVALUE_COMMIT=HEAD "
@@ -603,6 +606,9 @@ def package(result: dict) -> io.BytesIO:
                          "FloodValue: один согласованный комплект для выбранного чипа и бюджета.\n"
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
                          "asset_loss.csv: обязательный EL = p × V × q для всех объектов, в том числе на постоянной воде.\n"
+                         "p_calibration_status: где на независимых снимках калиброванная p выше (overestimated) "
+                         "или ниже (underestimated) доли воды; правило в run_metadata.json, calibration_bias.\n"
+                         "run_metadata.json, limitations: ограничения расчёта, те же, что в интерфейсе.\n"
                          "permanent_water.tif (если есть): постоянная вода JRC. Ущерб только от паводка (0 на ней) "
                          "лежит отдельно в колонках flood_expected_loss_rub и covered_flood_loss_rub.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"

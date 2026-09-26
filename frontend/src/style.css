@@ -843,6 +843,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .price-details summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform 0.3s var(--ease-emphasized); }
 .price-details[open] summary::after { transform: rotate(225deg) translateY(-1px); }
 .price-details summary:hover { color: var(--foreground); }
+.limits-details summary { gap: 7px; }
+.limits-list { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 7px; font-size: 12px; line-height: 1.45; color: var(--muted-foreground); }
 .formula { margin: 8px 0 4px; font-size: 12px; line-height: 1.5; }
 /* Какой продукт посчитан: оптика 1 м L2 или радар 3 м L1 при сроке 4 ч. */
 .price-product { margin-top: 10px; font-size: 12px; font-weight: 600; }
@@ -864,7 +866,7 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 @media (min-width: 1024px) { .decision-panel.procurement-expanded:not(.pill) { width: 460px; } }
 
 /* Сценарные величины в деталях плана */
-.scenario-mark { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--uncertain) 16%, transparent); color: var(--foreground); font-size: 10px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px; }
+.scenario-mark, .bias-mark { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--uncertain) 16%, transparent); color: var(--foreground); font-size: 10px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px; }
 .plan-result .mini-rows { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .plan-result .mini-rows > div > span:first-child { min-width: 0; }
 .plan-result .mini-rows b { white-space: nowrap; flex: none; }

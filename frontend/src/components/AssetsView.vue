@@ -44,6 +44,21 @@ const errorHint = computed(() => {
     + (calibrationChecked.value ? '' : ' Калибровка на этом снимке не проверена.')
 })
 
+/*
+ * Где на независимых снимках test_core калиброванная p расходится с долей воды. Ущерб по формуле кейса
+ * считается от p, поэтому пометка только предупреждает, число не меняется.
+ */
+const BIAS_LABEL = { overestimated: 'может быть завышена', underestimated: 'может быть занижена' }
+const biasLabel = asset => BIAS_LABEL[asset.p_check?.status] || ''
+function pHint(asset) {
+  const check = asset.p_check
+  const base = 'Вероятность воды в пикселе, где стоит объект'
+  if (!check || !BIAS_LABEL[check.status]) return base
+  return `${base}. На независимых снимках test_core пиксели с p от ${number(check.bin_p[0], 2)} до ${number(check.bin_p[1], 2)} `
+    + `оказались водой в ${percent(check.observed_water_share)} случаев, а не в ${percent(check.bin_mean_p)}. `
+    + `Ущерб считается по p, как требует кейс, поэтому он может быть ${check.status === 'overestimated' ? 'завышен' : 'занижен'}`
+}
+
 function select(asset) {
   if (state.selectedAssetId === asset.id) { state.selectedAssetId = null; return }
   emit('asset', asset.id)
@@ -91,7 +106,7 @@ function select(asset) {
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
           <p v-if="asset.flood_loss_status === 'permanent_water'" class="source-line">Точка на постоянной воде JRC. Обязательный ущерб p × V × q: {{ compactRub(asset.expected_loss_rub) }}; дополнительная оценка только паводка: {{ compactRub(asset.flood_expected_loss_rub) }}.</p>
           <div class="mini-rows">
-            <div v-tip="'Вероятность воды в пикселе, где стоит объект'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
+            <div v-tip="pHint(asset)"><span>Вероятность воды<small v-if="biasLabel(asset)" class="bias-mark">{{ biasLabel(asset) }}</small></span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="errorHint"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>
             <div v-tip="'Насколько расходятся пять моделей в этой точке, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
             <div v-tip="'V × q: сколько объект теряет, если окажется в воде'"><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ number(asset.vulnerability, 2) }}</b></div>
