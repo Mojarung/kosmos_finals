@@ -31,6 +31,8 @@ const path = computed(() => {
   return last ? d + `H${x(maxCost.value).toFixed(1)}` : ''
 })
 const budgetX = computed(() => x(Math.min(props.budget, maxCost.value)))
+// Подпись уходит влево у правого края и там, где точку пересекает линия бюджета.
+const leftLabel = point => point.cost > maxCost.value * 0.85 || (x(point.cost) < budgetX.value && budgetX.value - x(point.cost) < 18)
 </script>
 
 <template>
@@ -45,8 +47,8 @@ const budgetX = computed(() => x(Math.min(props.budget, maxCost.value)))
     <path class="curve" :d="path" />
     <g v-for="point in points" :key="point.key" :class="['point', point.key, { active: point.active }]">
       <circle :cx="x(point.cost)" :cy="y(point.share)" :r="point.active ? 6 : 4.5" />
-      <text :x="x(point.cost) + (point.cost > maxCost * 0.85 ? -8 : 8)" :y="y(point.share) + (point.share > 0.85 ? 12 : -6)"
-        :text-anchor="point.cost > maxCost * 0.85 ? 'end' : 'start'">{{ point.label }}</text>
+      <text :x="x(point.cost) + (leftLabel(point) ? -8 : 8)" :y="y(point.share) + (point.share > 0.85 ? 12 : -6)"
+        :text-anchor="leftLabel(point) ? 'end' : 'start'">{{ point.label }}</text>
     </g>
   </svg>
 </template>
