@@ -107,6 +107,15 @@ def model_weights() -> list[dict]:
     return [{"dir": member["dir"], "sha256": member["sha256"]} for member in members]
 
 
+def _plan_change(base: list[str], new: list[str]) -> str:
+    added = [zone for zone in new if zone not in base]
+    dropped = [zone for zone in base if zone not in new]
+    if not added and not dropped:
+        return "plan C unchanged"
+    return "plan C " + "; ".join(part for part in (added and "adds " + ", ".join(added),
+                                                   dropped and "drops " + ", ".join(dropped)) if part)
+
+
 def _blank(value: object) -> object:
     return "" if value is None else value
 
@@ -183,15 +192,17 @@ def package(result: dict) -> io.BytesIO:
         replans = asset_plan_sensitivity(ctx.space, asset_rows, inputs["budget_rub"], inputs["priority"],
                                          inputs["deadline_hours"], inputs["must_cover"])
         sensitivity_rows = []
+        base_zones = strategies["C"]["zone_ids"]
         for row, selected in zip(asset_rows, replans):
             changed_inputs = {"asset_id": row["asset_id"], "input": row["input"],
                               "factor": row["factor"], "input_value": row["input_value"]}
             sensitivity_rows.append([
                 f"asset_{row['asset_id']}_{row['input']}_{row['factor']}", "C",
-                json.dumps(changed_inputs, ensure_ascii=False), selected["quote"]["total_rub"],
+                json.dumps(changed_inputs, ensure_ascii=False), "", selected["quote"]["total_rub"],
                 selected["covered_expected_loss_rub"],
                 "feasible" if selected["feasible"] else "infeasible",
-                f"EL {row['expected_loss_rub']} RUB; rank {row['baseline_rank']}→{row['rank']} among region assets; fixed p-map",
+                f"EL {row['expected_loss_rub']} RUB; rank {row['baseline_rank']}→{row['rank']} among region assets; "
+                f"{_plan_change(base_zones, selected['zone_ids'])}; fixed p-map",
                 row["expected_loss_rub"], row["rank"], "|".join(selected["zone_ids"]),
                 _blank(selected["covered_doubt_share"]),
             ])
@@ -201,14 +212,15 @@ def package(result: dict) -> io.BytesIO:
                               "tariff_multiplier": row["tariff_multiplier"]}
             sensitivity_rows.append([
                 f"plan_{row['input']}_{row['factor']}", "C",
-                json.dumps(changed_inputs, ensure_ascii=False), row["data_cost_rub"],
+                json.dumps(changed_inputs, ensure_ascii=False), "", row["data_cost_rub"],
                 row["covered_expected_loss_rub"],
                 "feasible" if row["feasible"] else "infeasible",
-                "Reoptimized basket for one changed input; covered EL is not avoided loss",
+                f"{row['input']} x{row['factor']}: {_plan_change(base_zones, row['zone_ids'])}, "
+                f"covered EL {row['covered_expected_loss_rub']} RUB; covered EL is not avoided loss",
                 "", "", "|".join(row["zone_ids"]), _blank(row["covered_doubt_share"]),
             ])
         archive.writestr("sensitivity.csv", _csv(
-            ["scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub",
+            ["scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub", "data_cost_rub",
              "covered_expected_loss_rub", "result_status", "interpretation",
              "asset_expected_loss_rub", "rank", "zone_ids", "covered_doubt_share"], sensitivity_rows))
         json_file("candidate_orders.geojson", {"type": "FeatureCollection", "features": [
