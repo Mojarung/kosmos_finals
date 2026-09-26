@@ -195,6 +195,46 @@ def _cmd_compare(_args: argparse.Namespace) -> None:
     print(json.dumps(record["bootstrap_iou_difference"], indent=2))
 
 
+RELIABILITY_PATH = EVALUATION_DIR / "reliability_test_core.json"
+RELIABILITY_RULE = ("pixels: finite VV and VH and label != -1; calibrated p = Platt(mean logit of the v1 members), "
+                    "raw p = sigmoid(mean logit); ECE equal width: 15 bins of width 1/15 on [0, 1], sum over bins "
+                    "of |water pixels - sum of p| / pixels; ECE equal mass: pixels sorted by p cut into 15 runs "
+                    "whose sizes differ by at most one, same sum; ECE mid range: the equal-width ECE of the pixels "
+                    "with 0.05 < p < 0.95 only, divided by their count; Brier: mean (p - label)^2")
+
+
+def _cmd_reliability(_args: argparse.Namespace) -> None:
+    from floodvalue.ensemble import load_members
+    from floodvalue.infer import load_calibration
+    from floodvalue.package import member_dirs
+    from floodvalue.reliability_check import draw_reliability, part_logits, part_record, saved_probability_checks
+    from floodvalue.split import load_split
+    from floodvalue.train import DEVICE
+
+    platt, _ = load_calibration(CALIBRATION_PATH)
+    split = load_split(SPLIT_PATH)
+    members = load_members(member_dirs(MODEL_DIR))
+    blocks = {}
+    for part in ("test_core", "valid"):
+        print(f"{part}:", file=sys.stderr, flush=True)
+        logits, target = part_logits(paths.SEN1FLOODS11_DIR, split[part], members)
+        blocks[part] = part_record(logits, target, platt, len(split[part]))
+        del logits, target
+    evaluation = json.loads((EVALUATION_DIR / "evaluation.json").read_text(encoding="utf-8"))
+    record = {"command": "uv run --project ml floodvalue reliability", "rule": RELIABILITY_RULE,
+              "platt": platt.as_dict(), "device": DEVICE,
+              "test_core": {**blocks["test_core"], "saved_evaluation": saved_probability_checks(evaluation,
+                                                                                                "test_core")},
+              "validation": {"role": "Platt a, b and the mask threshold were fitted on these pixels (in-sample)",
+                             **blocks["valid"]}}
+    RELIABILITY_PATH.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    draw_reliability(record, EVALUATION_DIR / "figures" / "reliability_test_core.png")
+    keys = ("ece_equal_width", "ece_equal_mass", "ece_mid_range", "brier", "mid_range_share_of_pixels")
+    print(json.dumps({part: {variant: {key: record[part][variant][key] for key in keys}
+                             for variant in ("calibrated", "raw")} for part in ("test_core", "validation")},
+                     indent=2))
+
+
 NORM_CHECK_PATH = EVALUATION_DIR / "norm_stats_check.json"
 
 
@@ -261,6 +301,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands.add_parser("compare", help="event tables and chip bootstrap from saved per-chip counts") \
         .set_defaults(handler=_cmd_compare)
+    commands.add_parser("reliability",
+                        help="test_core reliability with equal-width, equal-mass and mid-range ECE; valid for reference") \
+        .set_defaults(handler=_cmd_reliability)
 
     commands.add_parser("norm-check",
                         help="shipped normalisation constants against float64 train statistics") \
