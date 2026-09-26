@@ -19,6 +19,7 @@ from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, SAR
                        as_polygon, enrich_assets)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
+from .temporal import scene_timing
 from .analysis import RESIDUAL_BASIS
 from .costs import RULE as COST_RULE
 from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
@@ -144,6 +145,11 @@ def code_commit() -> str | None:
     return _git_head() or os.environ.get("FLOODVALUE_COMMIT") or None
 
 
+def gitverse_commit() -> str | None:
+    """Only a separately declared mirror revision; a GitHub commit is not proof of a GitVerse push."""
+    return os.environ.get("FLOODVALUE_GITVERSE_COMMIT") or None
+
+
 def _sentinel_terms(observed_at: object) -> dict:
     year = str(observed_at or "")[:4]
     if not year.isdigit():
@@ -213,7 +219,7 @@ def _commands(scene_id: str, info: dict, inputs: dict, live: bool) -> list[str]:
             commands.append("uv run --project backend --extra demo python scripts/prepare_demo.py")
     commands += ["uv run --project ml floodvalue download",
                  "uv run --project ml floodvalue infer --chip <CHIP> --out data/inference/<CHIP>",
-                 "podman compose up --build"]
+                 "./scripts/compose.sh up --build"]
     if live:
         bbox = ",".join(str(value) for value in info["bbox"])
         commands.append(f'curl -X POST "http://localhost:18000/api/live/prepare?bbox={bbox}'
@@ -504,6 +510,7 @@ def package(result: dict) -> io.BytesIO:
             "permanent_water": {"status": result["region"]["permanent_status"],
                                 "rule": info.get("permanent_rule"), "period_note": info.get("permanent_period_note"),
                                 "file": "permanent_water.tif" if info.get("permanent_rule") else None},
+            "source_timing": scene_timing(info),
             "doubt_rule": DOUBT_RULE, "uncertainty_zone_rule": ZONE_RULE,
             "model": "5 member S1-only U-Net ResNet34 ensemble, Platt calibrated on validation",
             "model_weights": {"card": "ml/artifacts/model/model_card.json", "sha256": model_weights()},
@@ -516,14 +523,8 @@ def package(result: dict) -> io.BytesIO:
             "code_commit": code_commit(),
             "code_commit_rule": ("git rev-parse HEAD in the repository at export time; the FLOODVALUE_COMMIT build "
                                  "variable in images without .git; null when neither is available"),
-            "gitverse_commit": code_commit(),
-            "gitverse_status": "published" if code_commit() else "commit_not_recorded_in_this_build",
-            "other_cost_rule": ("other_cost_rub = compute + analyst review + radar processing, priced as a scenario "
-                                "(decision_cost_rule); field visits and wrong-action costs are not estimated; "
-                                "decision_cost_rub = data_cost_rub + other_cost_rub, the budget limits data_cost_rub only"),
-            "residual_uncertainty_rule": ("A: mean map error chance over valid pixels of the analysed region (share 0-1, "
-                                          "status baseline); B and C: " + RESIDUAL_BASIS + "; a strategy without a timely "
-                                          "order keeps the baseline (status baseline)"),
+            "gitverse_commit": gitverse_commit(),
+            "gitverse_status": "declared_access_unverified" if gitverse_commit() else "mirror_commit_not_verified",
             "counterfactual_rule": "B above the budget has strategy_status=counterfactual_over_budget, for comparison only",
             "priority_rule": ("rank by expected_loss_rub; map_doubtful=true flags assets whose map error chance at the "
                               "point is >= doubt_threshold, they need a look whatever their rank; no_data assets are "
@@ -581,10 +582,12 @@ def package(result: dict) -> io.BytesIO:
             "decision_cost_rule": COST_RULE,
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
             "commands": _commands(scene_id, info, inputs, live),
-            "commands_note": ("Run from the repository root on Windows, Linux or macOS. <CHIP> is any official "
+            "commands_note": ("Run from the repository root on Linux or macOS (Windows: pass FLOODVALUE_COMMIT=HEAD "
+                              "to docker compose). <CHIP> is any official "
                               "Sen1Floods11 hand-labeled chip, e.g. Bolivia_103757; floodvalue download fetches "
                               "the official v1.1 files with md5 checks. docker compose works the same as podman "
-                              "compose; in an image without .git pass FLOODVALUE_COMMIT to record code_commit."),
+                              "compose; use scripts/compose.sh to embed code_commit in an image without .git. "
+                              "A GitVerse mirror commit is recorded only when supplied separately."),
             "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
                                                                   "processed_at": info.get("processed_at")}),
         })
@@ -603,6 +606,8 @@ def package(result: dict) -> io.BytesIO:
                          "permanent_water.tif (если есть): постоянная вода JRC. Ущерб только от паводка (0 на ней) "
                          "лежит отдельно в колонках flood_expected_loss_rub и covered_flood_loss_rub.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
+                         "Для исторического чипа это ретроспективный разбор: слой JRC может включать "
+                         "наблюдения после события. Точный статус указан в run_metadata.json/source_timing.\n"
                          "Ручная метка использована только для проверки качества.\n"
                          "candidate_orders.geojson: каждая зона в трёх вариантах: новая оптика 1 м (ID зоны), "
                          "новый радар 3 м (-SAR) и архивная оптика старше 90 дней (-ARC, только контекст).\n"

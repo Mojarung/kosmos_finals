@@ -81,6 +81,13 @@ def validate(path: str | Path) -> dict:
         missing = REQUIRED - set(archive.namelist())
         require(not missing, f"Missing files: {sorted(missing)}")
         meta = document(archive, "run_metadata.json")
+        require(isinstance(meta.get("code_commit"), str) and len(meta["code_commit"]) == 40
+                and all(char in "0123456789abcdef" for char in meta["code_commit"].lower()),
+                "run_metadata.json: code_commit must be the exact 40-character source revision")
+        require(meta.get("source_timing", {}).get("analysis_mode") in
+                {"rtc_observation", "retrospective_dataset_demo"},
+                "run_metadata.json: source_timing must disclose the data time context")
+        require("other_cost_rule" not in meta, "run_metadata.json: stale other_cost_rule contradicts decision_cost_rule")
         analysis = document(archive, "analysis.json")
         assets = rows(archive, "assets.csv")
         losses = rows(archive, "asset_loss.csv")

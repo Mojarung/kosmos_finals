@@ -4,21 +4,22 @@
 
 Работа идёт по шагам решения: **наблюдение → приоритет объектов → закупка → проверка качества и экспорт**. На 3D-карте можно выбрать область в любом месте Земли между 85° ю. ш. и 85° с. ш. Сервис находит снимки Sentinel‑1 RTC с VV и VH, объединяет соседние кадры одного прохода, запускает замороженный ансамбль и привязывает решение к дате наблюдения. Одна рамка обрабатывается до 300 км² и до 20 км на сторону; сетка имеет примерно 10 м/пикс., поэтому большой регион режется на фрагменты с перекрытием. Если часть пикселей без сигнала, фактическое покрытие показано отдельно.
 
-Репозиторий сдачи: [GitVerse](https://gitverse.ru/hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21), ветка `master`, веса в Git LFS там же. Рабочая копия команды: [GitHub](https://github.com/Mojarung/kosmos_finals), ветка `main`, с тем же содержимым.
+Репозиторий сдачи: [GitVerse](https://gitverse.ru/hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21), ветка `master`, веса в Git LFS там же. Рабочая копия команды: [GitHub](https://github.com/Mojarung/kosmos_finals), ветка `main`. Перед сдачей нужно отдельно подтвердить, что GitVerse доступен жюри и указывает на тот же commit: одинаковое имя ветки этого не доказывает.
 
-[Свежая сверка 20 критериев и план работ](docs/14-service-delivery-review.md) отделяет готовность от баллов жюри. [Карта документов](docs/README.md) ведёт к постановке и подробному разбору, [план пилота](docs/11-pilot.md) описывает проверку на реальном операторе.
+[Свежая сверка 20 критериев и план работ](docs/16-strict-audit-2026-09-26.md) отделяет готовность от баллов жюри. [Карта документов](docs/README.md) ведёт к постановке и подробному разбору, [план пилота](docs/11-pilot.md) описывает проверку на реальном операторе.
 
 ## Запуск
 
 Нужны Podman Compose или Docker Compose, а для нового региона доступ к Microsoft Planetary Computer. Три подготовленные сцены лежат в репозитории и работают офлайн. Ещё 446 официальных чипов Sen1Floods11 открываются из списка стран в шапке («Ещё N»): сервис скачает S1, ручную метку и слой постоянной воды JRC, запустит ту же замороженную модель и добавит сцену на карту. Расчёт идёт в контейнере на CPU весами из Git LFS, обучение и GPU не нужны. Повторное открытие берёт результат из томов `live-observations` и `runtime-observations`; импортированные проекты живут в `operator-projects`.
 
+Сборка для сдачи требует чистого checkout: запуск через обёртку записывает точный Git commit в контейнер и каждый ZIP.
+
 ```bash
-FLOODVALUE_COMMIT=$(git rev-parse HEAD) podman compose up --build
-# или FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build
-# PowerShell: $env:FLOODVALUE_COMMIT = git rev-parse HEAD; docker compose up --build
+./scripts/compose.sh up --build
+# Docker: CONTAINER_CLI=docker ./scripts/compose.sh up --build
 ```
 
-Переменная записывает commit сборки в паспорт каждого ZIP: в образе нет `.git`, и без неё поле `code_commit` останется пустым.
+На Windows/PowerShell: `$env:FLOODVALUE_COMMIT = git rev-parse HEAD; docker compose up --build`. При прямом вызове Compose передайте точный HEAD: без него сборка останавливается, чтобы экспорт не выдавал комплект с неизвестной версией. `FLOODVALUE_GITVERSE_COMMIT` задаётся отдельно после проверки зеркала и никогда не выводится из локального GitHub HEAD.
 
 Интерфейс: <http://localhost:18080>. API: <http://localhost:18000/docs>. Порты задаются переменными `WEB_PORT` и `API_PORT`. На macOS, если Podman VM не пробрасывает порты, в отдельном терминале можно запустить `python3 scripts/podman_tunnel.py`.
 
@@ -128,7 +129,7 @@ ML-этапы запускаются из папки `ml`, остальные и
 | ml | Python 3.13, torch 2.14.0+cu132 и torchvision 0.29.0+cu132 (на macOS 2.14.0 и 0.29.0 с PyPI), segmentation-models-pytorch 0.5.0, rasterio 1.5.1, numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1 | `ml/.python-version`, `ml/uv.lock` |
 | frontend | Node 22 (образ `node:22-alpine`), vue 3.5.43, vite 8.3.1, maplibre-gl 6.11.2; раздача через `nginx:1.27-alpine` | `frontend/Dockerfile`, `frontend/package-lock.json` |
 
-Точный commit сдачи: последний коммит ветки `master` в GitVerse, итоговую проверяемую версию команда при сдаче помечает тегом `floodvalue-final`. Каждый выгруженный комплект сам называет свой код в полях `code_commit` и `gitverse_commit` файла `run_metadata.json`: в рабочей копии сервис берёт `git rev-parse HEAD` в момент экспорта, в контейнере значение приходит из аргумента сборки `FLOODVALUE_COMMIT` (команда в разделе «Запуск»). Без этого аргумента поле остаётся `null` со статусом `commit_not_recorded_in_this_build`.
+Каждый комплект называет версию кода в `run_metadata.json/code_commit`. В контейнере hash передаёт обёртка запуска; `gitverse_commit` остаётся пустым, пока зеркало отдельно не сверено. Это предотвращает ложное утверждение, что любой GitHub commit уже опубликован в GitVerse. Итоговую версию перед защитой нужно проверить из чистого клона и пометить тегом.
 
 ## Проверки и структура
 

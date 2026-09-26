@@ -154,9 +154,15 @@ def test_run_metadata_names_the_code_commit_and_cross_platform_commands():
     assert any("uv run --project ml floodvalue infer --chip" in command for command in commands)
     assert any("budget=6500" in command for command in commands)
     assert any("scripts/validate_package.py" in command for command in commands)
-    # The GitVerse repository holds the same commits, so the package names the commit it was built from.
-    assert meta["gitverse_commit"] == meta["code_commit"]
+    assert "./scripts/compose.sh up --build" in commands
+    # A local GitHub revision does not prove that the GitVerse mirror has been updated.
+    assert meta["gitverse_commit"] is None
+    assert meta["gitverse_status"] == "mirror_commit_not_verified"
     assert meta["repository"].startswith("https://gitverse.ru/")
+    assert meta["source_timing"]["analysis_mode"] == "retrospective_dataset_demo"
+    assert meta["source_timing"]["water_reference_status"] == "post_event_observations_possible"
+    assert "other_cost_rule" not in meta
+    assert meta["decision_cost_rule"]["status"] == "scenario"
 
 
 def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
@@ -165,6 +171,13 @@ def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
     assert exporter.code_commit() == "0123abc"
     monkeypatch.delenv("FLOODVALUE_COMMIT")
     assert exporter.code_commit() is None
+
+
+def test_gitverse_commit_requires_separate_declaration(monkeypatch):
+    monkeypatch.delenv("FLOODVALUE_GITVERSE_COMMIT", raising=False)
+    assert exporter.gitverse_commit() is None
+    monkeypatch.setenv("FLOODVALUE_GITVERSE_COMMIT", "fedcba321")
+    assert exporter.gitverse_commit() == "fedcba321"
 
 
 def test_source_manifest_records_a_checked_license_for_every_source():

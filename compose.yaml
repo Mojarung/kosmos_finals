@@ -2,11 +2,12 @@ services:
   backend:
     environment:
       SKYFI_API_KEY: ${SKYFI_API_KEY:-}
+      FLOODVALUE_GITVERSE_COMMIT: ${FLOODVALUE_GITVERSE_COMMIT:-}
     build:
       context: .
       dockerfile: backend/Dockerfile
       args:
-        FLOODVALUE_COMMIT: ${FLOODVALUE_COMMIT:-}
+        FLOODVALUE_COMMIT: ${FLOODVALUE_COMMIT:?Use scripts/compose.sh or pass the exact Git commit}
     ports:
       - "${API_PORT:-18000}:8000"
     volumes:

@@ -48,7 +48,7 @@ function openWeak() {
 </script>
 
 <template>
-  <section class="block" v-tip="'Независимая проверка test_core: 55 снимков, которые модель не видела. Оба метода сравниваются на одних и тех же пикселях'">
+  <section class="block" v-tip="'test_core: 55 несоседних с обучением окон, но события частично общие с train. Оба метода сравниваются на одних валидных пикселях'">
     <span class="caption">Совпадение с ручной разметкой, IoU</span>
     <div class="ring-pair">
       <RingGauge :value="testQuality.baseline.iou" label="порог VH" color="var(--risk)" :size="64" />
@@ -98,6 +98,7 @@ function openWeak() {
       <div v-if="testQuality.doubtful_error_rate != null" v-tip="doubtHint"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(testQuality.doubtful_error_rate, 1) }}</b></div>
       <div v-tip="'Паводок в Боливии, которого не было в обучении'"><span>Новое событие, Боливия</span><b class="tabular">IoU {{ percent(quality.parts.bolivia.model.iou, 1) }}</b></div>
     </div>
+    <p class="source-line calibration-limit">Общий ECE скрывает средние вероятности: при p 70–80% на test_core вода встречалась в 56–60% пикселей. Для нового RTC это не проверено.</p>
   </section>
 
   <section v-if="proxy && proxy.n_points" class="block"
@@ -113,13 +114,21 @@ function openWeak() {
   </section>
 
   <section class="block">
-    <span class="caption">Где модель хуже порога</span>
-    <p class="weak-note">На снимке {{ WEAK_CHIP }} IoU модели около 5%, у порога около 31%: модель нашла 6% воды, порог нашёл половину. Это единственный крупный снимок, где модель заметно хуже порога. Здесь тёмная и суша: 4,3% сухих пикселей темнее −26 дБ, на других снимках Боливии обычно 0,5%, и модель теряет воду даже там, где она темнее всего. Две трети пропусков попадают в сомнительные пиксели, туда и направляется съёмка.</p>
+    <span class="caption">Где карта может подвести</span>
+    <div class="mini-rows failure-rows">
+      <div v-tip="'Bolivia_242570: IoU модели 0,051 против 0,309 у VH. Тёмная суша и вода плохо разделяются'"><span>Боливия · тёмная суша</span><b>5% IoU</b></div>
+      <div v-tip="'India_747992, test_adjacent: IoU модели 0,059 против 0,289 у VH. Зоны сомнений находят лишь 44% пропущенной воды'"><span>Индия · уверенные пропуски</span><b>6% IoU</b></div>
+      <div v-tip="'Mekong, test_core: IoU 0,077 при очень малой доле воды и множестве ложных тревог на одном чипе'"><span>Меконг · ложные тревоги</span><b>8% IoU</b></div>
+    </div>
+    <p class="weak-note">В Индии более половины пропущенной воды карта уверенно назвала сушей. Слой сомнений не гарантирует, что покажет все ошибки.</p>
     <button class="tonal-button weak-button" :disabled="ingestRunning && !weakRunning" @click="openWeak">
       <Satellite :size="15" />{{ weakReady ? 'Открыть этот снимок' : weakRunning ? 'Считаем снимок…' : 'Рассчитать и открыть' }}
     </button>
   </section>
 
+  <p v-if="state.analysis.chip.timing?.analysis_mode === 'retrospective_dataset_demo'" class="source-line" v-tip="state.analysis.chip.timing.water_reference_note">
+    <Info :size="14" />Исторический пример: данные JRC могли включать наблюдения после паводка
+  </p>
   <p class="source-line" v-tip="'Ручная разметка Sen1Floods11 не делит воду на постоянную и паводок; постоянная вода берётся из слоя JRC. Учебные объекты и тариф не подтверждают реальный ущерб'">
     <Info :size="14" />Ограничения оценки
   </p>

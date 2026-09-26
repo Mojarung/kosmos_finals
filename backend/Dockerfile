@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 libgo
 WORKDIR /app/backend
 # The image has no .git: pass the commit at build time so run_metadata.json can name it.
 ARG FLOODVALUE_COMMIT=
+RUN test -n "$FLOODVALUE_COMMIT"
 ENV FLOODVALUE_COMMIT=${FLOODVALUE_COMMIT} \
     PATH="/app/backend/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \

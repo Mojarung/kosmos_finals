@@ -13,6 +13,7 @@ from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candi
                        enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2,
                        square_around, today)
 from .sensitivity import asset_sensitivity, plan_sensitivity
+from .temporal import scene_timing
 from .costs import decision_costs
 from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
                      uncertainty_zones, union_share)
@@ -356,7 +357,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             | {key: info[key] for key in ("source_kind", "source_item_id", "source_item_ids", "pixel_size_m_approx",
                                             "portfolio_status", "portfolio_rule", "processed_at", "split_part",
                                             "metrics_independent", "permanent_rule") if key in info}
-            | {"permanent_status": region["permanent_status"]},
+            | {"permanent_status": region["permanent_status"], "timing": scene_timing(info)},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets,
         "zones": [_zone_view(zone, deadline_hours) for zone in ctx.zones],

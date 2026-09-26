@@ -34,8 +34,9 @@ PERMANENT_RULE = ("JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and
                   "Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water "
                   "minus this layer; a portfolio point on it keeps the case EL = p * V * q, only the additional "
                   "flood-only loss (flood_expected_loss_rub) is 0 there")
-PERMANENT_PERIOD_NOTE = ("Observations up to 2018: fully before 2019 events; for 2016-2018 events the period ends "
-                         "near the event, but water in both 1984 and 2018 selects long-lived water bodies")
+PERMANENT_PERIOD_NOTE = ("JRC annual observations end in 2018. For events during 2018 the layer can include "
+                         "later months; for 2016-2017 events it includes later years. The layer is a "
+                         "retrospective reference, not evidence of availability on the historical decision date.")
 PORTFOLIO_RULE = ("numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without "
                   "replacement, one per case asset type in table order; independent of p, masks and labels")
 ASSET_TYPES = [
