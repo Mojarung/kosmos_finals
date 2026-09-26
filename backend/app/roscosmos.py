@@ -20,7 +20,7 @@ import json
 import os
 import threading
 import time
-from datetime import date, datetime, timezone
+from datetime import date
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -29,7 +29,7 @@ from fastapi import HTTPException
 from shapely import from_wkt
 from shapely.geometry import mapping, shape
 
-from .planning import OPERATIONAL_DAYS, quote
+from .catalog_offers import make_offer, pp840_price  # noqa: F401 - pp840_price kept for callers
 
 API = "https://api.gptl.ru"
 OPTICAL_SEARCH = API + "/catalog/v2/search"
@@ -99,57 +99,20 @@ def search_sar(aoi, start: date, end: date, limit: int = 100) -> list[dict]:
     return _call(request, "каталог Кондор-ФКА").get("features", [])
 
 
-def pp840_price(area_km2: float, sensor: str, resolution_m: float, captured: str, on: date) -> tuple[float, float]:
-    """Case formula for an existing image cropped to the AOI; the order minimum is 1 km²."""
-    billable = max(area_km2, 1.0)
-    age = (on - date.fromisoformat(captured)).days
-    order = {"candidate_id": "offer", "area_km2": billable, "sensor_type": sensor,
-             "resolution_m": resolution_m, "processing_level": "L2", "usage_type": "internal",
-             "acquisition_type": "operational" if age <= OPERATIONAL_DAYS else "archive",
-             "guaranteed_purchase": False, "observation_at": captured}
-    total = float(quote([order], calculation_date=on)["total_rub"])
-    return round(total, 2), round(total / billable, 2)
-
-
-def _offer(identifier: str, title: str, sensor: str, footprint, aoi, resolution_m: float, captured: str,
-           timestamp: str, cloud, preview: str | None, event_date: str | None, on: date, extra: dict) -> dict | None:
-    from .procurement import area
-
-    if not footprint.is_valid:
-        footprint = footprint.buffer(0)
-    overlap = footprint.intersection(aoi)
-    if overlap.is_empty or area(overlap) <= 0:
-        return None
-    sqkm = area(overlap)
-    price, unit = pp840_price(sqkm, sensor, resolution_m, captured, on)
-    return {"id": identifier, "archive_id": identifier, "provider": "Роскосмос", "title": title,
-            "product_type": "SAR" if sensor == "sar" else "OPTICAL",
-            "geometry": mapping(overlap), "footprint": mapping(footprint), "coverage_geometry": mapping(overlap),
-            "area_km2": round(sqkm, 4), "coverage_km2": round(sqkm, 4),
-            "coverage_percent": round(min(100, sqkm / area(aoi) * 100), 2),
-            "technical_min_km2": 1, "technical_max_km2": None,
-            "price": price, "unit_price": unit, "currency": "RUB",
-            "resolution_m": resolution_m, "source_gsd_cm": round(resolution_m * 100), "delivery_hours": None,
-            "capture_date": captured, "capture_timestamp": timestamp,
-            "days_from_event": (date.fromisoformat(captured) - date.fromisoformat(event_date)).days if event_date else None,
-            "price_status": "pp840_case_formula", "price_source": "planning.quote (ПП РФ № 840, сценарная ставка)",
-            "quote_at": datetime.now(timezone.utc).isoformat(), "quote_validated": False, "quality": "unknown",
-            "full_scene_only": False, "open_data": False,
-            "order_issue": None if sqkm >= 1 else "Меньше 1 км²: оплата по минимуму заказа",
-            "preview_url": preview, "cloud_percent": cloud, "off_nadir_angle": extra.get("off_nadir_angle"),
-            "order_url": ORDER_URL, **extra}
-
-
 def normalize_optical(item: dict, aoi, event_date: str | None, on: date) -> dict | None:
     platform = item.get("platform_name") or PLATFORMS.get(item.get("platform_type_identifier"), "Роскосмос")
     captured = (item.get("acquisition_date_begin") or item["date_time_stamp"])[:10]
     previews = [p["url"] for p in item.get("previews") or [] if isinstance(p.get("url"), str)]
     preview = previews[0].replace("http://", "https://", 1) if previews else None
     instrument = item.get("instrument_name") or item.get("instrument_identifier") or ""
-    return _offer(item["identifier"], f"{platform} {instrument}".strip(), "optical", from_wkt(item["geometry"]), aoi,
-                  float(item["resolution"]), captured, item.get("acquisition_date_begin") or item["date_time_stamp"],
-                  item.get("cloudiness"), preview, event_date, on,
-                  {"off_nadir_angle": item.get("nadir_tilt_angle"), "platform_identifier": item.get("platform_identifier")})
+    return make_offer(provider="Роскосмос", identifier=item["identifier"], title=f"{platform} {instrument}".strip(),
+                      sensor="optical", footprint=from_wkt(item["geometry"]), aoi=aoi,
+                      resolution_m=float(item["resolution"]), captured=captured,
+                      timestamp=item.get("acquisition_date_begin") or item["date_time_stamp"],
+                      cloud=item.get("cloudiness"), preview=preview, event_date=event_date, on=on, order_url=ORDER_URL,
+                      price_note="цену и ссылку на оплату выставляет Order API Геопортала",
+                      extra={"off_nadir_angle": item.get("nadir_tilt_angle"),
+                             "platform_identifier": item.get("platform_identifier")})
 
 
 def normalize_sar(feature: dict, aoi, event_date: str | None, on: date) -> dict | None:
@@ -159,7 +122,9 @@ def normalize_sar(feature: dict, aoi, event_date: str | None, on: date) -> dict 
                       if "ql" in key.lower() or "quicklook" in key.lower() or "thumbnail" in key.lower()), None)
     resolution = props.get("gsd") or props.get("sar:resolution_range") or 1.0
     modes = props.get("sar:instrument_mode") or ""
-    return _offer(feature["id"], f"Кондор-ФКА {modes}".strip(), "sar", shape(feature["geometry"]), aoi,
-                  float(resolution), timestamp[:10], timestamp, None,
-                  QUICKLOOK + quicklook if quicklook else None, event_date, on,
-                  {"polarizations": props.get("sar:polarizations"), "platform_identifier": props.get("platform")})
+    return make_offer(provider="Роскосмос", identifier=feature["id"], title=f"Кондор-ФКА {modes}".strip(),
+                      sensor="sar", footprint=shape(feature["geometry"]), aoi=aoi, resolution_m=float(resolution),
+                      captured=timestamp[:10], timestamp=timestamp, cloud=None,
+                      preview=QUICKLOOK + quicklook if quicklook else None, event_date=event_date, on=on,
+                      order_url=ORDER_URL, price_note="цену и ссылку на оплату выставляет Order API Геопортала",
+                      extra={"polarizations": props.get("sar:polarizations"), "platform_identifier": props.get("platform")})

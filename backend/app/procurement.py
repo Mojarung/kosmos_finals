@@ -34,8 +34,8 @@ from .planning import TO_EQUAL_AREA, today
 router = APIRouter(prefix='/api/procurement', tags=['procurement'])
 DB = Path(os.environ.get('FLOODVALUE_PROCUREMENT_DB', ROOT / 'data/runtime/procurement.sqlite3'))
 SKYFI = 'https://app.skyfi.com/platform-api'
-# Live catalogs: Roscosmos Geoportal (roubles, PP 840 estimate) and SkyFi (US dollars, provider prices).
-SOURCES = ('roscosmos', 'skyfi')
+# Live catalogs: Roscosmos Geoportal and SCANEX (roubles, PP 840 estimate), free Copernicus data, SkyFi (dollars).
+SOURCES = ('roscosmos', 'scanex', 'free', 'skyfi')
 
 
 def now():
@@ -74,7 +74,7 @@ class Input(BaseModel):
 
 class Search(Input):
     scene_id: str
-    source: str = Field(default='roscosmos', pattern='^(roscosmos|skyfi)$')
+    source: str = Field(default='roscosmos', pattern='^(roscosmos|scanex|free|skyfi)$')
     market: str = Field(default='commercial', pattern='^(commercial|open)$')
     from_date: date | None = None
     to_date: date | None = None
@@ -175,7 +175,7 @@ def normalize_archive(item, aoi, event_date=None):
 def status():
     from . import roscosmos
     return {'skyfi_configured': bool(os.environ.get('SKYFI_API_KEY')), 'roscosmos_configured': roscosmos.configured(),
-            'sources': list(SOURCES), 'purchase_enabled': False}
+            'scanex_configured': True, 'free_configured': True, 'sources': list(SOURCES), 'purchase_enabled': False}
 
 
 @router.get('/catalogs/latest')
@@ -205,8 +205,8 @@ def search(request: Search):
         raise HTTPException(422, 'Укажите корректный исторический период съёмки')
     bounds = request.bbox or info['bbox']
     aoi = box(*bounds)
-    if request.source == 'roscosmos':
-        return search_roscosmos(request, aoi, bounds, event, start, end)
+    if request.source != 'skyfi':
+        return search_live(request, aoi, bounds, event, start, end)
     raw = provider('/archives', {'aoi': aoi.wkt, 'fromDate': start.isoformat() + 'T00:00:00Z',
         'toDate': end.isoformat() + 'T23:59:59Z', 'pageSize': 100, 'minOverlapRatio': .01,
         'openData': request.market == 'open'})
@@ -236,14 +236,31 @@ def search(request: Search):
         'disclaimer': 'Предварительные цены реального каталога SkyFi. Цена заказа и пригодность для анализа требуют проверки.'})
 
 
-def search_roscosmos(request, aoi, bounds, event, start, end):
-    """Resurs-P/Kanopus-V optics and Kondor-FKA radar from the Geoportal API, priced by the case formula."""
-    from . import roscosmos
+def live_sources():
+    """Search and normalize functions of the catalogs that return roubles or free data, and their notes."""
+    from . import copernicus, roscosmos, scanex
+    return {
+        'roscosmos': ([(roscosmos.search_optical, roscosmos.normalize_optical), (roscosmos.search_sar, roscosmos.normalize_sar)],
+                      roscosmos.OPTICAL_SEARCH,
+                      'Каталог Геопортала Роскосмоса. Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса; '
+                      'цену поставщика и ссылку на оплату возвращает Order API при заказе.'),
+        'scanex': ([(scanex.search, scanex.normalize)], scanex.SEARCH,
+                   'Каталог СКАНЭКС «Космоснимки — Поиск» без учётной записи (интерфейс публичного сайта). '
+                   'Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса, цену поставщика даёт СКАНЭКС '
+                   'по заявке; разрешение номинальное по спутнику.'),
+        'free': ([(copernicus.search, copernicus.normalize)], copernicus.SEARCH,
+                 'Бесплатные Sentinel-1 и Sentinel-2 из Copernicus Data Space: поиск без ключа, скачивание после '
+                 'бесплатной регистрации.'),
+    }
+
+
+def search_live(request, aoi, bounds, event, start, end):
+    """Russian and free catalogs in the common offer shape, prices in roubles."""
+    searchers, source_url, disclaimer = live_sources()[request.source]
     on = today()
     offers, skipped, seen = [], 0, set()
-    for items, normalize in ((roscosmos.search_optical(aoi, start, end), roscosmos.normalize_optical),
-                             (roscosmos.search_sar(aoi, start, end), roscosmos.normalize_sar)):
-        for item in items:
+    for search_fn, normalize in searchers:
+        for item in search_fn(aoi, start, end):
             try:
                 offer = normalize(item, aoi, str(event), on)
                 if offer and offer['id'] not in seen:
@@ -251,13 +268,11 @@ def search_roscosmos(request, aoi, bounds, event, start, end):
                     seen.add(offer['id'])
             except (ValueError, KeyError, TypeError, GEOSException):
                 skipped += 1
-    return persist('catalog', {'scene_id': request.scene_id, 'source': 'roscosmos', 'normalization_version': 2,
+    return persist('catalog', {'scene_id': request.scene_id, 'source': request.source, 'normalization_version': 2,
         'captured_at': now(), 'market': request.market, 'currency': 'RUB', 'bbox': bounds,
         'area_km2': round(area(aoi), 4), 'event_date': str(event), 'from_date': str(start), 'to_date': str(end),
-        'offers': offers, 'truncated': False, 'skipped': skipped, 'pages': 1,
-        'source_url': roscosmos.OPTICAL_SEARCH, 'source_guide': roscosmos.GUIDE,
-        'disclaimer': 'Каталог Геопортала Роскосмоса. Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса; '
-                      'цену поставщика и ссылку на оплату возвращает Order API при заказе.'})
+        'offers': offers, 'truncated': False, 'skipped': skipped, 'pages': 1, 'source_url': source_url,
+        'disclaimer': disclaimer})
 
 
 @router.get('/catalogs/{catalog_id}')
@@ -274,7 +289,7 @@ def calculate(catalog, request):
     total_area = area(target)
     for o in offers:
         reasons = []
-        if o['resolution_m'] > request.resolution_m:
+        if (o['resolution_m'] or math.inf) > request.resolution_m:
             reasons.append('Недостаточная детализация')
         cloud = o.get('cloud_percent')
         if o.get('product_type') != 'SAR' and request.max_cloud_percent < 100:
@@ -346,6 +361,8 @@ def validate_quote(catalog_id: str, offer_id: str):
     if catalog.get('source') == 'roscosmos':
         raise HTTPException(409, 'Цену Роскосмоса подтверждает Order API Геопортала при создании заказа: он выставляет '
                                  'сумму по ПП № 840 и ссылку на оплату. Сервис заказов не создаёт.')
+    if catalog.get('source') != 'skyfi':
+        raise HTTPException(409, 'Цену этого источника подтверждает поставщик по заявке; бесплатные данные стоят 0.')
     quote = provider('/order-archive/validate', {'aoi': shape(offer['geometry']).wkt, 'archiveId': offer['archive_id']})
     cents = quote.get('estimatedCostCents')
     if type(cents) is not int or cents < 0:
@@ -372,12 +389,12 @@ def export(decision_id: str):
     esc = html.escape
     rub = catalog.get('currency') == 'RUB'
     money = (lambda v: f'{v:,.2f} ₽'.replace(',', ' ')) if rub else (lambda v: f'${v:.2f}')
-    source_name = 'Геопортал Роскосмоса, API ЦБГД' if catalog.get('source') == 'roscosmos' else 'SkyFi API'
-    currency_note = ('Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса; сумму поставщика и ссылку на оплату '
-                     'выставляет Order API Геопортала при заказе.' if rub else
+    source_name = {'roscosmos': 'Геопортал Роскосмоса, API ЦБГД', 'scanex': 'СКАНЭКС «Космоснимки — Поиск»',
+                   'free': 'Copernicus Data Space STAC'}.get(catalog.get('source'), 'SkyFi API')
+    currency_note = (catalog['disclaimer'] if rub else
                      'Цены в долларах США из коммерческого каталога SkyFi. Это отдельный подбор снимков, а не расчёт по ПП № 840.')
     cards = ''.join('<article>' + (f'<img src="{esc(o["preview_url"], quote=True)}" alt="Превью поставщика">' if o['preview_url'] else '') +
-        f'<h2>{esc(o["title"])} · {esc(o["capture_date"])}</h2><p>{esc(o["provider"])} · {o["resolution_m"]:.2f} м · {o["coverage_percent"]:.1f}% территории</p>' +
+        f'<h2>{esc(o["title"])} · {esc(o["capture_date"])}</h2><p>{esc(o["provider"])} · {(format(o["resolution_m"], ".2f") + " м") if o["resolution_m"] else "разрешение н/д"} · {o["coverage_percent"]:.1f}% территории</p>' +
         f'<b>{money(o["price"])}</b><p>Archive ID: {esc(o["id"])}</p></article>' for o in selected)
     report = f'''<!doctype html><html lang="ru"><meta charset="utf-8"><title>FloodValue · сравнение снимков</title>
 <style>body{{font:16px system-ui;max-width:1080px;margin:40px auto;color:#172d34;padding:24px}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}img{{width:100%;height:260px;object-fit:contain;background:#15262d}}article{{border-top:2px solid #317b7c;padding:20px 0}}h1{{font-size:36px}}b{{font-size:26px}}</style>

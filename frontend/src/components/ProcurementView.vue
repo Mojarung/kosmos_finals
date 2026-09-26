@@ -17,8 +17,14 @@ const error = ref('')
 // Два живых каталога: Геопортал Роскосмоса (₽, оценка по ПП № 840) и SkyFi ($). По умолчанию Роскосмос.
 // Без ключа источник недоступен: не шлём заведомо проваленных запросов и объясняем, что настроить.
 const SOURCES = {
-  roscosmos: { name: 'Роскосмос', of: 'Роскосмоса', api: 'Геопортал Роскосмоса · API ЦБГД', currency: 'RUB', budget: 20000, orderUrl: 'https://gptl.ru/' },
-  skyfi: { name: 'SkyFi', of: 'SkyFi', api: 'SkyFi API', currency: 'USD', budget: 500, orderUrl: 'https://app.skyfi.com' },
+  roscosmos: { name: 'Роскосмос', of: 'Роскосмоса', api: 'Геопортал Роскосмоса · API ЦБГД', currency: 'RUB', badge: '₽', budget: 20000,
+    resolution: 1, orderUrl: 'https://gptl.ru/', orderLabel: 'Заказать в Геопортале' },
+  scanex: { name: 'СКАНЭКС', of: 'СКАНЭКС', api: 'СКАНЭКС «Космоснимки — Поиск»', currency: 'RUB', badge: '₽', budget: 20000,
+    resolution: 1, orderUrl: 'https://search.kosmosnimki.ru/', orderLabel: 'Заявка в СКАНЭКС' },
+  free: { name: 'Бесплатно', of: 'бесплатных данных', api: 'Copernicus Data Space · STAC', currency: 'RUB', badge: '0 ₽', budget: 0,
+    resolution: 10, orderUrl: 'https://browser.dataspace.copernicus.eu/', orderLabel: 'Скачать в Copernicus' },
+  skyfi: { name: 'SkyFi', of: 'SkyFi', api: 'SkyFi API', currency: 'USD', badge: '$', budget: 500, resolution: 1,
+    orderUrl: 'https://app.skyfi.com', orderLabel: 'Открыть SkyFi' },
 }
 const source = computed({ get: () => state.catalogSource || 'roscosmos', set: value => { state.catalogSource = value } })
 const sourceInfo = computed(() => SOURCES[catalog.value?.source || source.value] || SOURCES.roscosmos)
@@ -35,7 +41,8 @@ const loadedPreviews = reactive(new Set())
 const today = new Date().toISOString().slice(0, 10)
 const eventDate = () => (state.analysis?.scenes?.find(s => s.chip_id === state.sceneId)?.observed_at || (state.analysis?.chip.chip_id === state.sceneId ? state.analysis.chip.observed_at : ''))?.slice(0, 10) || '2018-09-21'
 const query = reactive({ from_date: eventDate(), to_date: today, market: 'commercial' })
-const filters = reactive({ budget: SOURCES[state.catalogSource || 'roscosmos'].budget, resolution_m: 1, max_cloud_percent: 30 })
+const filters = reactive({ budget: SOURCES[state.catalogSource || 'roscosmos'].budget,
+  resolution_m: SOURCES[state.catalogSource || 'roscosmos'].resolution, max_cloud_percent: 30 })
 const offers = computed(() => result.value?.offers || catalog.value?.offers || [])
 const focused = computed(() => offers.value.find(o => o.id === focusedId.value) || offers.value[0])
 const selected = computed(() => offers.value.filter(o => selectedIds.value.includes(o.id)))
@@ -45,7 +52,10 @@ const money = n => n == null ? '—' : new Intl.NumberFormat('ru-RU', { style: '
 const num = (n, digits = 1) => n == null ? '—' : new Intl.NumberFormat('ru-RU', { maximumFractionDigits: digits }).format(n)
 const date = s => s ? new Date(s).toLocaleDateString('ru-RU') : '—'
 const minPrice = computed(() => catalog.value?.offers.length ? Math.min(...catalog.value.offers.map(o => o.price)) : null)
-const bestGsd = computed(() => catalog.value?.offers.length ? Math.min(...catalog.value.offers.map(o => o.resolution_m)) : null)
+const bestGsd = computed(() => {
+  const known = (catalog.value?.offers || []).map(o => o.resolution_m).filter(value => value != null)
+  return known.length ? Math.min(...known) : null
+})
 const maxPrice = computed(() => Math.max(1, ...offers.value.map(o => o.price), filters.budget))
 const years = computed(() => {
   const counts = new Map()
@@ -241,6 +251,7 @@ async function switchSource(next) {
   focusedId.value = null
   error.value = ''
   filters.budget = SOURCES[next].budget
+  filters.resolution_m = SOURCES[next].resolution
   if (!configured.value) return
   try { await loadSaved() } catch { await search() }
 }
@@ -259,7 +270,7 @@ onUnmounted(() => {
     <header class="imagery-heading">
       <div><span class="eyebrow"><Satellite :size="13" /> {{ sourceInfo.name.toUpperCase() }} · РЕАЛЬНЫЙ КАТАЛОГ</span><h2>{{ projectMode ? 'Снимки для объектов' : 'Снимки для территории' }}</h2><p>{{ state.sceneId }} <template v-if="catalog">· {{ num(catalog.area_km2, 2) }} км²</template></p></div>
       <div class="source-switch" role="group" aria-label="Источник каталога">
-        <button v-for="(item, key) in SOURCES" :key="key" :class="{ active: source === key }" :aria-pressed="source === key" :disabled="busy" @click="switchSource(key)">{{ item.name }} <span class="mode-currency">{{ item.currency === 'RUB' ? '₽' : '$' }}</span></button>
+        <button v-for="(item, key) in SOURCES" :key="key" :class="{ active: source === key }" :aria-pressed="source === key" :disabled="busy" @click="switchSource(key)">{{ item.name }} <span class="mode-currency">{{ item.badge }}</span></button>
       </div>
       <button class="quiet-button" @click="state.procurementMapMode = !state.procurementMapMode"><MapIcon :size="15" />{{ state.procurementMapMode ? 'Открыть каталог' : 'На карте' }}</button>
     </header>
@@ -275,7 +286,7 @@ onUnmounted(() => {
       </div></details>
       <button class="primary-button" :disabled="busy || !configured" @click="search"><RefreshCw :size="15" :class="{ spin: busy }" />{{ busy ? 'Поиск: ' + sourceInfo.name + '…' : 'Обновить: ' + sourceInfo.name }}</button>
     </div>
-    <div v-if="!state.procurementMapMode" class="source-strip"><span>{{ catalog ? 'Ответ ' + sourceInfo.name + ' от ' + date(catalog.captured_at) + ', ' + new Date(catalog.captured_at).toLocaleTimeString('ru-RU') : configured ? 'Ищем доступные архивные кадры и превью поставщиков' : 'Каталог ' + sourceInfo.of + ' не подключён на этом сервере' }}</span><button :disabled="busy || !configured" @click="eventPeriod">Неделя паводка</button><button :disabled="busy || !configured" @click="entireArchive">Весь архив территории</button></div>
+    <div v-if="!state.procurementMapMode" class="source-strip"><span>{{ catalog ? 'Ответ: ' + sourceInfo.api + ', ' + date(catalog.captured_at) + ', ' + new Date(catalog.captured_at).toLocaleTimeString('ru-RU') : configured ? 'Ищем доступные архивные кадры и превью поставщиков' : 'Каталог ' + sourceInfo.of + ' не подключён на этом сервере' }}</span><button :disabled="busy || !configured" @click="eventPeriod">Неделя паводка</button><button :disabled="busy || !configured" @click="entireArchive">Весь архив территории</button></div>
     <div v-if="!configured && !catalog" class="catalog-empty" role="status" data-testid="skyfi-not-configured"><Satellite :size="36" /><h3>Каталог {{ sourceInfo.of }} не подключён</h3><p v-if="source === 'roscosmos'">Снимки Ресурс-П, Канопус-В и Кондор-ФКА приходят из API Геопортала Роскосмоса по учётной записи ЕТРИС: укажите в .env рядом с compose.yaml ETRIS_ACCESS_TOKEN или ETRIS_CLIENT_ID, ETRIS_USERNAME и ETRIS_PASSWORD (образец в .env.example) и перезапустите сервис. Учётная запись бесплатна на gptl.ru, client_id выдают разработчики ЦБГД. Покупок сервис не делает.</p><p v-else>Реальные архивные снимки и цены поставщиков приходят из SkyFi по ключу API: укажите SKYFI_API_KEY в .env рядом с compose.yaml (образец в .env.example) и перезапустите сервис. Покупок сервис не делает. Без ключа работает расчёт по ТЗ: A/B/C в рублях по ПП № 840 и выгрузка комплекта.</p><button class="primary-button" @click="projectMode ? backToProject() : (state.procurementOpen = false)">{{ projectMode ? 'Вернуться к проекту' : 'Открыть расчёт по ТЗ' }}</button></div>
     <p v-if="error" class="imagery-error" role="alert">{{ error }}</p>
     <div v-if="!catalog && busy" class="catalog-loading" role="status"><Satellite :size="36" /><h3>Получаем снимки: {{ sourceInfo.name }}</h3><p>Запрашиваем реальные контуры, цены и изображения поставщиков.</p></div>
@@ -287,7 +298,7 @@ onUnmounted(() => {
       <div class="imagery-layout">
         <main v-if="!state.procurementMapMode" class="catalog-main">
           <div class="catalog-filters">
-            <label>Лимит на данные, $<input v-model.number="filters.budget" type="number" min="0" max="1000000000" aria-label="Бюджет закупки" :disabled="busy" /></label>
+            <label>Лимит на данные, {{ sourceInfo.currency === 'USD' ? '$' : '₽' }}<input v-model.number="filters.budget" type="number" min="0" max="1000000000" aria-label="Бюджет закупки" :disabled="busy" /></label>
             <label>Детализация<select v-model.number="filters.resolution_m" aria-label="Детализация закупки" :disabled="busy"><option :value="0.5">До 0,5 м</option><option :value="1">До 1 м</option><option :value="10">До 10 м</option><option :value="100">Любая</option></select></label>
             <label v-if="projectMode">Получить за, ч<select v-model.number="projectDeadline" aria-label="Срок получения снимка" :disabled="busy"><option :value="8">8 часов</option><option :value="12">12 часов</option><option :value="24">24 часа</option><option :value="48">48 часов</option><option :value="168">7 дней</option></select></label>
             <label>Облачность<select v-model.number="filters.max_cloud_percent" aria-label="Облачность" :disabled="busy"><option :value="10">До 10%</option><option :value="30">До 30%</option><option :value="60">До 60%</option><option :value="100">Любая / неизвестна</option></select></label>
@@ -300,7 +311,7 @@ onUnmounted(() => {
           <label v-if="view === 'gallery'" class="matches-toggle"><input v-model="onlyMatches" type="checkbox" />Только в пределах лимита и фильтров</label>
           <div v-if="view === 'gallery'" class="imagery-gallery" data-testid="imagery-gallery">
             <article v-for="(o, index) in shown" :key="o.id" class="image-card" :class="{ focused: o.id === focusedId, compared: selectedIds.includes(o.id) }" :data-testid="'image-' + o.id">
-              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable"><Satellite :size="27" /><span>Превью поставщика недоступно</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью SkyFi…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ projectMode ? o.covered_asset_ids?.length + ' ваших объектов' : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (projectMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
+              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable"><Satellite :size="27" /><span>Превью поставщика недоступно</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ projectMode ? o.covered_asset_ids?.length + ' ваших объектов' : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (projectMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
               <button class="compare-button" :disabled="busy || selected.length >= 4 && !selectedIds.includes(o.id)" :aria-pressed="selectedIds.includes(o.id)" @click="toggle(o)"><Check v-if="selectedIds.includes(o.id)" :size="14" />{{ selectedIds.includes(o.id) ? 'В сравнении' : 'Добавить к сравнению' }}</button>
             </article>
             <div v-if="!shown.length" class="no-filter-results">Фильтры скрыли все кадры. <button class="text-button" @click="onlyMatches = false; year = null">Показать весь каталог</button></div>
@@ -325,8 +336,9 @@ onUnmounted(() => {
         </main>
         <aside v-if="focused" class="image-inspector" data-testid="image-inspector">
           <div class="inspector-heading"><div><span class="eyebrow">ВЫБРАННЫЙ СНИМОК</span><h3>{{ focused.title }} <span>{{ focused.provider }}</span></h3></div><button class="icon-button" aria-label="Увеличить превью" @click="enlarged = true" :disabled="!focused.preview_url"><Expand :size="17" /></button></div>
-          <button class="inspector-preview" @click="enlarged = true" :disabled="!focused.preview_url"><img v-if="focused.preview_url && !failedImages.has(focused.id)" :src="focused.preview_url" :alt="'Превью ' + focused.title" referrerpolicy="no-referrer" @error="failedImages.add(focused.id)" /><div v-else class="image-unavailable"><Satellite :size="36" /><span>Поставщик не предоставил доступное превью</span></div><span>{{ date(focused.capture_date) }} · превью целого кадра</span></button>
-          <div class="inspector-price"><div><span>{{ focused.quote_validated ? 'Оценка проверена ' + sourceInfo.name : focused.price_status === 'pp840_case_formula' ? 'Оценка по ПП № 840' : 'Оценка по каталогу' }}</span><strong>{{ money(focused.price) }}</strong></div><div><span>Детализация</span><b>{{ num(focused.resolution_m, 2) }} м</b></div></div>
+          <button class="inspector-preview" @click="enlarged = true" :disabled="!focused.preview_url"><img v-if="focused.preview_url && !failedImages.has(focused.id)" :src="focused.preview_url" :alt="'Превью ' + focused.title" referrerpolicy="no-referrer" @error="focused && failedImages.add(focused.id)" /><div v-else class="image-unavailable"><Satellite :size="36" /><span>Поставщик не предоставил доступное превью</span></div><span>{{ date(focused.capture_date) }} · превью целого кадра</span></button>
+          <div class="inspector-price"><div><span>{{ focused.quote_validated ? 'Оценка проверена ' + sourceInfo.name : focused.price_status === 'pp840_case_formula' ? 'Оценка по ПП № 840' : 'Оценка по каталогу' }}</span><strong>{{ money(focused.price) }}</strong></div><div><span>Детализация</span><b>{{ focused.resolution_m == null ? 'н/д' : num(focused.resolution_m, 2) + ' м' }}</b></div></div>
+          <p v-if="focused.price_note" class="price-note">{{ focused.price_note }}</p>
           <div v-if="projectMode" class="project-offer-metrics"><b>{{ plural(focused.covered_asset_ids?.length || 0, ['ваш объект', 'ваших объекта', 'ваших объектов']) }}</b><span>EL {{ compactRub(focused.covered_expected_loss_rub) }} · {{ num(focused.covered_el_percent) }}%</span><small v-if="!focused.timely" class="filter-warning">Не укладывается в срок {{ projectDeadline }} ч</small></div>
           <div class="footprint-heading"><b>Пересечение с территорией</b><span>{{ num(focused.coverage_percent) }}%</span></div>
           <svg class="footprint-map" viewBox="0 0 320 170" role="img" aria-label="Контур покрытия выбранного снимка"><defs><pattern id="footprint-grid" width="25" height="22" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 22" fill="none" stroke="currentColor" stroke-width=".5" opacity=".2" /></pattern><clipPath id="footprint-clip"><rect width="320" height="170" /></clipPath></defs><rect width="320" height="170" fill="url(#footprint-grid)" /><g clip-path="url(#footprint-clip)"><path :d="mapPath(focused.footprint)" fill="none" stroke="#e4ad6a" stroke-width="1.5" stroke-dasharray="4 4" /><rect x="35" y="30" width="250" height="110" class="aoi-rect" /><path :d="mapPath(focused.coverage_geometry)" class="footprint-fill" /></g><text x="12" y="18">N ↑</text><text x="160" y="160" text-anchor="middle">{{ num(focused.coverage_km2, 2) }} из {{ num(catalog.area_km2, 2) }} км²</text></svg>
@@ -334,7 +346,7 @@ onUnmounted(() => {
           <p class="date-context">{{ eventGap }}</p>
           <p v-if="focused.order_issue" class="imagery-warning">{{ focused.order_issue }}. Эта позиция доступна для сравнения, но не включается в автоматический подбор.</p>
           <button class="primary-button wide" :disabled="busy || selected.length >= 4 && !selectedIds.includes(focused.id)" @click="toggle(focused)">{{ selectedIds.includes(focused.id) ? 'Убрать из сравнения' : 'Добавить к сравнению' }}</button>
-          <a v-if="catalog.source === 'roscosmos'" class="quiet-button wide" :href="sourceInfo.orderUrl" target="_blank" rel="noopener noreferrer">Заказать в Геопортале <ArrowUpRight :size="14" /></a>
+          <a v-if="catalog.source !== 'skyfi'" class="quiet-button wide" :href="focused.order_url || sourceInfo.orderUrl" target="_blank" rel="noopener noreferrer">{{ sourceInfo.orderLabel }} <ArrowUpRight :size="14" /></a>
           <button v-else class="quiet-button wide" :disabled="busy || !!focused.order_issue" @click="quote">Проверить цену в SkyFi <ArrowUpRight :size="14" /></button>
           <p v-if="quoteMessage" role="status" class="quote-message">{{ quoteMessage }}</p>
           <button class="quiet-button wide" :disabled="busy || planning || !selected.length" @click="download"><Download v-if="!projectMode" :size="14" /><Check v-else :size="14" />{{ projectMode ? 'Сохранить черновик заявки' : 'Скачать сравнение' }}</button>
