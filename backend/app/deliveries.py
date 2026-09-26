@@ -160,7 +160,7 @@ async def upload_file(delivery_id: str, request: Request, path: str) -> dict:
     entry = {"path": relative.as_posix(), "bytes": size, "kind": "other"}
     if relative.suffix.lower() in RASTER_SUFFIXES:
         try:
-            entry.update(kind="raster", **describe_raster(target, scene_zones(record["scene_id"])))
+            entry.update(kind="raster", **describe_raster(target, record["plan_zones"] if "plan_zones" in record else scene_zones(record["scene_id"])))
         except rasterio.errors.RasterioIOError:
             entry.update(kind="raster", status="unreadable", zones=[])
     record["files"] = [row for row in record["files"] if row["path"] != entry["path"]] + [entry]

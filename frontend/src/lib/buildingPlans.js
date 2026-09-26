@@ -11,7 +11,7 @@ export const buildingPlanZones = computed(() => buildingPlan.result?.zones || []
 export const buildingPlanOverlay = computed(() => {
   if (!buildingPlanMode.value || buildingPlan.picking || state.procurementOpen || !state.showZones || buildingPlan.busy) return []
   const chosen = new Set(currentBuildingPlan.value?.zone_ids || [])
-  return buildingPlanZones.value.filter(z => chosen.has(z.id)).map(z => ({ type: 'Feature', geometry: z.geometry,
+  return buildingPlanZones.value.filter(z => chosen.has(z.id) || z.id === state.selectedZoneId).map(z => ({ type: 'Feature', geometry: z.geometry,
     properties: { building_plan: 1, building_count: z.building_count, id: z.id, kind: z.kind, active: chosen.has(z.id) ? 1 : 0, hover: z.id === state.hoverZoneId ? 1 : 0, building_ids: z.building_ids } }))
 })
 export function toggleBuildingTarget(id) {
@@ -65,9 +65,9 @@ watch(() => [state.sceneId, buildings.data?.catalog_id], ([scene, catalogId], [o
     buildingPlan.scope = 'all'
   }
 })
-const body = computed(() => ({ buildings: buildingScope.value, budget_rub: Number(state.budget), deadline_hours: state.deadline,
+export const buildingPlanRequest = computed(() => ({ buildings: buildingScope.value, budget_rub: Number(state.budget), deadline_hours: state.deadline,
   base_rate_rub_km2: Number(buildingPlan.baseRate), processing_level: buildingPlan.processing, usage_type: buildingPlan.usage, priority: state.priority, must_cover: buildingPlan.mustCover, method: state.procurementMethod, visit_cost_rub: Number(buildingPlan.visitCost), strategy: state.strategy }))
-const key = computed(() => JSON.stringify([buildingScope.value, buildings.data?.raster_sha256, state.budget, state.deadline, state.procurementMethod, buildingPlan.visitCost, state.priority, buildingPlan.mustCover, buildingPlan.baseRate, buildingPlan.processing, buildingPlan.usage]))
+const key = computed(() => JSON.stringify([buildingScope.value, buildings.data?.raster_sha256, state.budget, state.deadline, state.procurementMethod, state.strategy, buildingPlan.visitCost, state.priority, buildingPlan.mustCover, buildingPlan.baseRate, buildingPlan.processing, buildingPlan.usage]))
 watch([key, buildingPlanMode, () => buildings.busy, () => buildingPlan.picking], () => {
   ++generation
   controller?.abort()
@@ -104,7 +104,7 @@ export async function loadBuildingPlan() {
   }
   buildingPlan.busy = true
   try {
-    const response = await fetch('/api/building-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body.value), signal: controller.signal })
+    const response = await fetch('/api/building-plans', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildingPlanRequest.value), signal: controller.signal })
     const data = await response.json()
     if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Проверьте параметры расчёта')
     if (current === generation) buildingPlan.result = data
@@ -117,7 +117,7 @@ export async function downloadBuildingPlan() {
   const current = generation
   buildingPlan.exporting = true
   try {
-    const response = await fetch('/api/building-plans/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body.value) })
+    const response = await fetch('/api/building-plans/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildingPlanRequest.value) })
     if (!response.ok) throw new Error('Не удалось выгрузить план')
     const blob = await response.blob()
     if (current !== generation) return
@@ -130,7 +130,7 @@ export async function downloadBuildingPlan() {
 
 export async function saveBuildingPlan(projectId) {
   if (!buildingPlan.result || buildingPlan.busy || buildingPlan.saving) return
-  const payload = JSON.parse(JSON.stringify(body.value))
+  const payload = JSON.parse(JSON.stringify(buildingPlanRequest.value))
   buildingPlan.saving = true
   buildingPlan.error = ''
   try {

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+from datetime import date
 import hashlib
 import json
 import math
@@ -130,18 +131,19 @@ def calculate(request: PlanRequest):
     values = [asset_information_value(a["p_flood"], a["exposure_rub"], request.visit_cost_rub) for a in assets]
     benefit = space.losses_for(np.array([v["voi_rub"] or 0 for v in values]))
     prices = space.prices(tariff, request.deadline_hours)
-    eligible = space.feasible(request.budget_rub, request.deadline_hours, request.must_cover, tariff)
+    budget = request.budget_rub if request.method == "budget" else float("inf")
+    eligible = space.feasible(budget, request.deadline_hours, request.must_cover, tariff)
     indexes = np.flatnonzero(eligible)
     losses = space.losses_for(None)
     score = (losses if request.priority == "risk" else doubt) if request.method == "budget" else benefit - prices
-    if request.method == "value" and not request.must_cover:
+    if request.method == "value":
         indexes = indexes[score[indexes] > .005]
     order = np.lexsort((space.count[indexes], prices[indexes], -score[indexes]))
     chosen = 0
     for position in order:
         candidate = int(indexes[position])
         exact = planning.quote(space.orders(candidate, request.deadline_hours), tariff)["total_rub"]
-        if exact <= request.budget_rub and (request.method == "budget" or request.must_cover or benefit[candidate] > exact):
+        if exact <= budget and (request.method == "budget" or benefit[candidate] > exact):
             chosen = candidate
             break
     total_loss = sum(a["expected_loss_rub"] or 0 for a in assets)
@@ -156,7 +158,7 @@ def calculate(request: PlanRequest):
                 "data_cost_rub": quoted["total_rub"], "quote": quoted, "timely": timely,
                 "budget_feasible": quoted["total_rub"] <= request.budget_rub,
                 "mandatory_satisfied": not request.must_cover or request.must_cover in ids,
-                "reason": "Обязательное здание не покрыто: увеличьте бюджет или срок." if strategy == 'C' and request.must_cover and request.must_cover not in ids else None,
+                "reason": ("Нет окупающегося заказа с обязательным зданием в этот срок." if request.method == "value" else "Обязательное здание не покрыто: увеличьте бюджет или срок.") if strategy == 'C' and request.must_cover and request.must_cover not in ids else None,
                 "covered_doubt_share": min(1.0, float(doubt[effective]) / total_doubt) if total_doubt else 0,
                 "covered_expected_loss_rub": round(float(losses[effective]), 2),
                 "coverage_share": min(1.0, float(losses[effective]) / total_loss) if total_loss else 0,
@@ -167,10 +169,26 @@ def calculate(request: PlanRequest):
 
     strategies = {"A": summary(0, "A"), "B": summary(1 << (len(space.zones) - 1), "B"), "C": summary(chosen, "C")}
     zones = []
+    active_index = {"A": 0, "B": 1 << (len(space.zones) - 1), "C": chosen}[request.strategy]
+    active_quote = strategies[request.strategy]["quote"]
     for k, z in enumerate(space.zones):
         product = planning.chosen_product(z, request.deadline_hours)
         ids = [a["id"] for a, covered in zip(assets, space.covered_assets(1 << k)) if covered]
-        zones.append({**{key: value for key, value in z.items() if key != "products"},
+        bit = 1 << k
+        selected = bool(active_index & bit)
+        grown = planning.quote(space.orders(active_index | bit, request.deadline_hours), tariff)
+        line = next(row for row in (active_quote if selected else grown)["lines"] if row["candidate_id"] == product["candidate_id"])
+        gain = float((benefit if request.method == "value" else losses if request.priority == "risk" else doubt)[active_index | bit]
+                     - (benefit if request.method == "value" else losses if request.priority == "risk" else doubt)[active_index])
+        reason = ("selected" if selected else "late" if product["delivery_hours"] > request.deadline_hours
+                  else "comparison" if request.strategy != "C"
+                  else "plan_infeasible" if request.must_cover and not strategies[request.strategy]["mandatory_satisfied"]
+                  else "nothing_new" if gain <= .005 else "over_budget" if grown["total_rub"] > budget
+                  else "lower_net_benefit" if request.method == "value" else "cheaper_equal")
+        zones.append({"selected": selected, "reason": reason, "cost_rub": line["cost_rub"],
+                      "price_with_rub": grown["total_rub"], "voi_alone_rub": round(float(benefit[bit]), 2),
+                      "marginal_gain": round(gain, 2),
+                      **{key: value for key, value in z.items() if key != "products"},
                       "building_ids": ids, "building_count": len(ids), "product": product,
                       "expected_loss_rub": round(float(losses[1 << k]), 2),
                       "price_alone_rub": planning.quote([product], tariff)["total_rub"]})
@@ -260,3 +278,49 @@ def saved_project_export(project_id: str, plan_id: str):
     from . import projects
     content = buildings.checked(lambda: projects.building_plan_archive(project_id, plan_id))
     return Response(content, media_type='application/zip', headers={'Content-Disposition': 'attachment; filename="saved-building-plan.zip"'})
+
+
+class BuildingDeliveryRequest(BaseModel):
+    plan: PlanRequest
+    provider_id: str
+    acquired_at: date | None = None
+
+
+@router.post("/deliveries", status_code=201)
+def create_building_delivery(request: BuildingDeliveryRequest):
+    from . import deliveries
+    def create():
+        result = calculate(request.plan)
+        chosen = set(result["strategies"][request.plan.strategy]["zone_ids"])
+        record = deliveries.create_delivery(deliveries.DeliveryRequest(
+            scene_id=request.plan.buildings.scene_id, provider_id=request.provider_id, acquired_at=request.acquired_at))
+        record["plan_zones"] = [{"id": z["id"], "geometry": z["geometry"]} for z in result["zones"] if z["id"] in chosen]
+        record["object_source"] = "buildings"
+        return deliveries._save(record)
+    return buildings.checked(create)
+
+
+@router.post("/deliveries/coverage")
+def building_delivery_coverage(request: PlanRequest):
+    from . import deliveries
+    from shapely.ops import unary_union
+    def coverage():
+        result = calculate(request)
+        chosen = set(result["strategies"][request.strategy]["zone_ids"])
+        zones = [z for z in result["zones"] if z["id"] in chosen]
+        response = deliveries.list_deliveries(request.buildings.scene_id)
+        footprints = []
+        for record in response["deliveries"]:
+            for entry in record["files"]:
+                entry["zones"] = []
+                if entry.get("status") == "georeferenced" and entry.get("footprint"):
+                    footprint = shape(entry["footprint"])
+                    footprints.append(footprint)
+                    entry["zones"] = deliveries.zone_coverage(footprint, zones)
+        combined = unary_union(footprints)
+        response["zones_covered"] = [row["zone_id"] for row in deliveries.zone_coverage(combined, zones) if row["share"] >= .95]
+        _, features, _, _ = inventory(request.buildings)
+        response["buildings_covered"] = sum(combined.covers(shape(f["geometry"])) for f in features)
+        response["building_count"] = len(features)
+        return response
+    return buildings.checked(coverage)
