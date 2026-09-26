@@ -43,6 +43,11 @@
     "error_rate_not_doubtful": 0.011450587926586287,
     "errors_inside_doubtful_share": 0.7149680094948365
   },
+  "measure_auroc": {
+    "part": "valid",
+    "entropy": 0.9306641287838794,
+    "member_std": 0.9171258716489084
+  },
   "report_only": {
     "role": "report_only_not_used_for_selection",
     "note": "scored after the threshold was fixed on valid; own_top_decile_* repeat the old per-part rule only to compare with evaluation.json",
@@ -57,6 +62,7 @@
         "error_rate_not_doubtful": 0.01911066596782672,
         "errors_inside_doubtful_share": 0.629602390683039,
         "auroc_entropy": 0.8878581355972636,
+        "auroc_member_std": 0.8618720597662399,
         "own_top_decile_bits": 0.4099301099777224,
         "own_top_decile_error_rate": 0.294715
       },
@@ -70,6 +76,7 @@
         "error_rate_not_doubtful": 0.01738679768932286,
         "errors_inside_doubtful_share": 0.7758420506179318,
         "auroc_entropy": 0.909169971342352,
+        "auroc_member_std": 0.9037311046937411,
         "own_top_decile_bits": 0.7066283047199252,
         "own_top_decile_error_rate": 0.34504
       }

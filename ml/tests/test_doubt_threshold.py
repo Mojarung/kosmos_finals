@@ -60,6 +60,20 @@ def _part(seed: int, scale: float) -> PartPixels:
     return PartPixels(chips=4, prob=prob, error=error)
 
 
+def test_record_compares_uncertainty_measures_on_the_selection_part():
+    rng = np.random.default_rng(5)
+    prob = rng.beta(0.3, 0.3, 20_000).astype(np.float32)
+    error = rng.random(prob.size) < np.minimum(prob, 1 - prob)
+    spread = rng.random(prob.size).astype(np.float32)  # carries no information about errors
+    selection = PartPixels(chips=4, prob=prob, error=error, member_std=spread)
+
+    measures = build_record(selection, {}, mask_threshold=0.41)["measure_auroc"]
+
+    assert measures["part"] == "valid"
+    assert measures["entropy"] > 0.6
+    assert measures["member_std"] == pytest.approx(0.5, abs=0.03)
+
+
 def test_record_takes_the_threshold_from_the_selection_part_only():
     selection = _part(1, 0.3)
     first = build_record(selection, {"test_core": _part(2, 0.3)}, mask_threshold=0.41)

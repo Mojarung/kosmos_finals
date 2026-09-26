@@ -50,7 +50,7 @@ def write_quality() -> None:
     quality = {"threshold": evaluation["threshold"], "calibration": evaluation["platt"],
                "doubt_threshold": {key: doubt[key] for key in ("source_part", "chips", "pixels",
                                                                 "entropy_top_decile_bits", "map_error_chance_threshold",
-                                                                "valid_at_threshold")}
+                                                                "valid_at_threshold", "measure_auroc")}
                | {"test_parts_role": doubt["report_only"]["role"]},
                "parts": {}, "flood_only": {}}
     for part in ("test_core", "bolivia"):

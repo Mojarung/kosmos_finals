@@ -84,6 +84,9 @@ def test_doubt_threshold_comes_from_the_validation_entropy_decile():
     p = DOUBT_THRESHOLD
     assert abs(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) - ENTROPY_TOP_DECILE_BITS) < 1e-3
     assert "validation" in DOUBT_RULE and "test_core" not in DOUBT_RULE
+    measures = record["measure_auroc"]
+    assert measures["part"] == "valid" and measures["entropy"] > measures["member_std"], \
+        "DOUBT_EVIDENCE says entropy ranks errors better than the spread on validation"
 
 
 def test_container_ships_the_doubt_threshold_record():

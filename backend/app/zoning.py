@@ -34,10 +34,13 @@ DOUBT_BASIS = (f"top decile of binary entropy on validation ({_RECORD['chips']} 
                f"{_VALID['error_rate_doubtful']:.1%} of those pixels wrong vs {_VALID['error_rate']:.1%} overall; "
                f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
                f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall")
-DOUBT_EVIDENCE = (f"threshold fixed on validation; test_core, report only: {_TEST['doubtful_share']:.1%} of pixels "
-                  f"doubtful, {_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall, "
-                  f"{_TEST['errors_inside_doubtful_share']:.1%} of all errors inside; ranking AUROC "
-                  f"{_TEST['auroc_entropy']:.3f}")
+_MEASURES = _RECORD["measure_auroc"]
+DOUBT_EVIDENCE = (f"threshold fixed on validation, where entropy also ranks errors better than ensemble spread "
+                  f"(AUROC {_MEASURES['entropy']:.3f} vs {_MEASURES['member_std']:.3f}); "
+                  f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
+                  f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall, "
+                  f"{_TEST['errors_inside_doubtful_share']:.1%} of all errors inside, AUROC "
+                  f"{_TEST['auroc_entropy']:.3f} vs {_TEST['auroc_member_std']:.3f}")
 # Zone sides are the 1.12 km object square (1.25 km², above the 1 km² minimum) and
 # its 1.5× and 2× multiples. Larger rectangles cover a river in one piece but no
 # longer fit a 6–7 thousand rouble budget, so the grouping stops at 2.24 km.

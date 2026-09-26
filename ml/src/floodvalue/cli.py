@@ -174,8 +174,9 @@ def _cmd_doubt_threshold(_args: argparse.Namespace) -> None:
     report = record["report_only"]["parts"]
     print(json.dumps({"entropy_top_decile_bits": record["entropy_top_decile_bits"],
                       "map_error_chance_threshold": record["map_error_chance_threshold"],
-                      "valid": record["valid_at_threshold"],
+                      "valid": record["valid_at_threshold"], "measure_auroc": record["measure_auroc"],
                       "report_only": {part: {key: row[key] for key in ("doubtful_share", "error_rate_doubtful",
+                                                                        "auroc_entropy", "auroc_member_std",
                                                                         "own_top_decile_bits")}
                                       for part, row in report.items()}}, indent=2))
 

@@ -42,6 +42,7 @@ class PartPixels:
     chips: int
     prob: np.ndarray  # float32, calibrated p
     error: np.ndarray  # bool, (p >= mask threshold) != label
+    member_std: np.ndarray | None = None  # float32, spread of member probabilities
 
 
 def inverse_entropy(bits: float) -> float:
@@ -97,9 +98,17 @@ def doubtful_stats(chance: np.ndarray, error: np.ndarray, chance_threshold: floa
 
 def build_record(selection: PartPixels, reports: Mapping[str, PartPixels], mask_threshold: float,
                  seed: int = 0) -> dict:
-    """Fix the threshold on the selection part, then score the report parts with it."""
-    chosen = select_threshold(binary_entropy(selection.prob), selection.error, seed)
+    """Fix the threshold on the selection part, then score the report parts with it.
+
+    ``measure_auroc`` compares the two uncertainty measures on the selection part: the
+    service ranks doubt by entropy of calibrated p, not by the ensemble spread.
+    """
+    entropy = binary_entropy(selection.prob)
+    chosen = select_threshold(entropy, selection.error, seed)
     threshold = chosen["map_error_chance_threshold"]
+    measures = {"part": SOURCE_PART, "entropy": chosen["auroc_entropy"]}
+    if selection.member_std is not None:
+        measures["member_std"] = error_detection(selection.member_std, selection.error, seed)["auroc"]
     record = {
         "rule": RULE,
         "source_part": SOURCE_PART,
@@ -110,6 +119,7 @@ def build_record(selection: PartPixels, reports: Mapping[str, PartPixels], mask_
         **chosen,
         "valid_at_threshold": doubtful_stats(map_error_chance(selection.prob, mask_threshold),
                                              selection.error, threshold),
+        "measure_auroc": measures,
         "report_only": {
             "role": REPORT_ROLE,
             "note": "scored after the threshold was fixed on valid; own_top_decile_* repeat the old "
@@ -123,6 +133,8 @@ def build_record(selection: PartPixels, reports: Mapping[str, PartPixels], mask_
             "chips": pixels.chips,
             **doubtful_stats(map_error_chance(pixels.prob, mask_threshold), pixels.error, threshold),
             "auroc_entropy": own["auroc"],
+            "auroc_member_std": (error_detection(pixels.member_std, pixels.error, seed)["auroc"]
+                                 if pixels.member_std is not None else None),
             "own_top_decile_bits": own["decile_edges"][DECILES - 1],
             "own_top_decile_error_rate": own["error_rate_by_decile"][DECILES - 1],
         }
@@ -134,19 +146,22 @@ def part_pixels(root: Path, names: Sequence[str], members: Sequence, platt, mask
     from floodvalue.chips import LABEL_INVALID, LABEL_WATER, Chip, read_label, read_s1, s1_valid
     from floodvalue.ensemble import run_ensemble
 
-    probs, errors = [], []
+    probs, errors, spreads = [], [], []
     for number, name in enumerate(names, 1):
         chip = Chip.from_name(name)
         s1, label = read_s1(root, chip), read_label(root, chip)
         valid = s1_valid(s1) & (label != LABEL_INVALID)
-        prob = run_ensemble(members, [s1], platt).prob[0][valid]
+        out = run_ensemble(members, [s1], platt)
+        prob = out.prob[0][valid]
         probs.append(prob)
+        spreads.append(out.member_std[0][valid])
         errors.append((prob >= mask_threshold) != (label[valid] == LABEL_WATER))
         if number % 10 == 0 or number == len(names):
             print(f"  {number}/{len(names)} chips", file=sys.stderr, flush=True)
     empty = np.zeros(0, dtype=np.float32)
     return PartPixels(len(names), np.concatenate(probs) if probs else empty,
-                      np.concatenate(errors) if errors else empty.astype(bool))
+                      np.concatenate(errors) if errors else empty.astype(bool),
+                      np.concatenate(spreads) if spreads else empty)
 
 
 def doubt_threshold(root: Path, split: Mapping[str, Sequence[str]], members: Sequence, platt,

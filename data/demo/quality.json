@@ -19,6 +19,11 @@
       "error_rate_not_doubtful": 0.011450587926586287,
       "errors_inside_doubtful_share": 0.7149680094948365
     },
+    "measure_auroc": {
+      "part": "valid",
+      "entropy": 0.9306641287838794,
+      "member_std": 0.9171258716489084
+    },
     "test_parts_role": "report_only_not_used_for_selection"
   },
   "parts": {
