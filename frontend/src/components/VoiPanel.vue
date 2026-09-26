@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { compactRub, plural, rub } from '../lib/format'
+import Money from './Money.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import { state } from '../store'
 
@@ -118,10 +119,10 @@ function reason(zone) {
         <h3 v-else>Заказ не окупается</h3>
         <figure class="voi-chart" data-testid="voi-chart" aria-label="Ожидаемая экономия на решениях и цена снимков в рублях">
           <figcaption>Экономия и цена <small>ожидаемые суммы, ₽</small></figcaption>
-          <div class="voi-chart-line"><span>Экономия на решениях</span><b>{{ compactRub(result.plan.voi_rub) }}</b><div class="voi-track"><span class="voi-benefit-bar" :style="{ width: barWidth(result.plan.voi_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
-          <div class="voi-chart-line"><span>Цена снимков</span><b>{{ compactRub(result.plan.derived_budget_rub) }}</b><div class="voi-track"><span class="voi-price-bar" :style="{ width: barWidth(result.plan.derived_budget_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
+          <div class="voi-chart-line"><span>Экономия на решениях</span><b><Money :value="result.plan.voi_rub" compact /></b><div class="voi-track"><span class="voi-benefit-bar" :style="{ width: barWidth(result.plan.voi_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
+          <div class="voi-chart-line"><span>Цена снимков</span><b><Money :value="result.plan.derived_budget_rub" compact /></b><div class="voi-track"><span class="voi-price-bar" :style="{ width: barWidth(result.plan.derived_budget_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
         </figure>
-        <div class="voi-totals"><div class="voi-net"><span>Выгода после снимков</span><b>{{ rub(result.plan.net_after_data_rub) }}</b></div></div>
+        <div class="voi-totals"><div class="voi-net"><span>Выгода после снимков</span><b><Money :value="result.plan.net_after_data_rub" /></b></div></div>
         <p class="panel-note">Сценарий: снимок помогает избежать лишних выездов и пропусков затопленных объектов. Обработка — ещё {{ rub(result.plan.other_cost_rub) }}.</p>
         <p v-if="result.status === 'no_positive_net_basket' && state.mustCover" class="panel-note">Проверить обязательный объект с положительной выгодой в этот срок не получится.</p>
       </section>
@@ -148,7 +149,7 @@ function reason(zone) {
         <div v-if="showRejected" class="voi-zones"><button v-for="zone in rejected" :key="zone.zone_id" class="voi-zone" :aria-pressed="state.selectedZoneId === zone.zone_id" @click="emit('zone', zone.zone_id)"><span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ reason(zone) }}</small><small>Польза {{ rub(zone.voi_alone_rub) }} · цена {{ rub(zone.price_alone_rub) }}</small></span></button></div>
       </div></details>
       <details class="disclosure"><summary>Расходы до и после</summary><div class="disclosure-body">
-        <div class="voi-totals"><div><span>Решения без снимков</span><b>{{ rub(result.plan.action_cost_before_rub) }}</b></div><div><span>Решения со снимками</span><b>{{ rub(result.plan.action_cost_after_observation_rub) }}</b></div><div><span>Снимки и обработка</span><b>{{ rub(result.plan.decision_cost_rub) }}</b></div></div>
+        <div class="voi-totals"><div><span>Решения без снимков</span><b><Money :value="result.plan.action_cost_before_rub" /></b></div><div><span>Решения со снимками</span><b><Money :value="result.plan.action_cost_after_observation_rub" /></b></div><div><span>Снимки и обработка</span><b><Money :value="result.plan.decision_cost_rub" /></b></div></div>
         <p class="panel-note">В расходах на решения учтены выезды и ожидаемые потери от пропуска объекта. Подробный расчёт — в выгрузке.</p>
       </div></details>
     </div>

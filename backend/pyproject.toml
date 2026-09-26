@@ -16,5 +16,6 @@ demo = ["rasterio>=1.4,<2", "pillow>=11,<13"]
 test = ["pytest>=8,<10", "httpx>=0.28,<1"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+# ".." — корень репозитория: тест бэктеста импортирует scripts.backtest_procurement.
+pythonpath = [".", ".."]
 testpaths = ["tests"]

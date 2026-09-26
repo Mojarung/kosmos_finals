@@ -1,4 +1,4 @@
-"""Real SkyFi archive exploration, geographic comparison and preliminary estimates.
+"""Live imagery catalogs (Roscosmos Geoportal, SkyFi): archive exploration, geographic comparison, estimates.
 
 No endpoint places an order. Catalog responses retain their source and capture time.
 """
@@ -34,6 +34,8 @@ from .planning import TO_EQUAL_AREA, today
 router = APIRouter(prefix='/api/procurement', tags=['procurement'])
 DB = Path(os.environ.get('FLOODVALUE_PROCUREMENT_DB', ROOT / 'data/runtime/procurement.sqlite3'))
 SKYFI = 'https://app.skyfi.com/platform-api'
+# Live catalogs: Roscosmos Geoportal and SCANEX (roubles, PP 840 estimate), free Copernicus data, SkyFi (dollars).
+SOURCES = ('roscosmos', 'scanex', 'free', 'skyfi')
 
 
 def now():
@@ -60,7 +62,7 @@ def read(identifier, kind='catalog'):
         if row:
             record = json.loads(row[0])
             catalog = record if kind == 'catalog' else record['catalog']
-            if catalog.get('source') != 'skyfi' or catalog.get('normalization_version') != 2:
+            if catalog.get('source') not in SOURCES or catalog.get('normalization_version') != 2:
                 raise HTTPException(409, 'Обновите каталог: эта версия расчёта больше не используется.')
             return record
     raise HTTPException(404, 'Сохранённые данные не найдены')
@@ -72,7 +74,7 @@ class Input(BaseModel):
 
 class Search(Input):
     scene_id: str
-    source: str = Field(default='skyfi', pattern='^skyfi$')
+    source: str = Field(default='roscosmos', pattern='^(roscosmos|scanex|free|skyfi)$')
     market: str = Field(default='commercial', pattern='^(commercial|open)$')
     from_date: date | None = None
     to_date: date | None = None
@@ -171,11 +173,14 @@ def normalize_archive(item, aoi, event_date=None):
 
 @router.get('/status')
 def status():
-    return {'skyfi_configured': bool(os.environ.get('SKYFI_API_KEY')), 'purchase_enabled': False}
+    from . import roscosmos
+    return {'skyfi_configured': bool(os.environ.get('SKYFI_API_KEY')), 'roscosmos_configured': roscosmos.configured(),
+            'scanex_configured': True, 'free_configured': True, 'sources': list(SOURCES), 'purchase_enabled': False}
 
 
 @router.get('/catalogs/latest')
-def latest(scene_id: str):
+def latest(scene_id: str, source: str | None = None):
+    """The newest saved catalog of the scene; ``source`` narrows it to one provider."""
     if scene_id not in known_scene_ids():
         raise HTTPException(404, 'Неизвестная сцена')
     bounds = metadata(scene_id)['bbox']
@@ -184,9 +189,9 @@ def latest(scene_id: str):
             rows = db.execute("SELECT payload FROM snapshots WHERE kind='catalog' ORDER BY rowid DESC LIMIT 200").fetchall()
         for row in rows:
             c = json.loads(row[0])
-            if c.get('scene_id') == scene_id and c.get('bbox') == bounds and c.get('source') == 'skyfi' and c.get('normalization_version') == 2:
+            if c.get('scene_id') == scene_id and c.get('bbox') == bounds and c.get('source') in ((source,) if source else SOURCES) and c.get('normalization_version') == 2:
                 return c
-    raise HTTPException(404, 'Для этой территории ещё нет сохранённого ответа SkyFi')
+    raise HTTPException(404, 'Для этой территории ещё нет сохранённого ответа каталога')
 
 
 @router.post('/catalogs')
@@ -200,6 +205,8 @@ def search(request: Search):
         raise HTTPException(422, 'Укажите корректный исторический период съёмки')
     bounds = request.bbox or info['bbox']
     aoi = box(*bounds)
+    if request.source != 'skyfi':
+        return search_live(request, aoi, bounds, event, start, end)
     raw = provider('/archives', {'aoi': aoi.wkt, 'fromDate': start.isoformat() + 'T00:00:00Z',
         'toDate': end.isoformat() + 'T23:59:59Z', 'pageSize': 100, 'minOverlapRatio': .01,
         'openData': request.market == 'open'})
@@ -229,6 +236,50 @@ def search(request: Search):
         'disclaimer': 'Предварительные цены реального каталога SkyFi. Цена заказа и пригодность для анализа требуют проверки.'})
 
 
+def live_sources():
+    """Search and normalize functions of the catalogs that return roubles or free data, and their notes."""
+    from . import copernicus, roscosmos, scanex
+    return {
+        'roscosmos': ([(roscosmos.search_optical, roscosmos.normalize_optical), (roscosmos.search_sar, roscosmos.normalize_sar)],
+                      roscosmos.OPTICAL_SEARCH,
+                      'Каталог Геопортала Роскосмоса. Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса; '
+                      'цену поставщика и ссылку на оплату возвращает Order API при заказе.'),
+        'scanex': ([(scanex.search, scanex.normalize)], scanex.SEARCH,
+                   'Каталог СКАНЭКС «Космоснимки — Поиск» без учётной записи (интерфейс публичного сайта). '
+                   'Цена — оценка по формуле ПП РФ № 840 со сценарной ставкой кейса, цену поставщика даёт СКАНЭКС '
+                   'по заявке; разрешение номинальное по спутнику. Превью есть у снимков Роскосмоса и Landsat: серверы '
+                   'превью Maxar, Airbus и китайских операторов из каталога не отвечают.'),
+        'free': ([(copernicus.search, copernicus.normalize)], copernicus.SEARCH,
+                 'Бесплатные Sentinel-1 и Sentinel-2 из Copernicus Data Space: поиск без ключа, скачивание после '
+                 'бесплатной регистрации.'),
+    }
+
+
+def search_live(request, aoi, bounds, event, start, end):
+    """Russian and free catalogs in the common offer shape, prices in roubles."""
+    from .copernicus import MIRROR_NOTE
+    searchers, source_url, disclaimer = live_sources()[request.source]
+    on = today()
+    offers, skipped, seen = [], 0, set()
+    for search_fn, normalize in searchers:
+        for item in search_fn(aoi, start, end):
+            if item.get('_endpoint') and item['_endpoint'] != source_url:
+                # The free catalog answered from its mirror: name the service that actually answered.
+                source_url, disclaimer = item['_endpoint'], disclaimer + MIRROR_NOTE
+            try:
+                offer = normalize(item, aoi, str(event), on)
+                if offer and offer['id'] not in seen:
+                    offers.append(offer)
+                    seen.add(offer['id'])
+            except (ValueError, KeyError, TypeError, GEOSException):
+                skipped += 1
+    return persist('catalog', {'scene_id': request.scene_id, 'source': request.source, 'normalization_version': 2,
+        'captured_at': now(), 'market': request.market, 'currency': 'RUB', 'bbox': bounds,
+        'area_km2': round(area(aoi), 4), 'event_date': str(event), 'from_date': str(start), 'to_date': str(end),
+        'offers': offers, 'truncated': False, 'skipped': skipped, 'pages': 1, 'source_url': source_url,
+        'disclaimer': disclaimer})
+
+
 @router.get('/catalogs/{catalog_id}')
 def get_catalog(catalog_id: str):
     return read(catalog_id)
@@ -243,7 +294,7 @@ def calculate(catalog, request):
     total_area = area(target)
     for o in offers:
         reasons = []
-        if o['resolution_m'] > request.resolution_m:
+        if (o['resolution_m'] or math.inf) > request.resolution_m:
             reasons.append('Недостаточная детализация')
         cloud = o.get('cloud_percent')
         if o.get('product_type') != 'SAR' and request.max_cloud_percent < 100:
@@ -312,6 +363,11 @@ def validate_quote(catalog_id: str, offer_id: str):
         raise HTTPException(404, 'Снимок не найден')
     if offer.get('order_issue'):
         raise HTTPException(422, offer['order_issue'])
+    if catalog.get('source') == 'roscosmos':
+        raise HTTPException(409, 'Цену Роскосмоса подтверждает Order API Геопортала при создании заказа: он выставляет '
+                                 'сумму по ПП № 840 и ссылку на оплату. Сервис заказов не создаёт.')
+    if catalog.get('source') != 'skyfi':
+        raise HTTPException(409, 'Цену этого источника подтверждает поставщик по заявке; бесплатные данные стоят 0.')
     quote = provider('/order-archive/validate', {'aoi': shape(offer['geometry']).wkt, 'archiveId': offer['archive_id']})
     cents = quote.get('estimatedCostCents')
     if type(cents) is not int or cents < 0:
@@ -336,14 +392,22 @@ def export(decision_id: str):
     p, catalog = decision['plan'], decision['catalog']
     selected = [o for o in p['offers'] if o['id'] in p['selected_ids']]
     esc = html.escape
+    rub = catalog.get('currency') == 'RUB'
+    money = (lambda v: f'{v:,.2f} ₽'.replace(',', ' ')) if rub else (lambda v: f'${v:.2f}')
+    source_name = {'roscosmos': 'Геопортал Роскосмоса, API ЦБГД', 'scanex': 'СКАНЭКС «Космоснимки — Поиск»',
+                   'free': 'Copernicus Data Space STAC'}.get(catalog.get('source'), 'SkyFi API')
+    if 'planetarycomputer' in (catalog.get('source_url') or ''):
+        source_name = 'Microsoft Planetary Computer STAC (снимки Copernicus Sentinel)'
+    currency_note = (catalog['disclaimer'] if rub else
+                     'Цены в долларах США из коммерческого каталога SkyFi. Это отдельный подбор снимков, а не расчёт по ПП № 840.')
     cards = ''.join('<article>' + (f'<img src="{esc(o["preview_url"], quote=True)}" alt="Превью поставщика">' if o['preview_url'] else '') +
-        f'<h2>{esc(o["title"])} · {esc(o["capture_date"])}</h2><p>{esc(o["provider"])} · {o["resolution_m"]:.2f} м · {o["coverage_percent"]:.1f}% территории</p>' +
-        f'<b>${o["price"]:.2f}</b><p>Archive ID: {esc(o["id"])}</p></article>' for o in selected)
+        f'<h2>{esc(o["title"])} · {esc(o["capture_date"])}</h2><p>{esc(o["provider"])} · {(format(o["resolution_m"], ".2f") + " м") if o["resolution_m"] else "разрешение н/д"} · {o["coverage_percent"]:.1f}% территории</p>' +
+        f'<b>{money(o["price"])}</b><p>Archive ID: {esc(o["id"])}</p></article>' for o in selected)
     report = f'''<!doctype html><html lang="ru"><meta charset="utf-8"><title>FloodValue · сравнение снимков</title>
 <style>body{{font:16px system-ui;max-width:1080px;margin:40px auto;color:#172d34;padding:24px}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}img{{width:100%;height:260px;object-fit:contain;background:#15262d}}article{{border-top:2px solid #317b7c;padding:20px 0}}h1{{font-size:36px}}b{{font-size:26px}}</style>
-<h1>Снимки для территории {esc(catalog['scene_id'])}</h1><p>Источник: SkyFi API · каталог получен {esc(catalog['captured_at'])}</p>
-<p>Стоимость по каталогу: <b>${p['cost']:.2f}</b> · покрытие {p['coverage_percent']:.1f}% · {p['coverage_km2']:.2f} км²</p>
-<p>Цены в долларах США из коммерческого каталога SkyFi. Это отдельный подбор снимков, а не расчёт по ПП № 840: сравнение стратегий A/B/C и бюджет в рублях лежат в основном комплекте FloodValue («Скачать решение»).</p>
+<h1>Снимки для территории {esc(catalog['scene_id'])}</h1><p>Источник: {source_name} · каталог получен {esc(catalog['captured_at'])}</p>
+<p>Стоимость по каталогу: <b>{money(p['cost'])}</b> · покрытие {p['coverage_percent']:.1f}% · {p['coverage_km2']:.2f} км²</p>
+<p>{currency_note}</p>
 <p>{esc(catalog['disclaimer'])}</p><p>Исходная сцена паводка: {esc(catalog['event_date'])}. Снимки другой даты не подтверждают состояние территории в этот день.</p><div class="grid">{cards}</div><p>{esc(p['method'])}</p></html>'''
     data = io.BytesIO()
     with zipfile.ZipFile(data, 'w', zipfile.ZIP_DEFLATED) as archive:

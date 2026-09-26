@@ -6,6 +6,7 @@ import AnimatedNumber from './AnimatedNumber.vue'
 import CalibrationBadge from './CalibrationBadge.vue'
 import { calibrationChecked, doubtThreshold, permanentSeparated, selectedAsset, state, toggleGuarantee } from '../store'
 import { NA, compactRub, number, percent, plural } from '../lib/format'
+import Money from './Money.vue'
 
 const emit = defineEmits(['asset'])
 const analysis = computed(() => state.analysis)
@@ -77,6 +78,7 @@ function select(asset) {
       <span class="unit">млн ₽</span>
       <span class="hero-aside">{{ analysis.metrics.high_probability_assets }} из {{ analysis.assets.length }}<br>в воде</span>
     </div>
+    <div class="hero-local"><Money :value="analysis.metrics.expected_loss_rub" compact local-only /></div>
     <p v-if="permanentSeparated && analysis.metrics.permanent_water_assets" class="source-line">Только паводок, без точек на постоянной воде JRC: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}. Число выше считает все 10 точек по формуле кейса p × V × q.</p>
     <p v-if="state.region" class="source-line">В рамке {{ analysis.metrics.assets_in_region }} из 10 объектов · {{ compactRub(analysis.metrics.region_expected_loss_rub) }}. План A/B/C сравнивает весь портфель.</p>
     <p v-if="analysis.metrics.unestimated_assets" class="warn-note"
@@ -99,7 +101,7 @@ function select(asset) {
               :class="{ doubtful: doubtful(asset.map_error_probability) }">{{ errorText(asset.map_error_probability) }}</small>
           </span>
         </span>
-        <strong class="tabular">{{ compactRub(asset.expected_loss_rub) }}</strong>
+        <strong class="tabular"><Money :value="asset.expected_loss_rub" compact /></strong>
         <ChevronRight :size="16" class="row-chevron" />
       </button>
 

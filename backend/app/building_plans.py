@@ -221,7 +221,7 @@ def export_bundle(scope, result, kind):
             archive.writestr("zones.geojson", json.dumps({"type": "FeatureCollection", "features": [
                 {"type": "Feature", "geometry": z["geometry"], "properties": {k: v for k, v in {**z, "selected": z["id"] in selected}.items() if k != "geometry"}}
                 for z in result["zones"]]}, ensure_ascii=False, allow_nan=False))
-        archive.writestr("README.txt", "План съёмки реальных зданий. Полные контуры, без повторного учёта зданий.\nЦены зданий и ущерб сценарные; условные цены отмечены synthetic_cost. Заказ не отправлен.\n" + ("Цены SkyFi в USD; архив подтверждает только свою дату." if kind == "skyfi" else "Тариф снимков в RUB сценарный. Охваченный ущерб не является предотвращённым ущербом."))
+        archive.writestr("README.txt", "План съёмки реальных зданий. Полные контуры, без повторного учёта зданий.\nЦены зданий и ущерб сценарные; условные цены отмечены synthetic_cost. Заказ не отправлен.\n" + ("Цены в валюте выбранного каталога; валюта указана в plan.json. Архив подтверждает только свою дату." if kind == "skyfi" else "Тариф снимков в RUB сценарный. Охваченный ущерб не является предотвращённым ущербом."))
     return Response(content.getvalue(), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="building-{kind}-plan.zip"'})
 
 

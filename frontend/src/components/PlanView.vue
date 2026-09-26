@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
+import SuppliersView from './SuppliersView.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import EconomicScenario from './EconomicScenario.vue'
 import VoiPanel from './VoiPanel.vue'
@@ -13,6 +14,7 @@ import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
 import { activePlan, state } from '../store'
 import { compactRub, date, km, number, percent, plural, rub } from '../lib/format'
+import Money from './Money.vue'
 
 const emit = defineEmits(['zone'])
 const procurementMethod = computed({ get: () => state.procurementMethod, set: value => { state.procurementMethod = value } })
@@ -273,12 +275,15 @@ function hover(id) { state.hoverZoneId = id }
   <template v-else>
   <div class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
-    <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
-      @click="state.procurementOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
-    <button aria-label="Каталог SkyFi" :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
-      @click="state.procurementOpen = true">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
+    <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen && !state.suppliersOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
+      @click="state.procurementOpen = false; state.suppliersOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
+    <button aria-label="Каталог снимков" :class="{ active: state.procurementOpen }" v-tip="'Живой каталог по API: Геопортал Роскосмоса в рублях или SkyFi в долларах. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
+      @click="state.procurementOpen = true; state.suppliersOpen = false">Каталог снимков</button>
+    <button aria-label="Поставщики" :class="{ active: state.suppliersOpen }" v-tip="'Где купить снимки плана, в том числе из России, и загрузка полученных файлов из папки'"
+      @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
   <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
+  <SuppliersView v-else-if="state.suppliersOpen" />
   <template v-else>
   <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
     <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>
@@ -322,7 +327,7 @@ function hover(id) { state.hoverZoneId = id }
         </span>
       </span>
       <span class="strategy-cost">
-        <strong class="tabular">{{ compactRub(analysis.strategies[key].data_cost_rub) }}</strong>
+        <strong class="tabular"><Money :value="analysis.strategies[key].data_cost_rub" compact /></strong>
         <small :class="{ warn: warn(key) }" v-tip="statusTip(key)">{{ status(key) }}</small>
       </span>
     </button>
@@ -330,7 +335,7 @@ function hover(id) { state.hoverZoneId = id }
   <p class="meter-key"><i class="coverage"></i>ущерб в зонах <i class="doubt"></i>сомнения в зонах</p>
 
   <section class="block">
-    <div class="panel-summary"><strong>{{ rub(plan?.data_cost_rub) }}</strong><span>{{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }} · {{ plural(plan?.covered_asset_ids?.length || 0, ['объект', 'объекта', 'объектов']) }}</span></div>
+    <div class="panel-summary"><strong><Money :value="plan?.data_cost_rub" /></strong><span>{{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }} · {{ plural(plan?.covered_asset_ids?.length || 0, ['объект', 'объекта', 'объектов']) }}</span></div>
     <p class="panel-note">В заказе {{ percent(plan?.coverage_share) }} суммы ожидаемого ущерба и {{ percent(plan?.covered_doubt_share) }} сомнительной площади.</p>
   </section>
   <p v-if="plan?.coverage_share == null" class="warn-note">В области нет объектов с оценённым ущербом, долю считать не от чего.</p>
@@ -405,12 +410,12 @@ function hover(id) { state.hoverZoneId = id }
         <div v-tip="group.hint">
           <span>Р · скидка за {{ km(group.area) }}</span><b class="tabular">× {{ number(group.first.discount_coef, 4) }}</b></div>
         <div v-for="line in group.lines" :key="line.candidate_id">
-          <span>{{ line.candidate_id }} · {{ km(line.area_km2) }}</span><b class="tabular">{{ rub(line.cost_rub) }}</b></div>
+          <span>{{ line.candidate_id }} · {{ km(line.area_km2) }}</span><b class="tabular"><Money :value="line.cost_rub" /></b></div>
       </div>
     </template>
     <div class="mini-rows price-rows">
-      <div class="total"><span>Снимки</span><b class="tabular">{{ rub(pricing.total_rub) }}</b></div>
-      <div v-if="plan?.decision_cost_rub != null" v-tip="costTip"><span>С обработкой · сценарий</span><b class="tabular">{{ rub(plan.decision_cost_rub) }}</b></div>
+      <div class="total"><span>Снимки</span><b class="tabular"><Money :value="pricing.total_rub" /></b></div>
+      <div v-if="plan?.decision_cost_rub != null" v-tip="costTip"><span>С обработкой · сценарий</span><b class="tabular"><Money :value="plan.decision_cost_rub" /></b></div>
       <div v-tip="residual.tip"><span>Остаток сомнений · сценарий</span><b class="tabular">{{ residual.text }}</b></div>
     </div>
     <p class="source-line">Формула ПП РФ №840 в редакции от 27.08.2025. Группа скидки {{ priceGroups.map(group => group.id).filter(Boolean).join(', ') || 'н/д' }}.</p>
@@ -423,7 +428,7 @@ function hover(id) { state.hoverZoneId = id }
       <div v-for="item in scenarios" :key="item.input + item.factor">
         <span>{{ item.input === 'budget' ? 'Бюджет' : 'Тариф' }} {{ item.factor < 1 ? '−20%' : '+20%' }}</span>
         <span class="scenario-zones">{{ plural(item.zone_ids.length, ['зона', 'зоны', 'зон']) }} за {{ compactRub(item.data_cost_rub) }}</span>
-        <b class="tabular" v-tip="'Ожидаемый ущерб в зонах такого заказа'">{{ compactRub(item.covered_expected_loss_rub) }}</b>
+        <b class="tabular" v-tip="'Ожидаемый ущерб в зонах такого заказа'"><Money :value="item.covered_expected_loss_rub" compact /></b>
       </div>
     </div>
   </div></details>

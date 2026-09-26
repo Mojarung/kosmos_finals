@@ -114,12 +114,13 @@ onMounted(() => {
       @draw-complete="finishDrawing" />
 
     <div ref="chrome" class="chrome">
-      <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
+      <TopBar @globe="mapRef?.showGlobe()" @place="mapRef?.focusPlace($event)" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
       <div v-if="buildingPlanMode && buildingPlan.picking" class="panel building-picker" role="region" aria-label="Выбор зданий для съёмки">
         <div><strong aria-live="polite">Выбрано зданий: {{ buildingPlan.selectedIds.length }}</strong><span>Нажмите на дом. Повторный клик уберёт его.</span></div>
         <button class="ghost-button" :disabled="!buildingPlan.selectedIds.length" @click="buildingPlan.selectedIds = []">Очистить</button>
         <button class="primary-button" @click="finishBuildingSelection">Готово</button>
       </div>
+
       <Transition name="pop">
         <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="panel capsule live-flow" role="status">
           <MorphLoader :size="25" />
@@ -143,7 +144,7 @@ onMounted(() => {
         <!-- Источники прячутся за кнопкой «©» на всех ширинах: строка занимала низ экрана. -->
         <button class="credits-toggle" type="button" :aria-expanded="creditsOpen" aria-controls="map-credits"
           aria-label="Источники подложки и данных" @click="creditsOpen = !creditsOpen">©</button>
-        <p id="map-credits" class="map-credits" :class="{ open: creditsOpen }" aria-label="Источники подложки"><span v-if="state.basemap === 'satellite'" class="credits-note">Подложка: современный снимок, только для ориентира, в расчёт не входит. </span><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, GIS User Community; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a></p>
+        <p id="map-credits" class="map-credits" :class="{ open: creditsOpen }" aria-label="Источники подложки"><span v-if="state.basemap === 'satellite'" class="credits-note">Подложка: современный снимок, только для ориентира, в расчёт не входит. </span><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, сообщество пользователей ГИС; </template><template v-else>Рельеф ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, USGS, NASA; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a>; <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">курсы валют ExchangeRate-API</a></p>
         <div v-if="state.analysis" class="panel map-console" data-enter>
           <div class="map-console-layer">
             <span v-for="item in legend" :key="item.key" v-tip="item.hint" class="legend-item"><i class="legend-water" :class="item.key"></i>{{ item.label }}</span>

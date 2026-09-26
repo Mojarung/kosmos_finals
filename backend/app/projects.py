@@ -54,16 +54,16 @@ def _connect() -> sqlite3.Connection:
 def _project(db: sqlite3.Connection, project_id: str) -> sqlite3.Row:
     project = db.execute("SELECT * FROM projects WHERE id=?", (project_id,)).fetchone()
     if project is None:
-        raise KeyError("Project not found")
+        raise KeyError("Проект не найден.")
     return project
 
 
 def create(name: str, scene_id: str) -> dict:
     if scene_id not in known_scene_ids():
-        raise ValueError("Unknown scene")
+        raise ValueError("Сцена не найдена.")
     name = name.strip()
     if not 1 <= len(name) <= 100:
-        raise ValueError("Project name must contain 1–100 characters")
+        raise ValueError("Название проекта: от 1 до 100 символов.")
     project = {"id": uuid.uuid4().hex[:12], "name": name, "scene_id": scene_id,
                "created_at": _now(), "updated_at": _now()}
     with _connect() as db:
@@ -109,28 +109,28 @@ def get(project_id: str) -> dict:
 
 def _rows(content: str, fmt: str) -> list[dict]:
     if len(content.encode("utf-8")) > 2_000_000:
-        raise ValueError("Asset file exceeds 2 MB")
+        raise ValueError("Файл объектов больше 2 МБ.")
     if fmt == "csv":
         return list(csv.DictReader(io.StringIO(content)))
     if fmt == "geojson":
         data = json.loads(content)
         if data.get("type") != "FeatureCollection":
-            raise ValueError("Expected GeoJSON FeatureCollection")
+            raise ValueError("Нужен GeoJSON FeatureCollection.")
         rows = []
         for feature in data.get("features", []):
             geometry = feature.get("geometry") or {}
             if geometry.get("type") != "Point" or len(geometry.get("coordinates", [])) < 2:
-                raise ValueError("Assets must be GeoJSON Points")
+                raise ValueError("Объекты должны быть точками GeoJSON (Point).")
             lon, lat = geometry["coordinates"][:2]
             rows.append({**(feature.get("properties") or {}), "longitude": lon, "latitude": lat})
         return rows
-    raise ValueError("Use csv or geojson")
+    raise ValueError("Формат файла: csv или geojson.")
 
 
 def import_assets(project_id: str, content: str, fmt: str) -> dict:
     rows = _rows(content, fmt)
     if not 1 <= len(rows) <= 500:
-        raise ValueError("Import 1–500 assets")
+        raise ValueError("Импортируйте от 1 до 500 объектов.")
     with _connect() as db:
         project = _project(db, project_id)
         scene_id = project["scene_id"]
@@ -142,13 +142,13 @@ def import_assets(project_id: str, content: str, fmt: str) -> dict:
                 value = float(row["value_rub"])
                 q = float(row["vulnerability"])
             except (KeyError, TypeError, ValueError) as error:
-                raise ValueError(f"Row {number}: longitude, latitude, value_rub and vulnerability are required") from error
+                raise ValueError(f"Строка {number}: нужны longitude, latitude, value_rub и vulnerability.") from error
             name = str(row.get("name") or "").strip()
             source = str(row.get("value_source") or "").strip()
             if not name or not source or not (-180 <= lon <= 180 and -85 <= lat <= 85):
-                raise ValueError(f"Row {number}: name, value_source and valid coordinates are required")
+                raise ValueError(f"Строка {number}: нужны name, value_source и корректные координаты.")
             if not (0 < value <= 1e13 and 0 <= q <= 1):
-                raise ValueError(f"Row {number}: value_rub must be positive and vulnerability 0–1")
+                raise ValueError(f"Строка {number}: value_rub больше нуля, vulnerability от 0 до 1.")
             reading = inspect_pixel(lon, lat, scene_id)
             p = reading.get("p_flood") if reading["status"] == "ok" else None
             prepared.append({"id": uuid.uuid4().hex[:12], "name": name[:120],
@@ -172,7 +172,7 @@ def save_decision(project_id: str, analysis: dict) -> dict:
     with _connect() as db:
         project = _project(db, project_id)
         if analysis["chip"]["chip_id"] != project["scene_id"]:
-            raise ValueError("Project scene differs from analysis scene")
+            raise ValueError("Проект создан для другой сцены, чем текущий расчёт.")
         assets = [json.loads(row["payload"]) for row in db.execute(
             "SELECT payload FROM assets WHERE project_id=?", (project_id,))]
         snapshot = {"scene_id": project["scene_id"], "observed_at": analysis["chip"]["observed_at"],

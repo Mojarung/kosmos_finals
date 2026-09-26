@@ -124,9 +124,9 @@ GSW_URL = ("https://storage.googleapis.com/global-surface-water/downloads2021/tr
            "transitions_{lon}_{lat}v1_4_2021.tif")
 # Water in both 1984 and 2021: permanent, seasonal, seasonal to permanent, permanent to seasonal.
 GSW_CLASSES = (1, 4, 7, 8)
-GSW_RULE = ("JRC Global Surface Water v1.4 transitions 1984-2021 (Pekel et al., Nature 2016): water in both "
-            "1984 and 2021, classes 1, 4, 7, 8; the Sen1Floods11 JRCWaterHand rule; observations end 2021, "
-            "before the event")
+GSW_RULE = ("переходы JRC Global Surface Water v1.4 за 1984–2021 (Pekel et al., Nature 2016): вода и в "
+            "1984, и в 2021 году, классы 1, 4, 7, 8; правило JRCWaterHand из Sen1Floods11; наблюдения "
+            "заканчиваются 2021 годом, до события")
 
 
 def _label(value: int, positive: str, negative: str) -> str:

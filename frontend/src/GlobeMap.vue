@@ -114,11 +114,121 @@ function polygon(bounds) {
   return { type: 'Polygon', coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] }
 }
 function collection(features) { return { type: 'FeatureCollection', features } }
+// Весь мир с дыркой под снимком: затемнение вокруг. Дырка обходится в обратную сторону,
+// иначе MapLibre примет её за второй полигон, а не за вырез.
+function surrounding(bounds) {
+  const [w, s, e, n] = bounds
+  return { type: 'Polygon', coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]],
+    [[w, s], [w, n], [e, n], [e, s], [w, s]]] }
+}
 function coordinates(bounds) {
   const [w, s, e, n] = bounds
   return [[w, n], [e, n], [e, s], [w, s]]
 }
-function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (state.theme === 'dark' ? 'dark' : 'positron') }
+// «Схема» — данные OSM из OpenFreeMap в своей палитре, как привычные карты: бледный positron
+// и стандартная liberty не читались: дороги и реки терялись на почти белом фоне.
+function styleUrl() { return 'https://tiles.openfreemap.org/styles/liberty' }
+/*
+ * Палитра подложки поверх liberty, днём по Google Картам: тёплая светлая земля, мятная зелень,
+ * бирюзовая вода; синий паводок и янтарные объекты на ней остаются главными.
+ * Первое совпадение по типу и id слоя выигрывает.
+ */
+const PALETTE = {
+  // Оттенки сняты с Google Карт в той же точке (Нигерия, река Кадуна): земля, зелень, вода,
+  // посёлки, серо-голубые дороги и магистрали с окантовкой, тёмные подписи.
+  light: [
+    [/^background$/, 'background', { 'background-color': '#f4efe3' }],
+    [/^water$/, 'fill', { 'fill-color': '#90d9ed' }],
+    [/^(park|landcover_wood|landcover_grass)$/, 'fill', { 'fill-color': '#d3f7e0', 'fill-opacity': 1 }],
+    [/^landcover_wetland$/, 'fill', { 'fill-color': '#c8efe0' }],
+    [/^landcover_sand$/, 'fill', { 'fill-color': '#f1e9d2' }],
+    [/^landuse_residential$/, 'fill', { 'fill-color': '#f5f3f2', 'fill-opacity': 1 }],
+    [/^building$/, 'fill', { 'fill-color': '#e8e9ed', 'fill-outline-color': '#dadce0' }],
+    [/^building-3d$/, 'fill-extrusion', { 'fill-extrusion-color': '#e8e9ed' }],
+    [/^waterway/, 'line', { 'line-color': '#90d9ed' }],
+    [/^park_outline$/, 'line', { 'line-opacity': 0 }],
+    [/^boundary/, 'line', { 'line-color': '#9aa0a6' }],
+    [/rail/, 'line', { 'line-color': '#b8bec6' }],
+    [/(motorway|trunk_primary)_casing$/, 'line', { 'line-color': '#6c89ae' }],
+    [/secondary_tertiary_casing$/, 'line', { 'line-color': '#c3ceda' }],
+    [/casing$/, 'line', { 'line-opacity': 0 }],
+    [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#93abc6' }],
+    [/secondary_tertiary$/, 'line', { 'line-color': '#ffffff' }],
+    [/./, 'line', { 'line-color': '#ced8e0' }],
+    [/^water/, 'symbol', { 'text-color': '#2a7d96', 'text-halo-color': '#d9f2f9' }],
+    [/./, 'symbol', { 'text-color': '#2b2c30', 'text-halo-color': '#fcfcf8', 'text-halo-width': 1.4 }],
+  ],
+  // Ночью та же схема, как ночной режим привычных карт: готовые тёмные стили OpenFreeMap
+  // (dark, fiord) слишком тусклые, дорог в них не видно.
+  dark: [
+    [/^background$/, 'background', { 'background-color': '#1b2229' }],
+    [/^natural_earth$/, 'raster', { 'raster-opacity': 0.12 }],
+    [/^water$/, 'fill', { 'fill-color': '#0f2d48' }],
+    [/^(park|landcover_wood|landcover_grass)$/, 'fill', { 'fill-color': '#1c3226' }],
+    [/^building$/, 'fill', { 'fill-color': '#2a353f', 'fill-outline-color': '#34414d' }],
+    [/./, 'fill', { 'fill-color': '#212a32' }],
+    [/^building-3d$/, 'fill-extrusion', { 'fill-extrusion-color': '#2a353f' }],
+    [/^waterway/, 'line', { 'line-color': '#1d5282' }],
+    [/^park_outline$/, 'line', { 'line-opacity': 0 }],
+    [/^boundary/, 'line', { 'line-color': '#6a7a89' }],
+    [/rail/, 'line', { 'line-color': '#4b5663' }],
+    [/(motorway|trunk_primary)_casing$/, 'line', { 'line-color': '#4a3a1f' }],
+    [/casing$/, 'line', { 'line-color': '#12181e' }],
+    [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#b08a45' }],
+    [/(secondary_tertiary|_link)$/, 'line', { 'line-color': '#6b7682' }],
+    [/./, 'line', { 'line-color': '#434f5b' }],
+    [/^water/, 'symbol', { 'text-color': '#7fb2de', 'text-halo-color': '#0f2d48' }],
+    [/./, 'symbol', { 'text-color': '#d3dbe3', 'text-halo-color': '#12181e', 'text-halo-width': 1.4 }],
+  ],
+}
+// Исходная раскраска liberty: при смене темы свойство, которое задаёт только другая
+// палитра, возвращается к ней, а не остаётся от прошлой темы.
+let basePaint = new Map()
+function rememberBasemap() {
+  basePaint = new Map(map.getStyle().layers.map(layer => [layer.id, { ...layer.paint }]))
+}
+function paintBasemap() {
+  const ruleFor = (rules, layer) => rules.find(([pattern, type]) => type === layer.type && pattern.test(layer.id))?.[2] || {}
+  for (const layer of map.getStyle().layers) {
+    if (!basePaint.has(layer.id)) continue
+    const paint = ruleFor(PALETTE[theme()], layer)
+    const stale = Object.values(PALETTE).flatMap(rules => Object.keys(ruleFor(rules, layer))).filter(key => !(key in paint))
+    for (const key of new Set(stale)) map.setPaintProperty(layer.id, key, basePaint.get(layer.id)[key])
+    for (const [key, value] of Object.entries(paint)) map.setPaintProperty(layer.id, key, value)
+  }
+}
+/*
+ * Отмывка рельефа под дорогами и водой: в сельских районах, где в OSM мало объектов,
+ * именно она делает схему живой, как рельеф в привычных картах. Ночью тайлы затемняем,
+ * иначе серая отмывка высветлила бы тёмный фон.
+ */
+const reliefTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}'
+function addRelief() {
+  const before = map.getStyle().layers.find(layer => /^waterway|^water$/.test(layer.id))?.id
+  map.addSource('relief', { type: 'raster', tiles: [reliefTiles], tileSize: 256, maxzoom: 16,
+    attribution: 'Рельеф © Esri, USGS, NGA, NASA, CGIAR' })
+  map.addLayer({ id: 'relief-layer', type: 'raster', source: 'relief', minzoom: 5,
+    paint: { ...reliefPaint(), 'raster-fade-duration': 200 } }, before)
+}
+function reliefPaint() {
+  const dark = state.theme === 'dark'
+  return { 'raster-opacity': dark ? 0.5 : 0.2, 'raster-brightness-max': dark ? 0.32 : 1 }
+}
+// Подписи по-русски: русское имя из OSM, иначе местное, если оно кириллицей (посёлки России и соседей
+// часто без name:ru), и только потом латиница. По умолчанию стиль пишет латиницу и местное письмо в две строки.
+// Кириллица узнаётся сравнением строк: всё, что начинается с U+0400–U+04FF, лежит между 'Ѐ' и 'Ԁ'.
+// Щиты с номерами дорог (A124 и т. п.) прячем: для паводка они ничего не говорят и только шумят поверх снимка.
+const LOCAL = ['to-string', ['get', 'name']]
+const LABEL = ['coalesce', ['get', 'name:ru'],
+  ['case', ['all', ['>=', LOCAL, 'Ѐ'], ['<', LOCAL, 'Ԁ']], LOCAL, ['coalesce', ['get', 'name:latin'], ['get', 'name']]]]
+function localizeLabels() {
+  for (const layer of map.getStyle().layers) {
+    if (layer.type !== 'symbol') continue
+    if (/shield/.test(layer.id)) { map.setLayoutProperty(layer.id, 'visibility', 'none'); continue }
+    const field = layer.layout?.['text-field']
+    if (field && JSON.stringify(field).includes('"name')) map.setLayoutProperty(layer.id, 'text-field', LABEL)
+  }
+}
 function installFallbackStyle() {
   if (!map || ready || fallbackStyle) return
   fallbackStyle = true
@@ -143,18 +253,61 @@ function beforeLabels() {
 }
 function setData(id, data) { map.getSource(id)?.setData(data) }
 
+// Цвета оверлеев по теме: одна таблица и для построения слоёв, и для перекраски на месте.
+function overlayPaint() {
+  const c = COLORS[theme()]
+  const zoneColor = ['case', ['==', ['get', 'building_plan'], 1], '#168de0', ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]]
+  return {
+    'chip-halo': { 'line-color': c.chip },
+    'chip-outline': { 'line-color': c.chip },
+    'zone-fill': { 'fill-color': zoneColor },
+    'zone-outline': { 'line-color': zoneColor },
+    'focused-zone-halo': { 'line-color': c.object },
+    'focused-zone-outline': { 'line-color': c.object },
+    'region-fill': { 'fill-color': c.region },
+    'region-outline': { 'line-color': c.regionLine },
+    'preview-fill': { 'fill-color': c.region },
+    'preview-line': { 'line-color': c.regionLine },
+    'probe-halo': { 'circle-color': c.chip },
+    'probe-point': { 'circle-color': c.chip },
+    'journey-points': { 'circle-color': c.chip },
+  }
+}
+/*
+ * Смена темы перекрашивает слои на месте. setStyle пересоздал бы все источники,
+ * и тайлы спутника и снимка загрузились бы и проявились заново: карта моргала.
+ */
+function applyTheme() {
+  paintBasemap()
+  if (map.getLayer('relief-layer')) for (const [key, value] of Object.entries(reliefPaint())) map.setPaintProperty('relief-layer', key, value)
+  for (const [id, paint] of Object.entries(overlayPaint())) {
+    for (const [key, value] of Object.entries(paint)) map.setPaintProperty(id, key, value)
+  }
+  for (const name of rasterNames.filter(name => name !== 'radar')) {
+    for (const [key, value] of Object.entries(rasterLook(name))) map.setPaintProperty(name + '-layer', key, value)
+  }
+  water.set({ theme: theme() })
+}
+
 function buildOverlays() {
   if (!map) return
-  const c = COLORS[theme()]
+  const paint = overlayPaint()
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey', 'buildings', 'selected-building']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'chip-shade', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey', 'buildings', 'selected-building']) map.addSource(id, { type: 'geojson', data: empty })
+
   map.addSource('satellite', {
     type: 'raster', tiles: [satelliteTiles], tileSize: 256,
-    attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community',
+    attribution: 'Снимки © Esri, Maxar, Earthstar Geographics и сообщество пользователей ГИС',
   })
   map.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite',
     layout: { visibility: state.basemap === 'satellite' ? 'visible' : 'none' },
     paint: { 'raster-fade-duration': 180 } }, before)
+  // Прожектор: карта вокруг снимка приглушена, граница читается контрастом, а не линией.
+  // Один на обе темы: под ним чаще всего спутник, а он от темы не зависит.
+  // На глобусе затемнение уходит, чтобы не темнить всю Землю.
+  map.addLayer({ id: 'chip-shade', type: 'fill', source: 'chip-shade',
+    paint: { 'fill-color': '#050b0d', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 6, 0, 9, 0.45],
+      'fill-opacity-transition': { duration: 350 } } }, before)
   const chip = state.analysis?.chip
   const chipId = chip?.chip_id || 'Nigeria_812045'
   const imageCoords = coordinates(chip?.bbox || [5.795, 9.06, 5.841, 9.107])
@@ -184,15 +337,17 @@ function buildOverlays() {
   map.addSource('nodata', { type: 'image', url: EMPTY_IMAGE, coordinates: imageCoords })
   map.addLayer({ id: 'nodata-layer', type: 'raster', source: 'nodata', layout: { visibility: 'none' },
     paint: { 'raster-resampling': 'nearest', 'raster-fade-duration': 0, 'raster-opacity-transition': { duration: 350 } } }, before)
+  map.addLayer({ id: 'chip-halo', type: 'line', source: 'chip',
+    paint: { ...paint['chip-halo'], 'line-width': 9, 'line-blur': 7, 'line-opacity': 0.35 } }, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
-    paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
-  const zoneColor = ['case', ['==', ['get', 'building_plan'], 1], '#168de0', ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]]
+    paint: { ...paint['chip-outline'], 'line-width': 1.25, 'line-opacity': 0.9 } }, before)
   map.addLayer({ id: 'zone-fill', type: 'fill', source: 'zones',
-    paint: { 'fill-color': zoneColor,
+    paint: { ...paint['zone-fill'],
       'fill-opacity': ['case', ['==', ['get', 'building_plan'], 1], .15, ['==', ['get', 'kind'], 'broad'], ['case', ['==', ['get', 'active'], 1], 0.06, 0],
+
         ['==', ['get', 'hover'], 1], 0.34, ['==', ['get', 'active'], 1], 0.2, 0.03] } }, before)
   map.addLayer({ id: 'zone-outline', type: 'line', source: 'zones',
-    paint: { 'line-color': zoneColor,
+    paint: { ...paint['zone-outline'],
       'line-width': ['case', ['==', ['get', 'hover'], 1], 3.2, ['==', ['get', 'active'], 1], 2.2, 1],
       'line-opacity': ['case', ['==', ['get', 'active'], 1], 1, 0.55],
       'line-dasharray': [2, 1.3] } }, before)
@@ -201,20 +356,20 @@ function buildOverlays() {
   map.addLayer({ id: 'building-zone-outline', type: 'line', source: 'zones', filter: ['==', ['get', 'building_plan'], 1],
     paint: { 'line-color': '#087dcc', 'line-width': 3.5, 'line-opacity': 1 } }, before)
   map.addLayer({ id: 'focused-zone-halo', type: 'line', source: 'focused-zone',
-    paint: { 'line-color': c.object, 'line-width': 11, 'line-opacity': .18 } }, before)
+    paint: { ...paint['focused-zone-halo'], 'line-width': 11, 'line-opacity': .18 } }, before)
   map.addLayer({ id: 'focused-zone-outline', type: 'line', source: 'focused-zone',
-    paint: { 'line-color': c.object, 'line-width': 3, 'line-opacity': .95 } }, before)
-  map.addLayer({ id: 'region-fill', type: 'fill', source: 'region', paint: { 'fill-color': c.region, 'fill-opacity': 0.12 } }, before)
-  map.addLayer({ id: 'region-outline', type: 'line', source: 'region', paint: { 'line-color': c.regionLine, 'line-width': 2.5 } }, before)
-  map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview', paint: { 'fill-color': c.region, 'fill-opacity': 0.1 } }, before)
+    paint: { ...paint['focused-zone-outline'], 'line-width': 3, 'line-opacity': .95 } }, before)
+  map.addLayer({ id: 'region-fill', type: 'fill', source: 'region', paint: { ...paint['region-fill'], 'fill-opacity': 0.12 } }, before)
+  map.addLayer({ id: 'region-outline', type: 'line', source: 'region', paint: { ...paint['region-outline'], 'line-width': 2.5 } }, before)
+  map.addLayer({ id: 'preview-fill', type: 'fill', source: 'preview', paint: { ...paint['preview-fill'], 'fill-opacity': 0.1 } }, before)
   map.addLayer({ id: 'preview-line', type: 'line', source: 'preview',
-    paint: { 'line-color': c.regionLine, 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
+    paint: { ...paint['preview-line'], 'line-width': 2, 'line-dasharray': [1.5, 1.5] } }, before)
   map.addLayer({ id: 'probe-halo', type: 'circle', source: 'probe',
-    paint: { 'circle-radius': 14, 'circle-color': c.chip, 'circle-opacity': 0.22 } }, before)
+    paint: { 'circle-radius': 14, ...paint['probe-halo'], 'circle-opacity': 0.22 } }, before)
   map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
-    paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
+    paint: { 'circle-radius': 5, ...paint['probe-point'], 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
   map.addLayer({ id: 'journey-points', type: 'circle', source: 'journey', filter: ['==', ['geometry-type'], 'Point'],
-    paint: { 'circle-radius': ['case', ['==', ['get', 'end'], 1], 8, 5], 'circle-color': c.chip,
+    paint: { 'circle-radius': ['case', ['==', ['get', 'end'], 1], 8, 5], ...paint['journey-points'],
       'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } }, before)
   if (probe.value?.longitude != null) setProbePoint(probe.value.longitude, probe.value.latitude)
   // Проекция всегда глобус: на крупном масштабе MapLibre сам рисует его плоским,
@@ -297,6 +452,7 @@ function syncMap() {
     water.set({ visible: false })
     syncNoData()
     setData('chip', empty)
+    setData('chip-shade', empty)
     setData('zones', empty)
     syncZoneLabels([])
     setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
@@ -335,6 +491,7 @@ function syncMap() {
   syncNoData()
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
+  setData('chip-shade', hidden ? empty : collection([{ type: 'Feature', geometry: surrounding(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
   const visibleZones = hidden ? [] : zoneFeatures()
   setData('zones', collection(visibleZones))
@@ -477,16 +634,18 @@ async function moveCamera(center, zoom, duration, easing = t => t) {
 }
 async function orbitGlobe(from, to, zoom, token) {
   if (reducedMotion()) return moveCamera(to, zoom, 0)
-  // MapLibre выбирает кратчайшую дугу между центрами. Промежуточные точки
-  // меньше 90° заставляют глобус пройти через дальнюю сторону даже для
-  // соседних стран, сохраняя непрерывное направление вращения.
-  const shortArc = ((to[0] - from[0] + 540) % 360) - 180
-  const longArc = shortArc >= 0 ? shortArc - 360 : shortArc + 360
-  const steps = Math.ceil(Math.abs(longArc) / 65)
+  // Кратчайшая дуга по долготе, шагами меньше 90°: так MapLibre не срежет через
+  // дальнюю сторону. Время растёт с расстоянием: соседи — меньше секунды, полглобуса — ~1,8 с.
+  const arc = ((to[0] - from[0] + 540) % 360) - 180
+  const distance = Math.max(Math.abs(arc), Math.abs(to[1] - from[1]))
+  const duration = Math.min(1800, 700 + distance * 6)
+  const steps = Math.max(1, Math.ceil(Math.abs(arc) / 65))
+  const easeInOut = t => t < 0.5 ? 2 * t * t : 1 - (2 - 2 * t) ** 2 / 2
   for (let step = 1; step <= steps && token === flight; step++) {
     const progress = step / steps
-    const center = [from[0] + longArc * progress, from[1] + (to[1] - from[1]) * progress]
-    await moveCamera(center, zoom, 2300 / steps, step === steps ? t => t * (2 - t) : t => t)
+    const center = [from[0] + arc * progress, from[1] + (to[1] - from[1]) * progress]
+    const easing = steps === 1 ? easeInOut : step === steps ? t => t * (2 - t) : t => t
+    await moveCamera(center, zoom, duration / steps, easing)
   }
 }
 async function sceneFrameReady(token, limit = 8000) {
@@ -682,6 +841,19 @@ function focusAsset(asset) {
   }
   map.flyTo({ ...camera, duration: 750, essential: false })
 }
+// Поиск страны или города: страна вписывается в экран, город открывается крупно; с глобуса далеко — через шторку.
+function focusPlace(place) {
+  if (!map || !place) return
+  state.tilted = false
+  const [w, s, e, n] = place.bbox || []
+  const camera = place.bbox
+    ? map.cameraForBounds([[w, s], [e, n]], { padding: padding(), maxZoom: place.city ? 12 : 9 })
+    : { center: place.center, zoom: 10.5 }
+  if (!camera) return
+  const target = { center: camera.center, zoom: camera.zoom, pitch: 0, bearing: 0 }
+  if (state.globeView && target.zoom - map.getZoom() > 5) return veiledMove(() => map.jumpTo(target), { from: 'far' })
+  map.flyTo({ ...target, duration: reducedMotion() ? 0 : 1400, essential: false })
+}
 function focusZone(zone) {
   if (!map || !zone) return
   const [w, s, e, n] = zone.bounds
@@ -729,7 +901,8 @@ function waterKind(pixel) {
   return pixel.permanent_water ? 'постоянная вода' : 'паводок'
 }
 
-defineExpose({ focusChip, showGlobe, focusAsset, focusZone, focusBuilding, toggleTilt, playReveal: () => water.playReveal() })
+defineExpose({ focusChip, showGlobe, focusAsset, focusZone, focusBuilding, focusPlace, toggleTilt, playReveal: () => water.playReveal() })
+
 
 function previewSelection(start, end) {
   const bounds = [Math.min(start.lng, end.lng), Math.min(start.lat, end.lat),
@@ -776,7 +949,16 @@ onMounted(() => {
     if (error.error?.message?.includes('tiles.openfreemap.org/styles/')) installFallbackStyle()
     console.warn('Map layer:', error.error)
   })
-  map.on('style.load', () => { clearTimeout(styleTimer); buildOverlays() })
+  map.on('style.load', () => {
+    clearTimeout(styleTimer)
+    if (!fallbackStyle) {
+      localizeLabels()
+      rememberBasemap()
+      paintBasemap()
+      addRelief()
+    }
+    buildOverlays()
+  })
   armStyleFallback()
   // Порог по реальному масштабу, а не по кнопке «Глобус»: выключается и при отдалении колесом.
   const GLOBE_ZOOM = 5
@@ -849,7 +1031,10 @@ watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
 watch(() => state.sceneId, id => flyToScene(id))
 watch(() => state.theme, () => {
-  if (!map) return
+  // Пока стиль грузится, style.load сам возьмёт текущую тему.
+  if (!map || !ready) return
+  if (!fallbackStyle) return applyTheme()
+  // Офлайн-заглушка: пробуем заново загрузить настоящий стиль.
   ready = false
   fallbackStyle = false
   // Камеру держим, только если снимок уже был на экране; иначе первая сцена не наехала бы.

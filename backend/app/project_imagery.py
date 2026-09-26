@@ -41,8 +41,9 @@ def preview_inventory(project: dict, assets: list[dict], catalog: dict, request:
     project_id = project['id']
     if catalog['scene_id'] != project['scene_id']:
         raise ValueError('Каталог относится к другому снимку проекта.')
-    if catalog.get('currency') != 'USD':
-        raise ValueError('Коммерческий каталог должен содержать цены в USD.')
+    currency = catalog.get('currency')
+    if currency not in {'USD', 'RUB'}:
+        raise ValueError('Неподдерживаемая валюта каталога.')
 
     base = procurement.calculate(catalog, request)
     weights = [float(asset['expected_loss_rub'] or 0) for asset in assets]
@@ -112,7 +113,7 @@ def preview_inventory(project: dict, assets: list[dict], catalog: dict, request:
             blockers.append(f"{offer['id']}: получение позже {request.deadline_hours} ч или срок неизвестен")
     cost = round(sum(offer['price'] for offer in picked), 2) if picked else None
     if cost is not None and cost > request.budget:
-        blockers.append('Цена превышает коммерческий бюджет в USD')
+        blockers.append('Цена превышает бюджет в ' + currency)
     if picked and not all(offer['quote_validated'] for offer in picked):
         blockers.append('Цена заказа ещё не подтверждена поставщиком')
     if picked and any(abs(offer.get('days_from_event') or 0) > 1 for offer in picked):
@@ -127,7 +128,7 @@ def preview_inventory(project: dict, assets: list[dict], catalog: dict, request:
         'covered_asset_count': covered_count, 'covered_expected_loss_rub': covered_el,
         'covered_el_percent': round(covered_el / total_el * 100, 1) if total_el else None,
         'deadline_hours': request.deadline_hours, 'target_el_percent': request.target_el_percent,
-        'currency': 'USD', 'budget_usd': request.budget,
+        'currency': currency, 'budget': request.budget, ('budget_usd' if currency == 'USD' else 'budget_rub'): request.budget,
         'blockers': blockers, 'price_verified': bool(picked) and all(o['quote_validated'] for o in picked),
         'status': 'empty' if not picked else 'draft_quote_checked' if all(o['quote_validated'] for o in picked)
                   else 'draft_catalog_estimate',
@@ -145,7 +146,7 @@ def save(project_id: str, request: Input) -> dict:
     payload = {key: value for key, value in result.items() if key not in {'offers', 'frontier'}}
     payload.update({'asset_snapshot': assets, 'selected_offers': selected,
         'catalog_captured_at': catalog['captured_at'], 'catalog_source_url': catalog['source_url'],
-        'catalog_id': catalog['id'], 'currency': 'USD', 'purchase_submitted': False,
+        'catalog_id': catalog['id'], 'currency': catalog['currency'], 'purchase_submitted': False,
         'quote_note': 'Catalog estimate or price validation only; no order is placed.'})
     record = {'id': uuid.uuid4().hex[:12], 'created_at': projects._now(), **payload}
     with projects._connect() as db:
@@ -186,10 +187,10 @@ def export(project_id: str, request_id: str) -> StreamingResponse:
         archive.writestr('project_assets.csv', table.getvalue())
         archive.writestr('selected_offers.geojson', json.dumps({'type': 'FeatureCollection', 'features': [
             {'type': 'Feature', 'geometry': offer['coverage_geometry'], 'properties': {
-                'archive_id': offer['archive_id'], 'provider': offer['provider'], 'price_usd': offer['price'],
+                'archive_id': offer['archive_id'], 'provider': offer['provider'], 'price': offer['price'], 'currency': record['currency'], **({'price_usd': offer['price']} if record['currency'] == 'USD' else {'price_rub': offer['price']}),
                 'price_status': offer['price_status'], 'capture_date': offer['capture_date'],
                 'delivery_hours': offer['delivery_hours']}} for offer in record['selected_offers']]}, ensure_ascii=False))
-        archive.writestr('README.txt', 'Черновик заявки: закупка не выполнена. Цены SkyFi в USD; расчёт A/B/C по ПП 840 в RUB — отдельный сценарий.\nОхваченный EL — приоритет проверки, не предотвращённый ущерб. Архив другого дня не подтверждает воду в дату события.\n')
+        archive.writestr('README.txt', 'Черновик заявки: закупка не выполнена. Валюта цены каждого предложения указана в выгрузке; расчёт A/B/C в RUB — отдельный сценарий.\nОхваченный EL — приоритет проверки, не предотвращённый ущерб. Архив другого дня не подтверждает воду в дату события.\n')
     output.seek(0)
     return StreamingResponse(output, media_type='application/zip', headers={
         'Content-Disposition': f'attachment; filename="project-imagery-{request_id}.zip"'})

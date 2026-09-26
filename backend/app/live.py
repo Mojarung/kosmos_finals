@@ -222,9 +222,9 @@ def _raster(path: Path, values: np.ndarray, bounds: list[float], dtype: str, nod
 
 
 PORTFOLIO_SEED = 2026
-PORTFOLIO_RULE = ("numpy default_rng(2026).choice over pixels with valid VV and VH, 10 without replacement, "
-                  "one per case asset type in table order; coordinates at the pixel centre; "
-                  "independent of p, masks and labels")
+PORTFOLIO_RULE = ("numpy default_rng(2026).choice по пикселям с валидными VV и VH, 10 без повторов, "
+                  "по одному на тип объекта кейса в порядке таблицы; координаты в центре пикселя; "
+                  "не зависит от p, масок и разметки")
 LICENSE = {"id": "CC-BY-4.0", "url": "https://creativecommons.org/licenses/by/4.0/",
            "providers": ["Catalyst", "Microsoft"],
            "attribution": "Sentinel-1 RTC derived from Copernicus Sentinel-1 GRD (ESA), processed by Catalyst"}

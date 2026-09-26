@@ -6,8 +6,8 @@ from functools import lru_cache
 
 from .catalog import mask, metadata, on_refresh, quality, scene_catalog
 
-CONTROL_POINT_RULE = ("the ten seeded portfolio asset pixels (placed independently of p, masks and labels); "
-                      "points whose manual label is -1 are skipped and counted")
+CONTROL_POINT_RULE = ("пиксели десяти объектов портфеля из seed (размещены независимо от p, масок и разметки); "
+                      "точки с ручной меткой -1 пропускаются и подсчитываются")
 
 
 def _pixel(info: dict, asset: dict) -> tuple[int, int]:
@@ -55,8 +55,8 @@ def asset_proxy_check(scene_id: str) -> dict:
         "control_point_rule": CONTROL_POINT_RULE,
         "labels_independent": info.get("metrics_independent", True),
         "n_points": count, "n_skipped_invalid_label": skipped, "n_assets": count,
-        "fixed_values": "case asset table V and q",
-        "error_metric": "mean absolute error of EL against EL_ref in RUB; bias = sum(EL) - sum(EL_ref)",
+        "fixed_values": "V и q из таблицы объектов кейса",
+        "error_metric": "средняя абсолютная ошибка EL относительно EL_ref в рублях; смещение = sum(EL) - sum(EL_ref)",
         "mean_absolute_probability_error": mean_p_error,
         "mean_absolute_error_rub": mean_loss_error,
         "mean_absolute_proxy_loss_error_rub": mean_loss_error,
@@ -64,8 +64,8 @@ def asset_proxy_check(scene_id: str) -> dict:
         "modeled_total_rub": round(modeled, 2), "label_proxy_total_rub": round(proxy, 2),
         "rows": rows,
         "test_core": quality().get("proxy_test_core"),
-        "method": "EL = p·V·q against EL_ref = y·V·q with the manual label y at each control point pixel",
-        "limitation": "The manual water label is not measured monetary loss; this only tests the p-to-EL propagation.",
+        "method": "EL = p·V·q против EL_ref = y·V·q с ручной меткой y в пикселе каждой контрольной точки",
+        "limitation": "Ручная метка воды не является измеренным денежным ущербом; проверяется только переход от p к EL.",
     }
 
 
@@ -90,8 +90,8 @@ def reference_proxy_check() -> dict:
         "mean_absolute_error_rub": round(sum(abs(r["el_rub"] - r["el_ref_rub"]) for r in rows) / count, 2) if count else None,
         "bias_rub": round(sum(r["el_rub"] - r["el_ref_rub"] for r in rows), 2) if count else None,
         "rows": [],
-        "method": "EL = p·V·q against EL_ref = y·V·q on the labelled test_core demo chips",
-        "limitation": "The selected region has no manual label; these numbers describe the labelled chips only.",
+        "method": "EL = p·V·q против EL_ref = y·V·q на размеченных демо-чипах test_core",
+        "limitation": "У выбранной области нет ручной разметки; эти числа описывают только размеченные чипы.",
     }
 
 on_refresh(asset_proxy_check.cache_clear)

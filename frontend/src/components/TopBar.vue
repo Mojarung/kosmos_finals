@@ -2,13 +2,14 @@
 import { computed, reactive, ref } from 'vue'
 import { Box, Globe2, LocateFixed, Moon, Satellite, Sun, Upload } from '@lucide/vue'
 import CountryPicker from './CountryPicker.vue'
+import PlaceSearch from './PlaceSearch.vue'
 import UploadS1 from './UploadS1.vue'
 import { chooseScene, loadLiveItem, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date } from '../lib/format'
 import { eventKey, flagUrl } from '../lib/flags'
 
-const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
+const emit = defineEmits(['globe', 'focus-chip', 'tilt', 'place'])
 const uploadOpen = ref(false)
 
 const current = computed(() => {
@@ -89,6 +90,7 @@ const origin = computed(() => {
     </div>
 
     <div class="panel capsule actions" data-enter>
+      <PlaceSearch @place="emit('place', $event)" />
       <button v-tip="'Загрузить свой двухканальный Sentinel‑1 GeoTIFF'" class="ghost-icon"
         aria-label="Загрузить снимок Sentinel-1" @click="uploadOpen = true"><Upload :size="18" /></button>
       <button v-tip="'Вернуться к снимку'" class="ghost-icon" aria-label="Показать весь снимок" @click="emit('focus-chip')"><LocateFixed :size="18" /></button>

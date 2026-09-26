@@ -363,6 +363,8 @@ html.map-moving .panel {
 .calib-line { margin-top: 8px; }
 .source-line.calib-note { display: block; margin: 6px 0 4px; line-height: 1.45; cursor: default; }
 .hero { display: flex; align-items: baseline; gap: 6px; margin-top: 3px; }
+/* Справочный итог в валюте страны: бледная строка ~12px под крупным числом (Money берёт .62em). */
+.hero-local { font-size: 19px; line-height: 1; }
 .hero .display { font-size: 36px; }
 .hero.small .display { font-size: 26px; }
 .hero .unit { font-size: 14px; color: var(--muted-foreground); }
@@ -893,8 +895,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .decision-panel.procurement-expanded .panel-scroll { padding: 6px 14px 14px; }
 }
 
-/* Decision workspace: quiet surface, expandable width, progressive disclosure. */
-.decision-panel:not(.pill) { width: 410px; background: var(--surface-1); border-radius: 14px; }
+/* Decision workspace: the same glass as the other panels, expandable width, progressive disclosure. */
+.decision-panel:not(.pill) { width: 410px; }
 .decision-panel .panel-head { padding: 12px; border-bottom: 1px solid var(--border); }
 .decision-panel .panel-scroll { padding: 8px 18px 12px; }
 .decision-panel .caption { font-size: 12px; letter-spacing: .025em; font-weight: 650; }
@@ -1011,3 +1013,54 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .economic-breakdown-row { display: grid; gap: 3px; padding: 6px 0; border-top: 1px solid var(--border); }
 .economic-breakdown-row span:last-child { color: var(--muted-foreground); overflow-wrap: anywhere; }
 @media (max-width: 520px) { .economic-controls { grid-template-columns: 1fr; } }
+
+/* Поставщики снимков и полученные поставки */
+.suppliers { padding: 12px 16px; }
+.supplier-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.supplier-list li { padding: 8px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+.supplier-list li.fits { border-color: color-mix(in srgb, var(--primary, #32836b) 45%, transparent); background: rgba(50, 131, 107, .06); }
+.supplier-list p { margin: 3px 0 0; font-size: 12px; line-height: 1.4; }
+.supplier-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; }
+.supplier-head a { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; white-space: nowrap; }
+.supplier-meta { color: var(--muted-foreground); font-size: 11px; }
+.supplier-meta .unverified { color: var(--uncertain, #c98b2b); }
+.delivery-form { display: flex; gap: 6px; margin-top: 8px; }
+.delivery-form select, .delivery-form input { flex: 1; min-width: 0; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface, transparent); color: inherit; font: inherit; font-size: 12px; }
+.delivery-buttons { display: flex; gap: 6px; margin-top: 8px; }
+.delivery-buttons button { display: inline-flex; align-items: center; gap: 6px; }
+.delivery { margin-top: 8px; }
+.zone-shares { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.zone-shares span { padding: 1px 6px; border-radius: 6px; background: rgba(50, 131, 107, .12); font-size: 11px; cursor: default; }
+.error-line { color: var(--destructive, #c0392b); }
+
+/* Источник живого каталога снимков */
+.source-switch { display: flex; gap: 4px; margin-left: auto; margin-right: 8px; }
+.source-switch button { border: 0; padding: 6px 10px; border-radius: 9px; font: inherit; font-size: 12px; color: var(--muted-foreground); background: transparent; cursor: pointer; }
+.source-switch button.active { background: rgba(50, 131, 107, .12); color: var(--foreground); }
+
+.price-note { margin: -6px 0 10px; font-size: 11px; color: var(--muted-foreground); }
+
+/* Карточка снимка без превью: контур кадра (пунктир) и территория, как в инспекторе */
+.image-unavailable.card-footprint { gap: 6px; }
+.image-unavailable.card-footprint svg { width: 86%; height: auto; max-height: 70%; }
+.card-footprint-scene { fill: #e4ad6a14; stroke: #e4ad6a; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.card-footprint .aoi-rect { stroke-width: 1.5; }
+
+/* ---------- Поиск страны или города ---------- */
+.place-search { position: relative; display: inline-flex; }
+.place-menu {
+  position: absolute; top: calc(100% + 12px); right: -6px; width: 340px; max-height: calc(100dvh - 96px);
+  overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: 20px; z-index: 5;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.place-row {
+  width: 100%; display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 10px;
+  min-height: 38px; padding: 0 10px; border-radius: 12px; text-align: left; font-size: 13px;
+  transition: background-color 0.18s var(--ease-standard);
+}
+.place-row.active, .place-row:hover { background: var(--surface-2); }
+.place-kind { color: var(--muted-foreground); }
+.place-country { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.place-world { grid-template-columns: 16px 1fr; margin-top: 2px; color: var(--primary); }
+.place-world .place-kind { color: inherit; }
+@media (max-width: 720px) { .place-menu { position: fixed; top: 64px; left: 16px; right: 16px; width: auto; } }

@@ -133,7 +133,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
       <div v-for="request in workspace.active.imagery_requests" :key="request.id" class="project-decision imagery-request-row">
         <strong>{{ new Date(request.created_at).toLocaleString('ru-RU') }} · {{ request.status === 'draft_quote_checked' ? 'оценка цены проверена' : 'цена по каталогу' }}</strong>
         <small>{{ request.selected_ids.length }} снимок(ов) · {{ request.covered_asset_count }} объектов · {{ percent((request.covered_el_percent || 0) / 100, 1) }} EL ({{ compactRub(request.covered_expected_loss_rub) }})</small>
-        <small>{{ new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD' }).format(request.cost) }} · заказ не отправлен</small>
+        <small>{{ new Intl.NumberFormat('ru-RU', { style: 'currency', currency: request.currency || 'USD' }).format(request.cost) }} · заказ не отправлен</small>
         <a :href="`/api/projects/${workspace.active.id}/imagery/requests/${request.id}/export`" :download="`project-imagery-${request.id}.zip`"><Download :size="13" /> Скачать черновик</a>
       </div>
     </section>

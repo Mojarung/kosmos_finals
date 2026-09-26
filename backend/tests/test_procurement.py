@@ -29,7 +29,7 @@ def request(client, c, **kwargs):
 
 def test_only_real_provider_is_available(client):
     assert client.post('/api/procurement/catalogs',json={'scene_id':'Nigeria_812045','source':'demo'}).status_code == 422
-    r=client.post('/api/procurement/catalogs',json={'scene_id':'Nigeria_812045'})
+    r=client.post('/api/procurement/catalogs',json={'scene_id':'Nigeria_812045','source':'skyfi'})
     assert r.status_code == 503 and 'SKYFI_API_KEY' in r.json()['detail']
 
 def test_real_estimates_work_without_claiming_verified_quality(client):
