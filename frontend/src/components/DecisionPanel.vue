@@ -34,7 +34,7 @@ function back() {
 </script>
 
 <template>
-  <MorphPanel :open="state.decisionOpen" class="decision-panel" :class="{ 'procurement-expanded': state.tab === 'plan' && state.procurementOpen }" data-enter>
+  <MorphPanel :open="state.decisionOpen" class="decision-panel" :class="{ 'procurement-expanded': state.tab === 'plan' && state.procurementOpen, 'procurement-map-mode': state.procurementMapMode }" data-enter>
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
         <Activity :size="16" class="accent" />

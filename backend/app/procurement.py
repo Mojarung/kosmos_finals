@@ -1,9 +1,11 @@
-"""Immutable procurement snapshots. No endpoint in this module places an order."""
+"""Real SkyFi archive exploration, geographic comparison and preliminary estimates.
+
+No endpoint places an order. Catalog responses retain their source and capture time.
+"""
 from __future__ import annotations
 
 import copy
-from collections import Counter
-import hashlib
+import html
 import io
 import json
 import math
@@ -11,9 +13,11 @@ import os
 import sqlite3
 import uuid
 import zipfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
+from itertools import combinations
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
@@ -21,460 +25,331 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from shapely import from_wkt
 from shapely.errors import GEOSException
-from shapely.geometry import Point, box, mapping, shape
-from shapely.ops import transform
+from shapely.geometry import box, mapping, shape
+from shapely.ops import transform, unary_union
 
-from .analysis import raster_assets
 from .catalog import ROOT, known_scene_ids, metadata
-from .planning import TO_EQUAL_AREA, square_around
+from .planning import TO_EQUAL_AREA
 
-router = APIRouter(prefix="/api/procurement", tags=["procurement"])
-DB = Path(os.environ.get("FLOODVALUE_PROCUREMENT_DB", ROOT / "data/runtime/procurement.sqlite3"))
-SKYFI = "https://app.skyfi.com/platform-api"
+router = APIRouter(prefix='/api/procurement', tags=['procurement'])
+DB = Path(os.environ.get('FLOODVALUE_PROCUREMENT_DB', ROOT / 'data/runtime/procurement.sqlite3'))
+SKYFI = 'https://app.skyfi.com/platform-api'
 
 
 def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def area(g):
-    return transform(TO_EQUAL_AREA.transform, g).area / 1_000_000
+def area(geometry):
+    return transform(TO_EQUAL_AREA.transform, geometry).area / 1_000_000
 
 
 def persist(kind, payload):
-    record = {**payload, "id": uuid.uuid4().hex, "saved_at": now()}
+    record = {**payload, 'id': uuid.uuid4().hex, 'saved_at': now()}
     DB.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB) as db:
-        db.execute("CREATE TABLE IF NOT EXISTS snapshots (id TEXT PRIMARY KEY, kind TEXT, payload TEXT)")
-        db.execute("INSERT INTO snapshots VALUES (?, ?, ?)", (record["id"], kind, json.dumps(record, allow_nan=False)))
+        db.execute('CREATE TABLE IF NOT EXISTS snapshots (id TEXT PRIMARY KEY, kind TEXT, payload TEXT)')
+        db.execute('INSERT INTO snapshots VALUES (?, ?, ?)', (record['id'], kind, json.dumps(record, allow_nan=False)))
     return record
 
 
-def read(identifier, kind="catalog"):
-    if not DB.exists():
-        raise HTTPException(404, "Сохранённый каталог не найден")
-    with sqlite3.connect(DB) as db:
-        row = db.execute("SELECT payload FROM snapshots WHERE id=? AND kind=?", (identifier, kind)).fetchone()
-    if not row:
-        raise HTTPException(404, "Сохранённый каталог не найден")
-    return json.loads(row[0])
+def read(identifier, kind='catalog'):
+    if DB.exists():
+        with sqlite3.connect(DB) as db:
+            row = db.execute('SELECT payload FROM snapshots WHERE id=? AND kind=?', (identifier, kind)).fetchone()
+        if row:
+            record = json.loads(row[0])
+            catalog = record if kind == 'catalog' else record['catalog']
+            if catalog.get('source') != 'skyfi' or catalog.get('normalization_version') != 2:
+                raise HTTPException(409, 'Обновите каталог: эта версия расчёта больше не используется.')
+            return record
+    raise HTTPException(404, 'Сохранённые данные не найдены')
 
 
 class Input(BaseModel):
-    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
 
 
 class Search(Input):
     scene_id: str
-    source: str = Field(default="demo", pattern="^(demo|skyfi)$")
-    market: str = Field(default="commercial", pattern="^(commercial|open|all)$")
+    source: str = Field(default='skyfi', pattern='^skyfi$')
+    market: str = Field(default='commercial', pattern='^(commercial|open)$')
     from_date: date | None = None
     to_date: date | None = None
+    bbox: list[float] | None = Field(default=None, min_length=4, max_length=4)
 
-    @model_validator(mode="after")
-    def dates(self):
+    @model_validator(mode='after')
+    def valid(self):
         if self.from_date and self.to_date and self.from_date > self.to_date:
-            raise ValueError("Начало периода позже конца")
+            raise ValueError('Начало периода позже конца')
+        if self.bbox:
+            w, s, e, n = self.bbox
+            if not (-180 <= w < e <= 180 and -85 <= s < n <= 85):
+                raise ValueError('Некорректные границы территории')
+            if not .01 <= area(box(*self.bbox)) <= 10000:
+                raise ValueError('Площадь территории должна быть от 0,01 до 10 000 км²')
         return self
 
 
 class Plan(Input):
     catalog_id: str = Field(min_length=1, max_length=64)
     budget: float = Field(default=500, ge=0, le=1e9)
-    deadline_hours: float = Field(default=12, gt=0, le=8760)
     resolution_m: float = Field(default=1, gt=0, le=100)
-    mandatory: list[str] = Field(default_factory=list, max_length=15)
-    excluded: list[str] = Field(default_factory=list, max_length=100)
-    objective: str = Field(default="coverage", pattern="^(coverage|cheapest)$")
+    max_cloud_percent: float = Field(default=30, ge=0, le=100)
+    target_coverage: float = Field(default=95, gt=0, le=100)
+    selected_ids: list[str] = Field(default_factory=list, max_length=4)
 
 
-class Review(Input):
-    offer_id: str = Field(min_length=1, max_length=200)
-    note: str = Field(min_length=12, max_length=1000)
-
-
-class Variant(Input):
-    offer_id: str = Field(min_length=1, max_length=200)
-    asset_ids: list[str] = Field(min_length=1, max_length=15)
-
-
-def skyfi_post(path, payload):
-    # Fixed allowlist: never accept an arbitrary URL or invoke a purchase endpoint.
-    if path not in {"/archives", "/order-archive/validate"}:
-        raise ValueError("Unsupported provider operation")
-    key = os.environ.get("SKYFI_API_KEY")
+def provider(path, payload=None):
+    if path not in {'/archives', '/order-archive/validate'} and not path.startswith('/archives?page='):
+        raise ValueError('Unsupported provider operation')
+    key = os.environ.get('SKYFI_API_KEY')
     if not key:
-        raise HTTPException(503, "SKYFI_API_KEY не настроен на сервере. Доступен учебный каталог.")
-    request = Request(SKYFI + path, data=json.dumps(payload).encode(), method="POST",
-                      headers={"Content-Type": "application/json", "X-Skyfi-Api-Key": key})
+        raise HTTPException(503, 'Для доступа к реальному каталогу настройте SKYFI_API_KEY на сервере.')
+    request = Request(SKYFI + path, data=json.dumps(payload).encode() if payload is not None else None,
+                      method='POST' if payload is not None else 'GET',
+                      headers={'Content-Type': 'application/json', 'X-Skyfi-Api-Key': key})
     try:
         with urlopen(request, timeout=25) as response:
             return json.load(response)
     except HTTPError as error:
-        # Do not echo upstream bodies/headers: they may contain account details.
         if error.code == 429:
-            raise HTTPException(429, "SkyFi временно ограничил частоту запросов. Подождите минуту и повторите поиск.") from None
-        raise HTTPException(502, f"SkyFi отклонил запрос (HTTP {error.code}). Проверьте доступ и условия заказа.") from None
+            raise HTTPException(429, 'SkyFi ограничил частоту запросов. Сохранённый каталог доступен; обновите его позже.') from None
+        if error.code == 403:
+            raise HTTPException(502, 'SkyFi не разрешил эту операцию для аккаунта (403). Сравнение по ценам каталога доступно; финальная цена не подтверждена.') from None
+        raise HTTPException(502, f'SkyFi отклонил запрос (HTTP {error.code}).') from None
     except (URLError, TimeoutError, ValueError):
-        raise HTTPException(502, "SkyFi не ответил корректно. Сохранённые каталоги остаются доступны.") from None
+        raise HTTPException(502, 'SkyFi временно не отвечает. Повторите обновление каталога.') from None
 
 
-def asset_snapshot(info):
-    return [{**a, "expected_loss_rub": round((a.get("p_flood") or 0) * a["value_rub"] * a["vulnerability"], 2)}
-            for a in raster_assets(info["chip_id"], info) if a.get("p_flood") is not None]
-
-
-def demo_offers(info):
-    bounds = info["bbox"]
-    event = date.fromisoformat(info["observed_at"][:10])
-    offers = []
-
-    def add(identifier, title, geometry, rate=12, minimum=5, delivery=6, resolution=.5, provider="Учебная оптика", **extra):
-        sqkm = area(geometry)
-        offers.append({"id": identifier, "archive_id": None, "title": title, "provider": provider,
-            "geometry": mapping(geometry), "footprint": mapping(geometry), "area_km2": round(sqkm, 3),
-            "billable_km2": round(max(sqkm, minimum), 3), "minimum_billable_km2": minimum,
-            "price": round(max(sqkm, minimum) * rate, 2), "currency": "USD", "resolution_m": resolution,
-            "unit_price": rate, "technical_min_km2": 1, "technical_max_km2": None,
-            "delivery_hours": delivery, "capture_date": str(event), "quality": "scenario",
-            "price_status": "scenario", "price_source": "Учебные условия FloodValue; не предложение поставщика",
-            "quote_at": "2026-09-26T00:00:00+00:00", "quote_validated": True,
-            "full_scene_only": False, "order_issue": None, "preview_url": None, **extra})
-
-    for a in info["assets"]:
-        add("local-" + a["id"], "Отдельная зона · " + a["name"], box(*square_around(a, bounds)))
-    # Grouped alternatives compete honestly with separate orders; no forced winner.
-    w, s, e, n = bounds
-    add("west", "Объединённый заказ · запад", box(w, s, w + (e-w)*.62, n))
-    add("east", "Объединённый заказ · восток", box(w + (e-w)*.38, s, e, n))
-    add("wide", "Вся область · один заказ", box(*bounds))
-    add("radar", "Вся область · резервный радар", box(*bounds), rate=0, minimum=0,
-        delivery=3, resolution=1, provider="Учебный радар", price=420, billable_km2=None,
-        full_scene_only=True, price_source="Учебная фиксированная цена кадра: 420 USD")
-    add("free", "Бесплатная обзорная сцена", box(*bounds), rate=0, minimum=0,
-        resolution=10, delivery=2, provider="Учебные открытые данные")
-    add("old", "Архив до события", box(*bounds), rate=1, minimum=0,
-        capture_date=str(event - timedelta(days=10)))
-    add("late", "Детальная сцена · долгая доставка", box(*bounds), rate=2, minimum=0, delivery=48)
-    add("cloud", "Облачность у объектов не проверена", box(*bounds), rate=1, minimum=0, quality="unknown")
-    return offers
-
-
-def normalize_archive(item, aoi):
-    footprint = from_wkt(item["footprint"])
-    if not footprint.is_valid or footprint.is_empty or footprint.geom_type not in {"Polygon", "MultiPolygon"}:
-        raise ValueError("Invalid footprint")
-    full = bool(item.get("fullSceneOnly"))
-    geometry = footprint if full else footprint.intersection(aoi)
-    sqkm = area(geometry)
-    if geometry.is_empty or sqkm == 0:
+def normalize_archive(item, aoi, event_date=None):
+    footprint = from_wkt(item['footprint'])
+    if not footprint.is_valid or footprint.is_empty or footprint.geom_type not in {'Polygon', 'MultiPolygon'}:
+        raise ValueError('Invalid footprint')
+    overlap = footprint.intersection(aoi)
+    if overlap.is_empty or area(overlap) <= 0:
         return None
+    full = bool(item.get('fullSceneOnly'))
+    geometry = footprint if full else overlap
+    sqkm = area(geometry)
     issue = None
-    if geometry.geom_type != "Polygon" or geometry.interiors or not geometry.equals(geometry.convex_hull):
-        issue = "Контур требует отдельного согласования: API принимает выпуклый Polygon"
-    elif len(geometry.exterior.coords) > 500:
-        issue = "Контур превышает 500 вершин"
-    elif not full and (sqkm < max(1, item.get("minSqKm", 0)) or sqkm > item.get("maxSqKm", math.inf)):
-        issue = "Площадь контура не соответствует ограничениям заказа"
-    price = item["priceFullScene"] if full else sqkm * item["priceForOneSquareKm"]
-    delivery = item.get("deliveryTimeHours")
-    if (not math.isfinite(price) or price < 0 or not math.isfinite(item["gsd"]) or item["gsd"] <= 0
-            or (delivery is not None and (not math.isfinite(delivery) or delivery < 0))):
-        raise ValueError("Invalid price or resolution")
-    previews = item.get("thumbnailUrls") or {}
-    preview = next((u for u in previews.values() if isinstance(u, str) and u.startswith("https://")), None)
-    return {"id": str(item["archiveId"]), "archive_id": item["archiveId"],
-        "title": item.get("constellation") or item["provider"], "provider": item["provider"],
-        "geometry": mapping(geometry), "footprint": mapping(footprint), "area_km2": round(sqkm, 3),
-        "billable_km2": None, "minimum_billable_km2": None,
-        "technical_min_km2": item.get("minSqKm"), "price": round(price, 2), "currency": "USD",
-        "technical_max_km2": item.get("maxSqKm"), "unit_price": item["priceForOneSquareKm"],
-        "resolution_m": item["gsd"] / 100, "source_gsd_cm": item["gsd"], "delivery_hours": item.get("deliveryTimeHours"),
-        "capture_date": item["captureTimestamp"][:10], "quality": "unknown",
-        "price_status": "catalog_estimate", "price_source": SKYFI + "/archives",
-        "quote_at": now(), "quote_validated": False, "full_scene_only": full,
-        "order_issue": issue, "preview_url": preview, "cloud_percent": item.get("cloudCoveragePercent")}
+    if not full:
+        if geometry.geom_type != 'Polygon' or geometry.interiors or not geometry.equals(geometry.convex_hull):
+            issue = 'Контур обрезки требует согласования с поставщиком'
+        elif len(geometry.exterior.coords) > 500:
+            issue = 'Контур превышает 500 вершин'
+        elif sqkm < max(1, item.get('minSqKm') or 0) or sqkm > (item.get('maxSqKm') or math.inf):
+            issue = 'Площадь меньше минимума или больше максимума заказа'
+    price = item['priceFullScene'] if full else sqkm * item['priceForOneSquareKm']
+    gsd = item['gsd'] / 100
+    if not math.isfinite(price) or price < 0 or not math.isfinite(gsd) or gsd <= 0:
+        raise ValueError('Invalid price or resolution')
+    thumbs = item.get('thumbnailUrls') or {}
+    urls = [(k, v) for k, v in thumbs.items() if isinstance(v, str) and v.startswith('https://')]
+    def pixels(pair):
+        try:
+            return int(pair[0].split('x')[0])
+        except ValueError:
+            return 0
+    preview = max(urls, key=pixels)[1] if urls else None
+    captured = item['captureTimestamp'][:10]
+    return {'id': str(item['archiveId']), 'archive_id': item['archiveId'], 'provider': item['provider'],
+        'title': item.get('constellation') or item['provider'], 'product_type': item.get('productType'),
+        'geometry': mapping(geometry), 'footprint': mapping(footprint), 'coverage_geometry': mapping(overlap),
+        'area_km2': round(sqkm, 4), 'coverage_km2': round(area(overlap), 4),
+        'coverage_percent': round(min(100, area(overlap) / area(aoi) * 100), 2),
+        'technical_min_km2': item.get('minSqKm'), 'technical_max_km2': item.get('maxSqKm'),
+        'price': round(price, 2), 'unit_price': item['priceForOneSquareKm'], 'currency': 'USD',
+        'resolution_m': gsd, 'source_gsd_cm': item['gsd'], 'delivery_hours': item.get('deliveryTimeHours'),
+        'capture_date': captured, 'capture_timestamp': item['captureTimestamp'],
+        'days_from_event': (date.fromisoformat(captured) - date.fromisoformat(event_date)).days if event_date else None,
+        'price_status': 'catalog_estimate', 'price_source': SKYFI + '/archives', 'quote_at': now(),
+        'quote_validated': False, 'quality': 'unknown', 'full_scene_only': full,
+        'open_data': bool(item.get('openData')), 'order_issue': issue, 'preview_url': preview,
+        'cloud_percent': item.get('cloudCoveragePercent'), 'off_nadir_angle': item.get('offNadirAngle')}
 
 
-@router.get("/status")
+@router.get('/status')
 def status():
-    return {"skyfi_configured": bool(os.environ.get("SKYFI_API_KEY")), "purchase_enabled": False}
+    return {'skyfi_configured': bool(os.environ.get('SKYFI_API_KEY')), 'purchase_enabled': False}
 
 
-@router.post("/catalogs")
+@router.get('/catalogs/latest')
+def latest(scene_id: str):
+    if scene_id not in known_scene_ids():
+        raise HTTPException(404, 'Неизвестная сцена')
+    bounds = metadata(scene_id)['bbox']
+    if DB.exists():
+        with sqlite3.connect(DB) as db:
+            rows = db.execute("SELECT payload FROM snapshots WHERE kind='catalog' ORDER BY rowid DESC LIMIT 200").fetchall()
+        for row in rows:
+            c = json.loads(row[0])
+            if c.get('scene_id') == scene_id and c.get('bbox') == bounds and c.get('source') == 'skyfi' and c.get('normalization_version') == 2:
+                return c
+    raise HTTPException(404, 'Для этой территории ещё нет сохранённого ответа SkyFi')
+
+
+@router.post('/catalogs')
 def search(request: Search):
     if request.scene_id not in known_scene_ids():
-        raise HTTPException(404, "Неизвестная сцена")
+        raise HTTPException(404, 'Неизвестная сцена')
     info = metadata(request.scene_id)
-    event = date.fromisoformat(info["observed_at"][:10])
-    start, end = request.from_date or event, request.to_date or event + timedelta(days=3)
+    event = date.fromisoformat(info['observed_at'][:10])
+    start, end = request.from_date or event, request.to_date or date.today()
     if start > end or end > date.today():
-        raise HTTPException(422, "Укажите корректный исторический период съёмки")
-    truncated = False
-    skipped = 0
-    if request.source == "demo":
-        offers = demo_offers(info)
-    else:
-        raw = skyfi_post("/archives", {"aoi": box(*info["bbox"]).wkt,
-            "fromDate": start.isoformat() + "T00:00:00Z", "toDate": end.isoformat() + "T23:59:59Z",
-            "pageSize": 50, "minOverlapRatio": .01,
-            **({"openData": request.market == "open"} if request.market != "all" else {})})
-        truncated = bool(raw.get("nextPage"))
-        offers = []
-        for item in raw.get("archives", []):
-            try:
-                offer = normalize_archive(item, box(*info["bbox"]))
-                if offer and offer["id"] not in {o["id"] for o in offers}:
-                    offers.append(offer)
-            except (ValueError, KeyError, TypeError, GEOSException):
-                skipped += 1
-    return persist("catalog", {"scene_id": request.scene_id, "source": request.source,
-        "captured_at": now(), "normalization_version": 1, "market": request.market, "mode": "retrospective", "currency": "USD", "bbox": info["bbox"],
-        "event_date": str(event), "from_date": str(start), "to_date": str(end),
-        "assets": asset_snapshot(info), "offers": offers, "truncated": truncated, "skipped": skipped,
-        "disclaimer": "Учебные предложения и цены. Не предложения поставщиков." if request.source == "demo"
-        else "Покупка исторического архива сегодня. Цены предварительные; качество требует проверки."})
+        raise HTTPException(422, 'Укажите корректный исторический период съёмки')
+    bounds = request.bbox or info['bbox']
+    aoi = box(*bounds)
+    raw = provider('/archives', {'aoi': aoi.wkt, 'fromDate': start.isoformat() + 'T00:00:00Z',
+        'toDate': end.isoformat() + 'T23:59:59Z', 'pageSize': 100, 'minOverlapRatio': .01,
+        'openData': request.market == 'open'})
+    records = raw.get('archives', [])
+    # Bounded paging: keep source completeness visible without issuing unbounded requests.
+    next_page = raw.get('nextPage')
+    pages = 1
+    while next_page and pages < 3:
+        raw = provider('/archives?' + urlencode({'page': next_page}))
+        records += raw.get('archives', [])
+        next_page = raw.get('nextPage')
+        pages += 1
+    offers, skipped, seen = [], 0, set()
+    for item in records:
+        try:
+            offer = normalize_archive(item, aoi, str(event))
+            if offer and offer['id'] not in seen:
+                offers.append(offer)
+                seen.add(offer['id'])
+        except (ValueError, KeyError, TypeError, GEOSException):
+            skipped += 1
+    return persist('catalog', {'scene_id': request.scene_id, 'source': 'skyfi', 'normalization_version': 2,
+        'captured_at': now(), 'market': request.market, 'currency': 'USD', 'bbox': bounds,
+        'area_km2': round(area(aoi), 4), 'event_date': str(event), 'from_date': str(start), 'to_date': str(end),
+        'offers': offers, 'truncated': bool(next_page), 'skipped': skipped, 'pages': pages,
+        'source_url': SKYFI + '/archives',
+        'disclaimer': 'Предварительные цены реального каталога SkyFi. Цена заказа и пригодность для анализа требуют проверки.'})
 
 
-@router.get("/catalogs/{catalog_id}")
+@router.get('/catalogs/{catalog_id}')
 def get_catalog(catalog_id: str):
     return read(catalog_id)
 
 
-def find_offer(catalog, offer_id):
-    offer = next((o for o in catalog["offers"] if o["id"] == offer_id), None)
-    if offer is None:
-        raise HTTPException(404, "Предложение не найдено")
-    return offer
-
-
-@router.post("/catalogs/{catalog_id}/variants")
-def create_variant(catalog_id: str, request: Variant):
-    catalog = read(catalog_id)
-    original = find_offer(catalog, request.offer_id)
-    if original["full_scene_only"]:
-        raise HTTPException(422, "Этот продукт оплачивается целым кадром; уменьшение контура не снижает цену")
-    if set(request.asset_ids) - {a["id"] for a in catalog["assets"]}:
-        raise HTTPException(422, "Неизвестный объект")
-    if len(catalog["offers"]) >= 100:
-        raise HTTPException(422, "Достигнут лимит 100 вариантов заказа в каталоге")
-    squares = [box(*square_around(a, catalog["bbox"])) for a in catalog["assets"] if a["id"] in request.asset_ids]
-    geometry = box(min(g.bounds[0] for g in squares), min(g.bounds[1] for g in squares),
-                   max(g.bounds[2] for g in squares), max(g.bounds[3] for g in squares))
-    sqkm = area(geometry)
-    if not shape(original["footprint"]).covers(geometry):
-        raise HTTPException(422, "Сцена не покрывает весь новый контур вокруг выбранных объектов")
-    if (sqkm < max(1, original.get("technical_min_km2") or 0)
-            or (original.get("technical_max_km2") is not None and sqkm > original["technical_max_km2"])):
-        raise HTTPException(422, "Новый контур не соответствует минимальной или максимальной площади продукта")
-    variant = copy.deepcopy(original)
-    identifier = hashlib.sha256((str(original.get("archive_id") or original["id"]) + geometry.wkt).encode()).hexdigest()[:16]
-    billable = max(sqkm, original.get("minimum_billable_km2") or 0)
-    variant.update(id="zone-" + identifier, geometry=mapping(geometry), area_km2=round(sqkm, 3),
-                   title="Заказ на выбранные объекты · " + original["provider"],
-                   billable_km2=round(billable, 3) if catalog["source"] == "demo" else None,
-                   price=round(billable * original["unit_price"], 2), quote_at=now(),
-                   quote_validated=catalog["source"] == "demo", order_issue=None,
-                   price_status="scenario" if catalog["source"] == "demo" else "catalog_estimate")
-    # A quote is bound to its geometry; never inherit a validated price after resizing.
-    variant.pop("quote_response", None)
-    if catalog["source"] == "skyfi":
-        variant.update(price_source=SKYFI + "/archives", quality="unknown")
-        variant.pop("quality_note", None)
-        variant.pop("reviewed_at", None)
-    if variant["id"] not in {o["id"] for o in catalog["offers"]}:
-        catalog["offers"].append(variant)
-    return persist("catalog", {**catalog, "parent_id": catalog_id})
-
-
-@router.post("/catalogs/{catalog_id}/review")
-def review(catalog_id: str, request: Review):
-    catalog = read(catalog_id)
-    offer = find_offer(catalog, request.offer_id)
-    if not request.note.strip() or len(request.note.strip()) < 12:
-        raise HTTPException(422, "Укажите основание проверки пригодности")
-    offer.update(quality="operator_review", quality_note=request.note.strip(), reviewed_at=now())
-    return persist("catalog", {**catalog, "parent_id": catalog_id})
-
-
-@router.post("/catalogs/{catalog_id}/quotes/{offer_id}")
-def validate_quote(catalog_id: str, offer_id: str):
-    catalog = read(catalog_id)
-    offer = find_offer(catalog, offer_id)
-    if catalog["source"] != "skyfi" or offer.get("order_issue"):
-        raise HTTPException(422, offer.get("order_issue") or "Учебная цена не подтверждается поставщиком")
-    quote = skyfi_post("/order-archive/validate", {"aoi": shape(offer["geometry"]).wkt,
-                                                  "archiveId": offer["archive_id"]})
-    cents = quote.get("estimatedCostCents")
-    if type(cents) is not int or cents < 0:
-        raise HTTPException(502, "Поставщик вернул некорректную цену")
-    offer.update(price=cents / 100, price_status="provider_estimate", quote_validated=True,
-                 quote_at=now(), quote_response=quote, price_source=SKYFI + "/order-archive/validate")
-    return persist("catalog", {**catalog, "parent_id": catalog_id})
-
-
-def reason(offer, catalog, request):
-    if offer["id"] in request.excluded:
-        return "Исключено пользователем"
-    if offer.get("order_issue"):
-        return offer["order_issue"]
-    if not (max(catalog["event_date"], catalog["from_date"]) <= offer["capture_date"] <= catalog["to_date"]):
-        return "Снято вне периода события"
-    if offer["resolution_m"] > request.resolution_m:
-        return "Недостаточная детализация"
-    if offer.get("delivery_hours") is None:
-        return "Срок доставки неизвестен"
-    if offer["delivery_hours"] > request.deadline_hours:
-        return "Доставка позже срока"
-    if offer["quality"] not in {"scenario", "operator_review", "verified"}:
-        return "Пригодность у объектов не проверена"
-    if not offer["quote_validated"]:
-        return "Нужна проверка цены заказа"
-    return None
-
-
 def calculate(catalog, request):
-    if catalog["source"] == "skyfi" and catalog.get("normalization_version") != 1:
-        raise HTTPException(409, "Этот каталог сохранён до исправления единиц детализации. Нажмите «Найти предложения» заново.")
-    assets = catalog["assets"]
-    if len(assets) > 15:
-        raise HTTPException(422, "Точный подбор поддерживает до 15 объектов")
-    ids = [a["id"] for a in assets]
-    if set(request.mandatory) - set(ids) or set(request.excluded) - {o["id"] for o in catalog["offers"]}:
-        raise HTTPException(422, "Неизвестный объект или предложение")
-    required = sum(1 << i for i, a in enumerate(assets) if a["id"] in request.mandatory)
-    offers = []
-    for original in catalog["offers"]:
-        o = copy.deepcopy(original)
-        polygon = shape(o["geometry"])
-        mask = sum(1 << i for i, a in enumerate(assets) if polygon.covers(Point(a["longitude"], a["latitude"])))
-        o.update(asset_ids=[ids[i] for i in range(len(ids)) if mask & (1 << i)], reason=reason(o, catalog, request), mask=mask)
-        offers.append(o)
-    blockers = dict(Counter(o["reason"] for o in offers if o["reason"]))
-    eligible_count = sum(o["reason"] is None and bool(o["mask"]) for o in offers)
-    # Exact set-cover DP over unique assets. Quotes are independent frozen line prices.
-    dp = {0: (0, ())}
-    for i, o in enumerate(offers):
-        if o["reason"] or not o["mask"]:
-            continue
-        cents = round(o["price"] * 100)
-        for covered, (cost, chosen) in list(dp.items()):
-            union = covered | o["mask"]
-            candidate = (cost + cents, chosen + (i,))
-            old = dp.get(union)
-            if old is None or (candidate[0], len(candidate[1])) < (old[0], len(old[1])):
-                dp[union] = candidate
-    value = {mask: sum(a["expected_loss_rub"] for i, a in enumerate(assets) if mask & (1 << i)) for mask in dp}
-    feasible = [mask for mask in dp if mask & required == required]
-    cheapest = min(feasible, key=lambda m: (dp[m][0], len(dp[m][1])), default=None)
-    within = [m for m in feasible if dp[m][0] <= round(request.budget * 100)]
-    if request.objective == "cheapest":
-        selected = min(within, key=lambda m: (dp[m][0], len(dp[m][1])), default=None)
-    else:
-        selected = max(within, key=lambda m: (value[m], m.bit_count(), -dp[m][0], -len(dp[m][1])), default=None)
-    # If mandatory requirements are impossible, show a clearly labelled partial fallback.
-    satisfied = selected is not None
-    if selected is None:
-        available = [m for m in dp if dp[m][0] <= round(request.budget * 100)]
-        selected = max(available, key=lambda m: ((m & required).bit_count(), value[m], -dp[m][0]))
-    cost, chosen = dp[selected]
-    selected_ids = [offers[i]["id"] for i in chosen]
-    covered_ids = [ids[i] for i in range(len(ids)) if selected & (1 << i)]
+    offers = copy.deepcopy(catalog['offers'])
+    by_id = {o['id']: o for o in offers}
+    if len(set(request.selected_ids)) != len(request.selected_ids) or set(request.selected_ids) - by_id.keys():
+        raise HTTPException(422, 'Неизвестный или повторный снимок')
+    target = box(*catalog['bbox'])
+    total_area = area(target)
     for o in offers:
-        o["selected"] = o["id"] in selected_ids
-        o["reason"] = o["reason"] or ("Выбрано в корзину" if o["selected"] else
-                         "Дороже бюджета" if o["price"] > request.budget else "Альтернатива: не улучшает выбранную корзину")
-        o.pop("mask")
-    # Compare with cheapest separate order per covered target; deduplicate identical order IDs.
-    independent = set()
-    for asset_id in covered_ids:
-        eligible = [(i, o) for i, o in enumerate(catalog["offers"]) if not reason(o, catalog, request)
-                    and shape(o["geometry"]).covers(Point(assets[ids.index(asset_id)]["longitude"], assets[ids.index(asset_id)]["latitude"]))]
-        independent.add(min(eligible, key=lambda pair: (pair[1]["price"], pair[0]))[0])
-    naive_cost = sum(round(catalog["offers"][i]["price"] * 100) for i in independent)
-    total_el = sum(a["expected_loss_rub"] for a in assets)
-    selected_offers = [offers[i] for i in chosen]
-    minimum_cost = dp[cheapest][0] / 100 if cheapest is not None else None
-    increments = {}
-    for i, asset in enumerate(assets):
-        target = selected | (1 << i)
-        options = [m for m in dp if m & target == target]
-        least = min((dp[m][0] for m in options), default=None)
-        increments[asset["id"]] = max(0, least - cost) / 100 if least is not None else None
-    free_masks = [m for m in dp if dp[m][0] == 0]
-    free_mask = max(free_masks, key=lambda m: (value[m], m.bit_count()))
-    broad_offers = [o for o in catalog["offers"] if not reason(o, catalog, request)
-                    and shape(o["geometry"]).covers(box(*catalog["bbox"]))]
-    broad = min(broad_offers, key=lambda o: o["price"], default=None)
-    return {"catalog_id": catalog["id"], "source": catalog["source"], "currency": catalog["currency"],
-        "calculated_at": now(), "request": request.model_dump(), "offers": offers,
-        "blockers": blockers, "eligible_count": eligible_count,
-        "selected_ids": selected_ids, "covered_ids": covered_ids, "cost": cost / 100,
-        "mandatory_satisfied": satisfied, "missing_ids": sorted(set(request.mandatory) - set(covered_ids)),
-        "minimum_cost": minimum_cost, "budget_gap": max(0, minimum_cost - request.budget) if minimum_cost is not None else None,
-        "incremental_cost": increments,
-        "free_coverage_count": free_mask.bit_count(),
-        "broad_cost": broad["price"] if broad else None,
-        "broad_offer_id": broad["id"] if broad else None,
-        "covered_el_rub": value[selected], "coverage_share": value[selected] / total_el if total_el else None,
-        "delivery_hours": max((o["delivery_hours"] for o in selected_offers), default=0),
-        "ordered_km2": round(sum(o["area_km2"] for o in selected_offers), 3),
-        "billable_km2": round(sum(o["billable_km2"] for o in selected_offers), 3)
-            if all(o["billable_km2"] is not None for o in selected_offers) else None,
-        "independent_cost": naive_cost / 100, "saving_vs_independent": max(0, naive_cost - cost) / 100,
-        "comparison_note": "Отдельный подбор самого дешёвого заказа для каждого охваченного объекта, без повторной оплаты одной позиции. Требования одинаковы; дополнительные объекты могут отличаться.",
-        "optimality": "Точный минимум по наборам объектов среди пригодных предложений сохранённого каталога. Цены позиций суммируются; общая скидка поставщика не предполагается.",
-        "limitations": ["Охват EL не является предотвращённым ущербом.", "Покупка не означает устранение неопределённости.",
-                        "Сроки доставки оценочные. Налоги и дополнительные сборы требуют подтверждения."]}
+        reasons = []
+        if o['resolution_m'] > request.resolution_m:
+            reasons.append('Недостаточная детализация')
+        cloud = o.get('cloud_percent')
+        if o.get('product_type') != 'SAR' and request.max_cloud_percent < 100:
+            if cloud is None:
+                reasons.append('Облачность неизвестна')
+            elif cloud > request.max_cloud_percent:
+                reasons.append('Облачность выше порога')
+        if o.get('order_issue'):
+            reasons.append(o['order_issue'])
+        o['filter_reasons'] = reasons
+        o['within_budget'] = o['price'] <= request.budget
+        o['eligible'] = not reasons
+    eligible = [o for o in offers if o['eligible']]
+    # Stable ordering makes equal-cost recommendations reproducible.
+    candidates = sorted(eligible, key=lambda o: (o['price'], -o['coverage_percent']))
+    geometries = {o['id']: shape(o['coverage_geometry']) for o in candidates}
+    choices = []
+    for o in candidates:
+        choices.append({'ids': [o['id']], 'cost': o['price'], 'coverage_percent': o['coverage_percent']})
+    # Exact comparisons among one- and two-image portfolios in this catalog.
+    for left, right in combinations(candidates, 2):
+        if left['coverage_percent'] >= 99.999 or right['coverage_percent'] >= 99.999:
+            continue
+        covered = min(100, area(geometries[left['id']].union(geometries[right['id']])) / total_area * 100)
+        choices.append({'ids': [left['id'], right['id']], 'cost': round(left['price'] + right['price'], 2), 'coverage_percent': round(covered, 2)})
+    complete = [c for c in choices if c['coverage_percent'] + .001 >= request.target_coverage]
+    minimum_full = min((c['cost'] for c in complete), default=None)
+    affordable = [c for c in choices if c['cost'] <= request.budget]
+    full_affordable = [c for c in affordable if c['coverage_percent'] + .001 >= request.target_coverage]
+    recommendation = min(full_affordable, key=lambda c: (c['cost'], len(c['ids']), -c['coverage_percent']), default=None)
+    if recommendation is None:
+        recommendation = max(affordable, key=lambda c: (c['coverage_percent'], -c['cost'], -len(c['ids'])), default=None)
+    picked_ids = request.selected_ids or (recommendation['ids'] if recommendation else [])
+    picked = [by_id[i] for i in picked_ids]
+    union = unary_union([shape(o['coverage_geometry']) for o in picked]) if picked else None
+    covered_area = area(union) if union is not None else 0
+    cost = round(sum(o['price'] for o in picked), 2) if picked else None
+    frontier, best = [], -1
+    for c in sorted(choices, key=lambda x: (x['cost'], -x['coverage_percent'])):
+        if c['coverage_percent'] > best + .001:
+            frontier.append(c)
+            best = c['coverage_percent']
+    return {'catalog_id': catalog['id'], 'request': request.model_dump(), 'offers': offers,
+        'recommendation': recommendation, 'frontier': frontier, 'eligible_count': len(eligible),
+        'minimum_full_cost': minimum_full, 'budget_gap': max(0, minimum_full - request.budget) if minimum_full is not None else None,
+        'selected_ids': picked_ids, 'cost': cost, 'coverage_km2': round(covered_area, 3),
+        'coverage_percent': round(min(100, covered_area / total_area * 100), 2),
+        'uncovered_km2': round(max(0, total_area - covered_area), 3),
+        'overlap_km2': round(max(0, sum(o['coverage_km2'] for o in picked) - covered_area), 3),
+        'geometry': mapping(union) if union is not None else None,
+        'price_verified': bool(picked) and all(o['quote_validated'] for o in picked),
+        'status': 'empty' if not picked else 'estimate', 'calculated_at': now(),
+        'method': 'Сравнение одиночных снимков и пар по геометрическому покрытию территории. Облачность указана для всего кадра; полезность в каждой точке не проверена.'}
 
 
-@router.post("/plan")
+@router.post('/plan')
 def plan(request: Plan):
     return calculate(read(request.catalog_id), request)
 
 
-@router.post("/decisions")
+@router.post('/catalogs/{catalog_id}/quotes/{offer_id}')
+def validate_quote(catalog_id: str, offer_id: str):
+    catalog = read(catalog_id)
+    offer = next((o for o in catalog['offers'] if o['id'] == offer_id), None)
+    if not offer:
+        raise HTTPException(404, 'Снимок не найден')
+    if offer.get('order_issue'):
+        raise HTTPException(422, offer['order_issue'])
+    quote = provider('/order-archive/validate', {'aoi': shape(offer['geometry']).wkt, 'archiveId': offer['archive_id']})
+    cents = quote.get('estimatedCostCents')
+    if type(cents) is not int or cents < 0:
+        raise HTTPException(502, 'SkyFi не вернул подтверждённую оценку цены')
+    offer.update(price=cents / 100, price_status='provider_estimate', quote_validated=True,
+                 quote_at=now(), price_source=SKYFI + '/order-archive/validate')
+    return persist('catalog', {**catalog, 'parent_id': catalog_id})
+
+
+@router.post('/decisions')
 def save_decision(request: Plan):
     catalog = read(request.catalog_id)
-    return persist("decision", {"catalog": catalog, "plan": calculate(catalog, request)})
+    result = calculate(catalog, request)
+    if not result['selected_ids']:
+        raise HTTPException(422, 'Выберите снимки для сравнения')
+    return persist('decision', {'catalog': catalog, 'plan': result})
 
 
-@router.get("/decisions")
-def decisions(scene_id: str):
-    if not DB.exists():
-        return {"decisions": []}
-    with sqlite3.connect(DB) as db:
-        rows = db.execute("SELECT payload FROM snapshots WHERE kind='decision' ORDER BY rowid DESC LIMIT 100").fetchall()
-    items = [json.loads(r[0]) for r in rows]
-    return {"decisions": [{"id": d["id"], "saved_at": d["saved_at"], "cost": d["plan"]["cost"],
-                           "covered": len(d["plan"]["covered_ids"]), "catalog_id": d["catalog"]["id"]}
-                          for d in items if d["catalog"]["scene_id"] == scene_id]}
-
-
-@router.get("/decisions/{decision_id}")
-def get_decision(decision_id: str):
-    return read(decision_id, "decision")
-
-
-@router.get("/decisions/{decision_id}/export")
+@router.get('/decisions/{decision_id}/export')
 def export(decision_id: str):
-    decision = read(decision_id, "decision")
-    p, catalog = decision["plan"], decision["catalog"]
-    selected = [o for o in p["offers"] if o["selected"]]
-    report = ["# Заявка на спутниковые данные", "", catalog["disclaimer"],
-        "Ретроспективный разбор; покупка архива сегодня.", f"Каталог: {catalog['captured_at']}",
-        f"Сцена: {catalog['scene_id']}; период {catalog['from_date']} — {catalog['to_date']}",
-        f"Стоимость: {p['cost']:.2f} USD", f"Обязательные условия выполнены: {p['mandatory_satisfied']}",
-        f"Не покрыты: {', '.join(p['missing_ids']) or 'нет'}", "", "## Состав заказа"]
-    for o in selected:
-        report += [f"- {o['title']}: {o['price']:.2f} USD; {o['price_status']}; источник {o['price_source']}; расчёт {o['quote_at']}"]
-    report += ["", "## Ограничения", *p["limitations"], p["optimality"]]
+    decision = read(decision_id, 'decision')
+    p, catalog = decision['plan'], decision['catalog']
+    selected = [o for o in p['offers'] if o['id'] in p['selected_ids']]
+    esc = html.escape
+    cards = ''.join('<article>' + (f'<img src="{esc(o["preview_url"], quote=True)}" alt="Превью поставщика">' if o['preview_url'] else '') +
+        f'<h2>{esc(o["title"])} · {esc(o["capture_date"])}</h2><p>{esc(o["provider"])} · {o["resolution_m"]:.2f} м · {o["coverage_percent"]:.1f}% территории</p>' +
+        f'<b>${o["price"]:.2f}</b><p>Archive ID: {esc(o["id"])}</p></article>' for o in selected)
+    report = f'''<!doctype html><html lang="ru"><meta charset="utf-8"><title>FloodValue · сравнение снимков</title>
+<style>body{{font:16px system-ui;max-width:1080px;margin:40px auto;color:#172d34;padding:24px}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}img{{width:100%;height:260px;object-fit:contain;background:#15262d}}article{{border-top:2px solid #317b7c;padding:20px 0}}h1{{font-size:36px}}b{{font-size:26px}}</style>
+<h1>Снимки для территории {esc(catalog['scene_id'])}</h1><p>Источник: SkyFi API · каталог получен {esc(catalog['captured_at'])}</p>
+<p>Стоимость по каталогу: <b>${p['cost']:.2f}</b> · покрытие {p['coverage_percent']:.1f}% · {p['coverage_km2']:.2f} км²</p>
+<p>{esc(catalog['disclaimer'])}</p><p>Исходная сцена паводка: {esc(catalog['event_date'])}. Снимки другой даты не подтверждают состояние территории в этот день.</p><div class="grid">{cards}</div><p>{esc(p['method'])}</p></html>'''
     data = io.BytesIO()
-    with zipfile.ZipFile(data, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("request.md", "\n".join(report))
-        archive.writestr("decision.json", json.dumps(decision, ensure_ascii=False, indent=2))
-        archive.writestr("orders.geojson", json.dumps({"type": "FeatureCollection", "features": [
-            {"type": "Feature", "geometry": o["geometry"], "properties": {k: v for k, v in o.items() if k not in {"geometry", "footprint"}}}
+    with zipfile.ZipFile(data, 'w', zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr('comparison.html', report)
+        archive.writestr('decision.json', json.dumps(decision, ensure_ascii=False, indent=2))
+        archive.writestr('coverage.geojson', json.dumps({'type': 'FeatureCollection', 'features': [
+            {'type': 'Feature', 'geometry': o['coverage_geometry'], 'properties': {'id': o['id'], 'price': o['price'], 'date': o['capture_date']}}
             for o in selected]}, ensure_ascii=False))
     data.seek(0)
-    return StreamingResponse(data, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="procurement-{decision_id}.zip"'})
+    return StreamingResponse(data, media_type='application/zip', headers={'Content-Disposition': f'attachment; filename="imagery-{decision_id}.zip"'})
