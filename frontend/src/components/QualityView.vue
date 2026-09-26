@@ -67,7 +67,7 @@ function openWeak() {
 
 <template>
   <section class="block" v-tip="'test_core: 55 несоседних с обучением окон, но события частично общие с train. Оба метода сравниваются на одних валидных пикселях'">
-    <span class="caption">Совпадение с ручной разметкой, IoU</span>
+    <span class="caption">Совпадение с ручной разметкой, IoU · test_core, 55 снимков</span>
     <div class="ring-pair">
       <RingGauge :value="testQuality.baseline.iou" label="порог VH" color="var(--risk)" :size="64" />
       <ArrowRight :size="18" class="muted" />
@@ -123,11 +123,11 @@ function openWeak() {
   <section v-if="proxy && proxy.n_points" class="block"
     v-tip="'В точках объектов вероятность модели сравнивается с ручной разметкой воды, стоимость и уязвимость те же. Так проверяется, как ошибка карты переходит в ущерб. Денежный ущерб на месте не измерялся'">
     <span class="caption">{{ proxy.status === 'reference_chips_region_not_labeled'
-      ? `Проверка ущерба на размеченных снимках · ${proxy.n_points} точек`
-      : `Проверка ущерба по разметке · ${proxy.n_points} из 10 объектов` }}</span>
+      ? `Прокси-проверка ущерба на размеченных снимках · ${proxy.n_points} точек`
+      : `Прокси-проверка ущерба по разметке · ${proxy.n_points} из 10 объектов` }}</span>
     <div class="mini-rows">
       <div><span>Средняя ошибка вероятности в точке</span><b class="tabular">{{ percent(proxy.mean_absolute_probability_error, 1) }}</b></div>
-      <div><span>Средняя ошибка ущерба на объект</span><b class="tabular">{{ compactRub(proxy.mean_absolute_proxy_loss_error_rub) }}</b></div>
+      <div v-tip="'Сравнение EL = p × V × q с EL_ref = y × V × q, где y: ручная метка воды в точке. Это прокси по разметке, а не фактические потери'"><span>Средняя прокси-ошибка EL на объект</span><b class="tabular">{{ compactRub(proxy.mean_absolute_proxy_loss_error_rub) }}</b></div>
     </div>
     <p v-if="proxy.status === 'reference_chips_region_not_labeled'" class="source-line">Для этой области разметки нет. Цифры взяты с трёх размеченных снимков: {{ proxy.reference_chip_ids.join(', ') }}.</p>
   </section>

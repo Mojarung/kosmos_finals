@@ -76,7 +76,7 @@ function select(asset) {
       <span class="unit">млн ₽</span>
       <span class="hero-aside">{{ analysis.metrics.high_probability_assets }} из {{ analysis.assets.length }}<br>в воде</span>
     </div>
-    <p v-if="permanentSeparated" class="source-line">Только паводок, без точек на постоянной воде JRC: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}. Число выше считает все 10 точек по формуле кейса p × V × q.</p>
+    <p v-if="permanentSeparated && analysis.metrics.permanent_water_assets" class="source-line">Только паводок, без точек на постоянной воде JRC: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}. Число выше считает все 10 точек по формуле кейса p × V × q.</p>
     <p v-if="state.region" class="source-line">В рамке {{ analysis.metrics.assets_in_region }} из 10 объектов · {{ compactRub(analysis.metrics.region_expected_loss_rub) }}. План A/B/C сравнивает весь портфель.</p>
     <p v-if="analysis.metrics.unestimated_assets" class="warn-note"
       v-tip="'Радар не дал сигнала в точках этих объектов. Их стоимость × уязвимость показана как риск, который пока не оценён'">

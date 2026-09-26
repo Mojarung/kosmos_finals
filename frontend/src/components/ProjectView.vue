@@ -104,7 +104,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
         <FileUp :size="16" /> Импорт CSV или GeoJSON
         <input type="file" accept=".csv,.geojson,.json,text/csv,application/geo+json" :disabled="busy" @change="upload" />
       </label>
-      <p class="project-help">CSV: name, longitude, latitude, value_rub, vulnerability, value_source. Для GeoJSON — Point и те же свойства. Источник цены обязателен.</p>
+      <p class="project-help">CSV: name, longitude, latitude, value_rub, vulnerability, value_source. Для GeoJSON: Point и те же свойства. Источник цены обязателен.</p>
     </section>
 
     <section v-if="workspace.active.assets.length" class="block">
@@ -113,7 +113,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
         <div><strong>{{ asset.name }}</strong><small>{{ asset.value_source }}</small></div>
         <div class="project-asset-value"><b>{{ compactRub(asset.expected_loss_rub) }}</b><small>{{ asset.p_water == null ? 'вне покрытия' : percent(asset.p_water, 1) + ' воды' }}</small></div>
       </div>
-      <p class="project-help">Стоимость и уязвимость берём из вашего файла. Вероятность воды — из текущего снимка. Это оценка риска, а не подтверждённый ущерб.</p>
+      <p class="project-help">Стоимость и уязвимость берём из вашего файла. Вероятность воды берём из текущего снимка. Это оценка риска, а не подтверждённый ущерб.</p>
     </section>
 
     <section v-if="workspace.active.assets.length" class="block project-imagery-entry" data-testid="project-imagery-entry">
