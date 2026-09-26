@@ -19,7 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 libgo
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
-ENV PATH="/app/backend/.venv/bin:${PATH}" \
+# The image has no .git: pass the commit at build time so run_metadata.json can name it.
+ARG FLOODVALUE_COMMIT=
+ENV FLOODVALUE_COMMIT=${FLOODVALUE_COMMIT} \
+    PATH="/app/backend/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/ml/src \
     LIVE_DATA_DIR=/app/data/live

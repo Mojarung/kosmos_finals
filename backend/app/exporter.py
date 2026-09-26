@@ -6,11 +6,14 @@ import csv
 import hashlib
 import io
 import json
+import os
+import subprocess
 import zipfile
 from datetime import datetime, timezone
+from urllib.parse import urlencode
 
 from .analysis import context
-from .catalog import metadata, scene_dir
+from .catalog import ROOT, metadata, scene_dir
 from .planning import BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, USAGE_COEF, as_polygon, enrich_assets
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
@@ -51,6 +54,59 @@ PARAMETERS = [
     {"name": "budget_rub", "value": None, "source": "operator input",
      "basis": "default 6500 RUB, about one sixth of a broad purchase of the chip; the frontier shows other budgets"},
 ]
+
+
+def _git_head() -> str | None:
+    try:
+        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    commit = result.stdout.strip()
+    return commit if result.returncode == 0 and commit else None
+
+
+def code_commit() -> str | None:
+    """Commit of the running code: git in the repository, else FLOODVALUE_COMMIT (images carry no .git)."""
+    return _git_head() or os.environ.get("FLOODVALUE_COMMIT") or None
+
+
+def _number(value: float) -> object:
+    return int(value) if float(value).is_integer() else value
+
+
+def _commands(scene_id: str, info: dict, inputs: dict, live: bool) -> list[str]:
+    """Cross-platform reproduction of this package: git, uv and curl, no shell-specific paths."""
+    query = {"scene_id": scene_id, "budget": _number(inputs["budget_rub"]),
+             "deadline": inputs["deadline_hours"], "priority": inputs["priority"]}
+    if inputs.get("must_cover"):
+        query["must_cover"] = inputs["must_cover"]
+    if inputs.get("bbox"):
+        query["bbox"] = ",".join(str(value) for value in inputs["bbox"])
+    archive = f"floodvalue-{scene_id}.zip"
+    commands = ["git lfs install --local", "git lfs pull", "uv sync --project ml",
+                "uv sync --project backend --extra demo"]
+    if not live:
+        commands += [f"curl --create-dirs -o data/source/{item['name']} {item['url']}"
+                     for item in info["source_manifest"] if item.get("url")]
+        commands.append(f"uv run --project ml floodvalue infer --s1 data/source/{scene_id}_S1Hand.tif "
+                        f"--out data/inference/{scene_id}")
+        if info.get("origin", "demo") == "demo":
+            commands.append("uv run --project backend --extra demo python scripts/prepare_demo.py")
+    commands += ["uv run --project ml floodvalue download",
+                 "uv run --project ml floodvalue infer --chip <CHIP> --out data/inference/<CHIP>",
+                 "podman compose up --build"]
+    if live:
+        bbox = ",".join(str(value) for value in info["bbox"])
+        commands.append(f'curl -X POST "http://localhost:18000/api/live/prepare?bbox={bbox}'
+                        f'&item_id={info.get("source_item_id")}"')
+        if info.get("permanent_status") == "jrc_gsw":
+            commands.append(f'curl -X POST "http://localhost:18000/api/live/permanent?scene_id={scene_id}"')
+    elif info.get("origin", "demo") != "demo":
+        commands.append(f"uv run --project backend python scripts/e2e_official.py http://127.0.0.1:18000 {scene_id}")
+    commands += ["uv run --project backend python scripts/e2e_official.py http://127.0.0.1:18000 <CHIP>",
+                 f'curl -o {archive} "http://localhost:18080/api/export?{urlencode(query, safe=",")}"',
+                 f"uv run --project backend --extra demo python scripts/validate_package.py {archive}"]
+    return commands
 
 
 def _csv(headers: list[str], rows: list[list[object]]) -> str:
@@ -259,6 +315,9 @@ def package(result: dict) -> io.BytesIO:
             "model_weights": "ml/artifacts/model/model_card.json",
             "baseline": "VH threshold -23.6 dB fixed on validation",
             "repository": "https://github.com/Mojarung/kosmos_finals",
+            "code_commit": code_commit(),
+            "code_commit_rule": ("git rev-parse HEAD in the repository at export time; the FLOODVALUE_COMMIT build "
+                                 "variable in images without .git; null when neither is available"),
             "gitverse_commit": None,
             "gitverse_status": "pending_team_publication",
             "split": "ml/artifacts/split.json: authors' v1.1 lists; test chips touching train chips moved to test_adjacent",
@@ -310,10 +369,11 @@ def package(result: dict) -> io.BytesIO:
             "sensitivity_method": result["sensitivity"]["method"],
             "decision_evidence": result["decision_evidence"],
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
-            "commands": ["git lfs pull", "uv sync --project ml", "uv sync --project backend --extra demo",
-                         "uv run --project ml floodvalue infer --s1 data/source/CHIP_S1Hand.tif --out data/inference/CHIP",
-                         "uv run --project backend --extra demo python scripts/prepare_demo.py",
-                         "uv run --project backend --extra demo python scripts/validate_package.py floodvalue-CHIP.zip"],
+            "commands": _commands(scene_id, info, inputs, live),
+            "commands_note": ("Run from the repository root on Windows, Linux or macOS. <CHIP> is any official "
+                              "Sen1Floods11 hand-labeled chip, e.g. Bolivia_103757; floodvalue download fetches "
+                              "the official v1.1 files with md5 checks. docker compose works the same as podman "
+                              "compose; in an image without .git pass FLOODVALUE_COMMIT to record code_commit."),
             "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
                                                                   "processed_at": info.get("processed_at")}),
         })

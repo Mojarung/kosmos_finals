@@ -4,16 +4,18 @@ import csv
 import io
 import json
 import shutil
+import subprocess
 import zipfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app import catalog
+from app import catalog, exporter
 from app.main import app
 from test_planning import validator
 
+ROOT = Path(__file__).resolve().parents[2]
 SCENE = "Nigeria_812045"
 ON_WATER = "A10"  # p ≈ 0.98: a flood-only rule would drop almost its whole EL
 
@@ -138,3 +140,25 @@ def test_strategy_comparison_covers_the_mandatory_el(permanent_point):
     same_budget = plan_rows["plan_budget_1.0"]
     assert float(same_budget["covered_expected_loss_rub"]) == pytest.approx(
         float(comparison["C"]["covered_expected_loss_rub"]), abs=0.02)
+
+
+def test_run_metadata_names_the_code_commit_and_cross_platform_commands():
+    meta = json.loads(export(TestClient(app), budget=6500)["run_metadata.json"])
+    assert "code_commit" in meta
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
+    if head.returncode == 0:
+        assert meta["code_commit"] == head.stdout.strip()
+    commands = meta["commands"]
+    assert commands and not any(".venv/bin" in command for command in commands)
+    assert any("uv run --project ml floodvalue infer --chip" in command for command in commands)
+    assert any("budget=6500" in command for command in commands)
+    assert any("scripts/validate_package.py" in command for command in commands)
+    assert meta["gitverse_commit"] is None
+
+
+def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
+    monkeypatch.setattr(exporter, "_git_head", lambda: None)
+    monkeypatch.setenv("FLOODVALUE_COMMIT", "0123abc")
+    assert exporter.code_commit() == "0123abc"
+    monkeypatch.delenv("FLOODVALUE_COMMIT")
+    assert exporter.code_commit() is None
