@@ -21,7 +21,7 @@ const INDEPENDENT = ['test_core', 'bolivia']
 const PART_ORDER = ['test_core', 'bolivia', 'test_adjacent', 'valid', 'train']
 const STAGES = {
   queued: 'Ставим в очередь', download: 'Скачиваем снимок', inference: 'Модель ищет воду',
-  prepare: 'Считаем объекты', done: 'Готово',
+  prepare: 'Ставим объекты и зоны', done: 'Готово',
 }
 const emit = defineEmits(['focus-chip'])
 

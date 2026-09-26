@@ -8,6 +8,9 @@ const HIDE_DELAY_MS = 140
 const SKIP_DELAY_MS = 500
 const GAP_PX = 10
 const EDGE_PX = 8
+// На касании подсказка открывается тапом по строке без собственного действия и сама гаснет.
+const TOUCH_HOLD_MS = 3200
+let touchTimer
 
 const texts = new WeakMap()
 let bubble = null
@@ -68,6 +71,20 @@ function hide() {
   if (bubble) bubble.dataset.open = 'false'
 }
 
+function interactive(target) {
+  return target.matches('button, a, input, select, label, [role="tab"], [role="radio"]')
+}
+function onTouch(event) {
+  if (event.pointerType !== 'touch') return
+  const target = event.currentTarget
+  // Кнопку тап нажимает, а не объясняет; у строк с числами действия нет, им подсказка нужнее.
+  if (interactive(target)) return
+  clearTimeout(touchTimer)
+  if (owner === target) return hide()
+  show(target)
+  touchTimer = setTimeout(hide, TOUCH_HOLD_MS)
+}
+
 function onEnter(event) {
   // На касании наведения нет: подсказка всплыла бы после тапа поверх того, что открылось.
   if (event.pointerType === 'touch') return
@@ -88,7 +105,34 @@ function onFocus(event) {
   if (event.currentTarget.matches(':focus-visible')) show(event.currentTarget)
 }
 
-const EVENTS = [['pointerenter', onEnter], ['pointerleave', onLeave], ['focus', onFocus], ['blur', hide], ['pointerdown', hide]]
+function onDown(event) {
+  if (event.pointerType === 'touch' && !interactive(event.currentTarget)) return
+  hide()
+}
+
+const EVENTS = [['pointerenter', onEnter], ['pointerleave', onLeave], ['focus', onFocus], ['blur', hide],
+  ['pointerdown', onDown], ['pointerup', onTouch]]
+
+function guard() {
+  if (guarded) return
+  guarded = true
+  for (const name of ['wheel', 'keydown', 'blur']) window.addEventListener(name, hide, { capture: true, passive: true })
+  window.addEventListener('pointerdown', event => {
+    if (owner && !owner.contains(event.target)) hide()
+  }, { capture: true, passive: true })
+}
+
+/** Подсказка для элемента вне шаблонов Vue (маркеры карты). Возвращает функцию отвязки. */
+export function bindTip(el, text) {
+  guard()
+  texts.set(el, text)
+  for (const [name, handler] of EVENTS) el.addEventListener(name, handler)
+  return () => {
+    for (const [name, handler] of EVENTS) el.removeEventListener(name, handler)
+    texts.delete(el)
+    if (owner === el) hide()
+  }
+}
 
 export const vTip = {
   mounted(el, binding) {

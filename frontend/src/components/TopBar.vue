@@ -50,7 +50,7 @@ const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-
             <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ utcTime(item.datetime) }} UTC · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
           </select>
         </label>
-        <button class="live-demo-link" @click="chooseScene('Nigeria_812045')">Демо</button>
+        <button class="live-demo-link" v-tip="'Вернуться к подготовленным снимкам Sen1Floods11'" @click="chooseScene('Nigeria_812045')">Готовые снимки</button>
       </div>
       <CountryPicker v-else @focus-chip="emit('focus-chip')" />
     </div>

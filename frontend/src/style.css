@@ -23,7 +23,8 @@
   --water-shallow: #96d6ea;
   --water-deep: #2468a8;
   --water-soft: #a9cfe8;
-  --uncertain: #dfae68;
+  /* Сомнения карты фиолетовые: так они не путаются ни с водой, ни с янтарём ущерба. */
+  --uncertain: #7a5bd0;
   --risk: #c98049;
   --reference: #3a8a80;
   --warn: #a0643a;
@@ -66,7 +67,7 @@
   --water-shallow: #5cb0d4;
   --water-deep: #144070;
   --water-soft: #3d6f9a;
-  --uncertain: #efc68e;
+  --uncertain: #b9a2f0;
   --risk: #eea77c;
   --reference: #8bd0c6;
   --warn: #f0c093;
@@ -492,6 +493,8 @@ html.map-moving .panel {
 .savings .display { color: var(--reference); }
 .scenario-rows > div { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; }
 .scenario-zones { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.scenario-rows .scenario-head { padding: 0 0 2px; font-size: 11px; color: var(--muted-foreground); }
+.scenario-rows .scenario-head span:last-child { text-align: right; }
 .evidence { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
 .evidence strong { font-size: 14px; }
 .evidence span { font-size: 12px; color: var(--muted-foreground); }
@@ -541,13 +544,15 @@ html.map-moving .panel {
 .legend { display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 18px; font-size: 13px; }
 .legend-item { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .legend-water { width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--water-shallow), var(--water-deep)); }
+.legend-water.flood { background: linear-gradient(135deg, var(--water-shallow), var(--water)); }
+.legend-water.river { background: linear-gradient(135deg, var(--water-deep), color-mix(in srgb, var(--water-deep) 60%, #000)); }
 .legend-water.probability { background: linear-gradient(90deg, var(--water-soft), var(--water)); }
 .legend-water.uncertainty { background: var(--uncertain); }
 .legend-water.baseline { background: var(--risk); }
 .legend-water.reference { background: var(--reference); }
 .legend-water.none { background: transparent; border: 1.5px dashed var(--muted-foreground); }
 .legend-asset { width: 12px; height: 12px; border-radius: 50%; background: var(--risk); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6), 0 0 0 0.5px rgb(8 28 36 / 0.25); }
-.legend-zone { width: 14px; height: 10px; border: 2px dashed var(--risk); border-radius: 3px; }
+.legend-zone { width: 14px; height: 10px; border: 2px dashed var(--risk); border-right-color: var(--uncertain); border-bottom-color: var(--uncertain); border-radius: 3px; }
 
 /* Обёртку двигает MapLibre: никаких transition на ней, иначе маркер отстаёт от карты. */
 .asset-pin { width: 26px; height: 26px; }
@@ -577,6 +582,8 @@ html.map-moving .panel {
    !important: MapLibre сам пишет маркерам inline-opacity (прячет их за горизонтом глобуса). */
 .scene-moving .asset-marker { opacity: 0 !important; pointer-events: none; }
 .asset-marker.high-risk { background: var(--risk); }
+/* Объект внутри заказанной зоны: зелёное кольцо охвата, как полоса «ущерб в зонах». */
+.asset-marker.covered { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 0 0 2.5px var(--reference), 0 2px 8px -1px rgb(8 28 36 / 0.4); }
 .asset-marker:hover { transform: scale(1.12); }
 .asset-marker.selected { transform: scale(1.2); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 0 0 3px color-mix(in srgb, var(--risk) 35%, transparent), 0 3px 10px -1px rgb(8 28 36 / 0.45); }
 
@@ -699,3 +706,66 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 /* Выбранное внутри стекла приподнято бликом и тенью, как сегмент в iOS 26. */
 .panel .bubble-tabs .bubble, .panel .chip.selected, .panel .tonal-button.active, .panel .ghost-icon.active,
 .panel .country-row.current .country-main, .panel .constraint { box-shadow: var(--glass-select-edge); }
+
+/* ---------- Съёмка: цель, стратегии, зоны, цена ---------- */
+.goal-line { margin: 2px 0 2px; font-size: 12px; line-height: 1.45; color: var(--muted-foreground); }
+.strategy-line { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strategy-meters { display: grid; gap: 3px; margin-top: 2px; max-width: 150px; }
+.strategy-meters .meter { max-width: none; height: 3px; }
+.meter.doubt span { background: var(--uncertain); }
+.strategy-cost { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+.strategy-cost strong { font-size: 14px; }
+.strategy-cost small { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.strategy-cost small.warn { color: var(--warn); }
+.meter-key { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 11px; color: var(--muted-foreground); }
+.meter-key i { width: 14px; height: 3px; border-radius: 99px; background: var(--reference); }
+.meter-key i.doubt { margin-left: 8px; background: var(--uncertain); }
+.pitch { display: grid; gap: 6px; }
+.pitch p { position: relative; padding-left: 12px; font-size: 13px; line-height: 1.45; }
+.pitch p::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; border-radius: 99px; background: var(--reference); }
+.pitch p + p::before { background: var(--uncertain); }
+.frontier { display: block; width: 100%; height: auto; margin-top: 6px; overflow: visible; }
+.frontier .grid { stroke: color-mix(in srgb, var(--border) 70%, transparent); stroke-width: 1; }
+.frontier .axis { fill: var(--muted-foreground); font-size: 9px; font-family: var(--font-sans); }
+.frontier .budget { stroke: var(--primary); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.frontier .budget-label { fill: var(--primary); }
+.frontier .curve { fill: none; stroke: var(--uncertain); stroke-width: 2; stroke-linejoin: round; }
+.frontier .point circle { fill: var(--surface-1); stroke: var(--muted-foreground); stroke-width: 1.5; transition: r 0.3s var(--ease-spring); }
+.frontier .point text { fill: var(--foreground); font-size: 10px; font-weight: 600; font-family: var(--font-sans); }
+.frontier .point.c circle { stroke: var(--reference); fill: var(--reference); }
+.frontier .point.u circle { stroke: var(--uncertain); fill: var(--uncertain); }
+.frontier .point.active circle { stroke-width: 3; stroke: var(--primary); }
+.zone-list { display: grid; gap: 2px; margin-top: 6px; }
+.zone-item {
+  display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 10px; width: 100%;
+  padding: 7px 8px; border-radius: 12px; text-align: left; transition: background-color 0.18s var(--ease-standard);
+}
+.zone-item:hover, .zone-item:focus-visible { background: var(--surface-2); }
+.zone-swatch { width: 12px; height: 12px; border-radius: 3px; border: 2px dashed var(--risk); }
+.zone-item.uncertainty .zone-swatch { border-color: var(--uncertain); }
+.zone-item.broad .zone-swatch { border-color: var(--primary); }
+.zone-item.chosen .zone-swatch { background: color-mix(in srgb, var(--risk) 30%, transparent); }
+.zone-item.chosen.uncertainty .zone-swatch { background: color-mix(in srgb, var(--uncertain) 30%, transparent); }
+.zone-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.zone-text strong { font-size: 13px; font-weight: 600; }
+.zone-text small { font-size: 12px; line-height: 1.35; color: var(--muted-foreground); }
+.zone-area { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.link-row { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--primary); }
+.link-row:hover { background: var(--surface-2); }
+.link-caret { transition: transform 0.3s var(--ease-emphasized); }
+.link-caret.up { transform: rotate(180deg); }
+.price-details summary { cursor: pointer; font-size: 12px; color: var(--muted-foreground); list-style: none; display: flex; align-items: center; gap: 6px; }
+.price-details summary::-webkit-details-marker { display: none; }
+.price-details summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform 0.3s var(--ease-emphasized); }
+.price-details[open] summary::after { transform: rotate(225deg) translateY(-1px); }
+.price-details summary:hover { color: var(--foreground); }
+.formula { margin: 8px 0 4px; font-size: 12px; line-height: 1.5; }
+.price-rows > div { padding: 3px 0; font-size: 12px; }
+.price-rows .total { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); margin-top: 2px; padding-top: 6px; font-size: 13px; }
+.alternate { cursor: default; line-height: 1.45; }
+.weak-note { margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--muted-foreground); }
+.weak-button { width: 100%; margin-top: 8px; }
+/* Панель решения кончается над кнопками масштаба, а не закрывает их. */
+@media (min-width: 1024px) {
+  .decision-panel:not(.pill) { max-height: calc(100% - 52px); }
+}

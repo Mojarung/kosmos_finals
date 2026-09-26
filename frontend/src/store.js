@@ -16,6 +16,8 @@ export const state = reactive({
   liveError: '',
   drawing: false,
   selectedAssetId: null,
+  // Зона под курсором в списке плана: карта подсвечивает её контур.
+  hoverZoneId: null,
   mustCover: null,
   layerMode: 'model',
   basemap: 'satellite',
@@ -41,6 +43,7 @@ export const isLive = computed(() => state.analysis?.chip.source_kind === 'live_
 export const selectedAsset = computed(() => state.analysis?.assets.find(item => item.id === state.selectedAssetId) || null)
 export const activePlan = computed(() => state.analysis?.strategies[state.strategy])
 export const testQuality = computed(() => state.analysis?.quality.parts.test_core)
+export const permanentSeparated = computed(() => ['jrc_waterhand', 's1_history'].includes(state.analysis?.region.permanent_status))
 
 let controller
 let timer
@@ -67,7 +70,7 @@ export async function fetchAnalysis() {
     state.analysis = await response.json()
     if (state.selectedAssetId && !state.analysis.assets.some(a => a.id === state.selectedAssetId)) state.selectedAssetId = null
   } catch (cause) {
-    if (cause.name !== 'AbortError') state.error = 'Не удалось загрузить анализ. Проверьте, что API запущен.'
+    if (cause.name !== 'AbortError') state.error = 'Сервер расчёта не отвечает. Проверьте, что он запущен, и повторите.'
   } finally {
     if (controller === current) state.loading = false
   }
@@ -105,6 +108,8 @@ export async function loadLiveItem(itemId) {
     state.sceneId = prepared.scene_id
     await fetchAnalysis()
     if (request === regionRequest) state.liveStatus = state.error ? 'error' : 'ready'
+    // Сразу за водой ищем постоянную воду по снимкам до паводка: без неё ущерб считался бы и от реки.
+    if (request === regionRequest && state.analysis?.region.permanent_status === 'not_separated') separatePermanent(prepared.scene_id)
   } catch (error) {
     if (request === regionRequest) Object.assign(state, { liveStatus: 'error', liveError: error.message })
   }
@@ -117,12 +122,30 @@ export async function chooseRegion(bounds) {
     const data = await apiJson('/api/live/discover?' + new URLSearchParams({ bbox: bounds.join(',') }))
     if (request !== regionRequest) return
     state.liveCandidates = data.scenes
-    if (!data.scenes.length) throw new Error('Для области нет полного снимка VV/VH. Выберите соседний участок или другую рамку.')
+    if (!data.scenes.length) throw new Error('Для этой рамки нет снимка Sentinel‑1 с обеими поляризациями. Сдвиньте рамку или уменьшите её.')
     await loadLiveItem(data.scenes[0].id)
   } catch (error) {
     if (request === regionRequest) Object.assign(state, { liveStatus: 'error', liveError: error.message })
   }
 }
+/*
+ * Постоянная вода для выбранной рамки: те же пять моделей на снимках Sentinel-1
+ * за год до паводка. Живёт в хранилище, чтобы ход расчёта пережил сворачивание панели.
+ */
+export const permanentJob = reactive({ sceneId: null, status: 'idle', message: '' })
+export async function separatePermanent(sceneId) {
+  if (permanentJob.sceneId === sceneId && permanentJob.status === 'running') return
+  Object.assign(permanentJob, { sceneId, status: 'running', message: '' })
+  try {
+    await apiJson('/api/live/permanent?' + new URLSearchParams({ scene_id: sceneId }), { method: 'POST' })
+    if (permanentJob.sceneId !== sceneId) return
+    permanentJob.status = 'done'
+    if (state.sceneId === sceneId) await fetchAnalysis()
+  } catch (error) {
+    if (permanentJob.sceneId === sceneId) Object.assign(permanentJob, { status: 'error', message: error.message })
+  }
+}
+
 export function resetRegion() {
   ++regionRequest
   Object.assign(state, { region: null, drawing: false, selectedAssetId: null, mustCover: null,
@@ -147,7 +170,7 @@ export function loadCatalog() {
   catalogRequest ??= fetch('/api/chips')
     .then(response => { if (!response.ok) throw new Error('API ' + response.status); return response.json() })
     .then(data => Object.assign(catalog, { events: data.events, chips: data.chips, loaded: true, error: '' }))
-    .catch(() => { catalog.error = 'Каталог чипов недоступен. Проверьте, что API запущен.' })
+    .catch(() => { catalog.error = 'Список стран не загрузился: сервер расчёта не отвечает.' })
     .finally(() => { catalogRequest = undefined })
   return catalogRequest
 }
@@ -172,7 +195,7 @@ async function poll(id) {
     if (!response.ok) throw new Error('API ' + response.status)
     ingest.job = await response.json()
   } catch {
-    ingest.job = { ...(ingest.job || {}), stage: 'error', message: 'Связь с API потеряна. Повторите запуск.' }
+    ingest.job = { ...(ingest.job || {}), stage: 'error', message: 'Связь с сервером потеряна. Запустите расчёт ещё раз.' }
   }
   finish()
 }
@@ -186,11 +209,11 @@ export async function runChip(chipId) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chip_id: chipId }),
     })
-    if (!response.ok) throw new Error(response.status === 404 ? 'Чип не найден в официальном списке' : 'API ' + response.status)
+    if (!response.ok) throw new Error(response.status === 404 ? 'Такого снимка нет в наборе Sen1Floods11' : 'API ' + response.status)
     ingest.job = await response.json()
     if (ingestRunning.value) pollTimer = setInterval(() => poll(ingest.job.id), 800)
     else finish()
   } catch (cause) {
-    ingest.job = { stage: 'error', message: 'Запуск не принят: ' + cause.message, timings: {} }
+    ingest.job = { stage: 'error', message: 'Расчёт не запустился: ' + cause.message, timings: {} }
   }
 }

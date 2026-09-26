@@ -5,8 +5,10 @@ import { ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { state } from './store'
-import { number } from './lib/format'
-import { BLANK, cachedWater, waterImage } from './lib/water'
+import { compactRub, number, percent } from './lib/format'
+import { waterField } from './lib/water'
+import { WaterLayer } from './lib/waterLayer'
+import { bindTip } from './lib/tip'
 import MorphLoader from './components/MorphLoader.vue'
 import { preloadGlobe, preloadTilt } from './lib/prefetch'
 
@@ -23,6 +25,8 @@ const veilLoader = ref(false)
 let map
 let ready = false
 let loadedScene = ''
+// Вода перерисовывается и без смены сцены: когда для рамки нашлась постоянная вода.
+let loadedWater = ''
 // Стиль перезагружен сменой темы: снимки кладём заново, а камеру не трогаем.
 let keepCamera = false
 let dragStart = null
@@ -32,41 +36,42 @@ let phase = null
 let flight = 0
 const markers = new Map()
 const empty = { type: 'FeatureCollection', features: [] }
-const rasterNames = ['radar', 'probability', 'model', 'baseline', 'reference', 'uncertainty']
+// Маску воды рисует WebGL-слой воды, остальные слои приходят готовыми PNG.
+const rasterNames = ['radar', 'probability', 'baseline', 'reference', 'uncertainty']
+const rasterFile = { radar: 'radar', probability: 'probability', baseline: 'baseline', reference: 'reference', uncertainty: 'doubt' }
 const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+const water = new WaterLayer('water-layer', { onError: error => console.warn(error) })
 
-// Цвета оверлеев в тон интерфейсу: контур снимка — акцент, зоны и выделение — янтарь риска.
+// Цвета оверлеев в тон интерфейсу: объекты и их зоны янтарные, как риск, неуверенность фиолетовая.
 const COLORS = {
-  light: { chip: '#3d7686', zone: '#dd9a5e', zoneLine: '#c98049', zoneIdle: '#7c9ea9', region: '#e3b26f', regionLine: '#c98049' },
-  dark: { chip: '#a6d3df', zone: '#efc68e', zoneLine: '#efc68e', zoneIdle: '#86a9b4', region: '#efc68e', regionLine: '#f4d3a4' },
+  light: { chip: '#3d7686', object: '#c98049', doubt: '#7a5bd0', broad: '#3d7686', region: '#e3b26f', regionLine: '#c98049' },
+  dark: { chip: '#a6d3df', object: '#efc68e', doubt: '#b9a2f0', broad: '#a6d3df', region: '#efc68e', regionLine: '#f4d3a4' },
 }
 
-/*
- * Слои приходят готовыми PNG одного насыщенного цвета (эталонные растры не меняем),
- * поэтому мягкость задаём при отрисовке: подъём тёмного края делает цвет пастельным,
- * воду чуть уводим в бирюзу, а линейное сглаживание убирает ступеньки 10-метровых пикселей.
- * Итоговый цвет маски воды посчитан по формулам шейдера и записан в --water, чтобы
- * легенда и панель совпадали с картой.
- */
 function rasterLook(name) {
-  // Маска уже нарисована водой (lib/water.js), фильтры ей не нужны.
-  if (name === 'model') return { 'raster-resampling': 'linear' }
   const dark = state.theme === 'dark'
   return {
-    'raster-resampling': 'linear',
-    'raster-brightness-min': dark ? 0.18 : 0.3,
+    'raster-resampling': name === 'uncertainty' ? 'nearest' : 'linear',
+    'raster-brightness-min': name === 'uncertainty' ? 0 : dark ? 0.18 : 0.3,
     ...(name === 'probability' ? { 'raster-hue-rotate': -8, 'raster-saturation': -0.1 } : {}),
   }
 }
 const theme = () => (state.theme === 'dark' ? 'dark' : 'light')
+const layerUrl = (chipId, name) => '/api/demo/' + chipId + '/' + rasterFile[name] + '.png'
+
 let waterToken = 0
-async function refreshWater(chipId, coords) {
+async function loadWater(chip, reveal) {
   const token = ++waterToken
+  water.clear()
   try {
-    const url = await waterImage('/api/demo/' + chipId + '/model.png', theme())
-    if (token === waterToken && ready) map.getSource('model')?.updateImage({ url, coordinates: coords })
+    const permanent = ['jrc_waterhand', 's1_history'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
+    const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent)
+    if (token !== waterToken) return
+    const [w, s, e, n] = chip.bbox
+    const meters = (e - w) * 111320 * Math.cos(((s + n) / 2) * Math.PI / 180) / field.width
+    water.setScene(field, chip.bbox, meters, { reveal })
   } catch (error) {
-    console.warn('Water texture:', error)
+    console.warn('Water field:', error)
   }
 }
 function polygon(bounds) {
@@ -79,12 +84,21 @@ function coordinates(bounds) {
   return [[w, n], [e, n], [e, s], [w, s]]
 }
 function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (state.theme === 'dark' ? 'dark' : 'positron') }
-function beforeLabels() { return map.getStyle().layers.find(layer => layer.type === 'symbol')?.id }
+/*
+ * Данные кладём под подписи, но над всеми линиями подложки. В тёмном стиле
+ * первые подписи (названия морей) идут раньше дорог и границ, и вставка перед
+ * ними оставила бы чёрные границы стран поверх спутника и воды.
+ */
+function beforeLabels() {
+  const layers = map.getStyle().layers
+  const lastShape = layers.findLastIndex(layer => layer.type !== 'symbol')
+  return layers.slice(lastShape + 1).find(layer => layer.type === 'symbol')?.id
+}
 function setData(id, data) { map.getSource(id)?.setData(data) }
 
 function buildOverlays() {
   if (!map) return
-  const c = COLORS[state.theme === 'dark' ? 'dark' : 'light']
+  const c = COLORS[theme()]
   const before = beforeLabels()
   for (const id of ['chip', 'region', 'preview', 'zones', 'probe']) map.addSource(id, { type: 'geojson', data: empty })
   map.addSource('satellite', {
@@ -94,23 +108,29 @@ function buildOverlays() {
   map.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite',
     layout: { visibility: state.basemap === 'satellite' ? 'visible' : 'none' },
     paint: { 'raster-fade-duration': 180 } }, before)
-  const chipId = state.analysis?.chip.chip_id || 'Nigeria_812045'
-  const imageCoords = coordinates(state.analysis?.chip.bbox || [5.795, 9.06, 5.841, 9.107])
+  const chip = state.analysis?.chip
+  const chipId = chip?.chip_id || 'Nigeria_812045'
+  const imageCoords = coordinates(chip?.bbox || [5.795, 9.06, 5.841, 9.107])
   for (const name of rasterNames) {
-    map.addSource(name, { type: 'image', url: '/api/demo/' + chipId + '/' + name + '.png', coordinates: imageCoords })
+    map.addSource(name, { type: 'image', url: layerUrl(chipId, name), coordinates: imageCoords })
     map.addLayer({ id: name + '-layer', type: 'raster', source: name,
       paint: { 'raster-opacity': name === 'radar' ? 0.7 : state.overlayOpacity / 100,
         'raster-opacity-transition': { duration: 350 }, 'raster-fade-duration': 250,
         ...(name === 'radar' ? {} : rasterLook(name)) } }, before)
   }
+  water.set({ theme: theme() })
+  map.addLayer(water, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
+  const zoneColor = ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]
   map.addLayer({ id: 'zone-fill', type: 'fill', source: 'zones',
-    paint: { 'fill-color': ['case', ['==', ['get', 'active'], 1], c.zone, c.zoneIdle],
-      'fill-opacity': ['case', ['==', ['get', 'active'], 1], 0.22, 0.05] } }, before)
+    paint: { 'fill-color': zoneColor,
+      'fill-opacity': ['case', ['==', ['get', 'kind'], 'broad'], ['case', ['==', ['get', 'active'], 1], 0.06, 0],
+        ['==', ['get', 'hover'], 1], 0.34, ['==', ['get', 'active'], 1], 0.2, 0.03] } }, before)
   map.addLayer({ id: 'zone-outline', type: 'line', source: 'zones',
-    paint: { 'line-color': ['case', ['==', ['get', 'active'], 1], c.zoneLine, c.zoneIdle],
-      'line-width': ['case', ['==', ['get', 'active'], 1], 2.2, 1],
+    paint: { 'line-color': zoneColor,
+      'line-width': ['case', ['==', ['get', 'hover'], 1], 3.2, ['==', ['get', 'active'], 1], 2.2, 1],
+      'line-opacity': ['case', ['==', ['get', 'active'], 1], 1, 0.55],
       'line-dasharray': [2, 1.3] } }, before)
   map.addLayer({ id: 'region-fill', type: 'fill', source: 'region', paint: { 'fill-color': c.region, 'fill-opacity': 0.12 } }, before)
   map.addLayer({ id: 'region-outline', type: 'line', source: 'region', paint: { 'line-color': c.regionLine, 'line-width': 2.5 } }, before)
@@ -137,6 +157,12 @@ function buildOverlays() {
   emit('ready')
 }
 
+function markerTip(asset, rank) {
+  const where = asset.loss_status === 'permanent_water' ? 'на постоянной воде, ущерба от паводка нет'
+    : asset.p_flood == null ? 'нет данных радара' : `вода ${percent(asset.p_flood)} · ущерб ${compactRub(asset.expected_loss_rub)}`
+  return `${rank}. ${asset.name}: ${where}`
+}
+
 function updateMarkers() {
   if (!map || !state.analysis) return
   const currentIds = new Set()
@@ -156,29 +182,46 @@ function updateMarkers() {
       element.addEventListener('click', event => { event.stopPropagation(); emit('asset', asset.id) })
       pin.append(element)
       const marker = new maplibregl.Marker({ element: pin, anchor: 'center' }).setLngLat([asset.longitude, asset.latitude]).addTo(map)
-      entry = { marker, element }
+      entry = { marker, element, untip: null }
       markers.set(asset.id, entry)
     }
     // На маркере место в рейтинге ущерба, а не служебный ID: сразу видно, куда смотреть первым.
-    entry.element.textContent = String(ranks.get(asset.id))
+    const rank = ranks.get(asset.id)
+    entry.element.textContent = String(rank)
     entry.marker.setLngLat([asset.longitude, asset.latitude])
     entry.element.classList.toggle('selected', asset.id === state.selectedAssetId)
-    entry.element.classList.toggle('high-risk', asset.p_flood >= state.analysis.chip.model_threshold)
-    entry.element.setAttribute('aria-label', `${ranks.get(asset.id)}. ${asset.name}, вероятность воды ${Math.round(asset.p_flood * 100)}%`)
+    entry.element.classList.toggle('high-risk', asset.loss_status === 'ok' && asset.p_flood >= state.analysis.chip.model_threshold)
+    entry.element.classList.toggle('covered', (state.analysis.strategies[state.strategy]?.covered_asset_ids || []).includes(asset.id) && state.showZones)
+    const text = markerTip(asset, rank)
+    entry.element.setAttribute('aria-label', text)
+    entry.untip?.()
+    entry.untip = bindTip(entry.element, text)
   }
   for (const [id, entry] of markers) {
-    if (!currentIds.has(id)) { entry.marker.remove(); markers.delete(id) }
+    if (!currentIds.has(id)) { entry.untip?.(); entry.marker.remove(); markers.delete(id) }
   }
+}
+
+function zoneFeatures() {
+  if (!state.showZones) return []
+  const plan = state.analysis.strategies[state.strategy]
+  const active = new Set(plan?.zone_ids || [])
+  // Широкая зона видна только у стратегии B: на остальных она закрыла бы весь снимок.
+  return state.analysis.zones
+    .filter(zone => zone.kind !== 'broad' || active.has(zone.id))
+    .map(zone => ({ type: 'Feature', geometry: zone.geometry,
+      properties: { id: zone.id, kind: zone.kind, active: active.has(zone.id) ? 1 : 0, hover: state.hoverZoneId === zone.id ? 1 : 0 } }))
 }
 
 function syncMap() {
   if (!ready || !state.analysis) return
   if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
     for (const name of rasterNames) map.setLayoutProperty(name + '-layer', 'visibility', 'none')
+    water.set({ visible: false })
     setData('chip', empty)
     setData('zones', empty)
     setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
-    for (const entry of markers.values()) entry.marker.remove()
+    for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() }
     markers.clear()
     return
   }
@@ -187,17 +230,19 @@ function syncMap() {
   // появился бы на другом конце карты, а старое место опустело бы посреди полёта.
   if (loadedScene !== chip.chip_id && phase !== 'out') {
     const imageCoords = coordinates(chip.bbox)
-    for (const name of rasterNames) {
-      const url = '/api/demo/' + chip.chip_id + '/' + name + '.png'
-      // Маску рисуем водой; пока она считается, слой пустой, а не старым плоским цветом.
-      map.getSource(name).updateImage({ url: name === 'model' ? cachedWater(url, theme()) || BLANK : url, coordinates: imageCoords })
-    }
-    refreshWater(chip.chip_id, imageCoords)
+    for (const name of rasterNames) map.getSource(name).updateImage({ url: layerUrl(chip.chip_id, name), coordinates: imageCoords })
     const first = !loadedScene
+    // Вода разливается при каждой новой сцене; после смены темы она уже была на экране.
+    loadWater(chip, !keepCamera)
+    loadedWater = chip.chip_id + '|' + chip.permanent_status
     if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
     if (!phase && !keepCamera && (first || !state.region)) focusChip()
     keepCamera = false
+  }
+  if (phase !== 'out' && loadedWater !== chip.chip_id + '|' + chip.permanent_status) {
+    loadedWater = chip.chip_id + '|' + chip.permanent_status
+    loadWater(chip, false)
   }
   const hidden = phase !== null
   map.setLayoutProperty('radar-layer', 'visibility', state.showRadar ? 'visible' : 'none')
@@ -207,13 +252,11 @@ function syncMap() {
     map.setLayoutProperty(name + '-layer', 'visibility', state.layerMode === name ? 'visible' : 'none')
     map.setPaintProperty(name + '-layer', 'raster-opacity', hidden ? 0 : state.overlayOpacity / 100)
   }
+  water.set({ visible: state.layerMode === 'model' && !hidden, opacity: state.overlayOpacity / 100 })
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
   if (!hidden) setData('chip', collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
-  const active = new Set(state.analysis.strategies[state.strategy]?.zone_ids || [])
-  const zones = state.showZones ? state.analysis.zones.filter(zone => active.has(zone.id) || zone.id !== 'ZALL') : []
-  setData('zones', collection(zones.map(zone => ({ type: 'Feature', geometry: zone.geometry,
-    properties: { id: zone.id, active: active.has(zone.id) ? 1 : 0 } }))))
+  setData('zones', collection(zoneFeatures()))
   updateMarkers()
 }
 
@@ -270,8 +313,8 @@ function analysisFor(id) {
  * всегда упирается в загрузку тайлов: MapLibre запрашивает их для каждого
  * промежуточного масштаба на всю ширину экрана, и на лету видны пустые
  * прямоугольники. Поэтому карта закрывается вуалью, под ней камера мгновенно
- * встаёт на место, и вуаль уходит только после события idle — когда подложка
- * и снимки загружены целиком. Движение даёт CSS-масштаб готового кадра.
+ * встаёт на место, и вуаль уходит только после загрузки тайлов. Движение
+ * даёт CSS-масштаб готового кадра.
  *
  * whenCovered — что дождаться под вуалью до прыжка (расчёт для новой сцены).
  * from: 'near' — кадр «наезжает» (к снимку), 'far' — «отъезжает» (к глобусу).
@@ -301,6 +344,8 @@ async function veiledMove(move, { whenCovered, from = 'near', limit = 3000, laye
   clearTimeout(loaderTimer)
   veilLoader.value = false
   veiled.value = false
+  // Вода разливается, когда шторка уже поднялась, а не под ней.
+  if (layersChange) water.playReveal()
   if (!quick) {
     const scale = from === 'far' ? 0.955 : 1.045
     container.value?.animate(
@@ -352,11 +397,17 @@ function focusAsset(asset) {
   }
   map.flyTo({ ...camera, duration: 750, essential: false })
 }
+function focusZone(zone) {
+  if (!map || !zone) return
+  const [w, s, e, n] = zone.bounds
+  const options = { padding: padding(), maxZoom: 14.6, duration: reducedMotion() ? 0 : 750, essential: false }
+  if (state.globeView) return veiledMove(() => map.fitBounds([[w, s], [e, n]], { ...options, duration: 0 }))
+  map.fitBounds([[w, s], [e, n]], options)
+}
 function toggleTilt() {
   if (state.globeView) return
   state.tilted = !state.tilted
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  map?.easeTo({ pitch: state.tilted ? 58 : 0, bearing: state.tilted ? -18 : 0, duration: reduced ? 0 : 800, essential: false })
+  map?.easeTo({ pitch: state.tilted ? 58 : 0, bearing: state.tilted ? -18 : 0, duration: reducedMotion() ? 0 : 800, essential: false })
 }
 
 function setProbePoint(longitude, latitude) {
@@ -383,12 +434,17 @@ async function inspectAt(longitude, latitude) {
 }
 const PROBE_MESSAGES = {
   outside_coverage: 'В этой точке нет снимка',
-  no_valid_pixel: 'Пиксель без валидного сигнала',
+  no_valid_pixel: 'Радар здесь не дал сигнала',
   error: 'Не удалось прочитать пиксель',
 }
-const water = value => value == null ? 'нет разметки' : value ? 'вода' : 'суша'
+const water3 = value => value == null ? 'нет разметки' : value ? 'вода' : 'суша'
+function waterKind(pixel) {
+  if (!pixel.model_water) return 'суша'
+  if (pixel.permanent_water == null) return 'вода'
+  return pixel.permanent_water ? 'постоянная вода' : 'паводок'
+}
 
-defineExpose({ focusChip, showGlobe, focusAsset, toggleTilt })
+defineExpose({ focusChip, showGlobe, focusAsset, focusZone, toggleTilt, playReveal: () => water.playReveal() })
 
 function previewSelection(start, end) {
   const bounds = [Math.min(start.lng, end.lng), Math.min(start.lat, end.lat),
@@ -478,15 +534,22 @@ onMounted(() => {
   })
   map.on('touchend', event => { if (dragStart) finishSelection(event.lngLat) })
 })
-onBeforeUnmount(() => { for (const entry of markers.values()) entry.marker.remove(); map?.remove() })
-watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy,
+onBeforeUnmount(() => { for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
+watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
 watch(() => state.sceneId, id => flyToScene(id))
-watch(() => state.theme, () => { ready = false; loadedScene = ''; keepCamera = true; map?.setStyle(styleUrl(), { diff: false }) })
+watch(() => state.theme, () => {
+  if (!map) return
+  ready = false
+  // Камеру держим, только если снимок уже был на экране; иначе первая сцена не наехала бы.
+  keepCamera = Boolean(loadedScene)
+  loadedScene = ''
+  map.setStyle(styleUrl(), { diff: false })
+})
 watch(() => state.drawing, value => {
   if (!map) return
   if (value) { map.dragPan.disable(); map.touchZoomRotate.disable(); map.getCanvas().style.cursor = 'crosshair' }
@@ -505,14 +568,14 @@ watch(() => state.drawing, value => {
   </div>
   <Transition name="pop">
     <div v-if="state.drawing" class="panel capsule map-hint">
-      <span class="pulse"></span>{{ dragging ? 'Отпустите, чтобы проанализировать область' : 'Протяните рамку по карте' }}
+      <span class="pulse"></span>{{ dragging ? 'Отпустите, чтобы посчитать область' : 'Протяните рамку по карте' }}
     </div>
   </Transition>
   <Transition name="rise">
     <div v-if="probe || probeLoading" class="panel pixel-card" aria-live="polite">
       <div class="pixel-head">
-        <span><ScanSearch :size="15" />Пиксель Sentinel‑1</span>
-        <button class="ghost-icon tiny" aria-label="Закрыть данные пикселя" @click="clearProbe"><X :size="15" /></button>
+        <span><ScanSearch :size="15" />Точка на снимке</span>
+        <button class="ghost-icon tiny" aria-label="Закрыть данные точки" @click="clearProbe"><X :size="15" /></button>
       </div>
       <p v-if="probeLoading" class="pixel-message">Читаем снимок…</p>
       <template v-else-if="probe?.status === 'ok'">
@@ -521,9 +584,11 @@ watch(() => state.drawing, value => {
           <span class="unit">вероятность воды</span>
         </div>
         <div class="mini-rows">
-          <div v-tip="'Решение модели при пороге p ≥ ' + probe.model_threshold + ' и классического порога VH'"><span>Модель / порог VH</span><b>{{ water(probe.model_water) }} / {{ water(probe.baseline_water) }}</b></div>
-          <div><span>Разброс ансамбля</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
-          <div v-tip="state.analysis?.chip.source_kind === 'live_sentinel1_rtc' ? 'Для нового снимка ручной разметки нет' : 'Ручная метка Sen1Floods11 только для контроля качества, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water(probe.reference_water) }}</b></div>
+          <div v-tip="'Что показывает карта в этой точке. Постоянная вода: река или озеро по слою JRC, это не паводок'"><span>На карте</span><b>{{ waterKind(probe) }}</b></div>
+          <div v-tip="'Вероятность, что карта окрасила эту точку неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(probe.map_error_probability, 1) }}</b></div>
+          <div v-tip="'Классический метод для сравнения: вода там, где VH ниже −23,6 дБ'"><span>Порог VH</span><b>{{ water3(probe.baseline_water) }}</b></div>
+          <div v-tip="state.analysis?.chip.source_kind === 'live_sentinel1_rtc' ? 'Для нового снимка ручной разметки нет' : 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water3(probe.reference_water) }}</b></div>
+          <div v-tip="'Насколько расходятся пять моделей ансамбля, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
         </div>
         <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>
       </template>

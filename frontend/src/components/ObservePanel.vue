@@ -1,10 +1,10 @@
 <script setup>
 import { computed } from 'vue'
-import { ChevronLeft, Crosshair, Globe2, Info, RotateCcw, Waves } from '@lucide/vue'
+import { ChevronLeft, Crosshair, Globe2, Info, LoaderCircle, RotateCcw, Waves } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import MorphPanel from './MorphPanel.vue'
 import ShareBar from './ShareBar.vue'
-import { hasData, isLive, resetRegion, state } from '../store'
+import { hasData, isLive, permanentJob, permanentSeparated, resetRegion, state } from '../store'
 import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
@@ -12,24 +12,39 @@ const region = computed(() => state.analysis?.region)
 const livePending = computed(() => ['searching', 'preparing', 'error'].includes(state.liveStatus))
 
 const LAYERS = [
-  { value: 'model', label: 'Маска', color: 'var(--water)', hint: 'Вода по модели: вероятность выше порога калибровки' },
-  { value: 'probability', label: 'Вероятность', color: 'var(--water-soft)', hint: 'Непрерывная вероятность воды p от 0 до 1' },
-  { value: 'uncertainty', label: 'Неуверенность', color: 'var(--uncertain)', hint: 'Разброс пяти моделей ансамбля: где они не согласны между собой' },
-  { value: 'baseline', label: 'Порог VH', color: 'var(--risk)', hint: 'Классический метод для сравнения: VH < −23,6 dB' },
+  { value: 'model', label: 'Вода', color: 'var(--water)', hint: 'Вода по модели. Паводок и постоянная вода окрашены по-разному' },
+  { value: 'probability', label: 'Вероятность', color: 'var(--water-soft)', hint: 'Вероятность воды в каждой точке, от 0 до 100%' },
+  { value: 'uncertainty', label: 'Сомнения', color: 'var(--uncertain)', hint: 'Где карта может ошибаться. Туда в первую очередь нужен новый снимок' },
+  { value: 'baseline', label: 'Порог VH', color: 'var(--risk)', hint: 'Классический метод для сравнения: вода там, где VH ниже −23,6 дБ' },
   { value: 'reference', label: 'Ручная метка', color: 'var(--reference)', hint: 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт' },
-  { value: 'none', label: 'Без слоя', color: 'var(--surface-3)', hint: 'Подложка без модели; радар можно включить отдельно' },
+  { value: 'none', label: 'Без слоя', color: 'var(--surface-3)', hint: 'Только подложка. Радар можно включить отдельно' },
 ]
+
+// Главное число показывает паводок: постоянная вода к ущербу не относится.
+const headline = computed(() => {
+  const r = region.value
+  if (!r) return null
+  return permanentSeparated.value
+    ? { caption: 'Паводок по модели', value: r.flood_water_area_km2,
+        hint: r.permanent_status === 's1_history'
+          ? 'Вода по модели минус постоянная вода: то, что было водой на всех снимках Sentinel‑1 за год до паводка'
+          : 'Вода по модели минус постоянная вода JRC (реки и озёра, которые были водой и в 1984, и в 2018 году)' }
+    : { caption: 'Вода по модели', value: r.model_water_area_km2,
+        hint: 'Постоянная вода для этой области не отделена: число включает реки и озёра' }
+})
 
 const segments = computed(() => {
   const r = region.value
   if (!r) return []
+  const total = r.observed_area_km2 || 1
   const water = r.model_water_area_km2
   const dry = Math.max(r.observed_area_km2 - water, 0)
-  const total = r.observed_area_km2 || 1
-  return [
-    { key: 'water', label: 'Вода', value: km(water), share: water / total, color: 'var(--water)', hint: `${percent(water / total, 1)} наблюдаемой площади. Постоянные водоёмы не отделены от паводка` },
-    { key: 'dry', label: 'Суша', value: km(dry), share: dry / total, color: 'var(--surface-3)', hint: `${percent(dry / total, 1)} наблюдаемой площади` },
-  ]
+  const parts = permanentSeparated.value
+    ? [{ key: 'flood', label: 'Паводок', value: r.flood_water_area_km2, color: 'var(--water-shallow)' },
+       { key: 'river', label: 'Река, озеро', value: r.permanent_water_area_km2, color: 'var(--water-deep)' }]
+    : [{ key: 'water', label: 'Вода', value: water, color: 'var(--water)' }]
+  return [...parts, { key: 'dry', label: 'Суша', value: dry, color: 'var(--surface-3)' }]
+    .map(part => ({ ...part, share: part.value / total, value: km(part.value), hint: `${percent(part.value / total, 1)} снятой площади` }))
 })
 
 function reset() {
@@ -47,7 +62,7 @@ function toggleDrawing() {
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть панель воды'" @click="state.observeOpen = true">
         <Waves :size="16" class="accent" />
-        <span v-if="hasData" class="tabular">{{ number(region.model_water_area_km2, 1) }} км² воды</span>
+        <span v-if="hasData && headline" class="tabular">{{ number(headline.value, 1) }} км² {{ permanentSeparated ? 'паводка' : 'воды' }}</span>
         <span v-else>Вода</span>
       </button>
     </template>
@@ -62,10 +77,10 @@ function toggleDrawing() {
 
     <div class="panel-scroll">
       <template v-if="hasData">
-        <section class="block" v-tip="'Площадь пикселей с вероятностью воды выше порога ' + state.analysis.chip.model_threshold + ' внутри области'">
-          <span class="caption">Вода по модели</span>
+        <section class="block" v-tip="headline.hint">
+          <span class="caption">{{ headline.caption }}</span>
           <div class="hero">
-            <AnimatedNumber class="display" :value="region.model_water_area_km2" :format="v => number(v, 1)" />
+            <AnimatedNumber class="display" :value="headline.value" :format="v => number(v, 1)" />
             <span class="unit">км²</span>
           </div>
           <ShareBar :segments="segments" />
@@ -73,16 +88,18 @@ function toggleDrawing() {
 
         <div class="rows">
           <div v-if="region.data_status === 'partial_coverage'" class="row coverage-warning"
-            v-tip="'Наблюдение покрывает только валидные VV/VH пиксели. Пустая часть не входит в оценку воды и риска'">
-            <span>Покрытие снимка</span><strong class="tabular">{{ percent(region.observed_area_km2 / region.area_km2, 1) }}</strong>
+            v-tip="'Радар дал сигнал только на части рамки. Пустая часть не входит ни в воду, ни в ущерб'">
+            <span>Снимок покрывает</span><strong class="tabular">{{ percent(region.observed_area_km2 / region.area_km2, 1) }}</strong>
           </div>
-          <div class="row" v-tip="'Средняя вероятность воды по пикселям области'">
-            <span>Средняя вероятность</span><strong class="tabular">{{ percent(region.mean_probability, 1) }}</strong>
+          <div v-if="isLive && permanentJob.sceneId === state.sceneId && permanentJob.status !== 'done'" class="row permanent-job"
+            v-tip="permanentJob.status === 'error' ? permanentJob.message : 'Те же пять моделей смотрят на снимки Sentinel‑1 за год до паводка. Вода, которая есть на всех, считается рекой или озером и вычитается из паводка'">
+            <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра на снимках за год до паводка…' }}</span>
+            <LoaderCircle v-if="permanentJob.status === 'running'" :size="15" class="spin accent" />
           </div>
-          <div class="row" v-tip="'Доля пикселей, где модели ансамбля заметно расходятся. Там стоит доснять'">
-            <span>Неоднозначных пикселей</span><strong class="tabular">{{ percent(region.uncertain_share, 1) }}</strong>
+          <div class="row" v-tip="'Площадь, где шанс ошибки карты 8% и выше. На независимой проверке в таких точках ошибается каждый третий пиксель'">
+            <span>Сомнительная площадь</span><strong class="tabular">{{ km(region.doubtful_area_km2) }}</strong>
           </div>
-          <div class="row" v-tip="'Столько воды находит классический порог VH < −23,6 dB на той же области'">
+          <div class="row" v-tip="'Столько воды находит классический метод на той же площади: VH ниже −23,6 дБ'">
             <span>Порог VH нашёл бы</span><strong class="tabular">{{ km(region.baseline_water_area_km2) }}</strong>
           </div>
         </div>
@@ -90,7 +107,7 @@ function toggleDrawing() {
 
       <div v-else-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="empty">
         <Globe2 :size="26" />
-        <strong>{{ state.liveStatus === 'searching' ? 'Ищем VV/VH' : 'Читаем радар и считаем модель' }}</strong>
+        <strong>{{ state.liveStatus === 'searching' ? 'Ищем снимки VV и VH' : 'Читаем радар, модель ищет воду' }}</strong>
         <span>Снимок и его дата придут из каталога Sentinel‑1 RTC.</span>
       </div>
       <div v-else-if="state.liveStatus === 'error'" class="empty">
@@ -105,17 +122,17 @@ function toggleDrawing() {
       </div>
 
       <section class="block">
-        <span class="caption">Область анализа</span>
+        <span class="caption">Область на карте</span>
         <div class="button-row">
           <button class="tonal-button" :class="{ active: state.drawing }" @click="toggleDrawing">
-            <Crosshair :size="16" />{{ state.drawing ? 'Отменить выбор' : 'Выделить на карте' }}
+            <Crosshair :size="16" />{{ state.drawing ? 'Отменить рамку' : 'Выделить рамкой' }}
           </button>
           <button class="tonal-icon" v-tip="'Вернуться ко всему снимку'" aria-label="Вернуться ко всему снимку" @click="reset"><RotateCcw :size="16" /></button>
         </div>
       </section>
 
       <section v-if="hasData" class="block">
-        <span class="caption">Слой на карте</span>
+        <span class="caption">Что показать на карте</span>
         <div class="chip-group" role="group" aria-label="Слой карты">
           <button v-for="layer in LAYERS.filter(item => !isLive || item.value !== 'reference')" :key="layer.value" v-tip="layer.hint" class="chip"
             :class="{ selected: state.layerMode === layer.value }" :aria-pressed="state.layerMode === layer.value"
@@ -125,18 +142,18 @@ function toggleDrawing() {
         </div>
         <div class="toggles">
           <button class="toggle" :aria-pressed="state.showRadar" @click="state.showRadar = !state.showRadar">
-            <span>Показать радар VH</span><span class="switch" :class="{ on: state.showRadar }"></span>
+            <span>Радарный снимок VH</span><span class="switch" :class="{ on: state.showRadar }"></span>
           </button>
           <button class="toggle" :aria-pressed="state.showZones" @click="state.showZones = !state.showZones">
-            <span>Зоны съёмки</span><span class="switch" :class="{ on: state.showZones }"></span>
+            <span>Зоны для заказа съёмки</span><span class="switch" :class="{ on: state.showZones }"></span>
           </button>
         </div>
       </section>
     </div>
 
     <footer class="panel-foot">
-      <span class="source" v-tip="isLive || livePending ? 'Снимок: Sentinel‑1 RTC. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34. Ручной метки для этой области нет' : 'Снимки и ручная метка: Sen1Floods11 v1.1. Маска и вероятности: замороженный ансамбль из пяти U‑Net ResNet34 с калибровкой Platt'">
-        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV/VH · U‑Net' : 'Sen1Floods11 · U‑Net' }}
+      <span class="source" v-tip="isLive || livePending ? 'Снимок: Sentinel‑1 RTC. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён. Ручной метки для этой области нет' : 'Снимки, ручная метка и постоянная вода: Sen1Floods11 v1.1. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён и откалиброван'">
+        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV и VH · U‑Net' : 'Sen1Floods11 · U‑Net · JRC' }}
       </span>
     </footer>
   </MorphPanel>

@@ -1,28 +1,39 @@
 <script setup>
 import { computed } from 'vue'
-import { ArrowRight, Info } from '@lucide/vue'
+import { ArrowRight, Info, Satellite } from '@lucide/vue'
 import RingGauge from './RingGauge.vue'
-import { state, testQuality } from '../store'
+import { chooseScene, ingest, ingestRunning, isLive, runChip, state, testQuality } from '../store'
 import { compactRub, number, percent } from '../lib/format'
 
 const region = computed(() => state.analysis.region)
+const quality = computed(() => state.analysis.quality)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
+const flood = computed(() => quality.value.flood_only?.test_core)
+const proxy = computed(() => state.analysis.asset_proxy_check)
 const METRICS = [
-  ['f1', 'F1', 'Среднее гармоническое точности и полноты'],
+  ['f1', 'F1', 'Среднее точности и полноты: одна цифра на оба вида ошибок'],
   ['recall', 'Полнота', 'Какую долю настоящей воды нашёл метод'],
   ['precision', 'Точность', 'Какая доля найденной воды действительно вода'],
 ]
+// Слабое место модели, которое не прячем: единственный крупный чип, где порог лучше.
+const WEAK_CHIP = 'Bolivia_242570'
+const weakReady = computed(() => state.analysis.scenes.some(scene => scene.chip_id === WEAK_CHIP))
+const weakRunning = computed(() => ingestRunning.value && ingest.chipId === WEAK_CHIP)
+function openWeak() {
+  if (weakReady.value) chooseScene(WEAK_CHIP)
+  else if (!ingestRunning.value) runChip(WEAK_CHIP)
+}
 </script>
 
 <template>
-  <section class="block" v-tip="'IoU на независимой выборке test_core: 55 чипов, оба метода на одних и тех же валидных пикселях'">
-    <span class="caption">Совпадение с ручной меткой, IoU</span>
+  <section class="block" v-tip="'Независимая проверка test_core: 55 снимков, которые модель не видела. Оба метода сравниваются на одних и тех же пикселях'">
+    <span class="caption">Совпадение с ручной разметкой, IoU</span>
     <div class="ring-pair">
       <RingGauge :value="testQuality.baseline.iou" label="порог VH" color="var(--risk)" :size="64" />
       <ArrowRight :size="18" class="muted" />
-      <RingGauge :value="testQuality.model.iou" label="модель" :size="84" />
+      <RingGauge :value="testQuality.model.iou" label="наша модель" :size="84" />
     </div>
-    <p class="gain tabular">+{{ number(gain, 1) }} п.п. к пороговому методу</p>
+    <p class="gain tabular">+{{ number(gain, 1) }} п.п. к классическому порогу</p>
   </section>
 
   <div class="rows">
@@ -30,37 +41,54 @@ const METRICS = [
       <span>{{ label }}</span>
       <span class="compare tabular">{{ percent(testQuality.baseline[key], 1) }}<ArrowRight :size="12" /><strong>{{ percent(testQuality.model[key], 1) }}</strong></span>
     </div>
+    <div v-if="flood" class="row" v-tip="'Та же проверка без постоянной воды JRC. Паводок искать труднее, чем реку, но модель всё равно заметно лучше порога'">
+      <span>Только паводок, IoU</span>
+      <span class="compare tabular">{{ percent(flood.baseline.iou, 1) }}<ArrowRight :size="12" /><strong>{{ percent(flood.model.iou, 1) }}</strong></span>
+    </div>
   </div>
 
   <section class="block">
-    <span class="caption">{{ state.analysis.chip.source_kind === 'live_sentinel1_rtc' ? 'В этой области нет ручной метки' : 'На выбранном участке' }}</span>
-    <p v-if="state.analysis.chip.source_kind === 'live_sentinel1_rtc'" class="source-line">IoU на новом снимке не измерен. Цифры выше — независимый test_core Sen1Floods11, а не эта территория.</p>
+    <span class="caption">{{ isLive ? 'В этой области нет ручной разметки' : 'На этом снимке' }}</span>
+    <p v-if="isLive" class="source-line">Точность на новом снимке не измерена. Цифры выше относятся к независимой проверке Sen1Floods11, а не к этой территории.</p>
     <div v-else class="mini-rows">
-      <div><span>IoU</span><span class="compare tabular">{{ percent(region.baseline_quality?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality?.iou, 1) }}</b></span></div>
-      <div v-tip="'Пиксели настоящей воды, которые метод пропустил'"><span>Пропущено пикселей воды</span><span class="compare tabular">{{ number(region.baseline_quality?.fn) }}<ArrowRight :size="12" /><b>{{ number(region.model_quality?.fn) }}</b></span></div>
-      <div><span>Пикселей с меткой</span><b class="tabular">{{ number(region.reference_pixels) }}</b></div>
+      <div><span>IoU, порог → модель</span><span class="compare tabular">{{ percent(region.baseline_quality?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality?.iou, 1) }}</b></span></div>
+      <div v-if="region.model_quality_flood" v-tip="'Без пикселей постоянной воды JRC'"><span>Только паводок</span><span class="compare tabular">{{ percent(region.baseline_quality_flood?.iou, 1) }}<ArrowRight :size="12" /><b>{{ percent(region.model_quality_flood?.iou, 1) }}</b></span></div>
+      <div v-tip="'Пиксели настоящей воды, которые метод не нашёл'"><span>Пропущено пикселей воды</span><span class="compare tabular">{{ number(region.baseline_quality?.fn) }}<ArrowRight :size="12" /><b>{{ number(region.model_quality?.fn) }}</b></span></div>
+      <div><span>Пикселей с разметкой</span><b class="tabular">{{ number(region.reference_pixels) }}</b></div>
     </div>
   </section>
 
   <section class="block">
-    <span class="caption">Надёжность вероятностей</span>
+    <span class="caption">Можно ли верить вероятностям</span>
     <div class="mini-rows">
-      <div v-tip="'Ошибка калибровки: насколько p совпадает с реальной частотой воды. Меньше лучше'"><span>ECE до и после калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
-      <div v-tip="'Насколько разброс ансамбля указывает на ошибки модели. 0,5 — случайно, 1 — идеально'"><span>Неуверенность ловит ошибки</span><b class="tabular">AUROC {{ number(testQuality.uncertainty_error_auroc, 3) }}</b></div>
-      <div v-tip="'Событие, которого не было в обучении'"><span>Новое событие Bolivia</span><b class="tabular">IoU {{ percent(state.analysis.quality.parts.bolivia.model.iou, 1) }}</b></div>
+      <div v-tip="'Ошибка калибровки ECE: насколько вероятность совпадает с реальной частотой воды. Чем меньше, тем лучше'"><span>Ошибка калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
+      <div v-tip="'Как хорошо шанс ошибки карты отличает ошибочные пиксели от верных. 0,5 значит наугад, 1 значит без промахов. По этой мере строятся сомнительные участки'"><span>Сомнения находят ошибки</span><b class="tabular">AUROC {{ number(testQuality.doubt_error_auroc ?? testQuality.uncertainty_error_auroc, 3) }}</b></div>
+      <div v-if="testQuality.doubt_error_rate_by_decile" v-tip="`Среди 10% самых сомнительных пикселей ошибается ${percent(testQuality.doubt_error_rate_by_decile[9], 1)}, в среднем по снимкам ${percent(testQuality.error_rate, 1)}`"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(testQuality.doubt_error_rate_by_decile[9], 1) }}</b></div>
+      <div v-tip="'Паводок в Боливии, которого не было в обучении'"><span>Новое событие, Боливия</span><b class="tabular">IoU {{ percent(quality.parts.bolivia.model.iou, 1) }}</b></div>
     </div>
   </section>
 
-  <section v-if="state.analysis.asset_proxy_check" class="block"
-    v-tip="'В тех же окрестностях 3×3 вокруг объектов p модели сравнивается с ручной меткой воды, V и q фиксированы. Проверяется перенос p в формулу ущерба, а не реальный денежный ущерб'">
-    <span class="caption">Проверка объектов по метке воды · {{ state.analysis.asset_proxy_check.n_assets }} из 10</span>
+  <section v-if="proxy && proxy.n_points" class="block"
+    v-tip="'В точках объектов вероятность модели сравнивается с ручной разметкой воды, стоимость и уязвимость те же. Так проверяется, как ошибка карты переходит в ущерб. Денежный ущерб на месте не измерялся'">
+    <span class="caption">{{ proxy.status === 'reference_chips_region_not_labeled'
+      ? `Проверка ущерба на размеченных снимках · ${proxy.n_points} точек`
+      : `Проверка ущерба по разметке · ${proxy.n_points} из 10 объектов` }}</span>
     <div class="mini-rows">
-      <div><span>Средняя ошибка p в точках</span><b class="tabular">{{ percent(state.analysis.asset_proxy_check.mean_absolute_probability_error, 1) }}</b></div>
-      <div><span>Средняя ошибка ущерба</span><b class="tabular">{{ compactRub(state.analysis.asset_proxy_check.mean_absolute_proxy_loss_error_rub) }}</b></div>
+      <div><span>Средняя ошибка вероятности в точке</span><b class="tabular">{{ percent(proxy.mean_absolute_probability_error, 1) }}</b></div>
+      <div><span>Средняя ошибка ущерба на объект</span><b class="tabular">{{ compactRub(proxy.mean_absolute_proxy_loss_error_rub) }}</b></div>
     </div>
+    <p v-if="proxy.status === 'reference_chips_region_not_labeled'" class="source-line">Для этой области разметки нет. Цифры взяты с трёх размеченных снимков: {{ proxy.reference_chip_ids.join(', ') }}.</p>
   </section>
 
-  <p class="source-line" v-tip="'Ручная метка не отделяет постоянную воду от паводковой. Учебные объекты и тариф не являются подтверждённым ущербом'">
+  <section class="block">
+    <span class="caption">Где модель хуже порога</span>
+    <p class="weak-note">На снимке {{ WEAK_CHIP }} IoU модели около 5%, у порога около 31%: модель нашла 6% воды, порог нашёл половину. Это единственный крупный снимок, где модель заметно хуже порога. Причину пока не разбирали.</p>
+    <button class="tonal-button weak-button" :disabled="ingestRunning && !weakRunning" @click="openWeak">
+      <Satellite :size="15" />{{ weakReady ? 'Открыть этот снимок' : weakRunning ? 'Считаем снимок…' : 'Рассчитать и открыть' }}
+    </button>
+  </section>
+
+  <p class="source-line" v-tip="'Ручная разметка Sen1Floods11 не делит воду на постоянную и паводок; постоянная вода берётся из слоя JRC. Учебные объекты и тариф не подтверждают реальный ущерб'">
     <Info :size="14" />Ограничения оценки
   </p>
 </template>
