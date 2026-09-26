@@ -343,13 +343,14 @@ def export(decision_id: str):
 <style>body{{font:16px system-ui;max-width:1080px;margin:40px auto;color:#172d34;padding:24px}}.grid{{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}}img{{width:100%;height:260px;object-fit:contain;background:#15262d}}article{{border-top:2px solid #317b7c;padding:20px 0}}h1{{font-size:36px}}b{{font-size:26px}}</style>
 <h1>Снимки для территории {esc(catalog['scene_id'])}</h1><p>Источник: SkyFi API · каталог получен {esc(catalog['captured_at'])}</p>
 <p>Стоимость по каталогу: <b>${p['cost']:.2f}</b> · покрытие {p['coverage_percent']:.1f}% · {p['coverage_km2']:.2f} км²</p>
+<p>Цены в долларах США из коммерческого каталога SkyFi. Это отдельный подбор снимков, а не расчёт по ПП № 840: сравнение стратегий A/B/C и бюджет в рублях лежат в основном комплекте FloodValue («Скачать решение»).</p>
 <p>{esc(catalog['disclaimer'])}</p><p>Исходная сцена паводка: {esc(catalog['event_date'])}. Снимки другой даты не подтверждают состояние территории в этот день.</p><div class="grid">{cards}</div><p>{esc(p['method'])}</p></html>'''
     data = io.BytesIO()
     with zipfile.ZipFile(data, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('comparison.html', report)
         archive.writestr('decision.json', json.dumps(decision, ensure_ascii=False, indent=2))
         archive.writestr('coverage.geojson', json.dumps({'type': 'FeatureCollection', 'features': [
-            {'type': 'Feature', 'geometry': o['coverage_geometry'], 'properties': {'id': o['id'], 'price': o['price'], 'date': o['capture_date']}}
+            {'type': 'Feature', 'geometry': o['coverage_geometry'], 'properties': {'id': o['id'], 'price': o['price'], 'currency': o.get('currency', 'USD'), 'date': o['capture_date']}}
             for o in selected]}, ensure_ascii=False))
     data.seek(0)
     return StreamingResponse(data, media_type='application/zip', headers={'Content-Disposition': f'attachment; filename="imagery-{decision_id}.zip"'})
