@@ -43,11 +43,23 @@ def _demo_ids() -> set[str]:
     return {scene["chip_id"] for scene in _demo_catalog()["scenes"]}
 
 
+# PNG map layers a scene may have on disk; doubt.png is drawn by the API from its uncertainty.
+LAYER_PNGS = ("model", "permanent", "radar", "probability", "baseline", "reference", "uncertainty")
+
+
+@lru_cache(maxsize=256)
+def scene_layers(scene_id: str) -> tuple[str, ...]:
+    """Layers the screen can fetch for this scene, so it never asks for a file that is not there."""
+    folder = scene_dir(scene_id)
+    return tuple(name for name in LAYER_PNGS if (folder / f"{name}.png").is_file()) + ("doubt",)
+
+
 def scene_catalog() -> dict:
     demo = _demo_catalog()
     ids = _demo_ids()
     scenes = [{**scene, "origin": scene.get("origin", "demo")} for scene in demo["scenes"]]
     scenes += [scene for scene in _runtime_scenes() if scene["chip_id"] not in ids]
+    scenes = [{**scene, "layers": list(scene_layers(scene["chip_id"]))} for scene in scenes]
     return {"default_chip_id": demo["default_chip_id"], "scenes": scenes}
 
 
@@ -69,7 +81,7 @@ def scene_dir(scene_id: str) -> Path:
 
 def refresh() -> None:
     """Forget cached catalog and scene files, e.g. after a live scene was added."""
-    for cached in (_demo_catalog, _runtime_scenes, metadata, mask, float_map, permanent_mask):
+    for cached in (_demo_catalog, _runtime_scenes, scene_layers, metadata, mask, float_map, permanent_mask):
         cached.cache_clear()
     for clear in _refresh_hooks:
         clear()

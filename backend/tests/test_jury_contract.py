@@ -143,3 +143,26 @@ def test_every_priced_line_names_its_rate_source_and_rounding():
     for line in lines:
         assert line["base_rate_source"] == catalog[line["candidate_id"]]["base_rate_source"] != ""
         assert "ROUND_HALF_UP" in line["rounding"] and "discount_coef" in line["rounding"]
+
+
+def test_scene_catalog_offers_only_layers_that_exist(tmp_path, monkeypatch):
+    import shutil
+
+    from app import catalog
+    demo = tmp_path / "demo"
+    demo.mkdir()
+    for name in ("scenes.json", "quality.json"):
+        shutil.copyfile(catalog.DATA_DIR / name, demo / name)
+    shutil.copytree(catalog.DATA_DIR / "Nigeria_812045", demo / "Nigeria_812045")
+    (demo / "Nigeria_812045" / "permanent.png").unlink()
+    monkeypatch.setattr(catalog, "DATA_DIR", demo)
+    catalog.refresh()
+    try:
+        layers = next(scene["layers"] for scene in catalog.scene_catalog()["scenes"]
+                      if scene["chip_id"] == "Nigeria_812045")
+        assert "permanent" not in layers and {"model", "radar", "probability", "doubt"} <= set(layers)
+    finally:
+        monkeypatch.undo()
+        catalog.refresh()
+    assert "permanent" in next(scene["layers"] for scene in catalog.scene_catalog()["scenes"]
+                               if scene["chip_id"] == "Nigeria_812045")
