@@ -134,7 +134,7 @@ ML-этапы запускаются из папки `ml`, остальные и
 ## Проверки и структура
 
 ```bash
-uv run --project backend --extra test pytest backend/tests -q
+uv run --project backend --extra demo --extra test pytest backend/tests -q
 cd frontend && npm run build && cd ..
 # После podman compose up -d или docker compose up -d:
 uv run --project backend python scripts/e2e_live.py http://127.0.0.1:18000 5.8,9.07,5.83,9.1
