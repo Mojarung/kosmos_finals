@@ -1,0 +1,236 @@
+{
+ "method": "context U-Net ensemble: event S1 + pre-event S1 RTC statistics + HAND/DEM/slope + JRC + WorldCover, optional Sentinel-2 L2A; five grouped-fold models per member",
+ "selection": "per track: equal-weight mean of fold-averaged logits of up to three members with the best pooled OOF IoU; Platt a*z+b and the threshold maximise pooled OOF IoU of that blend. Every number comes from OOF predictions of the development chips; test parts are not read.",
+ "tracks": {
+  "radar": {
+   "members": [
+    "effb4_all",
+    "r34_all"
+   ],
+   "platt": {
+    "a": 1.4459573030471802,
+    "b": -0.016471145674586296
+   },
+   "threshold": 0.4,
+   "oof_iou_at_threshold": 0.6798408238117325,
+   "oof_brier": 0.027142416685819626
+  },
+  "optical": {
+   "members": [
+    "r34_all_s2"
+   ],
+   "platt": {
+    "a": 1.5754834413528442,
+    "b": -0.13810621201992035
+   },
+   "threshold": 0.42,
+   "oof_iou_at_threshold": 0.7602354244756738,
+   "oof_brier": 0.01942434348165989
+  }
+ },
+ "members": {
+  "effb4_all": {
+   "config": {
+    "name": "effb4_all",
+    "groups": [
+     "s1",
+     "pre",
+     "terrain",
+     "jrc",
+     "worldcover"
+    ],
+    "architecture": "unet",
+    "encoder": "efficientnet-b4",
+    "encoder_weights": "imagenet",
+    "epochs": 40,
+    "crop": 320,
+    "batch_size": 12,
+    "crops_per_chip": 4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "lovasz_weight": 0.5,
+    "group_dropout": 0.0,
+    "s2_dropout": 0.0,
+    "seed": 0,
+    "tta": 8
+   },
+   "weights": [
+    {
+     "path": "effb4_all/fold0.safetensors",
+     "sha256": "40c15aca2bcf10e976bedb7e65e242df70f53b7a7d078865dc814d5e56d86ed9"
+    },
+    {
+     "path": "effb4_all/fold1.safetensors",
+     "sha256": "5aed12ba0a95c8c04cce4e6fde056e8967815542dd5c06eb9298dd5b1de0b6f4"
+    },
+    {
+     "path": "effb4_all/fold2.safetensors",
+     "sha256": "2521e9628108f19b4db84e458147eab817d558ce73d327c18963e5bcf7b89fdb"
+    },
+    {
+     "path": "effb4_all/fold3.safetensors",
+     "sha256": "1b1b3c2c8c06a733e8a14c68ce08603b5637eade3334eb39e3e7cc8b138a5736"
+    },
+    {
+     "path": "effb4_all/fold4.safetensors",
+     "sha256": "cee566bd0b38baee816b9c80bf0ff060e22d015681dc230f29e9b4d7856e261a"
+    }
+   ]
+  },
+  "r34_all": {
+   "config": {
+    "name": "r34_all",
+    "groups": [
+     "s1",
+     "pre",
+     "terrain",
+     "jrc",
+     "worldcover"
+    ],
+    "architecture": "unet",
+    "encoder": "resnet34",
+    "encoder_weights": "imagenet",
+    "epochs": 40,
+    "crop": 320,
+    "batch_size": 12,
+    "crops_per_chip": 4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "lovasz_weight": 0.5,
+    "group_dropout": 0.0,
+    "seed": 0,
+    "tta": 8
+   },
+   "weights": [
+    {
+     "path": "r34_all/fold0.safetensors",
+     "sha256": "390f16b37fbc9c9f113e96b80643270ebdbdaa2e0e7a6b30caf15f0b19ba4d1e"
+    },
+    {
+     "path": "r34_all/fold1.safetensors",
+     "sha256": "681218d8d17aa1c05d0076c935dcca54cfeb1431b0ad175f585f70f62e3a7ca8"
+    },
+    {
+     "path": "r34_all/fold2.safetensors",
+     "sha256": "dd3410db43b2dd600f14776500a32df1dde72c04d97dacf807570dbb8127a2a6"
+    },
+    {
+     "path": "r34_all/fold3.safetensors",
+     "sha256": "2426db7c2b1a60c93bb3bc94997d1b1264ba98b62885450abcab11bd58a2bcdc"
+    },
+    {
+     "path": "r34_all/fold4.safetensors",
+     "sha256": "50902a4c5f10551400ccfcb15e22377e2b076442c6e94a89cc4a6e5e89f41796"
+    }
+   ]
+  },
+  "r34_all_s2": {
+   "config": {
+    "name": "r34_all_s2",
+    "groups": [
+     "s1",
+     "pre",
+     "terrain",
+     "jrc",
+     "worldcover",
+     "s2"
+    ],
+    "architecture": "unet",
+    "encoder": "resnet34",
+    "encoder_weights": "imagenet",
+    "epochs": 40,
+    "crop": 320,
+    "batch_size": 12,
+    "crops_per_chip": 4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "lovasz_weight": 0.5,
+    "group_dropout": 0.0,
+    "s2_dropout": 0.3,
+    "seed": 0,
+    "tta": 8
+   },
+   "weights": [
+    {
+     "path": "r34_all_s2/fold0.safetensors",
+     "sha256": "0184e0c97db6da3a55633d0ac0afce9e1aa7cb7a3c1610f88c7ef7719fc1e2ea"
+    },
+    {
+     "path": "r34_all_s2/fold1.safetensors",
+     "sha256": "7609945e0a80532910387ebb484beac1402288fe126499b636cde7fe6e8060b7"
+    },
+    {
+     "path": "r34_all_s2/fold2.safetensors",
+     "sha256": "0e0555175e914a59da8e1cefae4b62a9c41ad4dbbf430b850f2f74245bfd390d"
+    },
+    {
+     "path": "r34_all_s2/fold3.safetensors",
+     "sha256": "6540c29a4424db55c7a1c762784b15e380796407e9d50da4c816429de38ab842"
+    },
+    {
+     "path": "r34_all_s2/fold4.safetensors",
+     "sha256": "f7d59ec09caa0389be376f7dc6fc89c5f53981d5a9a1a182c0d48444a47fc0bd"
+    }
+   ]
+  }
+ },
+ "channels": [
+  "vv",
+  "vh",
+  "vv_minus_vh",
+  "s1_valid",
+  "pre_med_vv",
+  "pre_med_vh",
+  "pre_p10_vv",
+  "pre_p10_vh",
+  "pre_p90_vv",
+  "pre_p90_vh",
+  "pre_last_vv",
+  "pre_last_vh",
+  "d_med_vv",
+  "d_med_vh",
+  "d_last_vv",
+  "d_last_vh",
+  "pre_valid",
+  "hand",
+  "rel_elev",
+  "slope",
+  "jrc",
+  "wc_10",
+  "wc_20",
+  "wc_30",
+  "wc_40",
+  "wc_50",
+  "wc_60",
+  "wc_80",
+  "wc_90",
+  "wc_95"
+ ],
+ "s2_channels": [
+  "b01",
+  "b02",
+  "b03",
+  "b04",
+  "b05",
+  "b06",
+  "b07",
+  "b08",
+  "b8a",
+  "b09",
+  "b11",
+  "b12",
+  "ndwi",
+  "mndwi",
+  "ndvi",
+  "awei",
+  "s2_valid"
+ ],
+ "sources": {
+  "event_s1": "Sen1Floods11 S1Hand (GRD dB) or Planetary Computer sentinel-1-rtc mapped by artifacts/rtc",
+  "pre_event": "Planetary Computer sentinel-1-rtc, same relative orbit, 5-365 days before, 10 dates, 20 m overview, mapped RTC->GRD by artifacts/rtc/harmonization.json",
+  "terrain": "Copernicus DEM GLO-30 (Planetary Computer), GLO-30 HAND (s3://glo-30-hand)",
+  "landcover": "ESA WorldCover 2021 v200 (Planetary Computer)",
+  "permanent_water": "Sen1Floods11 JRCWaterHand for chips; JRC GSW for live frames",
+  "optics": "Planetary Computer sentinel-2-l2a on the S1 date or up to 2 days earlier, SCL-masked"
+ }
+}

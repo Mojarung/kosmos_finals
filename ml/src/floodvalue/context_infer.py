@@ -181,9 +181,37 @@ def chip_acquisition(s1_path: Path) -> tuple[str, int] | None:
     return SEN1FLOODS11_ACQUISITIONS.get(event)
 
 
+def cached_inputs(name: str, grid: dict, s1: np.ndarray, jrc: np.ndarray | None,
+                  want_optics: bool) -> tuple[np.ndarray, np.ndarray | None, dict] | None:
+    """Layers already fetched by scripts/fresh_fetch_aux.py for an official chip, else None.
+
+    The same files built the training and test stacks, so a chip scored here gets exactly
+    the inputs of the evaluation; a clean clone has no data/aux and fetches them instead.
+    """
+    from floodvalue.chips import Chip
+    from floodvalue.context import AUX_DIR, merge_l2a, s2_allowed
+
+    static_path, pre_path = AUX_DIR / "static" / f"{name}.npz", AUX_DIR / "pre" / f"{name}.npz"
+    if not (static_path.exists() and pre_path.exists()):
+        return None
+    lat = (grid["bounds"][1] + grid["bounds"][3]) / 2
+    jrc = np.zeros(s1.shape[1:], np.float32) if jrc is None else jrc
+    layers, _ = assemble_layers(s1, np.load(pre_path), np.load(static_path), jrc, grid["transform"], lat)
+    manifest = AUX_DIR / "pre_manifest.json"
+    dates = json.loads(manifest.read_text(encoding="utf-8")).get(name, {}).get("dates") if manifest.exists() else None
+    provenance = {"layers": "local data/aux (fresh_fetch_aux.py)", "pre_event_dates": dates}
+    s2 = None
+    if want_optics and s2_allowed(Chip.from_name(name).event) and (AUX_DIR / "s2l2a" / name).exists():
+        reflectance, usable = merge_l2a(name)
+        provenance["s2_usable_share"] = float(usable.mean())
+        if usable.any():
+            s2 = s2_features(reflectance, usable)
+    return stack_layers(layers), s2, provenance
+
+
 def infer_chip(s1_path: Path, out_dir: Path, recipe_path: Path = PACKAGE_DIR / "recipe.json",
                jrc_path: Path | None = None, s1_date: str | None = None, relative_orbit: int | None = None,
-               optics: bool = True, tta: int = 2, device: str | None = None) -> dict:
+               optics: bool = True, tta: int = 8, device: str | None = None) -> dict:
     """Context-model rasters for one S1 GeoTIFF on its own grid (same contract as ``infer_s1``)."""
     import rasterio
 
@@ -206,7 +234,8 @@ def infer_chip(s1_path: Path, out_dir: Path, recipe_path: Path = PACKAGE_DIR / "
             jrc = (src.read(1) == 1).astype(np.float32)
     recipe = json.loads(recipe_path.read_text(encoding="utf-8"))
     want_optics = optics and "optical" in recipe["tracks"]
-    x_base, s2, provenance = frame_inputs(grid, s1, s1_date, relative_orbit, jrc, want_optics)
+    cached = cached_inputs(s1_path.name.removesuffix("_S1Hand.tif"), grid, s1, jrc, want_optics)
+    x_base, s2, provenance = cached or frame_inputs(grid, s1, s1_date, relative_orbit, jrc, want_optics)
     track = "optical" if s2 is not None else "radar"
     ensemble = load_ensemble(recipe_path, track, device)
     prob, spread = predict_frame(ensemble, x_base, s2, tta=tta, device=device)

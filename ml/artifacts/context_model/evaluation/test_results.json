@@ -1,0 +1,34 @@
+{
+ "recipe": "research\\fresh\\recipe.json",
+ "tracks": {
+  "radar": {
+   "test_core": {
+    "model_iou": 0.6894448385259809,
+    "baseline_iou": 0.5190838645347764
+   },
+   "test_adjacent": {
+    "model_iou": 0.7185899511619551,
+    "baseline_iou": 0.5544955530555497
+   },
+   "bolivia": {
+    "model_iou": 0.7064471584378643,
+    "baseline_iou": 0.5346303422719035
+   }
+  },
+  "optical": {
+   "test_core": {
+    "model_iou": 0.8205779052700028,
+    "baseline_iou": 0.5190838645347764
+   },
+   "test_adjacent": {
+    "model_iou": 0.8154432564343085,
+    "baseline_iou": 0.5544955530555497
+   },
+   "bolivia": {
+    "model_iou": 0.8163826211710278,
+    "baseline_iou": 0.5346303422719035
+   }
+  }
+ },
+ "seconds": 197.8
+}
