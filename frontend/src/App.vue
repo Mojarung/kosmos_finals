@@ -103,7 +103,7 @@ onMounted(() => {
       @draw-complete="finishDrawing" />
 
     <div ref="chrome" class="chrome">
-      <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
+      <TopBar @globe="mapRef?.showGlobe()" @place="mapRef?.focusPlace($event)" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
       <Transition name="pop">
         <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="panel capsule live-flow" role="status">
           <MorphLoader :size="25" />

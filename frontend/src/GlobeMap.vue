@@ -686,6 +686,19 @@ function focusAsset(asset) {
   }
   map.flyTo({ ...camera, duration: 750, essential: false })
 }
+// Поиск страны или города: страна вписывается в экран, город открывается крупно; с глобуса далеко — через шторку.
+function focusPlace(place) {
+  if (!map || !place) return
+  state.tilted = false
+  const [w, s, e, n] = place.bbox || []
+  const camera = place.bbox
+    ? map.cameraForBounds([[w, s], [e, n]], { padding: padding(), maxZoom: place.city ? 12 : 9 })
+    : { center: place.center, zoom: 10.5 }
+  if (!camera) return
+  const target = { center: camera.center, zoom: camera.zoom, pitch: 0, bearing: 0 }
+  if (state.globeView && target.zoom - map.getZoom() > 5) return veiledMove(() => map.jumpTo(target), { from: 'far' })
+  map.flyTo({ ...target, duration: reducedMotion() ? 0 : 1400, essential: false })
+}
 function focusZone(zone) {
   if (!map || !zone) return
   const [w, s, e, n] = zone.bounds
@@ -733,7 +746,7 @@ function waterKind(pixel) {
   return pixel.permanent_water ? 'постоянная вода' : 'паводок'
 }
 
-defineExpose({ focusChip, showGlobe, focusAsset, focusZone, toggleTilt, playReveal: () => water.playReveal() })
+defineExpose({ focusChip, showGlobe, focusAsset, focusZone, focusPlace, toggleTilt, playReveal: () => water.playReveal() })
 
 function previewSelection(start, end) {
   const bounds = [Math.min(start.lng, end.lng), Math.min(start.lat, end.lat),
