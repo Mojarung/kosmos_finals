@@ -202,9 +202,9 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     bounds = list(bounds_key) if bounds_key else None
     region = _region(scene_id, bounds_key)
     all_assets = enrich_assets(raster_assets(scene_id, info), info["model_threshold"])
-    if info.get("model", {}).get("id") == "next_optical":
+    if info.get("model", {}).get("id") in {"next_optical", "context"}:
         for asset in all_assets:
-            asset["p_check"] = None  # Legacy Platt reliability bins do not describe this isotonic model.
+            asset["p_check"] = None  # Legacy Platt reliability bins of the v1 ensemble do not describe these models.
     # A/B/C is a fixed-chip experiment. The ROI changes pixel statistics and
     # doubt sampling, never its ten seeded assets or their p, V and q.
     assets = all_assets
@@ -431,7 +431,8 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
-        "calibration_bias": ({"status": "not_evaluated_for_current_model", "model_id": "next_optical"} if info.get("model") else BIAS),
+        "calibration_bias": ({"status": "not_evaluated_for_current_model", "model_id": info["model"].get("id")}
+                             if info.get("model") else BIAS),
         "asset_proxy_check": reference_proxy_check() if live else asset_proxy_check(scene_id),
         "limitations": _limitations(info, region),
     }
@@ -452,7 +453,15 @@ def _limitations(info: dict, region: dict) -> list[str]:
         "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
     ]
-    if info.get("model"):
+    if info.get("model", {}).get("id") == "context":
+        model = info["model"]
+        optics = (f"с безоблачной оптикой Sentinel‑2 L2A ({model['optical_used_pixels']} пикселей)"
+                  if model.get("track") == "optical" else "без оптики: чистого снимка Sentinel‑2 за 0–2 дня до радара нет")
+        rows += [f"Модель с контекстом {optics}: радар того же трека за год до события, HAND, рельеф, JRC и WorldCover. "
+                 "На тесте Sen1Floods11 IoU 0,689 без оптики и 0,821 с оптикой; для этой рамки ручной метки нет.",
+                 "Порог сомнений сохранён от прежней модели как правило планирования; для модели с контекстом "
+                 "свой порог по OOF 0,147 записан в ml/artifacts/context_model/evaluation."]
+    elif info.get("model"):
         rows += ["Новая модель next_optical: исторический backtest и таблицы качества прежней S1-модели не оценивают эту версию.",
                  "Порог сомнений сохранён от прежней модели как правило планирования; точность вероятностей и этот порог для новой версии в сервисе ещё не проверены.",
                  "Оптика S2 связана с источником ручных меток. Тестовые события уже изучались; это не новая слепая проверка."]

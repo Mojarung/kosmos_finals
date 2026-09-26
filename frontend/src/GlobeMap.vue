@@ -814,7 +814,7 @@ watch(() => state.drawing, value => {
           <div v-tip="'Вероятность, что карта окрасила эту точку неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(probe.map_error_probability, 1) }}</b></div>
           <div v-tip="'Классический метод для сравнения: вода там, где VH ниже −23,6 дБ'"><span>Порог VH</span><b>{{ water3(probe.baseline_water) }}</b></div>
           <div v-tip="['live_sentinel1_rtc', 'uploaded_sentinel1_geotiff'].includes(state.analysis?.chip.source_kind) ? 'Для нового снимка ручной разметки нет' : 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water3(probe.reference_water) }}</b></div>
-          <div v-tip="'Насколько расходятся пять моделей ансамбля, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
+          <div v-tip="'Насколько расходятся модели ансамбля, в процентных пунктах вероятности'"><span>Разброс моделей</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
         </div>
         <p v-if="!calibrationChecked" class="pixel-calib"><CalibrationBadge /></p>
         <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>

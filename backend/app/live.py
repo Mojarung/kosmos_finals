@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,7 +27,7 @@ from rasterio.vrt import WarpedVRT
 from .catalog import LIVE_DIR
 from .planning import intersects, rectangle_area_km2
 from .scene_builder import ASSET_TYPES
-from .model_runtime import RECIPE, identity
+from .model_runtime import CONTEXT_RECIPE, RECIPE, context_enabled, context_identity, identity
 
 STAC = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 SAS = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc"
@@ -299,6 +300,48 @@ def _infer_tiled(s1: np.ndarray, progress=None) -> tuple[np.ndarray, np.ndarray]
             return arrays["probability"].copy(), arrays["spread"].copy()
 
 
+def _infer_context(bounds: list[float], s1: np.ndarray, feature: dict, progress) -> tuple:
+    """Context model for the frame; the ML environment runs it, like the S1 fallback path."""
+    import subprocess
+    import tempfile
+
+    from .permanent import gsw_permanent
+
+    orbit = feature["properties"].get("sat:relative_orbit")
+    if orbit is None:
+        raise LiveError("У снимка нет номера относительной орбиты: радар до события не подобрать.")
+    height, width = s1.shape[1:]
+    progress("context", 0.0, "Постоянная вода JRC для входа модели")
+    permanent, _ = gsw_permanent(bounds, width, height)
+    local = ROOT / "ml/.venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    import importlib.util
+    python = sys.executable if importlib.util.find_spec("torch") is not None else str(local)
+    with tempfile.TemporaryDirectory(prefix="floodvalue-context-") as folder:
+        source, jrc, output = Path(folder) / "s1.npy", Path(folder) / "jrc.npy", Path(folder) / "out.npz"
+        np.save(source, s1, allow_pickle=False)
+        np.save(jrc, permanent.astype(np.uint8), allow_pickle=False)
+        command = [python, "-m", "floodvalue.context_infer", "--input", str(source), "--jrc", str(jrc),
+                   "--bounds", *map(str, bounds), "--event-at", feature["properties"]["datetime"],
+                   "--orbit", str(int(orbit)), "--output", str(output), "--recipe", str(CONTEXT_RECIPE)]
+        log = Path(folder) / "stderr.txt"
+        with log.open("w", encoding="utf-8") as errors:
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=errors, text=True,
+                                       env={**os.environ, "PYTHONPATH": str(ROOT / "ml" / "src")})
+            for line in process.stdout:
+                try:
+                    event = json.loads(line)
+                    progress("context", event["progress"], event["message"])
+                except (ValueError, KeyError):
+                    continue
+            code = process.wait(timeout=3600)
+        if code:
+            tail = log.read_text(encoding="utf-8", errors="replace").strip().splitlines()[-2:]
+            raise LiveError("Модель с контекстом: " + " ".join(tail))
+        info = json.loads(output.with_suffix(".json").read_text(encoding="utf-8"))
+        with np.load(output, allow_pickle=False) as arrays:
+            return arrays["probability"].copy(), arrays["spread"].copy(), info
+
+
 def _cached_scene(folder: Path) -> dict | None:
     path = folder / "metadata.json"
     if not path.is_file():
@@ -323,7 +366,8 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
     cache_key = b"live-v6-next-optical-10m:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
     cache_key += hashlib.sha256(RECIPE.read_bytes()
-                                + (HARMONIZATION.read_bytes() if HARMONIZATION.is_file() else b"")).digest()
+                                + (HARMONIZATION.read_bytes() if HARMONIZATION.is_file() else b"")
+                                + (CONTEXT_RECIPE.read_bytes() if context_enabled() else b"")).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]
     scene_id = f"live_{digest}"
     folder = LIVE_DIR / scene_id
@@ -361,8 +405,20 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
         if valid.mean() < 0.05:
             raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
         progress("inference", 0, "Радар прочитан. Модель ищет воду")
-        threshold = identity()["threshold"]
-        probability, spread = _infer_tiled(s1, progress)
+        model_block = None
+        if context_enabled():
+            try:
+                probability, spread, context_info = _infer_context(bounds, s1, feature, progress)
+                threshold, model_block = context_info["threshold"], context_identity(context_info)
+            except Exception as error:  # noqa: BLE001 - archives down or no history: keep the S1 fallback
+                progress("inference", 0, "Слои контекста недоступны, считаем по одному снимку S1")
+                fallback_reason = str(error)
+        if model_block is None:
+            threshold = identity()["threshold"]
+            probability, spread = _infer_tiled(s1, progress)
+            model_block = {**identity(), "mode": "S1 fallback", "optical_used_pixels": 0}
+            if context_enabled():
+                model_block["context_fallback"] = fallback_reason
         model = valid & (probability >= threshold)
         baseline = valid & (vh < -23.6)
         probability[~valid] = 0
@@ -386,7 +442,7 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
             "model_water_pixels": int(model.sum()), "model_water_area_km2": round(float(model.sum() / (width*height) * area), 3),
             "baseline_water_pixels": int(baseline.sum()), "baseline_water_area_km2": round(float(baseline.sum() / (width*height) * area), 3),
             "model_threshold": threshold, "baseline_threshold_db": -23.6,
-            "model": {**identity(), "mode": "S1 fallback", "optical_used_pixels": 0},
+            "model": model_block,
             "portfolio_seed": PORTFOLIO_SEED, "portfolio_rule": PORTFOLIO_RULE, "assets": _portfolio(bounds, probability, spread, baseline, valid),
             "source_kind": "live_sentinel1_rtc", "source_item_id": feature["id"],
             "source_item_ids": [source["id"] for source in used_features],

@@ -261,3 +261,50 @@ def infer_chip(s1_path: Path, out_dir: Path, recipe_path: Path = PACKAGE_DIR / "
     }
     (out_dir / "inference.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     return report
+
+
+def run_frame(s1_path: Path, jrc_path: Path | None, bounds: list[float], event_at: str, relative_orbit: int,
+              out_path: Path, recipe_path: Path = PACKAGE_DIR / "recipe.json", tta: int = 2) -> dict:
+    """Service entry for a live frame on an EPSG:4326 grid: arrays in .npy, result in .npz + json info."""
+    from rasterio.crs import CRS
+    from rasterio.transform import from_bounds
+
+    s1 = np.load(s1_path)
+    height, width = s1.shape[1:]
+    grid = {"crs": CRS.from_epsg(4326), "transform": from_bounds(*bounds, width, height),
+            "width": width, "height": height, "bounds": tuple(bounds)}
+    jrc = np.load(jrc_path).astype(np.float32) if jrc_path else None
+    say = lambda _stage, fraction, message: print(json.dumps({"progress": fraction, "message": message}), flush=True)  # noqa: E731
+    x_base, s2, provenance = frame_inputs(grid, s1, event_at, relative_orbit, jrc, use_s2=True, progress=say)
+    track = "optical" if s2 is not None else "radar"
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    ensemble = load_ensemble(recipe_path, track, device)
+    prob, spread = predict_frame(ensemble, x_base, s2, tta=tta, device=device,
+                                 progress=lambda f, m: print(json.dumps({"progress": f, "message": m}), flush=True))
+    optical_pixels = int(np.asarray(s2[-1] > 0).sum()) if s2 is not None else 0
+    info = {"track": track, "members": [m.spec for m in ensemble.members], "threshold": ensemble.threshold,
+            "platt": {"a": ensemble.platt_a, "b": ensemble.platt_b}, "tta": tta,
+            "optical_used_pixels": optical_pixels, **provenance}
+    np.savez(out_path, probability=prob, spread=spread)
+    out_path.with_suffix(".json").write_text(json.dumps(info), encoding="utf-8")
+    return info
+
+
+def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="context model on a live frame (called by the service)")
+    parser.add_argument("--input", type=Path, required=True, help="S1 VV/VH in GRD dB, [2, H, W] .npy")
+    parser.add_argument("--jrc", type=Path, help="permanent water 0/1 [H, W] .npy")
+    parser.add_argument("--bounds", type=float, nargs=4, required=True)
+    parser.add_argument("--event-at", required=True)
+    parser.add_argument("--orbit", type=int, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--recipe", type=Path, default=PACKAGE_DIR / "recipe.json")
+    parser.add_argument("--tta", type=int, default=2)
+    args = parser.parse_args()
+    run_frame(args.input, args.jrc, args.bounds, args.event_at, args.orbit, args.output, args.recipe, args.tta)
+
+
+if __name__ == "__main__":
+    main()
