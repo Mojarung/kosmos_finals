@@ -558,10 +558,12 @@ class BasketSpace:
                  "doubt_share": round(float(best[i]) / self.doubt_total, 4)} for i in steps]
 
     def decisions(self, index: int | None, budget: float, priority: str, deadline: int,
-                  must_cover: str | None, tariff: float = 1.0, on: date | None = None) -> list[dict]:
+                  must_cover: str | None, tariff: float = 1.0, on: date | None = None,
+                  losses: np.ndarray | None = None) -> list[dict]:
         """Why every footprint is in basket C or not, with the product the rule takes, in checkable numbers."""
         chosen = index or 0
-        losses = self.losses_for(None)
+        covered_losses = self.losses_for(losses)
+        asset_losses = self.losses if losses is None else losses
         basket = quote(self.orders(chosen, deadline), tariff, "C", on)
         rows = []
         for k, (zone, product) in enumerate(zip(self.zones, self.chosen(deadline))):
@@ -570,7 +572,7 @@ class BasketSpace:
             own_assets = [asset["id"] for asset, mask in zip(self.assets, self.asset_masks) if mask & bit]
             row = {"zone_id": zone["id"], "kind": zone["kind"], "area_km2": zone["area_km2"],
                    "price_alone_rub": quote([product], tariff, "C", on)["total_rub"], "asset_ids": own_assets,
-                   "expected_loss_rub": round(float(sum(self.losses[i] for i, mask in enumerate(self.asset_masks) if mask & bit)), 2),
+                   "expected_loss_rub": round(float(sum(asset_losses[i] for i, mask in enumerate(self.asset_masks) if mask & bit)), 2),
                    "doubt_share": round(float(self.zone_doubt[k]) / self.doubt_total, 4) if self.doubt_total else None,
                    **_product_fields(product), "timely": timely}
             if index is not None and chosen & bit:
@@ -585,7 +587,7 @@ class BasketSpace:
             if not timely:
                 row["reason"] = "late"
             else:
-                gain_loss = round(float(losses[chosen | bit] - losses[chosen]), 2)
+                gain_loss = round(float(covered_losses[chosen | bit] - covered_losses[chosen]), 2)
                 gain_doubt = float(self.doubt[chosen | bit] - self.doubt[chosen])
                 gain = gain_loss if priority == "risk" else gain_doubt
                 row.update(price_with_rub=grown["total_rub"], gain_loss_rub=gain_loss,

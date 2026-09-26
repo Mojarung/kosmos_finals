@@ -19,6 +19,7 @@ from . import projects, project_imagery
 from .procurement import router as procurement_router
 from .backtest import router as backtest_router
 from .voi import router as voi_router
+from .economic_scenarios import ScenarioRequest, calculate as economic_scenario, package as economic_package
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 app.include_router(procurement_router)
@@ -223,6 +224,24 @@ def upload_status(job_id: str) -> dict:
     if job is None:
         raise HTTPException(404, "Загрузка не найдена.")
     return job
+
+
+@app.post("/api/economics/scenario")
+def calculate_economic_scenario(request: ScenarioRequest) -> dict:
+    try:
+        return economic_scenario(request)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/economics/scenario/export")
+def export_economic_scenario(request: ScenarioRequest) -> StreamingResponse:
+    try:
+        payload = economic_package(economic_scenario(request))
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    return StreamingResponse(iter([payload]), media_type="application/zip", headers={
+        "Content-Disposition": 'attachment; filename="floodvalue-economic-scenario.zip"'})
 
 
 @app.post("/api/scenes", status_code=202)

@@ -5,6 +5,7 @@ import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
 import BacktestPanel from './BacktestPanel.vue'
+import EconomicScenario from './EconomicScenario.vue'
 import VoiPanel from './VoiPanel.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
@@ -331,6 +332,8 @@ function hover(id) { state.hoverZoneId = id }
   <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
 
   <BacktestPanel :scene-id="state.sceneId" />
+
+  <EconomicScenario />
 
   <details v-if="chart" class="disclosure"><summary>Цена и охват зон</summary><div class="disclosure-body">
     <span class="caption" v-tip="'Линия: лучший набор зон для каждой суммы заказа по доле сомнительной площади. Точки: варианты A, B, C и все сомнительные участки вместе'">Сколько сомнений закрывает каждый рубль</span>

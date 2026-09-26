@@ -984,3 +984,29 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   background: var(--surface-1);
   font: inherit;
 }
+
+/* Экономические допущения редактируются отдельно от обязательного расчёта кейса. */
+.economic-scenario > summary { justify-content: flex-start; color: var(--foreground); }
+.economic-scenario > summary::after { margin-left: auto; }
+.economic-scenario .disclosure-body { display: grid; gap: 10px; }
+.economic-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.economic-controls label, .economic-asset-select { display: grid; gap: 5px; color: var(--muted-foreground); font-size: 11px; }
+.economic-controls input, .economic-controls select, .economic-asset-select select {
+  width: 100%; min-width: 0; height: 37px; padding: 6px 9px; border: 1px solid var(--border);
+  border-radius: 9px; background: var(--surface-1); color: var(--foreground); font: inherit; font-size: 12px;
+}
+.economic-controls input:focus-visible, .economic-controls select:focus-visible, .economic-asset-select select:focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 1px;
+}
+.economic-outcome { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px;
+  border-radius: 11px; background: var(--surface-2); font-size: 12px; }
+.economic-results { display: grid; gap: 8px; }
+.economic-result { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--border); border-radius: 11px; font-size: 12px; }
+.economic-result > div { display: flex; justify-content: space-between; gap: 8px; }
+.economic-result > div > span:first-child, .economic-result small { color: var(--muted-foreground); }
+.economic-result small { line-height: 1.4; }
+.economic-breakdown { font-size: 12px; }
+.economic-breakdown > summary { cursor: pointer; padding: 7px 0; font-weight: 600; }
+.economic-breakdown-row { display: grid; gap: 3px; padding: 6px 0; border-top: 1px solid var(--border); }
+.economic-breakdown-row span:last-child { color: var(--muted-foreground); overflow-wrap: anywhere; }
+@media (max-width: 520px) { .economic-controls { grid-template-columns: 1fr; } }
