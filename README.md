@@ -13,9 +13,12 @@
 Нужны Podman Compose или Docker Compose, а для нового региона доступ к Microsoft Planetary Computer. Три подготовленные сцены лежат в репозитории и работают офлайн. Ещё 446 официальных чипов Sen1Floods11 открываются из списка стран в шапке («Ещё N»): сервис скачает S1, ручную метку и слой постоянной воды JRC, запустит ту же замороженную модель и добавит сцену на карту. Расчёт идёт в контейнере на CPU весами из Git LFS, обучение и GPU не нужны. Повторное открытие берёт результат из томов `live-observations` и `runtime-observations`; импортированные проекты живут в `operator-projects`.
 
 ```bash
-podman compose up --build
-# или docker compose up --build
+FLOODVALUE_COMMIT=$(git rev-parse HEAD) podman compose up --build
+# или FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build
+# PowerShell: $env:FLOODVALUE_COMMIT = git rev-parse HEAD; docker compose up --build
 ```
+
+Переменная записывает commit сборки в паспорт каждого ZIP: в образе нет `.git`, и без неё поле `code_commit` останется пустым.
 
 Интерфейс: <http://localhost:18080>. API: <http://localhost:18000/docs>. Порты задаются переменными `WEB_PORT` и `API_PORT`. На macOS, если Podman VM не пробрасывает порты, в отдельном терминале можно запустить `python3 scripts/podman_tunnel.py`.
 
@@ -125,9 +128,7 @@ ML-этапы запускаются из папки `ml`, остальные и
 | ml | Python 3.13, torch 2.14.0+cu132 и torchvision 0.29.0+cu132 (на macOS 2.14.0 и 0.29.0 с PyPI), segmentation-models-pytorch 0.5.0, rasterio 1.5.1, numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1 | `ml/.python-version`, `ml/uv.lock` |
 | frontend | Node 22 (образ `node:22-alpine`), vue 3.5.43, vite 8.3.1, maplibre-gl 6.11.2; раздача через `nginx:1.27-alpine` | `frontend/Dockerfile`, `frontend/package-lock.json` |
 
-Точный commit сдачи: последний коммит ветки `master` в GitVerse. Каждый комплект сам записывает commit, из которого собран, в `code_commit` и `gitverse_commit` файла `run_metadata.json`: в рабочей копии через `git rev-parse HEAD`, в контейнере через аргумент сборки `FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build`. Без этого аргумента поле пустое со статусом `commit_not_recorded_in_this_build`.
-
-Каждый выгруженный комплект сам называет свой код: поле `code_commit` в `run_metadata.json` сервис заполняет из `git rev-parse HEAD` в момент экспорта. В образе Docker нет `.git`, поэтому hash передаётся при сборке: `FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build`, в PowerShell перед той же командой `$env:FLOODVALUE_COMMIT = git rev-parse HEAD`. Без переменной поле остаётся `null`. Итоговая проверяемая версия будет помечена тегом `floodvalue-final`, его ставит команда при сдаче.
+Точный commit сдачи: последний коммит ветки `master` в GitVerse, итоговую проверяемую версию команда при сдаче помечает тегом `floodvalue-final`. Каждый выгруженный комплект сам называет свой код в полях `code_commit` и `gitverse_commit` файла `run_metadata.json`: в рабочей копии сервис берёт `git rev-parse HEAD` в момент экспорта, в контейнере значение приходит из аргумента сборки `FLOODVALUE_COMMIT` (команда в разделе «Запуск»). Без этого аргумента поле остаётся `null` со статусом `commit_not_recorded_in_this_build`.
 
 ## Проверки и структура
 
