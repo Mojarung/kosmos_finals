@@ -86,6 +86,9 @@ def write_quality() -> None:
         transfer = json.loads(transfer_path.read_text(encoding="utf-8"))
         quality["rtc_transfer"] = {key: transfer[key] for key in ("rules", "fit_chips", "check_chips", "water_weighted_iou")}
         quality["rtc_transfer"]["mapping"] = transfer.get("shipped_mapping")
+        for key in ("selection_part", "cv_scores", "test_role"):
+            if key in transfer:
+                quality["rtc_transfer"][key] = transfer[key]
     errors_path = ROOT / "ml/artifacts/evaluation/error_analysis.json"
     if errors_path.exists():
         errors = json.loads(errors_path.read_text(encoding="utf-8"))

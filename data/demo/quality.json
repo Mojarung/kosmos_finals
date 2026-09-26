@@ -217,11 +217,24 @@
       "grd_model": 0.6841,
       "grd_baseline": 0.5151,
       "rtc_model_raw": 0.1835,
-      "rtc_model_median": 0.5808,
       "rtc_model_quantile": 0.6374,
       "rtc_baseline_raw": 0.1015,
       "rtc_baseline_quantile": 0.4842
     },
-    "mapping": "quantile"
+    "mapping": "quantile",
+    "selection_part": "train_cv",
+    "cv_scores": {
+      "leave_one_event_out": {
+        "folds": 7,
+        "median": 0.3188,
+        "quantile": 0.5846
+      },
+      "leave_one_chip_out": {
+        "folds": 13,
+        "median": 0.3162,
+        "quantile": 0.5856
+      }
+    },
+    "test_role": "report_only_not_used_for_selection"
   }
 }

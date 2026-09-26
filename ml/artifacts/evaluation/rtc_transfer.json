@@ -5,14 +5,227 @@
   },
   "fit_chips": 13,
   "check_chips": 11,
+  "selection_part": "train_cv",
+  "selection_rule": "leave-one-event-out over train chips: both mappings fitted on the other events' pixel pairs, frozen ensemble on the held-out chip's mapped RTC, IoU against the manual label pooled with water-pixel weights; the higher score ships, a tie keeps median; fixed before any test chip is read",
+  "shipped_mapping": "quantile",
+  "cv_scores": {
+    "leave_one_event_out": {
+      "folds": 7,
+      "median": 0.3188,
+      "quantile": 0.5846
+    },
+    "leave_one_chip_out": {
+      "folds": 13,
+      "median": 0.3162,
+      "quantile": 0.5856
+    }
+  },
+  "cv_chips": {
+    "leave_one_event_out": [
+      {
+        "chip_id": "India_1017769",
+        "held_out": "India",
+        "water_pixels": 98143,
+        "median": 0.1017,
+        "quantile": 0.7693
+      },
+      {
+        "chip_id": "Mekong_1111068",
+        "held_out": "Mekong",
+        "water_pixels": 7449,
+        "median": 0.1249,
+        "quantile": 0.1818
+      },
+      {
+        "chip_id": "Mekong_1191208",
+        "held_out": "Mekong",
+        "water_pixels": 15265,
+        "median": 0.8641,
+        "quantile": 0.8626
+      },
+      {
+        "chip_id": "Pakistan_1036366",
+        "held_out": "Pakistan",
+        "water_pixels": 22673,
+        "median": 0.5577,
+        "quantile": 0.6013
+      },
+      {
+        "chip_id": "Pakistan_132143",
+        "held_out": "Pakistan",
+        "water_pixels": 0,
+        "median": null,
+        "quantile": 0.0
+      },
+      {
+        "chip_id": "Somalia_1068756",
+        "held_out": "Somalia",
+        "water_pixels": 6495,
+        "median": 0.0239,
+        "quantile": 0.0109
+      },
+      {
+        "chip_id": "Somalia_1087508",
+        "held_out": "Somalia",
+        "water_pixels": 10021,
+        "median": 0.1789,
+        "quantile": 0.1608
+      },
+      {
+        "chip_id": "Spain_1167260",
+        "held_out": "Spain",
+        "water_pixels": 42519,
+        "median": 0.5236,
+        "quantile": 0.5125
+      },
+      {
+        "chip_id": "Spain_2472849",
+        "held_out": "Spain",
+        "water_pixels": 20,
+        "median": 0.003,
+        "quantile": 0.0067
+      },
+      {
+        "chip_id": "Sri-Lanka_1038087",
+        "held_out": "Sri-Lanka",
+        "water_pixels": 18112,
+        "median": 0.2581,
+        "quantile": 0.3101
+      },
+      {
+        "chip_id": "Sri-Lanka_120804",
+        "held_out": "Sri-Lanka",
+        "water_pixels": 6958,
+        "median": 0.1088,
+        "quantile": 0.1036
+      },
+      {
+        "chip_id": "USA_1010394",
+        "held_out": "USA",
+        "water_pixels": 1481,
+        "median": 0.1994,
+        "quantile": 0.2774
+      },
+      {
+        "chip_id": "USA_1068362",
+        "held_out": "USA",
+        "water_pixels": 31182,
+        "median": 0.5232,
+        "quantile": 0.5869
+      }
+    ],
+    "leave_one_chip_out": [
+      {
+        "chip_id": "India_1017769",
+        "held_out": "India_1017769",
+        "water_pixels": 98143,
+        "median": 0.1017,
+        "quantile": 0.7693
+      },
+      {
+        "chip_id": "Mekong_1111068",
+        "held_out": "Mekong_1111068",
+        "water_pixels": 7449,
+        "median": 0.1281,
+        "quantile": 0.1799
+      },
+      {
+        "chip_id": "Mekong_1191208",
+        "held_out": "Mekong_1191208",
+        "water_pixels": 15265,
+        "median": 0.8641,
+        "quantile": 0.8637
+      },
+      {
+        "chip_id": "Pakistan_1036366",
+        "held_out": "Pakistan_1036366",
+        "water_pixels": 22673,
+        "median": 0.5595,
+        "quantile": 0.6016
+      },
+      {
+        "chip_id": "Pakistan_132143",
+        "held_out": "Pakistan_132143",
+        "water_pixels": 0,
+        "median": null,
+        "quantile": 0.0
+      },
+      {
+        "chip_id": "Somalia_1068756",
+        "held_out": "Somalia_1068756",
+        "water_pixels": 6495,
+        "median": 0.0078,
+        "quantile": 0.0103
+      },
+      {
+        "chip_id": "Somalia_1087508",
+        "held_out": "Somalia_1087508",
+        "water_pixels": 10021,
+        "median": 0.1963,
+        "quantile": 0.1606
+      },
+      {
+        "chip_id": "Spain_1167260",
+        "held_out": "Spain_1167260",
+        "water_pixels": 42519,
+        "median": 0.5141,
+        "quantile": 0.5187
+      },
+      {
+        "chip_id": "Spain_2472849",
+        "held_out": "Spain_2472849",
+        "water_pixels": 20,
+        "median": 0.0122,
+        "quantile": 0.0078
+      },
+      {
+        "chip_id": "Sri-Lanka_1038087",
+        "held_out": "Sri-Lanka_1038087",
+        "water_pixels": 18112,
+        "median": 0.2524,
+        "quantile": 0.3103
+      },
+      {
+        "chip_id": "Sri-Lanka_120804",
+        "held_out": "Sri-Lanka_120804",
+        "water_pixels": 6958,
+        "median": 0.1096,
+        "quantile": 0.1032
+      },
+      {
+        "chip_id": "USA_1010394",
+        "held_out": "USA_1010394",
+        "water_pixels": 1481,
+        "median": 0.1985,
+        "quantile": 0.2775
+      },
+      {
+        "chip_id": "USA_1068362",
+        "held_out": "USA_1068362",
+        "water_pixels": 31182,
+        "median": 0.5134,
+        "quantile": 0.5869
+      }
+    ]
+  },
+  "test_part": "test_core",
+  "test_role": "report_only_not_used_for_selection",
   "water_weighted_iou": {
     "grd_model": 0.6841,
     "grd_baseline": 0.5151,
     "rtc_model_raw": 0.1835,
-    "rtc_model_median": 0.5808,
     "rtc_model_quantile": 0.6374,
     "rtc_baseline_raw": 0.1015,
     "rtc_baseline_quantile": 0.4842
+  },
+  "previous_selection": {
+    "selection_status": "post_hoc_on_test_core",
+    "shipped_mapping": "quantile",
+    "test_core_water_weighted_iou": {
+      "rtc_model_median": 0.5808,
+      "rtc_model_quantile": 0.6374
+    },
+    "note": "kept for the audit trail; replaced by the train cross-validation below"
   },
   "chips": [
     {
@@ -23,7 +236,6 @@
       "grd_model": 0.6017,
       "grd_baseline": 0.2624,
       "rtc_model_raw": 0.2905,
-      "rtc_model_median": 0.3011,
       "rtc_model_quantile": 0.4783,
       "rtc_baseline_raw": 0.011,
       "rtc_baseline_quantile": 0.1831,
@@ -38,7 +250,6 @@
       "grd_model": 0.7613,
       "grd_baseline": 0.655,
       "rtc_model_raw": 0.1627,
-      "rtc_model_median": 0.7432,
       "rtc_model_quantile": 0.72,
       "rtc_baseline_raw": 0.1433,
       "rtc_baseline_quantile": 0.6405,
@@ -53,7 +264,6 @@
       "grd_model": 0.0069,
       "grd_baseline": 0.003,
       "rtc_model_raw": 0.0035,
-      "rtc_model_median": 0.0,
       "rtc_model_quantile": 0.0064,
       "rtc_baseline_raw": 0.0,
       "rtc_baseline_quantile": 0.0014,
@@ -68,7 +278,6 @@
       "grd_model": 0.2783,
       "grd_baseline": 0.1896,
       "rtc_model_raw": 0.212,
-      "rtc_model_median": 0.3169,
       "rtc_model_quantile": 0.2632,
       "rtc_baseline_raw": 0.2676,
       "rtc_baseline_quantile": 0.2844,
@@ -83,7 +292,6 @@
       "grd_model": 0.0717,
       "grd_baseline": 0.0113,
       "rtc_model_raw": 0.0034,
-      "rtc_model_median": 0.0259,
       "rtc_model_quantile": 0.0274,
       "rtc_baseline_raw": 0.003,
       "rtc_baseline_quantile": 0.0102,
@@ -98,7 +306,6 @@
       "grd_model": null,
       "grd_baseline": 0.0,
       "rtc_model_raw": null,
-      "rtc_model_median": 0.0,
       "rtc_model_quantile": 0.0,
       "rtc_baseline_raw": 0.0,
       "rtc_baseline_quantile": 0.0,
@@ -113,7 +320,6 @@
       "grd_model": 0.0,
       "grd_baseline": 0.0,
       "rtc_model_raw": 0.0,
-      "rtc_model_median": 0.0,
       "rtc_model_quantile": 0.0,
       "rtc_baseline_raw": 0.0,
       "rtc_baseline_quantile": 0.0,
@@ -128,7 +334,6 @@
       "grd_model": 0.6417,
       "grd_baseline": 0.383,
       "rtc_model_raw": 0.0993,
-      "rtc_model_median": 0.3811,
       "rtc_model_quantile": 0.6398,
       "rtc_baseline_raw": 0.0298,
       "rtc_baseline_quantile": 0.3175,
@@ -143,7 +348,6 @@
       "grd_model": 0.287,
       "grd_baseline": 0.2485,
       "rtc_model_raw": 0.4204,
-      "rtc_model_median": 0.3233,
       "rtc_model_quantile": 0.2678,
       "rtc_baseline_raw": 0.1356,
       "rtc_baseline_quantile": 0.2367,
@@ -158,7 +362,6 @@
       "grd_model": 0.3749,
       "grd_baseline": 0.3319,
       "rtc_model_raw": 0.3925,
-      "rtc_model_median": 0.4897,
       "rtc_model_quantile": 0.3365,
       "rtc_baseline_raw": 0.129,
       "rtc_baseline_quantile": 0.3997,
@@ -173,13 +376,11 @@
       "grd_model": 0.507,
       "grd_baseline": 0.3411,
       "rtc_model_raw": 0.4273,
-      "rtc_model_median": 0.4641,
       "rtc_model_quantile": 0.4003,
       "rtc_baseline_raw": 0.3041,
       "rtc_baseline_quantile": 0.2891,
       "water_pixels": 2122,
       "valid_pixels": 262061
     }
-  ],
-  "shipped_mapping": "quantile"
+  ]
 }
