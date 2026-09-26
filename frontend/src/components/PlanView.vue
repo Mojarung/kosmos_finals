@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
+import SuppliersView from './SuppliersView.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import EconomicScenario from './EconomicScenario.vue'
 import VoiPanel from './VoiPanel.vue'
@@ -268,12 +269,15 @@ function hover(id) { state.hoverZoneId = id }
 <template>
   <div class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
-    <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
-      @click="state.procurementOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
+    <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen && !state.suppliersOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
+      @click="state.procurementOpen = false; state.suppliersOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
     <button aria-label="Каталог SkyFi" :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
-      @click="state.procurementOpen = true">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
+      @click="state.procurementOpen = true; state.suppliersOpen = false">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
+    <button aria-label="Поставщики" :class="{ active: state.suppliersOpen }" v-tip="'Где купить снимки плана, в том числе из России, и загрузка полученных файлов из папки'"
+      @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
   <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
+  <SuppliersView v-else-if="state.suppliersOpen" />
   <template v-else>
   <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
     <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>

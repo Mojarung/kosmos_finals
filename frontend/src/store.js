@@ -6,6 +6,8 @@ import { computed, reactive, watch } from 'vue'
  */
 export const state = reactive({
   procurementOpen: false,
+  // Третий режим вкладки «Съёмка»: где купить снимки и что пришло от поставщика.
+  suppliersOpen: false,
   procurementMethod: 'budget',
   voiExportHref: null,
   procurementMapMode: false,

@@ -1011,3 +1011,22 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .economic-breakdown-row { display: grid; gap: 3px; padding: 6px 0; border-top: 1px solid var(--border); }
 .economic-breakdown-row span:last-child { color: var(--muted-foreground); overflow-wrap: anywhere; }
 @media (max-width: 520px) { .economic-controls { grid-template-columns: 1fr; } }
+
+/* Поставщики снимков и полученные поставки */
+.suppliers { padding: 12px 16px; }
+.supplier-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.supplier-list li { padding: 8px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+.supplier-list li.fits { border-color: color-mix(in srgb, var(--primary, #32836b) 45%, transparent); background: rgba(50, 131, 107, .06); }
+.supplier-list p { margin: 3px 0 0; font-size: 12px; line-height: 1.4; }
+.supplier-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; }
+.supplier-head a { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; white-space: nowrap; }
+.supplier-meta { color: var(--muted-foreground); font-size: 11px; }
+.supplier-meta .unverified { color: var(--uncertain, #c98b2b); }
+.delivery-form { display: flex; gap: 6px; margin-top: 8px; }
+.delivery-form select, .delivery-form input { flex: 1; min-width: 0; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface, transparent); color: inherit; font: inherit; font-size: 12px; }
+.delivery-buttons { display: flex; gap: 6px; margin-top: 8px; }
+.delivery-buttons button { display: inline-flex; align-items: center; gap: 6px; }
+.delivery { margin-top: 8px; }
+.zone-shares { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.zone-shares span { padding: 1px 6px; border-radius: 6px; background: rgba(50, 131, 107, .12); font-size: 11px; cursor: default; }
+.error-line { color: var(--destructive, #c0392b); }

@@ -1,0 +1,162 @@
+{
+  "checked_at": "2026-09-26",
+  "rule": "Where the imagery of a plan can actually be bought. Every row names its source; availability for Russian customers is stated only when the source says so. Prices are not quoted here: the plan stays priced by the PP 840 formula, a supplier quote replaces it only after a request.",
+  "providers": [
+    {
+      "id": "roscosmos_geoportal",
+      "name": "Геопортал Роскосмоса",
+      "country": "Россия",
+      "kind": "государственный фонд данных ДЗЗ",
+      "products": "радар Кондор-ФКА, оптика Ресурс-П и Канопус-В; архив и новая съёмка",
+      "sensors": [
+        "sar",
+        "optical"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "онлайн, личный кабинет после регистрации",
+      "price_basis": "ПП РФ № 840: та же формула, что в расчёте по ТЗ",
+      "russia": "доступно юридическим и физическим лицам",
+      "url": "https://gptl.ru/",
+      "sources": [
+        "https://www.roscosmos.ru/25638/",
+        "https://www.ixbt.com/news/2025/12/19/glaza-naorbite-snimki-s-novejshih-sputnikov-kondorfka-teper-mogut-zakazyvat-vse-zhelajushie.html",
+        "https://base.garant.ru/72284094/"
+      ]
+    },
+    {
+      "id": "terratech",
+      "name": "Терра Тех · TerraCloud",
+      "country": "Россия",
+      "kind": "коммерческий оператор Роскосмоса (холдинг РКС)",
+      "products": "российские и зарубежные спутники, архив и новая съёмка; онлайн-магазин TerraCloud",
+      "sensors": [
+        "optical"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "онлайн в TerraCloud или заявка",
+      "price_basis": "прайс оператора",
+      "russia": "российская компания",
+      "url": "https://terratech.ru/data/optika/",
+      "sources": [
+        "https://www.roscosmos.ru/31048/",
+        "https://terratech.ru/company/news/zapusk-servisa-onlayn-pokupki-kosmicheskoy-semki-terracloud/"
+      ]
+    },
+    {
+      "id": "sovzond",
+      "name": "Совзонд",
+      "country": "Россия",
+      "kind": "дистрибьютор операторов ДЗЗ, в том числе российских",
+      "products": "оптика и радар, архив и новая съёмка; схема покрытия и расчёт по заявке",
+      "sensors": [
+        "optical",
+        "sar"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "заявка",
+      "price_basis": "расчёт стоимости по заявке",
+      "russia": "российская компания",
+      "url": "https://sovzond.ru/products/spatial-data/satellites/",
+      "sources": [
+        "https://sovzond.ru/services/remote-sensing/"
+      ]
+    },
+    {
+      "id": "scanex",
+      "name": "СКАНЭКС",
+      "country": "Россия",
+      "kind": "оператор приёма и дистрибьютор",
+      "products": "оптика до 30 см и радар, архив и новая съёмка; каталог Search.Космоснимки",
+      "sensors": [
+        "optical",
+        "sar"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "заявка по форме или телефону",
+      "price_basis": "по заявке",
+      "russia": "российская компания",
+      "url": "https://www.scanex.ru/data/satellites/",
+      "sources": [
+        "https://www.scanex.ru/support/faq/"
+      ]
+    },
+    {
+      "id": "innoter",
+      "name": "Иннотер",
+      "country": "Россия, данные Китая",
+      "kind": "дистрибьютор",
+      "products": "китайские SuperView, Jilin-1 (оптика), Gaofen-3 (радар); архив и новая съёмка",
+      "sensors": [
+        "optical",
+        "sar"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "заявка на innoter@innoter.com",
+      "price_basis": "по заявке",
+      "russia": "российская компания",
+      "url": "https://innoter.com/services/dannye-dzz/zakaz-novoy-semki/",
+      "sources": [
+        "https://innoter.com/sputniki/superview-1/",
+        "https://innoter.com/sputniki/gaofen-3/"
+      ]
+    },
+    {
+      "id": "copernicus",
+      "name": "Copernicus Data Space",
+      "country": "ЕС, открытые данные",
+      "kind": "бесплатные данные",
+      "products": "Sentinel-1 (радар 10 м) и Sentinel-2 (оптика 10 м); стратегия A",
+      "sensors": [
+        "sar",
+        "optical"
+      ],
+      "acquisition": [
+        "free"
+      ],
+      "order": "скачивание после регистрации",
+      "price_basis": "бесплатно",
+      "russia": "открытая лицензия",
+      "url": "https://dataspace.copernicus.eu/",
+      "sources": [
+        "https://dataspace.copernicus.eu/"
+      ]
+    },
+    {
+      "id": "skyfi",
+      "name": "SkyFi",
+      "country": "США",
+      "kind": "маркетплейс зарубежных операторов",
+      "products": "коммерческий архив и новая съёмка; каталог встроен во вкладку «Каталог SkyFi»",
+      "sensors": [
+        "optical",
+        "sar"
+      ],
+      "acquisition": [
+        "new",
+        "archive"
+      ],
+      "order": "онлайн",
+      "price_basis": "цены каталога в долларах",
+      "russia": "оплату из России не проверяли",
+      "url": "https://app.skyfi.com/",
+      "sources": [
+        "https://app.skyfi.com/"
+      ]
+    }
+  ]
+}

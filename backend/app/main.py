@@ -17,12 +17,14 @@ from .layers import doubt_png
 from .permanent import separate_live
 from . import projects, project_imagery
 from .procurement import router as procurement_router
+from .deliveries import router as deliveries_router
 from .backtest import router as backtest_router
 from .voi import router as voi_router
 from .economic_scenarios import ScenarioRequest, calculate as economic_scenario, package as economic_package
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 app.include_router(procurement_router)
+app.include_router(deliveries_router)
 app.include_router(backtest_router)
 app.include_router(voi_router)
 
