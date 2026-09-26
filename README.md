@@ -111,9 +111,17 @@ ML-этапы запускаются из папки `ml`, остальные и
 | Интерфейс | `docker compose up --build` | <http://localhost:18080> |
 | Экспорт и проверка | `GET /api/export?scene_id=<chip>&budget=6500`, затем `scripts/validate_package.py` | ZIP из 20 файлов, `"status": "ok"` |
 
-Основной метод и сервис используют только VV и VH Sentinel‑1, это и есть режим без вспомогательных данных. Вариант S1+S2 из ML-пакета в сервис не входит. Версии зависимостей зафиксированы в `ml/uv.lock`, `backend/uv.lock` и `frontend/package-lock.json`.
+Основной метод и сервис используют только VV и VH Sentinel‑1, это и есть режим без вспомогательных данных. Вариант S1+S2 из ML-пакета в сервис не входит. Версии зависимостей зафиксированы в `ml/uv.lock`, `backend/uv.lock` и `frontend/package-lock.json`:
+
+| Часть | Точные версии | Откуда |
+|---|---|---|
+| backend | Python 3.13 (образ `ghcr.io/astral-sh/uv:python3.13-bookworm-slim`), fastapi 0.141.1, uvicorn 0.54.0, numpy 2.5.3, rasterio 1.5.1, pyproj 3.8.0, pillow 12.3.0; для живого inference в образ ставятся torch 2.14.0+cpu, torchvision 0.29.0+cpu, segmentation-models-pytorch 0.5.0 | `backend/Dockerfile`, `backend/uv.lock` |
+| ml | Python 3.13, torch 2.14.0+cu132 и torchvision 0.29.0+cu132 (на macOS 2.14.0 и 0.29.0 с PyPI), segmentation-models-pytorch 0.5.0, rasterio 1.5.1, numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1 | `ml/.python-version`, `ml/uv.lock` |
+| frontend | Node 22 (образ `node:22-alpine`), vue 3.5.43, vite 8.3.1, maplibre-gl 6.11.2; раздача через `nginx:1.27-alpine` | `frontend/Dockerfile`, `frontend/package-lock.json` |
 
 Точный commit сдачи: TODO, появится после публикации в GitVerse. Тот же hash надо записать в `gitverse_commit` в `run_metadata.json`, сейчас там `null` со статусом `pending_team_publication`.
+
+Каждый выгруженный комплект сам называет свой код: поле `code_commit` в `run_metadata.json` сервис заполняет из `git rev-parse HEAD` в момент экспорта. В образе Docker нет `.git`, поэтому hash передаётся при сборке: `FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build`, в PowerShell перед той же командой `$env:FLOODVALUE_COMMIT = git rev-parse HEAD`. Без переменной поле остаётся `null`. Итоговая проверяемая версия будет помечена тегом `floodvalue-final`, его ставит команда при сдаче.
 
 ## Проверки и структура
 
