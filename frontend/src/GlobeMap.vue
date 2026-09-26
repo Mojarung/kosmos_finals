@@ -38,6 +38,8 @@ let phase = null
 let flight = 0
 let waterLoad = Promise.resolve(true)
 let tileErrorSeen = false
+let styleTimer
+let fallbackStyle = false
 const markers = new Map()
 const empty = { type: 'FeatureCollection', features: [] }
 // Маску воды рисует WebGL-слой воды, остальные слои приходят готовыми PNG.
@@ -111,6 +113,18 @@ function coordinates(bounds) {
   return [[w, n], [e, n], [e, s], [w, s]]
 }
 function styleUrl() { return 'https://tiles.openfreemap.org/styles/' + (state.theme === 'dark' ? 'dark' : 'positron') }
+function installFallbackStyle() {
+  if (!map || ready || fallbackStyle) return
+  fallbackStyle = true
+  clearTimeout(styleTimer)
+  map.setStyle({ version: 8, sources: {}, layers: [
+    { id: 'offline-background', type: 'background', paint: { 'background-color': state.theme === 'dark' ? '#172528' : '#dce7e8' } },
+  ] }, { diff: false })
+}
+function armStyleFallback() {
+  clearTimeout(styleTimer)
+  styleTimer = setTimeout(installFallbackStyle, 8000)
+}
 /*
  * Данные кладём под подписи, но над всеми линиями подложки. В тёмном стиле
  * первые подписи (названия морей) идут раньше дорог и границ, и вставка перед
@@ -653,9 +667,11 @@ onMounted(() => {
     // MapLibre считает errored-тайл «загруженным» в areTilesLoaded().
     if (error.tile) tileErrorSeen = true
     if (error.error?.message?.includes('Worker failed')) mapError.value = true
+    if (error.error?.message?.includes('tiles.openfreemap.org/styles/')) installFallbackStyle()
     console.warn('Map layer:', error.error)
   })
-  map.on('style.load', buildOverlays)
+  map.on('style.load', () => { clearTimeout(styleTimer); buildOverlays() })
+  armStyleFallback()
   // Порог по реальному масштабу, а не по кнопке «Глобус»: выключается и при отдалении колесом.
   const GLOBE_ZOOM = 5
   map.on('zoom', () => {
@@ -709,7 +725,7 @@ onMounted(() => {
   })
   map.on('touchend', event => { if (dragStart) finishSelection(event.lngLat) })
 })
-onBeforeUnmount(() => { for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
+onBeforeUnmount(() => { clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab, state.procurementOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
@@ -720,10 +736,12 @@ watch(() => state.sceneId, id => flyToScene(id))
 watch(() => state.theme, () => {
   if (!map) return
   ready = false
+  fallbackStyle = false
   // Камеру держим, только если снимок уже был на экране; иначе первая сцена не наехала бы.
   keepCamera = Boolean(loadedScene)
   loadedScene = ''
   map.setStyle(styleUrl(), { diff: false })
+  armStyleFallback()
 })
 watch(() => state.drawing, value => {
   if (!map) return

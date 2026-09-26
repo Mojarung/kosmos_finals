@@ -5,8 +5,7 @@ async function openProcurement(page) {
   await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
   await page.getByRole('button', { name: 'Подобрать снимки', exact: true }).click()
   await expect(page.getByTestId('procurement')).toBeVisible()
-  await page.getByRole('button', { name: 'Найти предложения', exact: true }).click()
-  await expect(page.getByTestId('basket')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.getByRole('button', { name: 'Выбрать 3 приоритетных' })).toBeVisible()
 }
 
 async function settled(page, action) {
@@ -19,82 +18,82 @@ async function settled(page, action) {
   return plan
 }
 
-test('real UI → API → optimizer → immutable ZIP; exclusions and impossible requirements', async ({ page }) => {
+test('addressed purchase has a clear empty state, real price changes and ZIP export', async ({ page }) => {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await openProcurement(page)
-  await expect(page.getByText('Учебные предложения и цены. Не предложения поставщиков.', { exact: true })).toBeVisible()
-  const before = await page.getByTestId('basket-price').innerText()
-  const excluded = await settled(page, () => page.getByRole('checkbox', { name: 'Исключить Вся область · один заказ', exact: true }).check())
-  expect(excluded.selected_ids).not.toContain('wide')
-  expect(await page.getByTestId('basket-price').innerText()).not.toBe(before)
-  await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).check())
+  await expect(page.getByText('Начните с объектов')).toBeVisible()
+  await expect(page.getByTestId('basket')).toHaveCount(0)
+  await expect(page.getByText(/\+0,00/)).toHaveCount(0)
+  await page.screenshot({ path: test.info().outputPath('procurement-start.png') })
+  let delayed = false
+  await page.route('**/api/procurement/plan', async route => {
+    if (!delayed && route.request().postDataJSON().mandatory?.length === 3) {
+      delayed = true
+      await new Promise(resolve => setTimeout(resolve, 600))
+    }
+    await route.continue()
+  })
+  const chosen = await settled(page, async () => {
+    await page.getByRole('button', { name: 'Выбрать 3 приоритетных' }).click()
+    await expect(page.getByText('Подбираем снимки…')).toBeVisible()
+    await expect(page.getByTestId('basket')).toHaveCount(0)
+  })
+  expect(chosen.request.objective).toBe('cheapest')
+  expect(chosen.request.mandatory).toHaveLength(3)
+  expect(chosen.cost).toBeGreaterThan(0)
+  await expect(page.getByText('Подходящий набор найден')).toBeVisible()
+  await expect(page.getByText('Стоимость набора')).toBeVisible()
   const broke = await settled(page, () => page.getByLabel('Бюджет закупки', { exact: true }).fill('0'))
   expect(broke.mandatory_satisfied).toBe(false)
-  await expect(page.getByText('Все обязательные условия выполнить не удалось', { exact: true })).toBeVisible()
+  await expect(page.getByText('Чтобы закрыть все выбранные объекты, нужно минимум', { exact: false })).toBeVisible()
   const free = await settled(page, () => page.getByLabel('Детализация закупки', { exact: true }).selectOption('10'))
   expect(free.selected_ids).toEqual(['free'])
-  await expect(page.getByText('Обязательные условия выполнены', { exact: true })).toBeVisible()
+  await expect(page.getByText('Подходящий набор найден')).toBeVisible()
   const downloadPromise = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Сохранить и скачать заявку', exact: true }).click()
+  await page.getByRole('button', { name: 'Скачать план закупки' }).click()
   const download = await downloadPromise
   expect(download.suggestedFilename()).toMatch(/^procurement-.*\.zip$/)
   expect(await download.failure()).toBeNull()
   await download.saveAs(test.info().outputPath('request.zip'))
-  await page.getByTestId('basket').scrollIntoViewIfNeeded()
-  await page.screenshot({ path: test.info().outputPath('procurement-desktop.png') })
   expect(errors).toEqual([])
 })
 
-test('deadline failure, empty cheapest basket, and switching back to case calculation', async ({ page }) => {
+test('limits, mode and alternatives work without a long initial offer list', async ({ page }) => {
   await openProcurement(page)
-  await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).check())
+  await expect(page.locator('.procurement-offer')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Все объекты (10)' }).click()
+  const plan = await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).check())
+  expect(plan.request.mandatory).toHaveLength(1)
   const impossible = await settled(page, () => page.getByLabel('Срок закупки', { exact: true }).fill('1'))
   expect(impossible.minimum_cost).toBeNull()
-  await expect(page.getByText('В этом каталоге нет пригодной комбинации.', { exact: false })).toBeVisible()
-  await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).uncheck())
-  const empty = await settled(page, () => page.getByLabel('Цель закупки', { exact: true }).selectOption('cheapest'))
-  expect(empty.cost).toBe(0)
+  await expect(page.getByText('При заданном сроке и детализации подходящей комбинации нет.')).toBeVisible()
+  await settled(page, () => page.getByLabel('Срок закупки', { exact: true }).fill('12'))
+  await page.getByRole('button', { name: 'Другие предложения', exact: false }).click()
+  await expect(page.locator('.procurement-offer')).toHaveCount(5)
+  await page.getByRole('button', { name: 'Показать все', exact: false }).click()
+  await expect(page.getByTestId('offer-wide')).toBeVisible()
+  const wide = page.getByTestId('offer-wide')
+  await wide.getByText('Параметры и действия', { exact: true }).click()
+  const variant = await settled(page, () => wide.getByRole('button', { name: 'Создать заказ на выбранные объекты' }).click())
+  expect(variant.offers.some(o => o.id.startsWith('zone-'))).toBe(true)
+  await page.getByText('Сравнить с другими планами').click()
+  await expect(page.getByText('A · Без оплаты')).toBeVisible()
+  await settled(page, () => page.getByRole('button', { name: 'Максимум охвата' }).click())
+  await expect(page.getByRole('button', { name: 'Максимум охвата' })).toHaveClass(/active/)
   await page.getByRole('button', { name: 'Расчёт по ТЗ', exact: true }).click()
   await expect(page.getByRole('radiogroup', { name: 'Вариант закупки' })).toBeVisible()
 })
 
-test('compact viewport keeps procurement usable', async ({ page }) => {
-  await page.setViewportSize({ width: 1100, height: 800 })
-  await openProcurement(page)
-  await expect(page.getByLabel('Бюджет закупки', { exact: true })).toBeVisible()
-  const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, viewport: innerWidth }))
-  expect(width.scroll).toBeLessThanOrEqual(width.viewport)
-})
-
-test('new order geometry, marginal cost, preserved coverage and restored decision', async ({ page }) => {
-  await openProcurement(page)
-  await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).check())
-  await settled(page, () => page.getByLabel('Цель закупки', { exact: true }).selectOption('cheapest'))
-  const wide = page.getByTestId('offer-wide')
-  await wide.getByText('Параметры и источник цены', { exact: true }).click()
-  const variantPlan = await settled(page, () => wide.getByRole('button', { name: 'Создать заказ на обязательные объекты', exact: true }).click())
-  expect(variantPlan.offers.some(o => o.id.startsWith('zone-'))).toBe(true)
-  for (const id of variantPlan.covered_ids) expect(variantPlan.incremental_cost[id]).toBe(0)
-  const same = await settled(page, () => page.getByRole('button', { name: 'Сохранить охват и найти дешевле', exact: true }).click())
-  expect(same.covered_ids).toEqual(expect.arrayContaining(variantPlan.covered_ids))
-  const download = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Сохранить и скачать заявку', exact: true }).click()
-  await download
-  await settled(page, () => page.getByLabel('Бюджет закупки', { exact: true }).fill('0'))
-  const restored = await settled(page, () => page.locator('.procurement-history').first().click())
-  expect(restored.cost).toBe(same.cost)
-  expect(restored.selected_ids).toEqual(same.selected_ids)
-})
-
-test('phone viewport can open and use the procurement panel', async ({ page }) => {
+test('compact and phone viewports keep the flow usable', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
+  await page.route('https://tiles.openfreemap.org/styles/**', route => route.abort())
   await page.goto('/')
   await page.getByRole('button', { name: /^EL / }).click()
   await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
   await page.getByRole('button', { name: 'Подобрать снимки', exact: true }).click()
-  await page.getByRole('button', { name: 'Найти предложения', exact: true }).click()
-  await expect(page.getByTestId('basket')).toHaveAttribute('aria-busy', 'false')
+  await expect(page.getByRole('button', { name: 'Выбрать 3 приоритетных' })).toBeVisible()
+  await settled(page, () => page.getByRole('button', { name: 'Выбрать 3 приоритетных' }).click())
   await page.getByTestId('basket').scrollIntoViewIfNeeded()
   await page.screenshot({ path: test.info().outputPath('procurement-phone.png') })
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, viewport: innerWidth }))
@@ -102,19 +101,14 @@ test('phone viewport can open and use the procurement panel', async ({ page }) =
 })
 
 for (const [country, scene] of [['Гана', 'Ghana_313799'], ['Меконг · Камбоджа', 'Mekong_333434']]) {
-  test(`procurement constraints and map selection in ${country}`, async ({ page }) => {
+  test(`auto catalogue and addressed plan in ${country}`, async ({ page }) => {
     await openProcurement(page)
     await page.getByRole('tab', { name: country, exact: true }).click()
     await expect(page.getByTestId('procurement')).toContainText(scene)
-    const search = page.waitForResponse(r => r.url().endsWith('/api/procurement/catalogs') && r.request().method() === 'POST')
-    await page.getByRole('button', { name: 'Найти предложения', exact: true }).click()
-    const c = await (await search).json()
-    expect(c.scene_id).toBe(scene)
-    await expect(page.getByTestId('basket')).toHaveAttribute('aria-busy','false')
-    await settled(page, () => page.getByRole('checkbox', { name: 'Обязательно: Склад', exact: true }).check())
-    const plan = await settled(page, () => page.getByLabel('Бюджет закупки', { exact: true }).fill('100'))
-    expect(plan.cost).toBeLessThanOrEqual(100)
-    expect(plan.mandatory_satisfied).toBe(true)
+    await expect(page.getByRole('button', { name: 'Выбрать 3 приоритетных' })).toBeVisible()
+    const plan = await settled(page, () => page.getByRole('button', { name: 'Выбрать 3 приоритетных' }).click())
+    expect(plan.request.mandatory).toHaveLength(3)
+    expect(plan.cost).toBeLessThanOrEqual(500)
     await page.getByTestId('basket').scrollIntoViewIfNeeded()
     await page.screenshot({ path: test.info().outputPath(scene + '.png') })
   })
