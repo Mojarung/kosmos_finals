@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 
@@ -85,6 +87,8 @@ def parse_osm(content: bytes, source: dict) -> dict:
         root = ET.fromstring(content)
     except ET.ParseError as error:
         raise ValueError("OSM вернул некорректные данные; повторите загрузку") from error
+    if root.find("remark") is not None:
+        raise ValueError("Сервер OSM не завершил выборку зданий")
     nodes = {n.attrib["id"]: (float(n.attrib["lon"]), float(n.attrib["lat"])) for n in root.findall("node")}
     ways = {w.attrib["id"]: w for w in root.findall("way")}
     features, consumed = [], set()
@@ -172,21 +176,43 @@ def load_osm(bounds: list[float]) -> dict:
     if cached.exists():
         return json.loads(cached.read_text())
     url = "https://api.openstreetmap.org/api/0.6/map?bbox=" + ",".join(map(str, bounds))
-    try:
-        with urlopen(Request(url, headers={"User-Agent": "FloodValue/0.2 building-research"}), timeout=40) as response:
-            content = response.read(MAX_BYTES + 1)
-    except Exception as error:
-        raise ValueError("OSM сейчас не отвечает. Повторите или загрузите GeoJSON; сохранённый пример Пайпорты доступен без OSM") from error
-    if len(content) > MAX_BYTES:
-        raise ValueError("Слишком много данных OSM; уменьшите область")
-    data = parse_osm(content, {"name": "OpenStreetMap", "url": url, "license": "ODbL-1.0",
+    west, south, east, north = bounds
+    bbox = f"{south},{west},{north},{east}"
+    # Dense cities exceed the map API's 50k-node limit even for a small bbox.
+    # Overpass retrieves buildings and their geometry instead of every map object.
+    query = f'[out:xml][timeout:15];(way["building"]({bbox});relation["building"]["type"="multipolygon"]({bbox}););(._;>;);out body;'
+    headers = {"User-Agent": "FloodValue/0.2 building-research"}
+    requests = [Request(url, headers=headers)] + [
+        Request(endpoint, data=urlencode({"data": query}).encode(), headers=headers)
+        for endpoint in ("https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter")
+    ]
+    for index, request in enumerate(requests):
+        try:
+            with urlopen(request, timeout=8 if index == 0 else 20) as response:
+                content = response.read(MAX_BYTES + 1)
+            if len(content) > MAX_BYTES:
+                raise ValueError("Слишком много данных OSM; уменьшите область")
+            data = parse_osm(content, osm_source(request.full_url, bounds, "map" if index == 0 else "overpass"))
+            return cache_extract(data, bounds)
+        except Exception as error:
+            logging.getLogger(__name__).warning("Building source %s failed: %s", request.full_url.split('?')[0], error)
+    raise ValueError("Не удалось загрузить контуры из трёх источников OSM. Уменьшите область или откройте сохранённый пример.")
+
+
+def osm_source(url: str, bounds: list[float], provider: str) -> dict:
+    return {"name": "OpenStreetMap", "url": url, "provider": provider, "bounds": bounds, "license": "ODbL-1.0",
         "attribution": "© OpenStreetMap contributors", "retrieved_at": datetime.now(timezone.utc).isoformat(),
         "temporal_scope": "Текущие контуры; существование и назначение на дату снимка не проверены",
-        "scope": "Полные доступные контуры OSM в области запроса; неполные отношения пропущены"})
+        "scope": "Полные доступные контуры OSM в области запроса; неполные отношения пропущены"}
+
+
+def cache_extract(data: dict, bounds: list[float]) -> dict:
     # A bbox response includes incidental objects; retain only intersecting buildings.
     region = box(*bounds)
     data["features"] = [f for f in data["features"] if shape(f["geometry"]).intersects(region)]
     save(data)
+    key = hashlib.sha256(json.dumps(bounds).encode()).hexdigest()[:24]
+    cached = CACHE / f"osm-use-v2-{key}.json"
     with tempfile.NamedTemporaryFile(dir=CACHE, mode="w", delete=False) as handle:
         json.dump(data, handle, ensure_ascii=False)
     os.replace(handle.name, cached)

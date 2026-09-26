@@ -25,12 +25,14 @@ METHOD = {
     "probability": "Среднее p воды по площади пересечения контура с пикселями; не калиброванная вероятность затопления здания",
     "permanent_water": "При наличии маски постоянной воды p и маска воды в таких пикселях обнуляются",
     "coverage": "При неполном покрытии радаром ущерб не экстраполируется: сумма отсутствует",
+    "default_valuation": "Для неизвестного типа: базовая ставка 45 000 ₽/м² × стабильный коэффициент 0,85–1,15 по ID. Это демонстрационная стоимость, не определение типа или рыночная оценка.",
     "limitations": [
         "Оценка сценарная. Глубина воды, конструкция, имущество, простой и реальный счёт за ремонт неизвестны.",
         "Площадь верхних этажей не включается; ставка относится к подверженному воздействию первому этажу.",
         "Sentinel-1 не подтверждает повреждение отдельного дома; в плотной застройке возможны пропуски воды.",
         "Низкий сигнал воды на позднем снимке не доказывает отсутствия ущерба во время пика паводка.",
-        "Контуры и назначение OSM могут быть неполными и новее снимка; неопознанные типы требуют уточнения.",
+        "Неизвестному типу назначается условная стоимость с вариацией по ID; назначение здания остаётся неизвестным.",
+        "Без полного покрытия радаром в карточке показаны условные потери при затоплении; в сумму ущерба по снимку они не входят.",
     ],
 }
 
@@ -130,14 +132,18 @@ def evaluate(request: Evaluation) -> dict:
         rate = rates.get(kind)
         if rate is None:
             status = "unknown_type"
-        exposure = area * rate["cost_rub_m2"] if rate else None
+        # Stable demo prices: reopening/repricing never draws a new random amount.
+        cost_factor = 1 + (int(hashlib.sha256(feature["id"].encode()).hexdigest()[:8], 16) % 31 - 15) / 100 if kind == "unknown" else 1
+        unit_cost = rate["cost_rub_m2"] * cost_factor if rate else None
+        exposure = area * unit_cost if rate else None
         conditional = exposure * rate["damage_ratio"] if rate else None
         loss = conditional * stats["water_probability_proxy"] if status == "ok" else None
         rows.append({**feature, "properties": {**props, **stats, **assumptions.display_height(props["tags"]),
             "building_type": kind, "type_label": rate["label"] if rate else "Тип не определён",
             "type_source": type_source, "area_m2": area, "levels": props["tags"].get("building:levels"),
-            "cost_rub_m2": rate["cost_rub_m2"] if rate else None, "damage_ratio": rate["damage_ratio"] if rate else None,
-            "cost_source": ("Ставка пользователя" if rate["cost_rub_m2"] != assumptions.RATES[kind]["cost_rub_m2"] else "Сценарная ставка команды") if rate else None,
+            "cost_rub_m2": unit_cost, "base_cost_rub_m2": rate["cost_rub_m2"] if rate else None,
+            "cost_factor": cost_factor, "synthetic_cost": kind == "unknown", "damage_ratio": rate["damage_ratio"] if rate else None,
+            "cost_source": ("Условная ставка: базовая цена × коэффициент по ID здания" if kind == "unknown" else "Ставка пользователя" if rate["cost_rub_m2"] != assumptions.RATES[kind]["cost_rub_m2"] else "Сценарная ставка команды") if rate else None,
             "damage_source": ("Доля повреждения пользователя" if rate["damage_ratio"] != assumptions.RATES[kind]["damage_ratio"] else "Допущение команды: 30%") if rate else None,
             "exposure_rub": exposure, "conditional_damage_rub": conditional,
             "expected_loss_rub": loss, "status": status, "overlapping_footprint": index in overlaps,
@@ -156,7 +162,9 @@ def evaluate(request: Evaluation) -> dict:
         "summary": {"count": len(rows), "estimated": len(estimated), "unestimated": len(rows) - len(estimated),
                     "unknown_type": sum(f["properties"]["building_type"] == "unknown" for f in rows),
                     "with_water": sum((f["properties"]["water_fraction"] or 0) > 0 for f in rows),
-                    "expected_loss_rub": total},
+                    "expected_loss_rub": total,
+                    "conditional_damage_rub": sum(f["properties"]["conditional_damage_rub"] or 0 for f in rows if not f["properties"]["overlapping_footprint"]),
+                    "synthetic_cost": sum(f["properties"]["synthetic_cost"] for f in rows)},
         "rates": rates, "rate_version": assumptions.VERSION, "rate_source": assumptions.SOURCE,
         "rate_overrides": {key: value.model_dump() for key, value in request.rate_overrides.items()},
         "type_overrides": request.type_overrides, "method": METHOD,
@@ -221,7 +229,7 @@ def evaluate_buildings(request: Evaluation):
 def package(result: dict) -> bytes:
     target, table = io.BytesIO(), io.StringIO()
     columns = ["id", "name", "building_type", "type_source", "risk_rank", "height_m", "height_source", "area_m2", "radar_coverage", "water_probability_proxy", "water_fraction",
-               "cost_rub_m2", "cost_source", "damage_ratio", "damage_source", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
+               "cost_rub_m2", "base_cost_rub_m2", "cost_factor", "synthetic_cost", "cost_source", "damage_ratio", "damage_source", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
     writer = csv.DictWriter(table, fieldnames=columns, extrasaction="ignore")
     writer.writeheader()
     for feature in result["features"]:

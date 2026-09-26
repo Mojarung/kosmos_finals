@@ -1,7 +1,7 @@
 """Editable scenario assumptions, not a market appraisal or measured repair bill."""
 import re
 
-VERSION = "building-scenario-rub-v1"
+VERSION = "building-scenario-rub-v2"
 SOURCE = "Сценарные ставки команды, 26.09.2026; рыночная оценка не проводилась"
 # RUB per square metre of footprint / exposed ground floor. Upper floors are not multiplied in.
 _ROWS = [
@@ -15,6 +15,7 @@ _ROWS = [
     ("farm", "Сельхозздание", 25000), ("garage", "Гараж", 18000),
     ("utility", "Техническое здание", 45000), ("shed", "Хозпостройка", 12000),
     ("roof", "Навес", 10000), ("other", "Другое — выбранный тип", 40000),
+    ("unknown", "Неуточнённый тип", 45000),
 ]
 RATES = {key: {"label": label, "cost_rub_m2": cost, "damage_ratio": 0.3} for key, label, cost in _ROWS}
 

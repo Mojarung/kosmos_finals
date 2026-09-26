@@ -79,7 +79,7 @@ def test_unknown_manual_type_and_per_type_rates(scene):
     rows = [feature('unknown', box(0, 0, .001, .001), {'building': 'yes'}), feature('school', box(.001, 0, .002, .001), {'building': 'school'})]
     result, _ = evaluate(rows)
     assert result['summary']['unknown_type'] == 1
-    assert result['summary']['estimated'] == 1
+    assert result['summary']['estimated'] == 2
     original = result['features'][1]['properties']['expected_loss_rub']
     result, _ = evaluate(rows, rate_overrides={'school': {'cost_rub_m2': 170000, 'damage_ratio': .3}}, type_overrides={'unknown': 'warehouse'})
     assert result['summary']['unknown_type'] == 0
@@ -151,13 +151,17 @@ def test_real_paiporta_snapshot_is_reproducible(tmp_path, monkeypatch):
     monkeypatch.setattr(building_sources, 'CACHE', tmp_path)
     result = buildings.load(buildings.LoadRequest(scene_id='Paiporta_20241101'))
     assert result['summary']['count'] == 908
-    assert result['summary']['estimated'] == 239
+    assert result['summary']['estimated'] == 908
+    assert result['summary']['synthetic_cost'] == 669
     assert result['summary']['unknown_type'] == 669
     assert result['observed_at'].startswith('2024-11-01')
     assert result['source']['retrieved_date'] == '2026-09-26'
     assert result['model']['mode'] == 'S1 fallback'
     assert result['summary']['with_water'] == 0  # late urban radar: do not claim detected damage
-    assert result['summary']['expected_loss_rub'] == pytest.approx(7903003.121871223)
+    known_loss = sum(f['properties']['expected_loss_rub'] for f in result['features'] if not f['properties']['synthetic_cost'])
+    assert known_loss == pytest.approx(7903003.121871223)
+    assert result['summary']['expected_loss_rub'] > known_loss
+    assert all(f['properties']['exposure_rub'] > 0 for f in result['features'])
     assert len(result['top_building_ids']) == 10
     ranked = sorted(result['features'], key=lambda f: f['properties']['risk_rank'])
     assert [f['id'] for f in ranked[:10]] == result['top_building_ids']
@@ -189,6 +193,8 @@ def test_rank_does_not_hide_unknown_high_water_building(scene):
     result, _ = evaluate(rows)
     assert result['top_building_ids'] == ['unknown-water','known-dry']
     props = {f['id']:f['properties'] for f in result['features']}
-    assert props['unknown-water']['expected_loss_rub'] is None
+    assert props['unknown-water']['expected_loss_rub'] > 0
+    assert props['unknown-water']['synthetic_cost'] is True
+    assert .85 <= props['unknown-water']['cost_factor'] <= 1.15
     assert props['unknown-water']['risk_rank'] == 1
     assert props['outside']['risk_rank'] is None
