@@ -247,6 +247,7 @@ function updateMarkers() {
 
 function zoneFeatures() {
   if (state.tab === 'plan' && state.procurementOverlay !== null) return state.procurementOverlay
+  if (state.tab === 'projects' && state.projectOverlay !== null) return state.projectOverlay
   if (!state.showZones) return []
   const plan = state.analysis.strategies[state.strategy]
   const active = new Set(plan?.zone_ids || [])
@@ -730,7 +731,8 @@ onMounted(() => {
 })
 onBeforeUnmount(() => { clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId,
-  state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab, state.procurementOverlay], syncMap, { deep: true })
+  state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab,
+  state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))

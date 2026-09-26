@@ -13,6 +13,7 @@ const mapRef = ref(null)
 const chrome = ref(null)
 const splash = ref(null)
 const mapReady = ref(false)
+const creditsOpen = ref(false)
 
 // Порог маски воды: зафиксирован на validation и одинаков для всех снимков.
 const maskThreshold = computed(() => state.analysis?.chip.model_threshold)
@@ -118,7 +119,10 @@ onMounted(() => {
              спутник Esri World Imagery (адреса тайлов в GlobeMap.vue). Подписи OSM лежат
              поверх и спутника, поэтому строка OSM есть в обоих режимах. -->
         <!-- Одной строкой: Vue убирает пробелы-переводы строк между ссылками, и они слипались. -->
-        <p class="map-credits" aria-label="Источники подложки"><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, GIS User Community; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a></p>
+        <!-- Источники прячутся за кнопкой «©» на всех ширинах: строка занимала низ экрана. -->
+        <button class="credits-toggle" type="button" :aria-expanded="creditsOpen" aria-controls="map-credits"
+          aria-label="Источники подложки и данных" @click="creditsOpen = !creditsOpen">©</button>
+        <p id="map-credits" class="map-credits" :class="{ open: creditsOpen }" aria-label="Источники подложки"><span v-if="state.basemap === 'satellite'" class="credits-note">Подложка: современный снимок, только для ориентира, в расчёт не входит. </span><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, GIS User Community; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a></p>
         <div v-if="state.analysis" class="panel map-console" data-enter>
           <div class="map-console-layer">
             <span v-for="item in legend" :key="item.key" v-tip="item.hint" class="legend-item"><i class="legend-water" :class="item.key"></i>{{ item.label }}</span>
@@ -142,7 +146,6 @@ onMounted(() => {
                 aria-label="Видимость слоя на карте" :style="{ '--progress': state.overlayOpacity + '%' }" />
             </label>
           </div>
-          <p v-if="state.basemap === 'satellite'" class="basemap-note">Подложка: современный спутниковый снимок, только для ориентира; в расчёт не входит</p>
         </div>
       </div>
     </div>

@@ -61,7 +61,8 @@ const origin = computed(() => {
           </h1>
           <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span
               v-if="origin" class="scene-source"><span class="scene-kind">{{ origin.label }}</span> <span class="scene-chip tabular">{{ origin.value }}</span></span><span
-              v-else class="scene-source">Sentinel‑1</span></p>
+              v-else class="scene-source">Sentinel‑1</span><span v-if="state.analysis?.chip?.chip_id === current.chip_id && state.analysis.chip.timing?.analysis_mode === 'retrospective_dataset_demo'"
+              class="scene-timing" v-tip="state.analysis.chip.timing.availability_note">Ретроспектива</span></p>
         </div>
       </Transition>
     </div>

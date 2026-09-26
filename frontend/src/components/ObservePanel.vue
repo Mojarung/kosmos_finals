@@ -98,6 +98,8 @@ function toggleDrawing() {
             <span class="unit">км²</span>
           </div>
           <ShareBar :segments="segments" />
+          <p v-if="state.analysis.chip.timing?.analysis_mode === 'retrospective_dataset_demo'" class="source-line temporal-note"
+            v-tip="state.analysis.chip.timing.water_reference_note">Исторический пример · JRC не обязательно был доступен на дату паводка</p>
         </section>
 
         <div class="rows">

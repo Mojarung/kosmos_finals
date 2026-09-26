@@ -43,6 +43,11 @@ ORDER_FIELDS = ("candidate_id", "area_km2", "sensor_type", "resolution_m", "proc
 LINE_NUMBERS = ("area_km2", "base_rate_rub_km2", "processing_coef", "usage_coef", "freshness_coef", "discount_coef",
                 "previous_group_area_km2", "basket_group_area_km2", "group_area_km2", "unit_price_rub_km2", "cost_rub")
 OPERATIONAL_DAYS = 90
+# Required by the case for every sensitivity variant, plus the uncertainty status it asks to keep.
+SENSITIVITY_REQUIRED = ("scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub", "data_cost_rub",
+                        "other_cost_rub", "covered_expected_loss_rub", "result_status", "interpretation",
+                        "uncertainty_status")
+UNCERTAINTY_STATUSES = {"baseline", "scenario", "measured", "not_estimated"}
 
 
 def freshness(order: dict, calculation_date: date) -> float:
@@ -68,6 +73,8 @@ def rows(archive: zipfile.ZipFile, name: str) -> list[dict]:
     parsed = list(csv.DictReader(io.StringIO(content)))
     require(all(str(value).strip().lower() not in {"nan", "inf", "-inf", "infinity", "-infinity"}
                 for row in parsed for value in row.values()), f"{name}: NaN/Inf")
+    require(all(value not in {"True", "False"} for row in parsed for value in row.values()),
+            f"{name}: booleans must be true/false like the rest of the package")
     return parsed
 
 
@@ -81,7 +88,14 @@ def validate(path: str | Path) -> dict:
         missing = REQUIRED - set(archive.namelist())
         require(not missing, f"Missing files: {sorted(missing)}")
         meta = document(archive, "run_metadata.json")
-        analysis = document(archive, "analysis.json")
+        require(isinstance(meta.get("code_commit"), str) and len(meta["code_commit"]) == 40
+                and all(char in "0123456789abcdef" for char in meta["code_commit"].lower()),
+                "run_metadata.json: code_commit must be the exact 40-character source revision")
+        require(meta.get("source_timing", {}).get("analysis_mode") in
+                {"rtc_observation", "retrospective_dataset_demo"},
+                "run_metadata.json: source_timing must disclose the data time context")
+        require("other_cost_rule" not in meta, "run_metadata.json: stale other_cost_rule contradicts decision_cost_rule")
+        document(archive, "analysis.json")  # parsed for NaN/Inf like every other JSON of the package
         assets = rows(archive, "assets.csv")
         losses = rows(archive, "asset_loss.csv")
         sensitivity = rows(archive, "sensitivity.csv")
@@ -112,7 +126,7 @@ def validate(path: str | Path) -> dict:
                 close(float(row["expected_loss_rub"]), expected, f"EL {row['asset_id']}")
             if "flood_expected_loss_rub" in row:
                 # Additional flood-only model: 0 on JRC permanent water, the mandatory EL elsewhere.
-                if row.get("permanent_water_at_point") == "True":
+                if row.get("permanent_water_at_point") == "true":
                     require(row["flood_expected_loss_rub"] != "" and float(row["flood_expected_loss_rub"]) == 0,
                             f"{row['asset_id']}: flood-only loss on permanent water must be 0")
                 elif row["expected_loss_rub"] == "":
@@ -123,6 +137,15 @@ def validate(path: str | Path) -> dict:
         require({json.loads(row["changed_inputs_json"])["input"] for row in sensitivity
                  if row["scenario_id"].startswith("plan_")} == {"budget", "tariff"},
                 "Budget/tariff sensitivity missing")
+        for row in sensitivity:
+            for column in SENSITIVITY_REQUIRED:
+                require(row.get(column, "") != "", f"sensitivity.csv {row['scenario_id']}: empty {column}")
+            close(float(row["decision_cost_rub"]), float(row["data_cost_rub"]) + float(row["other_cost_rub"]),
+                  f"sensitivity.csv {row['scenario_id']}: decision_cost_rub is not data + other", 0.011)
+            require(row["uncertainty_status"] in UNCERTAINTY_STATUSES,
+                    f"sensitivity.csv {row['scenario_id']}: uncertainty_status {row['uncertainty_status']!r}")
+            require((row["residual_uncertainty"] == "") == (row["uncertainty_status"] == "not_estimated"),
+                    f"sensitivity.csv {row['scenario_id']}: residual uncertainty must be empty only when not_estimated")
 
         calculation_date = date.fromisoformat(meta["pricing"]["calculation_date"])
         deadline = int(meta["deadline_hours"])
@@ -216,6 +239,9 @@ def validate(path: str | Path) -> dict:
                 float(comparison["C"]["data_cost_rub"]) <= budget, "C exceeds budget")
         require(comparison["B"]["budget_feasible"] == str(
             float(comparison["B"]["data_cost_rub"]) <= budget).lower(), "B budget status wrong")
+        require(comparison["B"]["budget_feasible"] == "true"
+                or comparison["B"]["strategy_status"] == "counterfactual_over_budget",
+                "B above the budget must be marked counterfactual, also when it is late")
 
         with MemoryFile(archive.read("flood_probability.tif")) as memory:
             with memory.open() as src:

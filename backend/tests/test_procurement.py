@@ -41,7 +41,8 @@ def test_real_estimates_work_without_claiming_verified_quality(client):
 @pytest.mark.parametrize('scene',['Nigeria_812045','Ghana_313799','Mekong_333434'])
 @pytest.mark.parametrize('budget',[0,100,500,1000])
 def test_real_budgets_and_union(scene,budget):
-    c=snapshot(scene); r=p.calculate(c,p.Plan(catalog_id=c['id'],budget=budget))
+    c=snapshot(scene)
+    r=p.calculate(c,p.Plan(catalog_id=c['id'],budget=budget))
     assert r['cost'] is None or r['cost'] <= budget
     chosen=[o for o in c['offers'] if o['id'] in r['selected_ids']]
     assert len(chosen) <= 2
@@ -58,14 +59,16 @@ def test_empty_is_not_free(client):
     assert r['budget_gap'] == 385.81 and not r['selected_ids']
 
 def test_overlap_is_counted_once(client):
-    c=catalog(); ids=[o['id'] for o in c['offers'] if o['coverage_percent'] == 100][:2]
+    c=catalog()
+    ids=[o['id'] for o in c['offers'] if o['coverage_percent'] == 100][:2]
     r=request(client,c,selected_ids=ids)
     assert r['coverage_percent'] == 100
     assert r['overlap_km2'] == pytest.approx(c['area_km2'],abs=.002)
     assert r['cost'] == sum(o['price'] for o in c['offers'] if o['id'] in ids)
 
 def test_filters_keep_catalog_visible(client):
-    c=catalog();r=request(client,c,resolution_m=.1)
+    c=catalog()
+    r=request(client,c,resolution_m=.1)
     assert r['recommendation'] is None and len(r['offers']) == len(c['offers'])
     assert all('Недостаточная детализация' in o['filter_reasons'] for o in r['offers'])
 
@@ -83,7 +86,8 @@ def test_invalid_selection_dates_bounds(client):
         assert client.post('/api/procurement/catalogs',json={'scene_id':'Nigeria_812045',**extra}).status_code == 422
 
 def test_real_export_and_no_empty_export(client):
-    c=catalog();saved=client.post('/api/procurement/decisions',json={'catalog_id':c['id']}).json()
+    c=catalog()
+    saved=client.post('/api/procurement/decisions',json={'catalog_id':c['id']}).json()
     z=zipfile.ZipFile(io.BytesIO(client.get('/api/procurement/decisions/'+saved['id']+'/export').content))
     assert z.testzip() is None
     report=z.read('comparison.html').decode()

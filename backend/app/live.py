@@ -314,6 +314,7 @@ def _cached_scene(folder: Path) -> dict | None:
 
 
 def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
+    progress = progress or (lambda *_: None)
     area = validate_area(bounds)
     features = _features(bounds, item_id)
     feature = features[0]
@@ -326,12 +327,12 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
     folder = LIVE_DIR / scene_id
     cached = _cached_scene(folder)
     if cached is not None:
-        if progress: progress("ready", 1, "Готовый расчёт взят из кэша")
+        progress("ready", 1, "Готовый расчёт взят из кэша")
         return cached
     with _lock:
         cached = _cached_scene(folder)
         if cached is not None:
-            if progress: progress("ready", 1, "Готовый расчёт взят из кэша")
+            progress("ready", 1, "Готовый расчёт взят из кэша")
             return cached
         width, height = grid_size(bounds)
         token = _json(SAS)["token"]
@@ -341,8 +342,8 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
         used_features = []
         passport = []
         for source_number, source in enumerate(features, 1):
-            if progress: progress("reading", (source_number - 1) / len(features),
-                                  f"Читаем VV/VH · кадр {source_number} из {len(features)}")
+            progress("reading", (source_number - 1) / len(features),
+                     f"Читаем VV/VH · кадр {source_number} из {len(features)}")
             source_vv = _read_band(source["assets"]["vv"]["href"], token, bounds, (height, width))
             source_vh = _read_band(source["assets"]["vh"]["href"], token, bounds, (height, width))
             fill = np.isfinite(source_vv) & np.isfinite(source_vh) & ~valid
@@ -357,7 +358,7 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
         s1 = np.stack([vv, vh])
         if valid.mean() < 0.05:
             raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
-        if progress: progress("inference", 0, "Радар прочитан. Модель ищет воду")
+        progress("inference", 0, "Радар прочитан. Модель ищет воду")
         from floodvalue.infer import load_calibration
         _, threshold = load_calibration(CALIBRATION)
         probability, spread = _infer_tiled(s1, progress)
@@ -365,7 +366,7 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
         baseline = valid & (vh < -23.6)
         probability[~valid] = 0
         spread[~valid] = 0
-        if progress: progress("saving", 0.95, "Сохраняем слои и считаем объекты")
+        progress("saving", 0.95, "Сохраняем слои и считаем объекты")
         folder.mkdir(parents=True, exist_ok=True)
         _overlays(folder, vh, probability, spread, model, baseline, valid)
         (folder / "model_mask.bin").write_bytes(np.where(valid, model, 255).astype("uint8").tobytes())
@@ -397,5 +398,5 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
             "permanent_status": "not_separated",
         }
         (folder / "metadata.json").write_text(json.dumps(metadata_record, ensure_ascii=False, indent=2), encoding="utf-8")
-        if progress: progress("ready", 1, "Анализ готов")
+        progress("ready", 1, "Анализ готов")
         return metadata_record

@@ -247,10 +247,13 @@ function hover(id) { state.hoverZoneId = id }
 
 <template>
   <div class="procurement-mode-switch">
-    <button :class="{ active: !state.procurementOpen }" @click="state.procurementOpen = false">Расчёт по ТЗ</button>
-    <button :class="{ active: state.procurementOpen }" @click="state.procurementOpen = true">Каталог SkyFi</button>
+    <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
+    <button :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
+      @click="state.procurementOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
+    <button :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
+      @click="state.procurementOpen = true">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
   </div>
-  <ProcurementView v-if="state.procurementOpen" :key="state.sceneId" />
+  <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
   <template v-else>
   <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
     <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>

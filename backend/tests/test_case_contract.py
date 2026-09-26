@@ -73,7 +73,7 @@ def test_point_on_permanent_water_keeps_the_mandatory_el(permanent_point, tmp_pa
     el = mandatory_el(files)
     losses = {row["asset_id"]: row for row in table(files, "asset_loss.csv")}
     point = losses[ON_WATER]
-    assert point["permanent_water_at_point"] == "True"
+    assert point["permanent_water_at_point"] == "true"
     assert point["status"] == "ok"
     assert float(point["expected_loss_rub"]) == pytest.approx(el[ON_WATER], abs=0.011)
     assert float(point["flood_expected_loss_rub"]) == 0
@@ -101,7 +101,7 @@ def test_validator_rejects_the_flood_only_status(tmp_path):
     rows = table(files, "asset_loss.csv")
     target = rows[0]
     # What the exporter used to write for a point on permanent water.
-    target.update(status="permanent_water", expected_loss_rub="0.0", permanent_water_at_point="True")
+    target.update(status="permanent_water", expected_loss_rub="0.0", permanent_water_at_point="true")
     if "flood_expected_loss_rub" in target:
         target["flood_expected_loss_rub"] = "0.0"
     output = io.StringIO()
@@ -143,7 +143,13 @@ def test_strategy_comparison_covers_the_mandatory_el(permanent_point):
         float(comparison["C"]["covered_expected_loss_rub"]), abs=0.02)
 
 
-def test_run_metadata_names_the_code_commit_and_cross_platform_commands():
+def test_run_metadata_names_the_code_commit_and_cross_platform_commands(monkeypatch):
+    # A GitHub working copy: the result must not depend on where the tests themselves were cloned from.
+    real_git = exporter._git
+    monkeypatch.setattr(exporter, "_git", lambda *args: (
+        "origin\thttps://github.com/Mojarung/kosmos_finals.git (fetch)\n" if args == ("remote", "-v")
+        else real_git(*args)))
+    monkeypatch.delenv("FLOODVALUE_GITVERSE_COMMIT", raising=False)
     meta = json.loads(export(TestClient(app), budget=6500)["run_metadata.json"])
     assert "code_commit" in meta
     head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True)
@@ -154,9 +160,15 @@ def test_run_metadata_names_the_code_commit_and_cross_platform_commands():
     assert any("uv run --project ml floodvalue infer --chip" in command for command in commands)
     assert any("budget=6500" in command for command in commands)
     assert any("scripts/validate_package.py" in command for command in commands)
-    # The GitVerse repository holds the same commits, so the package names the commit it was built from.
-    assert meta["gitverse_commit"] == meta["code_commit"]
+    assert "./scripts/compose.sh up --build" in commands
+    # A local GitHub revision does not prove that the GitVerse mirror has been updated.
+    assert meta["gitverse_commit"] is None
+    assert meta["gitverse_status"] == "mirror_commit_not_verified"
     assert meta["repository"].startswith("https://gitverse.ru/")
+    assert meta["source_timing"]["analysis_mode"] == "retrospective_dataset_demo"
+    assert meta["source_timing"]["water_reference_status"] == "post_event_observations_possible"
+    assert "other_cost_rule" not in meta
+    assert meta["decision_cost_rule"]["status"] == "scenario"
 
 
 def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
@@ -165,6 +177,14 @@ def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
     assert exporter.code_commit() == "0123abc"
     monkeypatch.delenv("FLOODVALUE_COMMIT")
     assert exporter.code_commit() is None
+
+
+def test_gitverse_commit_requires_separate_declaration(monkeypatch):
+    monkeypatch.setattr(exporter, "_git", lambda *args: "")  # an image without .git
+    monkeypatch.delenv("FLOODVALUE_GITVERSE_COMMIT", raising=False)
+    assert exporter.gitverse_commit() is None
+    monkeypatch.setenv("FLOODVALUE_GITVERSE_COMMIT", "fedcba321")
+    assert exporter.gitverse_commit() == "fedcba321"
 
 
 def test_source_manifest_records_a_checked_license_for_every_source():

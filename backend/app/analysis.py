@@ -8,12 +8,14 @@ from functools import lru_cache
 import numpy as np
 
 from .catalog import default_scene_id, float_map, mask, metadata, on_refresh, permanent_mask, quality, scene_catalog
+from .costs import decision_costs
 from .evidence import asset_proxy_check, reference_proxy_check
 from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candidates, chosen_product, contains,
-                       enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2,
-                       square_around, today)
+                       enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2, today)
+from .reliability import BIAS
+from .reliability import LIMITATION as CALIBRATION_LIMITATION
 from .sensitivity import asset_sensitivity, plan_sensitivity
-from .costs import decision_costs
+from .temporal import scene_timing
 from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
                      uncertainty_zones, union_share)
 
@@ -276,6 +278,16 @@ def _residual(ctx: Context, baseline: float | None, footprint_ids: list[str]) ->
             "uncertainty_basis": RESIDUAL_BASIS, "covered_chance_share": share}
 
 
+def _baseline_uncertainty(ctx: Context) -> float | None:
+    """Strategy A: the mean map error chance of the region, before any new observation."""
+    return round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None
+
+
+def residual_for(ctx: Context, footprint_ids: list[str]) -> dict:
+    """Residual uncertainty of a timely C basket by the same rule as the A/B/C table (sensitivity variants)."""
+    return _residual(ctx, _baseline_uncertainty(ctx), footprint_ids)
+
+
 def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, on) -> dict:
     space, exposure = ctx.space, ctx.exposure
     broad, broad_index = _broad(ctx)
@@ -286,7 +298,7 @@ def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, o
     b_covered = b["covered_expected_loss_rub"] if b_timely else 0
     b_doubt = (b["covered_doubt_share"] if b_timely else 0) if space.doubt_total else None
     no_exposure = None if exposure else "no_estimated_exposure_in_portfolio"
-    baseline = round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None
+    baseline = _baseline_uncertainty(ctx)
     strategies = {
         "A": {"label": "Открытые данные", "zone_ids": [], "data_cost_rub": 0, "covered_asset_ids": [],
               "covered_expected_loss_rub": 0, "coverage_share": 0 if exposure else None,
@@ -356,7 +368,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             | {key: info[key] for key in ("source_kind", "source_item_id", "source_item_ids", "pixel_size_m_approx",
                                             "portfolio_status", "portfolio_rule", "processed_at", "split_part",
                                             "metrics_independent", "permanent_rule") if key in info}
-            | {"permanent_status": region["permanent_status"]},
+            | {"permanent_status": region["permanent_status"], "timing": scene_timing(info)},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets,
         "zones": [_zone_view(zone, deadline_hours) for zone in ctx.zones],
@@ -366,7 +378,8 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                     "candidate_rule": CANDIDATE_RULE, "product_rule": PRODUCT_RULE},
         "sensitivity": {
             "asset": asset_sensitivity(assets),
-            "plan": plan_sensitivity(space, budget_rub, priority, deadline_hours, must_cover),
+            "plan": [{**row, **residual_for(ctx, row["zone_ids"])}
+                     for row in plan_sensitivity(space, budget_rub, priority, deadline_hours, must_cover)],
             "method": "one_input_at_a_time_20_percent_fixed_probability_map_and_portfolio",
         },
         "inputs": {"budget_rub": budget_rub, "priority": priority, "bbox": bounds,
@@ -414,6 +427,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
+        "calibration_bias": BIAS,
         "asset_proxy_check": reference_proxy_check() if live else asset_proxy_check(scene_id),
         "limitations": _limitations(info, region),
     }
@@ -434,6 +448,8 @@ def _limitations(info: dict, region: dict) -> list[str]:
         "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
     ]
+    if CALIBRATION_LIMITATION:
+        rows.append(CALIBRATION_LIMITATION)
     if live:
         rows += ["Для нового региона нет ручной метки: локальные IoU/F1 не вычисляются.",
                  "Модель обучена на Sen1Floods11; перенос на RTC другого времени и места требует полевой проверки."]

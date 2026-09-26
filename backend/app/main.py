@@ -15,7 +15,7 @@ from .live import LiveError, discover, prepare
 from . import live_jobs
 from .layers import doubt_png
 from .permanent import separate_live
-from . import projects
+from . import projects, project_imagery
 from .procurement import router as procurement_router
 from .backtest import router as backtest_router
 from .voi import router as voi_router
@@ -76,6 +76,11 @@ class DecisionCreate(BaseModel):
     must_cover: str | None = None
 
 
+class OperatorPlanCreate(BaseModel):
+    budget: float = 6500
+    deadline: int = 8
+
+
 @app.get("/api/projects")
 def list_projects() -> dict:
     return {"projects": projects.list_projects()}
@@ -118,6 +123,54 @@ def save_project_decision(project_id: str, request: DecisionCreate) -> dict:
         raise HTTPException(404, str(error)) from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/plan")
+def preview_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
+    try:
+        return projects.operator_plan(project_id, request.budget, request.deadline)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/plans", status_code=201)
+def save_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
+    try:
+        return projects.save_operator_plan(project_id, request.budget, request.deadline)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/imagery/plan")
+def preview_project_imagery(project_id: str, request: project_imagery.Input) -> dict:
+    try:
+        return project_imagery.preview(project_id, request)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/imagery/requests", status_code=201)
+def save_project_imagery(project_id: str, request: project_imagery.Input) -> dict:
+    try:
+        return project_imagery.save(project_id, request)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.get("/api/projects/{project_id}/imagery/requests/{request_id}/export")
+def export_project_imagery(project_id: str, request_id: str) -> StreamingResponse:
+    try:
+        return project_imagery.export(project_id, request_id)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
 
 
 @app.get("/api/scenes")

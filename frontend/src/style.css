@@ -192,8 +192,10 @@ html.map-moving .panel {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 14%, transparent), 0 2px 6px -2px rgb(0 0 0 / 0.3);
 }
 /* По базовой линии, а не по центру: дата и «Sentinel‑1» стоят на одной строке текста. */
-.scene-date { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--muted-foreground); white-space: nowrap; }
+.scene-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 13px; color: var(--muted-foreground); white-space: nowrap; }
 .scene-date > .tabular { color: var(--foreground); font-weight: 500; }
+.scene-timing { border: 1px solid color-mix(in srgb, var(--warn) 38%, transparent); border-radius: 5px;
+  padding: 1px 5px; color: var(--warn); font-size: 10px; font-weight: 650; letter-spacing: .02em; }
 .scene-source::before {
   content: ''; display: inline-block; width: 3px; height: 3px; margin-right: 8px;
   border-radius: 50%; background: currentColor; vertical-align: middle;
@@ -439,6 +441,8 @@ html.map-moving .panel {
 
 .panel-foot .source, .source-line { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted-foreground); cursor: help; }
 .source-line { margin: 10px 0 2px; }
+.source-line.temporal-note { color: var(--warn); line-height: 1.4; }
+.source-line.calibration-limit { line-height: 1.45; }
 .empty { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px 0; font-size: 13px; line-height: 1.5; color: var(--muted-foreground); }
 .empty svg { color: var(--primary); }
 .empty strong { font-size: 15px; color: var(--foreground); }
@@ -555,8 +559,6 @@ html.map-moving .panel {
   .bottom-row > .map-console { grid-column: 1; grid-row: 1; }
   .map-credits { grid-column: 1; grid-row: 2; justify-self: center; max-width: 760px; text-align: center; }
 }
-/* Пояснение к спутнику: отдельная строка пульта. contain: ширину пульта задаёт первая строка, а не этот текст. */
-.basemap-note { flex-basis: 100%; contain: inline-size; padding: 0 0 3px; font-size: 11px; line-height: 1.35; color: var(--muted-foreground); }
 .legend-note { color: var(--muted-foreground); }
 .map-console-layer, .map-console-tools { display: flex; align-items: center; gap: 11px; }
 .map-console-tools { padding-left: 12px; border-left: 1px solid var(--border); }
@@ -751,7 +753,6 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .map-console { flex-direction: column; flex-wrap: nowrap; gap: 5px; padding: 8px 12px; width: min(380px, calc(100vw - 88px)); border-radius: 20px; }
   .map-console-layer, .map-console-tools { width: 100%; justify-content: center; }
   .map-console-layer { min-height: 20px; flex-wrap: wrap; row-gap: 2px; }
-  .basemap-note { flex-basis: auto; contain: none; padding: 0; text-align: center; }
   /* Под пультом, по центру: слева от него на узком экране места нет. */
   .bottom-row { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 6px; }
   .bottom-row > .map-console { grid-column: 1; grid-row: 1; }
@@ -842,6 +843,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .price-details summary::after { content: ''; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); transition: transform 0.3s var(--ease-emphasized); }
 .price-details[open] summary::after { transform: rotate(225deg) translateY(-1px); }
 .price-details summary:hover { color: var(--foreground); }
+.limits-details summary { gap: 7px; }
+.limits-list { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 7px; font-size: 12px; line-height: 1.45; color: var(--muted-foreground); }
 .formula { margin: 8px 0 4px; font-size: 12px; line-height: 1.5; }
 /* Какой продукт посчитан: оптика 1 м L2 или радар 3 м L1 при сроке 4 ч. */
 .price-product { margin-top: 10px; font-size: 12px; font-weight: 600; }
@@ -860,13 +863,34 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .procurement-mode-switch { display: flex; padding: 12px 16px; gap: 6px; border-bottom: 1px solid var(--border); }
 .procurement-mode-switch button { flex: 1; border: 0; padding: 9px 8px; border-radius: 10px; font: inherit; font-size: 12px; color: var(--muted-foreground); background: transparent; cursor: pointer; }
 .procurement-mode-switch button.active { background: rgba(50, 131, 107, .12); color: var(--foreground); }
+.mode-currency { margin-left: 6px; padding: 0 5px; border-radius: 5px; background: color-mix(in srgb, var(--foreground) 8%, transparent); font-size: 11px; font-weight: 600; }
 @media (min-width: 1024px) { .decision-panel.procurement-expanded:not(.pill) { width: 460px; } }
 
 /* Сценарные величины в деталях плана */
-.scenario-mark { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--uncertain) 16%, transparent); color: var(--foreground); font-size: 10px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px; }
+.scenario-mark, .bias-mark { margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--uncertain) 16%, transparent); color: var(--foreground); font-size: 10px; font-weight: 600; letter-spacing: .01em; vertical-align: 1px; }
 .plan-result .mini-rows { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 .plan-result .mini-rows > div > span:first-child { min-width: 0; }
 .plan-result .mini-rows b { white-space: nowrap; flex: none; }
+
+/* Источники подложки скрыты на всех ширинах: кнопка «©» слева от пульта раскрывает их по нажатию. */
+.credits-toggle {
+  display: grid; place-items: center; grid-column: 1; grid-row: 1; justify-self: start; align-self: end;
+  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; pointer-events: auto; cursor: pointer;
+  font: 600 14px/1 inherit; color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.credits-toggle[aria-expanded="true"] { color: var(--foreground); }
+.map-credits { display: none; }
+.map-credits.open { display: block; }
+/* Пометка о спутниковой подложке живёт в том же окне источников. */
+.credits-note { display: inline; }
+/* Широкий экран: источники раскрываются справа от кнопки, в той же ячейке слева от пульта. */
+@media (min-width: 1280px) { .map-credits.open { margin-left: 38px; } }
+@media (max-width: 700px) {
+  .map-credits.open { grid-row: 2; }
+}
 
 /* Real archive workspace: give imagery and comparisons their own reading width. */
 .decision-panel.procurement-expanded:not(.pill):not(.procurement-map-mode) {
