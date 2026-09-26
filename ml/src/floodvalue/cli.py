@@ -148,6 +148,39 @@ def _cmd_infer(args: argparse.Namespace) -> None:
     print(json.dumps(report, indent=2))
 
 
+DOUBT_PATH = EVALUATION_DIR / "doubt_threshold.json"
+# The value the service used before this command existed; kept in the record as provenance.
+REPLACED_DOUBT = {"source_part": "test_core", "entropy_top_decile_bits": 0.4080650210380554,
+                  "map_error_chance_threshold": 0.0817,
+                  "reason": "read from evaluation.json test_core deciles; the final check must not tune the service"}
+
+
+def _cmd_doubt_threshold(_args: argparse.Namespace) -> None:
+    from floodvalue.doubt import doubt_threshold
+    from floodvalue.ensemble import load_members
+    from floodvalue.infer import load_calibration
+    from floodvalue.package import member_dirs
+    from floodvalue.split import load_split
+    from floodvalue.train import DEVICE
+
+    platt, threshold = load_calibration(CALIBRATION_PATH)
+    dirs = member_dirs(MODEL_DIR)
+    record = doubt_threshold(paths.SEN1FLOODS11_DIR, load_split(SPLIT_PATH), load_members(dirs), platt, threshold)
+    record["model"] = {"members": [path.relative_to(paths.PIPELINE_ROOT).as_posix() for path in dirs],
+                       "calibration": CALIBRATION_PATH.relative_to(paths.PIPELINE_ROOT).as_posix(),
+                       "platt": platt.as_dict(), "device": DEVICE}
+    record["replaces"] = REPLACED_DOUBT
+    DOUBT_PATH.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    report = record["report_only"]["parts"]
+    print(json.dumps({"entropy_top_decile_bits": record["entropy_top_decile_bits"],
+                      "map_error_chance_threshold": record["map_error_chance_threshold"],
+                      "valid": record["valid_at_threshold"], "measure_auroc": record["measure_auroc"],
+                      "report_only": {part: {key: row[key] for key in ("doubtful_share", "error_rate_doubtful",
+                                                                        "auroc_entropy", "auroc_member_std",
+                                                                        "own_top_decile_bits")}
+                                      for part, row in report.items()}}, indent=2))
+
+
 def _cmd_failure(args: argparse.Namespace) -> None:
     from floodvalue.failure import run_failure
     report = run_failure(args.chip, args.reference, EVALUATION_DIR)
@@ -185,6 +218,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands.add_parser("evaluate", help="calibrate on valid, score both methods on test parts, draw figures") \
         .set_defaults(handler=_cmd_evaluate)
+
+    commands.add_parser("doubt-threshold",
+                        help="fix the service's doubt threshold on valid; report test_core and bolivia only") \
+        .set_defaults(handler=_cmd_doubt_threshold)
 
     failure = commands.add_parser("failure", help="explain where the frozen ensemble misses water on one chip")
     failure.add_argument("--chip", default="Bolivia_242570", help="official chip name")

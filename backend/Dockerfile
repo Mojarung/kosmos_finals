@@ -13,6 +13,7 @@ COPY data/catalog ./data/catalog
 COPY ml/src/floodvalue ./ml/src/floodvalue
 COPY ml/artifacts/model ./ml/artifacts/model
 COPY ml/artifacts/evaluation/calibration.json ./ml/artifacts/evaluation/calibration.json
+COPY ml/artifacts/evaluation/doubt_threshold.json ./ml/artifacts/evaluation/doubt_threshold.json
 COPY ml/artifacts/baseline/baseline.json ./ml/artifacts/baseline/baseline.json
 COPY ml/artifacts/rtc ./ml/artifacts/rtc
 RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 libgomp1 \

@@ -17,7 +17,7 @@ from .catalog import ROOT, metadata, scene_dir
 from .planning import BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, USAGE_COEF, as_polygon, enrich_assets
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
-from .zoning import DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE
+from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
 
 REASONS = {
     "selected": "in basket C",
@@ -33,8 +33,7 @@ PARAMETERS = [
      "basis": "max IoU on validation; IoU curve is flat between 0.3 and 0.5"},
     {"name": "baseline_threshold_db", "value": -23.6, "source": "ml/artifacts/baseline/baseline.json",
      "basis": "VH threshold fitted on train, channel chosen on validation"},
-    {"name": "doubt_threshold", "value": DOUBT_THRESHOLD, "source": "evaluation.json test_core entropy deciles",
-     "basis": "top decile of binary entropy on independent test_core; 29.5% of those pixels are wrong vs 4.7% overall"},
+    {"name": "doubt_threshold", "value": DOUBT_THRESHOLD, "source": DOUBT_SOURCE, "basis": DOUBT_BASIS},
     {"name": "uncertainty_zone_sides_km", "value": "1.12, 1.68, 2.24", "source": "app/zoning.py",
      "basis": "1.12 km square is the 1.25 km² object zone above the 1 km² minimum; 1.5x and 2x keep zones within a 6-7 thousand RUB budget"},
     {"name": "max_uncertainty_zones", "value": 5, "source": "app/zoning.py",

@@ -1,5 +1,21 @@
 {
   "rule": "RTC dB quantiles 0.5..99.5% mapped onto GRD dB quantiles of the same pixels; train chips only",
+  "mapping": "quantile",
+  "selection_part": "train_cv",
+  "selection_rule": "leave-one-event-out over train chips: both mappings fitted on the other events' pixel pairs, frozen ensemble on the held-out chip's mapped RTC, IoU against the manual label pooled with water-pixel weights; the higher score ships, a tie keeps median; fixed before any test chip is read",
+  "shipped_mapping": "quantile",
+  "cv_scores": {
+    "leave_one_event_out": {
+      "folds": 7,
+      "median": 0.3188,
+      "quantile": 0.5846
+    },
+    "leave_one_chip_out": {
+      "folds": 13,
+      "median": 0.3162,
+      "quantile": 0.5856
+    }
+  },
   "fit_chips": [
     {
       "chip_id": "India_1017769",

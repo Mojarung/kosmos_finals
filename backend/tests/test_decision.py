@@ -13,7 +13,7 @@ from app.live import GRID, _portfolio
 from app.main import app
 from app.planning import contains, enrich_assets, quote
 from app.scene_builder import SceneSpec, build_scene
-from app.zoning import DOUBT_THRESHOLD, ENTROPY_TOP_DECILE_BITS
+from app.zoning import DOUBT_RULE, DOUBT_THRESHOLD, ENTROPY_TOP_DECILE_BITS
 from synthetic import PERMANENT_ROWS, make_chip
 from test_planning import validator
 
@@ -75,12 +75,23 @@ def test_uncertainty_zones_are_orderable_and_cover_doubt_cheaper_than_broad():
         assert frontier[-1]["doubt_share"] == 1.0
 
 
-def test_doubt_threshold_matches_the_test_core_entropy_decile():
-    evaluation = json.loads((ROOT / "ml/artifacts/evaluation/evaluation.json").read_text())
-    edge = evaluation["probability"]["test_core"]["uncertainty_entropy"]["decile_edges"][9]
-    assert ENTROPY_TOP_DECILE_BITS == edge
+def test_doubt_threshold_comes_from_the_validation_entropy_decile():
+    record = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text(encoding="utf-8"))
+    assert record["source_part"] == "valid" and record["chips"] == 89
+    assert record["report_only"]["role"] == "report_only_not_used_for_selection"
+    assert ENTROPY_TOP_DECILE_BITS == record["entropy_top_decile_bits"] == record["decile_edges"][9]
+    assert DOUBT_THRESHOLD == record["map_error_chance_threshold"]
     p = DOUBT_THRESHOLD
-    assert abs(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) - edge) < 1e-3
+    assert abs(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) - ENTROPY_TOP_DECILE_BITS) < 1e-3
+    assert "validation" in DOUBT_RULE and "test_core" not in DOUBT_RULE
+    measures = record["measure_auroc"]
+    assert measures["part"] == "valid" and measures["entropy"] > measures["member_std"], \
+        "DOUBT_EVIDENCE says entropy ranks errors better than the spread on validation"
+
+
+def test_container_ships_the_doubt_threshold_record():
+    dockerfile = (ROOT / "backend/Dockerfile").read_text(encoding="utf-8")
+    assert "COPY ml/artifacts/evaluation/doubt_threshold.json ./ml/artifacts/evaluation/doubt_threshold.json" in dockerfile
 
 
 def test_permanent_water_is_split_and_carries_no_loss(tmp_path):

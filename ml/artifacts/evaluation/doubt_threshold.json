@@ -1,0 +1,106 @@
+{
+  "rule": "map error chance = 1 - p where p >= mask threshold, p elsewhere (p: Platt-calibrated mean logit of the v1 ensemble); doubtful pixel: chance >= the lower root of binary entropy at the top-decile edge of entropy on the valid part (numpy quantiles over <= 2,000,000 pixels, seed 0, as in evaluation.json), rounded to 4 decimals; test parts are scored with the frozen value and reported only",
+  "source_part": "valid",
+  "chips": 89,
+  "pixels": 20274154,
+  "subsample_seed": 0,
+  "mask_threshold": 0.41,
+  "pixels_used_for_deciles": 2000000,
+  "decile_edges": [
+    0.001999777741730213,
+    0.01845954339951277,
+    0.025919973477721216,
+    0.0333641029894352,
+    0.042311938107013704,
+    0.05462787114083767,
+    0.07354484200477603,
+    0.10729076042771339,
+    0.18013431131839755,
+    0.4114301532506943,
+    1.0
+  ],
+  "entropy_top_decile_bits": 0.4114301532506943,
+  "map_error_chance_threshold": 0.0826,
+  "auroc_entropy": 0.9306641287838794,
+  "error_rate_by_decile": [
+    0.000105,
+    0.000385,
+    0.000645,
+    0.001005,
+    0.00193,
+    0.003545,
+    0.00774,
+    0.020225,
+    0.067495,
+    0.25877
+  ],
+  "valid_at_threshold": {
+    "pixels": 20274154,
+    "doubtful_pixels": 2027318,
+    "doubtful_share": 0.09999519585379493,
+    "error_rate": 0.03615588596199871,
+    "error_rate_doubtful": 0.25851543763731194,
+    "error_rate_not_doubtful": 0.011450587926586287,
+    "errors_inside_doubtful_share": 0.7149680094948365
+  },
+  "measure_auroc": {
+    "part": "valid",
+    "entropy": 0.9306641287838794,
+    "member_std": 0.9171258716489084
+  },
+  "report_only": {
+    "role": "report_only_not_used_for_selection",
+    "note": "scored after the threshold was fixed on valid; own_top_decile_* repeat the old per-part rule only to compare with evaluation.json",
+    "parts": {
+      "test_core": {
+        "chips": 55,
+        "pixels": 11559945,
+        "doubtful_pixels": 1150313,
+        "doubtful_share": 0.09950851842288178,
+        "error_rate": 0.04646086118921846,
+        "error_rate_doubtful": 0.2939634690732001,
+        "error_rate_not_doubtful": 0.01911066596782672,
+        "errors_inside_doubtful_share": 0.629602390683039,
+        "auroc_entropy": 0.8878581355972636,
+        "auroc_member_std": 0.8618720597662399,
+        "own_top_decile_bits": 0.4099301099777224,
+        "own_top_decile_error_rate": 0.294715
+      },
+      "bolivia": {
+        "chips": 15,
+        "pixels": 2824434,
+        "doubtful_pixels": 514808,
+        "doubtful_share": 0.18226943876189,
+        "error_rate": 0.06342722117068411,
+        "error_rate_doubtful": 0.26998220695871084,
+        "error_rate_not_doubtful": 0.01738679768932286,
+        "errors_inside_doubtful_share": 0.7758420506179318,
+        "auroc_entropy": 0.909169971342352,
+        "auroc_member_std": 0.9037311046937411,
+        "own_top_decile_bits": 0.7066283047199252,
+        "own_top_decile_error_rate": 0.34504
+      }
+    }
+  },
+  "model": {
+    "members": [
+      "artifacts/model/members/m0",
+      "artifacts/model/members/m1",
+      "artifacts/model/members/m2",
+      "artifacts/model/members/m3",
+      "artifacts/model/members/m4"
+    ],
+    "calibration": "artifacts/evaluation/calibration.json",
+    "platt": {
+      "a": 0.7666532755645349,
+      "b": -0.1796736118131183
+    },
+    "device": "cpu"
+  },
+  "replaces": {
+    "source_part": "test_core",
+    "entropy_top_decile_bits": 0.4080650210380554,
+    "map_error_chance_threshold": 0.0817,
+    "reason": "read from evaluation.json test_core deciles; the final check must not tune the service"
+  }
+}
