@@ -154,6 +154,12 @@ def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
     return sorted(result, key=lambda asset: (-(asset["expected_loss_rub"] or 0), asset["id"]))
 
 
+def _half_up(values: np.ndarray, digits: int) -> np.ndarray:
+    """ROUND_HALF_UP for positive floats, as quote() does with Decimal; np.round would round half to even."""
+    scale = 10 ** digits
+    return np.floor(values * scale + 0.5) / scale
+
+
 def covered_assets(zones: list[dict], assets: list[dict]) -> list[dict]:
     return [asset for asset in assets if any(contains(zone["bounds"], asset) for zone in zones)]
 
@@ -201,10 +207,10 @@ class BasketSpace:
     def prices(self, tariff: float) -> np.ndarray:
         if tariff not in self._prices:
             area = np.maximum(self.area_sum, 1e-12)
-            discount = np.round(np.clip(-0.058 * np.log(area / RESOLUTION_M ** 2) + 1.037, 0.2, 1.0), 9)
+            discount = _half_up(np.clip(-0.058 * np.log(area / RESOLUTION_M ** 2) + 1.037, 0.2, 1.0), 9)
             rate = float(BASE_RATE) * tariff * float(PROCESSING_COEF * USAGE_COEF * FRESHNESS_COEF)
-            unit = np.round(rate * discount, 2)
-            lines = np.round(unit[:, None] * self.areas[None, :], 2)
+            unit = _half_up(rate * discount, 2)
+            lines = _half_up(unit[:, None] * self.areas[None, :], 2)
             self._prices[tariff] = np.where(self.count > 0, (lines * self.bits).sum(1), 0.0)
         return self._prices[tariff]
 
@@ -230,7 +236,9 @@ class BasketSpace:
         doubt = np.round(self.doubt[candidates], 6)
         primary, secondary = (covered_loss, doubt) if priority == "risk" else (doubt, covered_loss)
         order = np.lexsort((self.count[candidates], self.prices(tariff)[candidates], -secondary, -primary))
-        for position in order[:64]:
+        # The float price only shortlists; walk the whole order so a basket that fails the exact
+        # Decimal check near the budget never hides a feasible one further down.
+        for position in order:
             index = int(candidates[position])
             if quote(self.selected(index), tariff)["total_rub"] <= budget:
                 return index
