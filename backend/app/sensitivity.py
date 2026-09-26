@@ -8,18 +8,28 @@ from .planning import BasketSpace
 
 
 def _loss(asset: dict, values: dict) -> float:
-    # A point on permanent water carries no flood loss whatever the inputs.
+    # A point on permanent water carries no flood-only loss whatever the inputs.
     if asset.get("loss_status") == "permanent_water":
         return 0.0
     return round(values["p"] * values["V"] * values["q"], 2)
 
 
+def _rank(losses: dict[str, float], asset_id: str) -> int:
+    """1 for the largest loss, ties by asset_id."""
+    return sorted(losses, key=lambda item_id: (-losses[item_id], item_id)).index(asset_id) + 1
+
+
 def asset_sensitivity(assets: list[dict]) -> list[dict]:
-    """Vary one input at a time; all other assets and inputs stay fixed."""
+    """Vary one input at a time; all other assets and inputs stay fixed.
+
+    expected_loss_rub and rank follow the flood-only loss the plan optimises;
+    case_expected_loss_rub and case_rank follow the mandatory EL = p·V·q.
+    """
     rows = []
     eligible = [asset for asset in assets if asset["p_flood"] is not None]
     baseline = {asset["id"]: index for index, asset in enumerate(
         sorted(eligible, key=lambda item: (-item["expected_loss_rub"], item["id"])), 1)}
+    case_losses = {item["id"]: item["case_expected_loss_rub"] for item in eligible}
     for asset in eligible:
         for field, key in (("p", "p_flood"), ("V", "value_rub"), ("q", "vulnerability")):
             for factor in (0.8, 1.2):
@@ -31,12 +41,16 @@ def asset_sensitivity(assets: list[dict]) -> list[dict]:
                 loss = _loss(asset, values)
                 losses = {item["id"]: item["expected_loss_rub"] for item in eligible}
                 losses[asset["id"]] = loss
-                rank = sorted(losses, key=lambda item_id: (-losses[item_id], item_id)).index(asset["id"]) + 1
+                rank = _rank(losses, asset["id"])
+                case_loss = round(values["p"] * values["V"] * values["q"], 2)
                 rows.append({"asset_id": asset["id"], "input": field,
                              "factor": factor, "input_value": round(value, 6),
                              "expected_loss_rub": loss, "rank": rank,
                              "baseline_rank": baseline[asset["id"]],
-                             "rank_change": baseline[asset["id"]] - rank})
+                             "rank_change": baseline[asset["id"]] - rank,
+                             "case_expected_loss_rub": case_loss,
+                             "case_rank": _rank({**case_losses, asset["id"]: case_loss}, asset["id"]),
+                             "case_baseline_rank": _rank(case_losses, asset["id"])})
     return rows
 
 

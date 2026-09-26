@@ -133,20 +133,29 @@ def map_error_probability(p: float | None, threshold: float) -> float | None:
 
 
 def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
-    """EL = p·V·q; a point on permanent water gets no flood loss, and the reason is kept."""
+    """Two loss readings of every asset.
+
+    case_expected_loss_rub is the mandatory case model EL = p·V·q for every asset with p,
+    wherever the point stands; case_loss_status is ok or no_data. It goes to asset_loss.csv.
+    expected_loss_rub (also named flood_expected_loss_rub) is the additional flood-only model:
+    0 on JRC permanent water with loss_status permanent_water. The screen and the basket
+    search use it.
+    """
     result = []
     for asset in assets:
         p = asset["p_flood"]
         permanent = bool(asset.get("permanent_water_at_point"))
+        case_loss = None if p is None else round(p * asset["value_rub"] * asset["vulnerability"], 2)
         if p is None:
             loss, status = None, "no_data"
         elif permanent:
             loss, status = 0.0, "permanent_water"
         else:
-            loss, status = round(p * asset["value_rub"] * asset["vulnerability"], 2), "ok"
+            loss, status = case_loss, "ok"
         result.append({
             **asset,
-            "expected_loss_rub": loss, "loss_status": status,
+            "expected_loss_rub": loss, "loss_status": status, "flood_expected_loss_rub": loss,
+            "case_expected_loss_rub": case_loss, "case_loss_status": "no_data" if p is None else "ok",
             "exposure_rub": round(asset["value_rub"] * asset["vulnerability"], 2),
             "map_error_probability": map_error_probability(p, threshold),
             "probability_status": "frozen_ensemble",

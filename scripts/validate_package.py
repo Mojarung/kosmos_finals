@@ -1,6 +1,6 @@
 """Validate a FloodValue submission ZIP; run with backend's demo dependencies.
 
-Usage: backend/.venv/bin/python scripts/validate_package.py floodvalue-CHIP.zip
+Usage: uv run --project backend --extra demo python scripts/validate_package.py floodvalue-CHIP.zip
 """
 
 from __future__ import annotations
@@ -28,7 +28,8 @@ REQUIRED = {
     "strategy_plans.json", "sensitivity.csv", "metrics.csv", "run_metadata.json",
     "source_manifest.json", "analysis.json", "zone_decisions.csv",
 }
-LOSS_STATUSES = {"ok", "partial", "no_data", "permanent_water"}
+# The case allows only these; a point on permanent water is ok with the mandatory EL = p·V·q.
+LOSS_STATUSES = {"ok", "partial", "no_data"}
 
 
 def require(condition: bool, message: str) -> None:
@@ -77,19 +78,27 @@ def validate(path: str | Path) -> dict:
                 "Chip IDs differ")
         by_id = {row["asset_id"]: row for row in assets}
         for row in losses:
-            require(row["status"] in LOSS_STATUSES, "Invalid loss status")
-            if row["status"] == "no_data":
-                require(row["p_flood"] == row["expected_loss_rub"] == "", "No-data loss is filled")
-                continue
-            if row["status"] == "permanent_water":
-                require(float(row["expected_loss_rub"]) == 0 and row["permanent_water_at_point"] == "True",
-                        f"{row['asset_id']}: loss on permanent water must be 0")
-                continue
-            probability = float(row["p_flood"])
-            require(0 <= probability <= 1, "Probability outside [0,1]")
-            asset = by_id[row["asset_id"]]
-            expected = probability * float(asset["asset_value_rub"]) * float(asset["vulnerability_coef"])
-            close(float(row["expected_loss_rub"]), expected, f"EL {row['asset_id']}")
+            require(row["status"] in LOSS_STATUSES,
+                    f"{row['asset_id']}: invalid loss status {row['status']!r}, expected one of {sorted(LOSS_STATUSES)}")
+            if row["status"] == "no_data" or (row["status"] == "partial" and not row["p_flood"]):
+                require(row["p_flood"] == row["expected_loss_rub"] == row["rank"] == "",
+                        f"{row['asset_id']}: unestimated p, EL and rank must be empty, not 0")
+            else:
+                probability = float(row["p_flood"])
+                require(0 <= probability <= 1, "Probability outside [0,1]")
+                asset = by_id[row["asset_id"]]
+                expected = probability * float(asset["asset_value_rub"]) * float(asset["vulnerability_coef"])
+                close(float(row["expected_loss_rub"]), expected, f"EL {row['asset_id']}")
+            if "flood_expected_loss_rub" in row:
+                # Additional flood-only model: 0 on JRC permanent water, the mandatory EL elsewhere.
+                if row.get("permanent_water_at_point") == "True":
+                    require(row["flood_expected_loss_rub"] != "" and float(row["flood_expected_loss_rub"]) == 0,
+                            f"{row['asset_id']}: flood-only loss on permanent water must be 0")
+                elif row["expected_loss_rub"] == "":
+                    require(row["flood_expected_loss_rub"] == "", f"{row['asset_id']}: flood-only loss without EL")
+                else:
+                    close(float(row["flood_expected_loss_rub"]), float(row["expected_loss_rub"]),
+                          f"{row['asset_id']}: flood-only loss off permanent water must equal EL")
         require({json.loads(row["changed_inputs_json"])["input"] for row in sensitivity
                  if row["scenario_id"].startswith("plan_")} == {"budget", "tariff"},
                 "Budget/tariff sensitivity missing")
@@ -174,26 +183,40 @@ def validate(path: str | Path) -> dict:
         region_assets = {row["asset_id"]: row for row in losses if row["in_region"] == "true"}
         estimated = sum(float(row["expected_loss_rub"]) for row in region_assets.values() if row["expected_loss_rub"])
         for strategy in ("B", "C"):
-            covered = {asset_id for asset_id, row in region_assets.items() if any(
+            row = comparison[strategy]
+            covered = {asset_id for asset_id, asset in region_assets.items() if any(
                 float(zones[zone_id]["_bounds"][0]) <= float(by_id[asset_id]["longitude"]) <= float(zones[zone_id]["_bounds"][2])
                 and float(zones[zone_id]["_bounds"][1]) <= float(by_id[asset_id]["latitude"]) <= float(zones[zone_id]["_bounds"][3])
                 for zone_id in plans[strategy])}
+            # expected_loss_rub of asset_loss.csv is the mandatory EL, so this is the mandatory covered EL.
             covered_loss = sum(float(region_assets[a]["expected_loss_rub"] or 0) for a in covered)
-            if strategy == "C" or comparison["B"]["covered_expected_loss_rub"] not in {"0", "0.0"}:
-                close(float(comparison[strategy]["covered_expected_loss_rub"]), covered_loss, f"{strategy}: covered EL")
-                require(int(comparison[strategy]["covered_asset_count"]) == len(covered), f"{strategy}: covered assets")
-            share = comparison[strategy]["coverage_share"]
+            # B delivered after the decision deadline covers nothing by definition.
+            late_broad = (strategy == "B" and float(row["covered_expected_loss_rub"]) == 0
+                          and int(row["covered_asset_count"]) == 0)
+            if not late_broad:
+                close(float(row["covered_expected_loss_rub"]), covered_loss,
+                      f"{strategy}: covered EL must sum the mandatory EL of covered assets")
+                require(int(row["covered_asset_count"]) == len(covered), f"{strategy}: covered assets")
+                if row.get("covered_flood_loss_rub", "") != "":
+                    flood = sum(float(region_assets[a].get("flood_expected_loss_rub") or 0) for a in covered)
+                    close(float(row["covered_flood_loss_rub"]), flood, f"{strategy}: covered flood-only loss")
+            share = row["coverage_share"]
             require((share == "") == (estimated == 0), f"{strategy}: coverage share must be empty only without exposure")
             if share:
-                close(float(share), float(comparison[strategy]["covered_expected_loss_rub"]) / estimated,
+                close(float(share), float(row["covered_expected_loss_rub"]) / estimated,
                       f"{strategy}: coverage share", 0.0001)
-            doubt = comparison[strategy]["covered_doubt_share"]
+            else:
+                require(row.get("coverage_status", "") != "", f"{strategy}: empty coverage share needs its reason")
+            doubt = row["covered_doubt_share"]
             require(doubt == "" or 0 <= float(doubt) <= 1, f"{strategy}: doubt share outside [0,1]")
-        region_ok = [row["asset_id"] for row in losses if row["in_region"] == "true" and row["status"] != "no_data"]
+        estimated_rows = [row for row in region_assets.values() if row["expected_loss_rub"] != ""]
+        region_ok = [row["asset_id"] for row in estimated_rows]
+        by_loss = [row["asset_id"] for row in sorted(
+            estimated_rows, key=lambda row: (-float(row["expected_loss_rub"]), row["asset_id"]))]
         ranked = sorted((row for row in losses if row["rank"]), key=lambda row: int(row["rank"]))
-        require([row["asset_id"] for row in ranked] == region_ok and all(
-            float(a["expected_loss_rub"]) >= float(b["expected_loss_rub"]) for a, b in zip(ranked, ranked[1:])),
-            "Ranks must order region assets by expected loss")
+        require([int(row["rank"]) for row in ranked] == list(range(1, len(ranked) + 1))
+                and [row["asset_id"] for row in ranked] == by_loss,
+                "Ranks must run 1..n over estimated region assets by expected loss, ties by asset_id")
         asset_scenarios = [row for row in sensitivity if row["scenario_id"].startswith("asset_")]
         require({json.loads(row["changed_inputs_json"])["asset_id"] for row in asset_scenarios} == set(region_ok)
                 and len(asset_scenarios) == 6 * len(region_ok), "Sensitivity must cover every region asset ±20% p/V/q")

@@ -130,6 +130,7 @@ def test_validator_rejects_p_not_read_at_asset_pixel(tmp_path):
     target["p_flood"] = str(tampered)
     target["expected_loss_rub"] = str(round(
         tampered * float(asset["asset_value_rub"]) * float(asset["vulnerability_coef"]), 2))
+    target["flood_expected_loss_rub"] = target["expected_loss_rub"]  # consistent row: only the pixel read is wrong
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=list(rows[0]))
     writer.writeheader()

@@ -175,6 +175,7 @@ class Context:
     space: BasketSpace
     exposure: float
     unestimated: list[dict]
+    case_exposure: float
 
 
 @lru_cache(maxsize=64)
@@ -202,7 +203,8 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     space = BasketSpace(zones, assets, masks, masses, total)
     exposure = round(sum(asset["expected_loss_rub"] or 0 for asset in assets), 2)
     unestimated = [asset for asset in assets if asset["loss_status"] == "no_data"]
-    return Context(info, region, assets, zones, space, exposure, unestimated)
+    case_exposure = round(sum(asset["case_expected_loss_rub"] or 0 for asset in assets), 2)
+    return Context(info, region, assets, zones, space, exposure, unestimated, case_exposure)
 
 
 on_refresh(_region.cache_clear)
@@ -215,6 +217,15 @@ def context(scene_id: str, bounds: list[float] | None) -> Context:
 
 def _share(value: float, total: float) -> float | None:
     return round(value / total, 4) if total else None
+
+
+def _case_coverage(ctx: Context, covered_ids: list[str]) -> dict:
+    """Mandatory case EL (p·V·q) of the covered assets, next to the flood-only numbers the plan optimises."""
+    losses = {asset["id"]: asset["case_expected_loss_rub"] or 0 for asset in ctx.assets}
+    covered = round(sum(losses[asset_id] for asset_id in covered_ids), 2)
+    return {"case_covered_expected_loss_rub": covered,
+            "case_coverage_share": _share(covered, ctx.case_exposure),
+            "case_coverage_status": None if ctx.case_exposure else "no_estimated_exposure_in_region"}
 
 
 def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, deadline_hours: int) -> dict:
@@ -230,7 +241,7 @@ def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, d
     return {
         "A": {"label": "Открытые данные", "zone_ids": [], "data_cost_rub": 0, "covered_asset_ids": [],
               "covered_expected_loss_rub": 0, "coverage_share": 0 if exposure else None,
-              "coverage_status": no_exposure,
+              "coverage_status": no_exposure, **_case_coverage(ctx, []),
               "covered_doubt_share": 0 if space.doubt_total else None,
               "budget_feasible": True, "timely": True,
               "residual_uncertainty": round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None,
@@ -239,6 +250,7 @@ def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, d
               "data_cost_rub": b["quote"]["total_rub"], "quote": b["quote"],
               "covered_asset_ids": b_covered_ids, "covered_expected_loss_rub": b_covered,
               "coverage_share": _share(b_covered, exposure), "coverage_status": no_exposure,
+              **_case_coverage(ctx, b_covered_ids),
               "covered_doubt_share": b_doubt,
               "budget_feasible": b["quote"]["total_rub"] <= budget_rub,
               "timely": b_timely, "residual_uncertainty": None,
@@ -246,6 +258,7 @@ def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, d
         "C": {"label": "Приоритетная съёмка", **c,
               "data_cost_rub": c["quote"]["total_rub"],
               "coverage_share": _share(c["covered_expected_loss_rub"], exposure), "coverage_status": no_exposure,
+              **_case_coverage(ctx, c["covered_asset_ids"]),
               "budget_feasible": c["quote"]["total_rub"] <= budget_rub,
               "constraints_feasible": c["feasible"], "timely": True,
               "residual_uncertainty": None, "uncertainty_status": "not_estimated"},
@@ -299,6 +312,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
         "inputs": {"budget_rub": budget_rub, "priority": priority, "bbox": bounds,
                    "deadline_hours": deadline_hours, "must_cover": must_cover},
         "metrics": {"portfolio_count": len(assets), "expected_loss_rub": exposure,
+                    "case_expected_loss_rub": ctx.case_exposure,
                     "high_probability_assets": sum((a["p_flood"] or 0) >= info["model_threshold"] for a in assets),
                     "permanent_water_assets": sum(a["loss_status"] == "permanent_water" for a in assets),
                     "unestimated_assets": len(ctx.unestimated),
@@ -345,11 +359,13 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
 def _limitations(info: dict, region: dict) -> list[str]:
     live = info.get("source_kind") == LIVE
     water = {
-        "jrc_waterhand": "Постоянная вода JRC вычтена: ущерб считается только от паводка.",
-        "jrc_gsw": "Постоянная вода JRC Global Surface Water (вода и в 1984, и в 2021 году) вычтена: ущерб считается только от паводка.",
+        "jrc_waterhand": "Постоянная вода JRC вычтена из карты паводка.",
+        "jrc_gsw": "Постоянная вода JRC Global Surface Water (вода и в 1984, и в 2021 году) вычтена из карты паводка.",
     }.get(region["permanent_status"], "Постоянная вода в этой области не отделена: карта показывает всю воду.")
     rows = [
         water,
+        "Обязательный EL = p × V × q считается для всех объектов, в том числе на постоянной воде. "
+        "Ущерб только от паводка (0 на постоянной воде) идёт отдельной оценкой, по ней выбирается корзина C.",
         "V и q объектов заданы кейсом; сами точки учебные, а не реальный реестр.",
         "Базовая ставка 788,64 ₽/км² и доступность новой съёмки через 6 часов сценарные.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
