@@ -518,12 +518,12 @@ def package(result: dict) -> io.BytesIO:
                                  "variable in images without .git; null when neither is available"),
             "gitverse_commit": code_commit(),
             "gitverse_status": "published" if code_commit() else "commit_not_recorded_in_this_build",
-            "other_cost_rule": ("processing runs on a CPU in seconds and analyst review or field checks are not priced, "
-                                "so other_cost_rub and decision_cost_rub stay empty with other_cost_status=not_estimated; "
-                                "strategies are compared by data_cost_rub"),
+            "other_cost_rule": ("other_cost_rub = compute + analyst review + radar processing, priced as a scenario "
+                                "(decision_cost_rule); field visits and wrong-action costs are not estimated; "
+                                "decision_cost_rub = data_cost_rub + other_cost_rub, the budget limits data_cost_rub only"),
             "residual_uncertainty_rule": ("A: mean map error chance over valid pixels of the analysed region (share 0-1, "
-                                          "status baseline); B and C: empty with status not_estimated, because no new "
-                                          "image has been received"),
+                                          "status baseline); B and C: " + RESIDUAL_BASIS + "; a strategy without a timely "
+                                          "order keeps the baseline (status baseline)"),
             "counterfactual_rule": "B above the budget has strategy_status=counterfactual_over_budget, for comparison only",
             "priority_rule": ("rank by expected_loss_rub; map_doubtful=true flags assets whose map error chance at the "
                               "point is >= doubt_threshold, they need a look whatever their rank; no_data assets are "
@@ -579,7 +579,6 @@ def package(result: dict) -> io.BytesIO:
             "sensitivity_method": result["sensitivity"]["method"],
             "decision_evidence": result["decision_evidence"],
             "decision_cost_rule": COST_RULE,
-            "residual_uncertainty_rule": RESIDUAL_BASIS,
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
             "commands": _commands(scene_id, info, inputs, live),
             "commands_note": ("Run from the repository root on Windows, Linux or macOS. <CHIP> is any official "
