@@ -30,14 +30,15 @@ def test_broad_strategy_reports_the_assets_it_covers():
     assert broad["coverage_share"] == 1.0 and broad["covered_doubt_share"] == 1.0
 
 
-def test_coverage_share_is_empty_without_estimated_exposure():
+def test_subregion_keeps_the_ten_asset_case_portfolio():
     region = [5.7952, 9.07, 5.8081, 9.0828]
     ctx = context("Nigeria_812045", region)
-    assert ctx.exposure == 0
+    assert len(ctx.assets) == 10 and ctx.exposure > 0
     result = analyze(region, 6500, "risk", 8, None, "Nigeria_812045")
-    for key in ("A", "B", "C"):
-        assert result["strategies"][key]["coverage_share"] is None
-        assert result["strategies"][key]["coverage_status"] == "no_estimated_exposure_in_region"
+    assert result["metrics"]["portfolio_count"] == 10
+    assert [asset["id"] for asset in result["assets"]] == [asset["id"] for asset in analyze(
+        None, 6500, "risk", 8, None, "Nigeria_812045")["assets"]]
+    assert result["strategies"]["B"]["coverage_share"] == 1
 
 
 def test_plan_is_exact_best_basket_and_explains_every_zone():
@@ -106,7 +107,8 @@ def test_permanent_water_is_split_and_carries_no_loss(tmp_path):
     for asset in enrich_assets(meta["assets"]):
         assert asset["permanent_water_at_point"] == (asset["row"] < PERMANENT_ROWS)
         if asset["permanent_water_at_point"]:
-            assert asset["expected_loss_rub"] == 0 and asset["loss_status"] == "permanent_water"
+            assert asset["expected_loss_rub"] == asset["case_expected_loss_rub"]
+            assert asset["flood_expected_loss_rub"] == 0 and asset["flood_loss_status"] == "permanent_water"
     nigeria = analyze(None, 6500, "risk", 8, None, "Nigeria_812045")["region"]
     assert nigeria["permanent_status"] == "jrc_waterhand"
     total = nigeria["flood_water_area_km2"] + nigeria["permanent_water_area_km2"]

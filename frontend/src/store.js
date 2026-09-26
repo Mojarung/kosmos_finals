@@ -14,6 +14,8 @@ export const state = reactive({
   liveItemId: null,
   liveStatus: 'idle',
   liveError: '',
+  liveStage: '',
+  liveProgress: 0,
   drawing: false,
   selectedAssetId: null,
   // Зона под курсором в списке плана: карта подсвечивает её контур.
@@ -86,7 +88,7 @@ watch(() => state.tab, value => { if (value === 'plan') state.showZones = true }
 export function chooseScene(id) {
   if (state.sceneId === id) return false
   Object.assign(state, { sceneId: id, region: null, selectedAssetId: null, mustCover: null, layerMode: 'model', drawing: false,
-    liveCandidates: [], liveItemId: null, liveStatus: 'idle', liveError: '', overlayOpacity: 58 })
+    liveCandidates: [], liveItemId: null, liveStatus: 'idle', liveError: '', liveStage: '', liveProgress: 0, overlayOpacity: 58 })
   return true
 }
 let regionRequest = 0
@@ -99,15 +101,24 @@ async function apiJson(url, options) {
 export async function loadLiveItem(itemId) {
   if (!state.region) return
   const request = ++regionRequest
-  Object.assign(state, { liveItemId: itemId, liveStatus: 'preparing', liveError: '',
+  Object.assign(state, { liveItemId: itemId, liveStatus: 'preparing', liveError: '', liveStage: 'Подключаемся к снимку', liveProgress: 0,
     selectedAssetId: null, mustCover: null, tab: 'assets' })
   try {
-    const params = new URLSearchParams({ bbox: state.region.join(','), item_id: itemId })
-    const prepared = await apiJson('/api/live/prepare?' + params, { method: 'POST' })
+    let job = await apiJson('/api/live/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bbox: state.region.join(','), item_id: itemId }) })
+    while (request === regionRequest && !['done', 'error'].includes(job.stage)) {
+      Object.assign(state, { liveStage: job.message, liveProgress: job.progress })
+      await new Promise(resolve => setTimeout(resolve, 850))
+      if (request !== regionRequest) return
+      job = await apiJson('/api/live/jobs/' + job.id)
+    }
+    if (job.stage === 'error') throw new Error(job.error || 'Снимок не обработан')
+    const prepared = job
     if (request !== regionRequest) return
     state.sceneId = prepared.scene_id
     await fetchAnalysis()
-    if (request === regionRequest) state.liveStatus = state.error ? 'error' : 'ready'
+    if (request === regionRequest) Object.assign(state, { liveStatus: state.error ? 'error' : 'ready',
+      liveError: state.error || '', liveStage: state.error ? 'Ошибка анализа' : 'Анализ готов', liveProgress: 1 })
     // Сразу за водой вычитаем постоянную воду: без неё ущерб считался бы и от реки.
     if (request === regionRequest && state.analysis?.region.permanent_status === 'not_separated') separatePermanent(prepared.scene_id)
   } catch (error) {
@@ -117,7 +128,7 @@ export async function loadLiveItem(itemId) {
 export async function chooseRegion(bounds) {
   const request = ++regionRequest
   Object.assign(state, { region: bounds, selectedAssetId: null, mustCover: null, layerMode: 'model', overlayOpacity: 78, liveStatus: 'searching',
-    liveError: '', liveCandidates: [], liveItemId: null })
+    liveError: '', liveCandidates: [], liveItemId: null, liveStage: 'Ищем снимки Sentinel‑1', liveProgress: 0 })
   try {
     const data = await apiJson('/api/live/discover?' + new URLSearchParams({ bbox: bounds.join(',') }))
     if (request !== regionRequest) return
@@ -127,6 +138,9 @@ export async function chooseRegion(bounds) {
   } catch (error) {
     if (request === regionRequest) Object.assign(state, { liveStatus: 'error', liveError: error.message })
   }
+}
+export function retryRegion() {
+  if (state.region) chooseRegion([...state.region])
 }
 /*
  * Постоянная вода для выбранной рамки из архива JRC Global Surface Water (вода
@@ -157,6 +171,56 @@ export function toggleGuarantee() {
   state.tab = 'plan'
 }
 export function exportDecision() { window.location.href = '/api/export?' + parameters() }
+
+export const workspace = reactive({ projects: [], active: null, loading: false, error: '', notice: '' })
+
+export async function loadProjects() {
+  workspace.loading = true
+  try {
+    const data = await apiJson('/api/projects')
+    workspace.projects = data.projects
+    workspace.error = ''
+  } catch (error) { workspace.error = error.message }
+  finally { workspace.loading = false }
+}
+
+export async function openProject(id) {
+  workspace.loading = true
+  try {
+    workspace.active = await apiJson('/api/projects/' + id)
+    workspace.error = ''
+  } catch (error) { workspace.error = error.message }
+  finally { workspace.loading = false }
+}
+
+export async function createProject(name) {
+  const project = await apiJson('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, scene_id: state.sceneId }) })
+  await loadProjects()
+  await openProject(project.id)
+  return project
+}
+
+export async function importProjectAssets(file) {
+  const format = file.name.toLowerCase().endsWith('.csv') ? 'csv' : 'geojson'
+  const content = await file.text()
+  const result = await apiJson(`/api/projects/${workspace.active.id}/assets/import`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format, content }),
+  })
+  await openProject(workspace.active.id)
+  workspace.notice = `Загружено: ${result.count}. Оценено: ${result.estimated}`
+}
+
+export async function saveProjectDecision() {
+  const result = await apiJson(`/api/projects/${workspace.active.id}/decisions`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bbox: state.region?.join(',') || null, budget: state.budget,
+      priority: state.priority, deadline: state.deadline, must_cover: state.mustCover }),
+  })
+  await openProject(workspace.active.id)
+  await loadProjects()
+  workspace.notice = `Решение ${result.id} сохранено`
+}
 
 /*
  * Каталог официальных чипов Sen1Floods11 и живой расчёт одного из них. Живут

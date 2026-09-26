@@ -41,12 +41,14 @@ function select(asset) {
   <section class="block" v-tip="'Сумма по объектам: вероятность воды × стоимость × уязвимость. Вероятность из модели, стоимость и уязвимость учебные'">
     <p v-if="analysis.chip.portfolio_status" class="source-line portfolio-note">10 учебных объектов: места и стоимости сценарные</p>
     <p v-if="analysis.region.data_status === 'partial_coverage'" class="source-line portfolio-note">Снимок покрывает {{ percent(analysis.region.observed_area_km2 / analysis.region.area_km2, 1) }} рамки. В остальных точках ущерб не оценить.</p>
-    <span class="caption">{{ permanentSeparated ? 'Ожидаемый ущерб от паводка' : 'Ожидаемый ущерб' }}</span>
+    <span class="caption">Ожидаемый ущерб · p × V × q</span>
     <div class="hero">
       <AnimatedNumber class="display" :value="analysis.metrics.expected_loss_rub / 1e6" :format="v => v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })" />
       <span class="unit">млн ₽</span>
       <span class="hero-aside">{{ analysis.metrics.high_probability_assets }} из {{ analysis.assets.length }}<br>в воде</span>
     </div>
+    <p v-if="permanentSeparated" class="source-line">Поправка на постоянную воду JRC: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}. Основной расчёт выше сохраняет все 10 точек.</p>
+    <p v-if="state.region" class="source-line">В рамке {{ analysis.metrics.assets_in_region }} из 10 объектов · {{ compactRub(analysis.metrics.region_expected_loss_rub) }}. План A/B/C сравнивает весь портфель.</p>
     <p v-if="analysis.metrics.unestimated_assets" class="warn-note"
       v-tip="'Радар не дал сигнала в точках этих объектов. Их стоимость × уязвимость показана как риск, который пока не оценён'">
       {{ plural(analysis.metrics.unestimated_assets, ['объект', 'объекта', 'объектов']) }} без данных: {{ compactRub(analysis.metrics.unestimated_exposure_rub) }} под риском не оценены
@@ -71,7 +73,7 @@ function select(asset) {
 
       <Transition name="expand">
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
-          <p v-if="asset.loss_status === 'permanent_water'" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка, ущерб от паводка не считается.</p>
+          <p v-if="asset.flood_loss_status === 'permanent_water'" class="source-line">Точка на постоянной воде JRC. Обязательный ущерб p × V × q: {{ compactRub(asset.expected_loss_rub) }}; дополнительная оценка только паводка: {{ compactRub(asset.flood_expected_loss_rub) }}.</p>
           <div class="mini-rows">
             <div v-tip="'Вероятность воды в пикселе, где стоит объект'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="'Вероятность, что карта окрасила точку объекта неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>

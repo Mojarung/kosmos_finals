@@ -8,9 +8,6 @@ from .planning import BasketSpace
 
 
 def _loss(asset: dict, values: dict) -> float:
-    # A point on permanent water carries no flood-only loss whatever the inputs.
-    if asset.get("loss_status") == "permanent_water":
-        return 0.0
     return round(values["p"] * values["V"] * values["q"], 2)
 
 
@@ -22,8 +19,7 @@ def _rank(losses: dict[str, float], asset_id: str) -> int:
 def asset_sensitivity(assets: list[dict]) -> list[dict]:
     """Vary one input at a time; all other assets and inputs stay fixed.
 
-    expected_loss_rub and rank follow the flood-only loss the plan optimises;
-    case_expected_loss_rub and case_rank follow the mandatory EL = p·V·q.
+    Both rankings follow the mandatory EL = p·V·q used by the plan.
     """
     rows = []
     eligible = [asset for asset in assets if asset["p_flood"] is not None]

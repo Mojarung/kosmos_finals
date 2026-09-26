@@ -4,7 +4,7 @@ import { ChevronLeft, Crosshair, Globe2, Info, LoaderCircle, RotateCcw, Waves } 
 import AnimatedNumber from './AnimatedNumber.vue'
 import MorphPanel from './MorphPanel.vue'
 import ShareBar from './ShareBar.vue'
-import { hasData, isLive, permanentJob, permanentSeparated, resetRegion, state } from '../store'
+import { hasData, isLive, permanentJob, permanentSeparated, resetRegion, retryRegion, state } from '../store'
 import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
@@ -91,6 +91,9 @@ function toggleDrawing() {
             v-tip="'Радар дал сигнал только на части рамки. Пустая часть не входит ни в воду, ни в ущерб'">
             <span>Снимок покрывает</span><strong class="tabular">{{ percent(region.observed_area_km2 / region.area_km2, 1) }}</strong>
           </div>
+          <div v-if="isLive" class="row" v-tip="'Доля пикселей, где у радарного снимка есть оба канала VV и VH'"><span>Покрытие радара</span><strong class="tabular">{{ percent(region.observed_area_km2 / region.area_km2, 1) }}</strong></div>
+          <div v-if="isLive" class="row" v-tip="'Физический размер пикселя меняется незначительно из-за округления сетки до 32 пикселей'"><span>Разрешение анализа</span><strong class="tabular">≈ {{ state.analysis.chip.pixel_size_m_approx }} м/пикс.</strong></div>
+          <p v-if="isLive" class="source-line">Ручной метки нет: IoU/F1 для этой области не посчитать. Проверьте карту по независимому источнику.</p>
           <div v-if="isLive && permanentJob.sceneId === state.sceneId && permanentJob.status !== 'done'" class="row permanent-job"
             v-tip="permanentJob.status === 'error' ? permanentJob.message : 'Берём из архива JRC воду, которая была и в 1984, и в 2021 году, и вычитаем её из паводка'">
             <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра в архиве JRC…' }}</span>
@@ -107,13 +110,15 @@ function toggleDrawing() {
 
       <div v-else-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="empty">
         <Globe2 :size="26" />
-        <strong>{{ state.liveStatus === 'searching' ? 'Ищем снимки VV и VH' : 'Читаем радар, модель ищет воду' }}</strong>
+        <strong>{{ state.liveStage || 'Загружаем радар' }}</strong>
+        <span v-if="state.liveProgress" class="tabular">{{ Math.round(state.liveProgress * 100) }}% обработки</span>
         <span>Снимок и его дата придут из каталога Sentinel‑1 RTC.</span>
       </div>
       <div v-else-if="state.liveStatus === 'error'" class="empty">
         <Info :size="26" />
         <strong>Область пока не готова</strong>
         <span>{{ state.liveError }}</span>
+        <button class="tonal-button" @click="retryRegion">Повторить загрузку</button>
       </div>
       <div v-else-if="state.analysis" class="empty">
         <Globe2 :size="26" />
