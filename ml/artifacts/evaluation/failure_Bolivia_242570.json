@@ -1,0 +1,655 @@
+{
+  "chip": "Bolivia_242570",
+  "reference_part": "bolivia",
+  "threshold": 0.41,
+  "baseline_threshold_db": -23.6,
+  "target": {
+    "valid_pixels": 175507,
+    "water_pixels": 27346,
+    "water_share": 0.156,
+    "model": {
+      "iou": 0.055,
+      "recall": 0.06,
+      "precision": 0.404,
+      "tp": 1632,
+      "fp": 2405,
+      "fn": 25714
+    },
+    "baseline": {
+      "iou": 0.309,
+      "recall": 0.497,
+      "precision": 0.449,
+      "tp": 13596,
+      "fp": 16678,
+      "fn": 13750
+    },
+    "baseline_threshold_db": -23.6,
+    "vh_water_median": -23.58,
+    "vv_minus_vh_water_median": 8.0,
+    "recall_by_vh": [
+      {
+        "vh_bin": "< -26",
+        "water": 6876,
+        "model_found": 712,
+        "baseline_found": 6876,
+        "share_of_water": 0.251,
+        "model_recall": 0.104,
+        "baseline_recall": 1.0
+      },
+      {
+        "vh_bin": "-26 .. -23.6",
+        "water": 6720,
+        "model_found": 487,
+        "baseline_found": 6720,
+        "share_of_water": 0.246,
+        "model_recall": 0.072,
+        "baseline_recall": 1.0
+      },
+      {
+        "vh_bin": "-23.6 .. -21",
+        "water": 7587,
+        "model_found": 351,
+        "baseline_found": 0,
+        "share_of_water": 0.277,
+        "model_recall": 0.046,
+        "baseline_recall": 0.0
+      },
+      {
+        "vh_bin": ">= -21",
+        "water": 6163,
+        "model_found": 82,
+        "baseline_found": 0,
+        "share_of_water": 0.225,
+        "model_recall": 0.013,
+        "baseline_recall": 0.0
+      }
+    ],
+    "fragments": {
+      "components": 139,
+      "largest_component_px": 9080,
+      "share_in_components_below_100px": 0.03,
+      "share_within_3px_of_land": 0.486
+    },
+    "missed": {
+      "pixels": 25714,
+      "vh_median": -23.44,
+      "member_std_mean": 0.185,
+      "baseline_catches_share": 0.482,
+      "p_median": 0.124
+    },
+    "found": {
+      "pixels": 1632,
+      "vh_median": -25.49,
+      "member_std_mean": 0.271
+    },
+    "permanent_water_share": 0.0,
+    "separability": {
+      "auc_vh": 0.826,
+      "auc_p": 0.775
+    },
+    "texture": {
+      "window_px": 5,
+      "water_local_std_median": 2.56,
+      "found_local_std_median": 3.03,
+      "missed_local_std_median": 2.54,
+      "dry_darker_than_-26_share": 0.043
+    }
+  },
+  "reference_chips": [
+    "Bolivia_103757",
+    "Bolivia_129334",
+    "Bolivia_195474",
+    "Bolivia_23014",
+    "Bolivia_290290",
+    "Bolivia_294583",
+    "Bolivia_312675",
+    "Bolivia_314919",
+    "Bolivia_379434",
+    "Bolivia_432776",
+    "Bolivia_60373"
+  ],
+  "reference_recall_by_vh": [
+    {
+      "vh_bin": "< -26",
+      "water": 140491,
+      "model_found": 132516,
+      "baseline_found": 140491,
+      "share_of_water": 0.331,
+      "model_recall": 0.943,
+      "baseline_recall": 1.0
+    },
+    {
+      "vh_bin": "-26 .. -23.6",
+      "water": 108421,
+      "model_found": 96959,
+      "baseline_found": 108421,
+      "share_of_water": 0.256,
+      "model_recall": 0.894,
+      "baseline_recall": 1.0
+    },
+    {
+      "vh_bin": "-23.6 .. -21",
+      "water": 95432,
+      "model_found": 75960,
+      "baseline_found": 0,
+      "share_of_water": 0.225,
+      "model_recall": 0.796,
+      "baseline_recall": 0.0
+    },
+    {
+      "vh_bin": ">= -21",
+      "water": 79791,
+      "model_found": 39510,
+      "baseline_found": 0,
+      "share_of_water": 0.188,
+      "model_recall": 0.495,
+      "baseline_recall": 0.0
+    }
+  ],
+  "reference_per_chip": {
+    "Bolivia_103757": {
+      "water_pixels": 35362,
+      "vh_water_median": -24.86,
+      "vv_minus_vh_water_median": 6.74,
+      "fragments": {
+        "components": 126,
+        "largest_component_px": 21543,
+        "share_in_components_below_100px": 0.024,
+        "share_within_3px_of_land": 0.319
+      },
+      "missed": {
+        "pixels": 1112,
+        "vh_median": -15.83,
+        "member_std_mean": 0.084,
+        "baseline_catches_share": 0.002,
+        "p_median": 0.188
+      },
+      "found": {
+        "pixels": 34250,
+        "vh_median": -25.0,
+        "member_std_mean": 0.019
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.86,
+        "found_local_std_median": 2.88,
+        "missed_local_std_median": 2.43,
+        "dry_darker_than_-26_share": 0.005
+      },
+      "separability": {
+        "auc_vh": 0.965,
+        "auc_p": 0.979
+      },
+      "model_iou": 0.806,
+      "baseline_iou": 0.623
+    },
+    "Bolivia_129334": {
+      "water_pixels": 156067,
+      "vh_water_median": -25.49,
+      "vv_minus_vh_water_median": 8.95,
+      "fragments": {
+        "components": 214,
+        "largest_component_px": 105882,
+        "share_in_components_below_100px": 0.007,
+        "share_within_3px_of_land": 0.211
+      },
+      "missed": {
+        "pixels": 19723,
+        "vh_median": -21.87,
+        "member_std_mean": 0.253,
+        "baseline_catches_share": 0.316,
+        "p_median": 0.234
+      },
+      "found": {
+        "pixels": 136344,
+        "vh_median": -25.89,
+        "member_std_mean": 0.164
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.92,
+        "found_local_std_median": 3.0,
+        "missed_local_std_median": 2.42,
+        "dry_darker_than_-26_share": 0.017
+      },
+      "separability": {
+        "auc_vh": 0.957,
+        "auc_p": 0.929
+      },
+      "model_iou": 0.815,
+      "baseline_iou": 0.702
+    },
+    "Bolivia_195474": {
+      "water_pixels": 1551,
+      "vh_water_median": -17.07,
+      "vv_minus_vh_water_median": 6.24,
+      "fragments": {
+        "components": 17,
+        "largest_component_px": 290,
+        "share_in_components_below_100px": 0.357,
+        "share_within_3px_of_land": 0.905
+      },
+      "missed": {
+        "pixels": 1361,
+        "vh_median": -16.76,
+        "member_std_mean": 0.031,
+        "baseline_catches_share": 0.004,
+        "p_median": 0.041
+      },
+      "found": {
+        "pixels": 190,
+        "vh_median": -19.96,
+        "member_std_mean": 0.132
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 1.84,
+        "found_local_std_median": 1.93,
+        "missed_local_std_median": 1.82,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.812,
+        "auc_p": 0.885
+      },
+      "model_iou": 0.04,
+      "baseline_iou": 0.01
+    },
+    "Bolivia_23014": {
+      "water_pixels": 7780,
+      "vh_water_median": -24.66,
+      "vv_minus_vh_water_median": 7.33,
+      "fragments": {
+        "components": 22,
+        "largest_component_px": 6534,
+        "share_in_components_below_100px": 0.01,
+        "share_within_3px_of_land": 0.138
+      },
+      "missed": {
+        "pixels": 382,
+        "vh_median": -15.99,
+        "member_std_mean": 0.065,
+        "baseline_catches_share": 0.003,
+        "p_median": 0.165
+      },
+      "found": {
+        "pixels": 7398,
+        "vh_median": -24.88,
+        "member_std_mean": 0.05
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.95,
+        "found_local_std_median": 2.98,
+        "missed_local_std_median": 2.54,
+        "dry_darker_than_-26_share": 0.005
+      },
+      "separability": {
+        "auc_vh": 0.981,
+        "auc_p": 0.994
+      },
+      "model_iou": 0.761,
+      "baseline_iou": 0.558
+    },
+    "Bolivia_233925": {
+      "water_pixels": 1,
+      "vh_water_median": -11.36,
+      "vv_minus_vh_water_median": 5.68,
+      "fragments": {
+        "components": 1,
+        "largest_component_px": 1,
+        "share_in_components_below_100px": 1.0,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 1,
+        "vh_median": -11.36,
+        "member_std_mean": 0.001,
+        "baseline_catches_share": 0.0,
+        "p_median": 0.008
+      },
+      "found": {
+        "pixels": 0,
+        "vh_median": null,
+        "member_std_mean": null
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 1.01,
+        "found_local_std_median": null,
+        "missed_local_std_median": 1.01,
+        "dry_darker_than_-26_share": 0.004
+      },
+      "separability": {
+        "auc_vh": 0.053,
+        "auc_p": 0.851
+      },
+      "model_iou": 0.0,
+      "baseline_iou": 0.0
+    },
+    "Bolivia_290290": {
+      "water_pixels": 19699,
+      "vh_water_median": -23.13,
+      "vv_minus_vh_water_median": 9.66,
+      "fragments": {
+        "components": 17,
+        "largest_component_px": 6107,
+        "share_in_components_below_100px": 0.003,
+        "share_within_3px_of_land": 0.331
+      },
+      "missed": {
+        "pixels": 2732,
+        "vh_median": -16.61,
+        "member_std_mean": 0.074,
+        "baseline_catches_share": 0.007,
+        "p_median": 0.106
+      },
+      "found": {
+        "pixels": 16967,
+        "vh_median": -23.66,
+        "member_std_mean": 0.087
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.34,
+        "found_local_std_median": 2.38,
+        "missed_local_std_median": 2.1,
+        "dry_darker_than_-26_share": 0.005
+      },
+      "separability": {
+        "auc_vh": 0.933,
+        "auc_p": 0.973
+      },
+      "model_iou": 0.576,
+      "baseline_iou": 0.381
+    },
+    "Bolivia_294583": {
+      "water_pixels": 15008,
+      "vh_water_median": -23.96,
+      "vv_minus_vh_water_median": 3.63,
+      "fragments": {
+        "components": 58,
+        "largest_component_px": 4750,
+        "share_in_components_below_100px": 0.05,
+        "share_within_3px_of_land": 0.419
+      },
+      "missed": {
+        "pixels": 346,
+        "vh_median": -14.58,
+        "member_std_mean": 0.118,
+        "baseline_catches_share": 0.003,
+        "p_median": 0.253
+      },
+      "found": {
+        "pixels": 14662,
+        "vh_median": -24.03,
+        "member_std_mean": 0.013
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.57,
+        "found_local_std_median": 2.57,
+        "missed_local_std_median": 2.93,
+        "dry_darker_than_-26_share": 0.004
+      },
+      "separability": {
+        "auc_vh": 0.972,
+        "auc_p": 0.989
+      },
+      "model_iou": 0.665,
+      "baseline_iou": 0.508
+    },
+    "Bolivia_312675": {
+      "water_pixels": 9575,
+      "vh_water_median": -21.11,
+      "vv_minus_vh_water_median": 8.09,
+      "fragments": {
+        "components": 87,
+        "largest_component_px": 3831,
+        "share_in_components_below_100px": 0.072,
+        "share_within_3px_of_land": 0.541
+      },
+      "missed": {
+        "pixels": 4616,
+        "vh_median": -19.54,
+        "member_std_mean": 0.117,
+        "baseline_catches_share": 0.049,
+        "p_median": 0.204
+      },
+      "found": {
+        "pixels": 4959,
+        "vh_median": -22.57,
+        "member_std_mean": 0.152
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.05,
+        "found_local_std_median": 2.24,
+        "missed_local_std_median": 1.88,
+        "dry_darker_than_-26_share": 0.001
+      },
+      "separability": {
+        "auc_vh": 0.953,
+        "auc_p": 0.973
+      },
+      "model_iou": 0.407,
+      "baseline_iou": 0.189
+    },
+    "Bolivia_314919": {
+      "water_pixels": 83678,
+      "vh_water_median": -24.28,
+      "vv_minus_vh_water_median": 7.75,
+      "fragments": {
+        "components": 186,
+        "largest_component_px": 63436,
+        "share_in_components_below_100px": 0.018,
+        "share_within_3px_of_land": 0.285
+      },
+      "missed": {
+        "pixels": 20769,
+        "vh_median": -22.45,
+        "member_std_mean": 0.182,
+        "baseline_catches_share": 0.366,
+        "p_median": 0.083
+      },
+      "found": {
+        "pixels": 62909,
+        "vh_median": -24.83,
+        "member_std_mean": 0.144
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.75,
+        "found_local_std_median": 2.9,
+        "missed_local_std_median": 2.32,
+        "dry_darker_than_-26_share": 0.014
+      },
+      "separability": {
+        "auc_vh": 0.947,
+        "auc_p": 0.935
+      },
+      "model_iou": 0.69,
+      "baseline_iou": 0.553
+    },
+    "Bolivia_360519": {
+      "water_pixels": 414,
+      "vh_water_median": -19.8,
+      "vv_minus_vh_water_median": 7.79,
+      "fragments": {
+        "components": 33,
+        "largest_component_px": 176,
+        "share_in_components_below_100px": 0.575,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 356,
+        "vh_median": -19.15,
+        "member_std_mean": 0.046,
+        "baseline_catches_share": 0.067,
+        "p_median": 0.084
+      },
+      "found": {
+        "pixels": 58,
+        "vh_median": -26.85,
+        "member_std_mean": 0.09
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.3,
+        "found_local_std_median": 10.63,
+        "missed_local_std_median": 2.19,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.914,
+        "auc_p": 0.974
+      },
+      "model_iou": 0.039,
+      "baseline_iou": 0.048
+    },
+    "Bolivia_379434": {
+      "water_pixels": 10790,
+      "vh_water_median": -18.27,
+      "vv_minus_vh_water_median": 6.51,
+      "fragments": {
+        "components": 241,
+        "largest_component_px": 1744,
+        "share_in_components_below_100px": 0.24,
+        "share_within_3px_of_land": 0.849
+      },
+      "missed": {
+        "pixels": 5358,
+        "vh_median": -15.98,
+        "member_std_mean": 0.053,
+        "baseline_catches_share": 0.001,
+        "p_median": 0.074
+      },
+      "found": {
+        "pixels": 5432,
+        "vh_median": -21.58,
+        "member_std_mean": 0.108
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.43,
+        "found_local_std_median": 2.77,
+        "missed_local_std_median": 2.08,
+        "dry_darker_than_-26_share": 0.002
+      },
+      "separability": {
+        "auc_vh": 0.813,
+        "auc_p": 0.908
+      },
+      "model_iou": 0.268,
+      "baseline_iou": 0.125
+    },
+    "Bolivia_432776": {
+      "water_pixels": 72145,
+      "vh_water_median": -23.57,
+      "vv_minus_vh_water_median": 7.23,
+      "fragments": {
+        "components": 67,
+        "largest_component_px": 62489,
+        "share_in_components_below_100px": 0.004,
+        "share_within_3px_of_land": 0.19
+      },
+      "missed": {
+        "pixels": 21756,
+        "vh_median": -21.37,
+        "member_std_mean": 0.26,
+        "baseline_catches_share": 0.246,
+        "p_median": 0.268
+      },
+      "found": {
+        "pixels": 50389,
+        "vh_median": -24.41,
+        "member_std_mean": 0.207
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.67,
+        "found_local_std_median": 2.86,
+        "missed_local_std_median": 2.3,
+        "dry_darker_than_-26_share": 0.025
+      },
+      "separability": {
+        "auc_vh": 0.881,
+        "auc_p": 0.93
+      },
+      "model_iou": 0.651,
+      "baseline_iou": 0.465
+    },
+    "Bolivia_60373": {
+      "water_pixels": 12480,
+      "vh_water_median": -22.78,
+      "vv_minus_vh_water_median": 5.57,
+      "fragments": {
+        "components": 26,
+        "largest_component_px": 2934,
+        "share_in_components_below_100px": 0.016,
+        "share_within_3px_of_land": 0.405
+      },
+      "missed": {
+        "pixels": 1035,
+        "vh_median": -15.81,
+        "member_std_mean": 0.083,
+        "baseline_catches_share": 0.0,
+        "p_median": 0.185
+      },
+      "found": {
+        "pixels": 11445,
+        "vh_median": -23.15,
+        "member_std_mean": 0.033
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 2.48,
+        "found_local_std_median": 2.5,
+        "missed_local_std_median": 2.18,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.957,
+        "auc_p": 0.993
+      },
+      "model_iou": 0.687,
+      "baseline_iou": 0.398
+    },
+    "Bolivia_76104": {
+      "water_pixels": 5,
+      "vh_water_median": -14.14,
+      "vv_minus_vh_water_median": 3.03,
+      "fragments": {
+        "components": 5,
+        "largest_component_px": 1,
+        "share_in_components_below_100px": 1.0,
+        "share_within_3px_of_land": 1.0
+      },
+      "missed": {
+        "pixels": 5,
+        "vh_median": -14.14,
+        "member_std_mean": 0.021,
+        "baseline_catches_share": 0.0,
+        "p_median": 0.005
+      },
+      "found": {
+        "pixels": 0,
+        "vh_median": null,
+        "member_std_mean": null
+      },
+      "texture": {
+        "window_px": 5,
+        "water_local_std_median": 1.85,
+        "found_local_std_median": null,
+        "missed_local_std_median": 1.85,
+        "dry_darker_than_-26_share": 0.0
+      },
+      "separability": {
+        "auc_vh": 0.419,
+        "auc_p": 0.542
+      },
+      "model_iou": 0.0,
+      "baseline_iou": 0.0
+    }
+  }
+}

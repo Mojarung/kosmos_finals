@@ -148,6 +148,14 @@ def _cmd_infer(args: argparse.Namespace) -> None:
     print(json.dumps(report, indent=2))
 
 
+def _cmd_failure(args: argparse.Namespace) -> None:
+    from floodvalue.failure import run_failure
+    report = run_failure(args.chip, args.reference, EVALUATION_DIR)
+    target = report["target"]
+    print(json.dumps({"chip": report["chip"], "model": target["model"], "baseline": target["baseline"],
+                      "missed": target["missed"], "fragments": target["fragments"]}, ensure_ascii=False, indent=2))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="floodvalue", description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -178,6 +186,10 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser("evaluate", help="calibrate on valid, score both methods on test parts, draw figures") \
         .set_defaults(handler=_cmd_evaluate)
 
+    failure = commands.add_parser("failure", help="explain where the frozen ensemble misses water on one chip")
+    failure.add_argument("--chip", default="Bolivia_242570", help="official chip name")
+    failure.add_argument("--reference", default="bolivia", help="split part to compare against")
+    failure.set_defaults(handler=_cmd_failure)
     infer = commands.add_parser("infer", help="write flood_probability.tif / flood_mask.tif for one S1 chip")
     source = infer.add_mutually_exclusive_group(required=True)
     source.add_argument("--chip", help="official chip name, e.g. Ghana_313799")
