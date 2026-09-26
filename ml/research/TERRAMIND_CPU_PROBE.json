@@ -1,0 +1,26 @@
+{
+  "chip": "Ghana_1033830",
+  "rule": "lexicographically first outer fold0 chip",
+  "device": "cpu",
+  "threads": 4,
+  "shape": [
+    1,
+    15,
+    512,
+    512
+  ],
+  "seconds_cold": 0.21297358399988298,
+  "seconds_warm": [
+    0.15769762499985518,
+    0.16967012500026613,
+    0.17045079200033797
+  ],
+  "model_bytes": 24901372,
+  "checkpoint_sha256": "87ad30bd0f83c84925c93f48755ff826532072ebd3752290b4f6534ed33d308f",
+  "parameter_count": 6141057,
+  "max_abs_probability_difference_from_mps": 4.291534423828125e-06,
+  "mean_abs_probability_difference_from_mps": 1.6028658933464612e-07,
+  "different_labels_p05": 0,
+  "valid_pixels": 233229,
+  "scope": "one fold, full 512 chip; excludes data loading and five-model ensemble"
+}

@@ -1,0 +1,167 @@
+{
+  "source_commit": "cae7833",
+  "protocol": "research/CONTEXT_FOLLOWUP_PROTOCOL.md",
+  "development_only": true,
+  "new_test_evaluation": false,
+  "decision": "keep existing boost_learned; expanded optical context rejected on event CV",
+  "control_reproduced_exact_counts": true,
+  "previous_single_lightgbm_event_iou": 0.781912402425595,
+  "rows": [
+    {
+      "new_optical_weight": 0.0,
+      "event_mean_iou": 0.7840982191737054,
+      "pooled_iou": 0.8219562897888353,
+      "brier": 0.015989804938012886,
+      "events": {
+        "Mekong": 0.9712644089011704,
+        "Nigeria": 0.9344944837031969,
+        "Spain": 0.7459642204220732,
+        "USA": 0.8568303677477008,
+        "India": 0.8268931334815488,
+        "Pakistan": 0.606112692270794,
+        "Sri-Lanka": 0.8788961781522721,
+        "Ghana": 0.540575391254823,
+        "Paraguay": 0.7052367166212534,
+        "Somalia": 0.7747145991822215
+      },
+      "counts": {
+        "tp": 6739144,
+        "fp": 521024,
+        "fn": 938740,
+        "tn": 69354503
+      },
+      "n_pixels": 77553411,
+      "fold_thresholds": [
+        0.44,
+        0.45,
+        0.48
+      ]
+    },
+    {
+      "new_optical_weight": 0.25,
+      "event_mean_iou": 0.7831042199521563,
+      "pooled_iou": 0.8198698359124628,
+      "brier": 0.016142574288947588,
+      "events": {
+        "Mekong": 0.9718486324621919,
+        "Nigeria": 0.9346519363958828,
+        "Spain": 0.7464831804281346,
+        "USA": 0.8563102522464309,
+        "India": 0.8253573643281265,
+        "Pakistan": 0.6132750559056719,
+        "Sri-Lanka": 0.8806255712155466,
+        "Ghana": 0.5423405841241344,
+        "Paraguay": 0.687751764371523,
+        "Somalia": 0.7723978580439204
+      },
+      "counts": {
+        "tp": 6722394,
+        "fp": 521459,
+        "fn": 955490,
+        "tn": 69354068
+      },
+      "n_pixels": 77553411,
+      "fold_thresholds": [
+        0.44,
+        0.45,
+        0.44
+      ]
+    },
+    {
+      "new_optical_weight": 0.5,
+      "event_mean_iou": 0.7787961466794399,
+      "pooled_iou": 0.8150275500408036,
+      "brier": 0.016384783460334697,
+      "events": {
+        "Mekong": 0.9718464783098797,
+        "Nigeria": 0.9344058344058344,
+        "Spain": 0.7455274836725861,
+        "USA": 0.8537627710292306,
+        "India": 0.8211403527675548,
+        "Pakistan": 0.6110866421792677,
+        "Sri-Lanka": 0.8803651021324922,
+        "Ghana": 0.5394754528547554,
+        "Paraguay": 0.6627396144054858,
+        "Somalia": 0.7676117350373121
+      },
+      "counts": {
+        "tp": 6681441,
+        "fp": 519926,
+        "fn": 996443,
+        "tn": 69355601
+      },
+      "n_pixels": 77553411,
+      "fold_thresholds": [
+        0.47,
+        0.45,
+        0.45
+      ]
+    },
+    {
+      "new_optical_weight": 1.0,
+      "event_mean_iou": 0.7706459672180548,
+      "pooled_iou": 0.8079388535304151,
+      "brier": 0.01706454830466177,
+      "events": {
+        "Mekong": 0.9707479310579563,
+        "Nigeria": 0.9330445020667705,
+        "Spain": 0.7434468447390488,
+        "USA": 0.8447402317404861,
+        "India": 0.8115601942002948,
+        "Pakistan": 0.6023953699557668,
+        "Sri-Lanka": 0.8795290845084801,
+        "Ghana": 0.5415332005019263,
+        "Paraguay": 0.6424095011779757,
+        "Somalia": 0.7370528122318434
+      },
+      "counts": {
+        "tp": 6652251,
+        "fp": 555723,
+        "fn": 1025633,
+        "tn": 69319804
+      },
+      "n_pixels": 77553411,
+      "fold_thresholds": [
+        0.43,
+        0.46,
+        0.46
+      ]
+    }
+  ],
+  "signature": {
+    "version": "optical47_plus18_context27_81_v1",
+    "source_sha256": "af8ded9beadc537bdfa483426474ff792f170f35009cc61bc266900390d2947d",
+    "optical_source_sha256": "949286f9d59cdbb8d2834b9e7ae298cd7eb9feaf6251c466ef8aca9a55326f38",
+    "texture_source_sha256": "fa7a11264a2f9acbc0bae258ed2afae7a713d4a70445f7366e38bfc584c3559e",
+    "params": {
+      "n_estimators": 2000,
+      "learning_rate": 0.035,
+      "num_leaves": 31,
+      "min_child_samples": 200,
+      "reg_lambda": 5.0,
+      "colsample_bytree": 0.9,
+      "subsample": 0.8,
+      "subsample_freq": 1,
+      "n_jobs": 4,
+      "random_state": 74,
+      "verbosity": -1
+    },
+    "train_pixels": 10000,
+    "valid_pixels": 3000,
+    "plan_sha256": "ca1a5360c9d14838d48782a94fe03994288c16e10b40b999ad7843406eff8ab7"
+  },
+  "files_sha256": {
+    "runs/spatial_boost/fold0/result_w0.00.json": "75ec318fd5cdc607fed50a26d66097edd291bc972120cf96c76ed10a8ec8e4d5",
+    "runs/spatial_boost/fold1/result_w0.00.json": "d67f3bdc8412fc153a3be0b4f59e0b94c1a051af502faf6bb2e991dc917c593d",
+    "runs/spatial_boost/fold2/result_w0.00.json": "20b32c5fe85dcd71acfe2de25cc3d7acb5e00daf684d04b024171377c2f90260",
+    "runs/spatial_boost/fold0/result_w0.25.json": "82bbc48f15984cbc956d9e106387a37df02d2be3133b2abfd7adb2b98c0077fe",
+    "runs/spatial_boost/fold1/result_w0.25.json": "8067515ae0db55dea9de146de124bdd261f40f8d1c667934b0fc2f45611a721b",
+    "runs/spatial_boost/fold2/result_w0.25.json": "f461c62e1277b63b6cc7d94b0d97e339e5afb2bd0a4001028e61aab5a6d82795",
+    "runs/spatial_boost/fold0/result_w0.50.json": "b8bc7ecb3835d050e4f2938900ef62fb54d38741fed6e75c935139ef5097be06",
+    "runs/spatial_boost/fold1/result_w0.50.json": "feb4f5c612a367c4100c2deecaa0c56a3e1ac075bcda51f242e18aa3d899ec36",
+    "runs/spatial_boost/fold2/result_w0.50.json": "aec0b887ef70e60481c080d12d9b59b1cf41437f9f8c19b3dc8e5d541a7e29f6",
+    "runs/spatial_boost/fold0/result_w1.00.json": "7a9dd3ecddec02fc30d5b45fdaf03641a7e2529eca3e7b739c186eecc04cb2bc",
+    "runs/spatial_boost/fold1/result_w1.00.json": "4291ee42bc12fe6bb6ea7c894800543c3139c7e491fcccd08b1306e3c599e095",
+    "runs/spatial_boost/fold2/result_w1.00.json": "f8ad4d564dee24bfb15192a130da279b75e8a62f813c0f747706ab64c27f5235"
+  }
+}

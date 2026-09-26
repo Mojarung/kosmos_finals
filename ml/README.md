@@ -1,5 +1,8 @@
 # FloodValue pipeline: карта воды по Sentinel-1
 
+Продолжение после обновления контекстной модели: [разбор, открытые данные и приоритеты](research/CONTEXT_FOLLOWUP_RESEARCH.md).
+Новая итерация: [L2A boosting, TerraMind tiny, предобучение Kuro Siwo и выбор модели по доступности оптики](research/SERVICE_ITERATION_RESULTS.md), [команды воспроизведения](research/SERVICE_RUNBOOK.md). Это development CV; опубликованные ниже test-метрики не менялись.
+
 Пайплайн находит воду на S1-чипах официального [Sen1Floods11](https://github.com/cloudtostreet/Sen1Floods11) двумя методами и пишет растры в формате кейса. Первый метод - пороговый baseline, второй - ансамбль U-Net с откалиброванными вероятностями и неопределённостью. Экономика (объекты, EL, зоны, A/B/C) считается в сервисе [`backend/`](../backend/app), этот пакет её не касается.
 
 Всё запускается через `uv` из этой папки. Обучение шло на RTX 5070 12 ГБ; inference и оценка работают и на CPU, только медленнее.

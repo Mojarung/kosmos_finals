@@ -1,0 +1,128 @@
+{
+  "training_admission": false,
+  "scope": "One deterministic train sample per source; catalogue/probe only; event-level deduplication still required",
+  "protected_chips": 446,
+  "kuro": {
+    "repo": "orion-ai-lab/Kuro-Siwo-Webdataset",
+    "revision": "e8e61b7b1254b04bfa2b5e26d43db90cb86b5004",
+    "url": "https://huggingface.co/datasets/orion-ai-lab/Kuro-Siwo-Webdataset/resolve/e8e61b7b1254b04bfa2b5e26d43db90cb86b5004/train_GRD/shard-00000.tar",
+    "prefix_bytes": 8388608,
+    "license": "CC-BY-4.0",
+    "key": "000000",
+    "event_id": 470,
+    "sources": {
+      "SL1": {
+        "source_date": "2020-05-11",
+        "s1_ids": [
+          "d2c08caf-d00e-5dd7-b57a-cedfd8c46084"
+        ],
+        "master": false,
+        "coverage": 100.0,
+        "crank": 1
+      },
+      "SL2": {
+        "source_date": "2020-04-29",
+        "s1_ids": [
+          "906c4af3-4688-53ee-a8f3-d35315fc0a54"
+        ],
+        "master": false,
+        "coverage": 100.0,
+        "crank": 2
+      },
+      "MS1": {
+        "source_date": "2020-10-14",
+        "s1_ids": [
+          "11d72c4d-489c-5236-b7e8-b69241204904"
+        ],
+        "master": true,
+        "coverage": 100.0,
+        "crank": 1
+      }
+    },
+    "geometry_4326": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            0.2911888993473428,
+            9.724000469095628
+          ],
+          [
+            0.2911888993473428,
+            9.743833042363521
+          ],
+          [
+            0.31131116171162015,
+            9.743833042363521
+          ],
+          [
+            0.31131116171162015,
+            9.724000469095628
+          ],
+          [
+            0.2911888993473428,
+            9.724000469095628
+          ]
+        ]
+      ]
+    },
+    "shape": [
+      224,
+      224
+    ],
+    "water_pixels": 879,
+    "valid_pixels": 50176,
+    "s1_db_percentiles": [
+      -22.452997627258302,
+      -13.78298044204712,
+      -8.129625492095947
+    ],
+    "protected_geographic_overlap": [],
+    "label_mapping": "0 dry; 1 permanent water and 2 flood -> water; 3 nodata",
+    "power_conversion_source": "https://github.com/Orion-AI-Lab/KuroSiwo/blob/main/configs/grd_preprocessing.xml"
+  },
+  "worldfloods": {
+    "repo": "isp-uv-es/WorldFloodsv2",
+    "revision": "1f3faa2989e69930ac31d5c0a79fd224461123f8",
+    "metadata_url": "https://huggingface.co/datasets/isp-uv-es/WorldFloodsv2/resolve/1f3faa2989e69930ac31d5c0a79fd224461123f8/train/meta/01042016_Choctawhatchee_River_near_Bellwood_AL.json",
+    "license": "CC-BY-NC-4.0",
+    "train_metadata_entries": 475,
+    "event_id": "01042016_Choctawhatchee_River_near_Bellwood_AL",
+    "s2_date": "2016-01-11T16:37:13.424000+00:00",
+    "shape": [
+      10107,
+      7599
+    ],
+    "encoding": [
+      {
+        "0": "invalid",
+        "1": "clear",
+        "2": "cloud"
+      },
+      {
+        "0": "invalid",
+        "1": "land",
+        "2": "water"
+      }
+    ],
+    "protected_geographic_overlap": [],
+    "image_downloaded": false,
+    "note": "two GT channels: clear/cloud and land/water; HF auto imagefolder viewer is not the segmentation task"
+  },
+  "files_sha256": {
+    "kuro_card.json": "387814e6b36789a0654988da01eb7c80fa74bfee17fac64e452defc8b591cddb",
+    "kuro_catalogue.yaml": "c75f18c01c39b3e4c0a97d122e290ce759d9802bd1b48cc44a8e1ea996e11ad5",
+    "kuro_dataset.py": "13710663c575279565b59ac3c7ba680a8af399df6bb1cb2dad1d2b3dfc1211e1",
+    "kuro_grd_preprocessing.xml": "4da971dfed7b88e1a99c3d81d687d9590cba6801301c72d627c7ceeae0b62bf6",
+    "kuro_grid.json": "e551699f206c6dd6eb7c7b244bdfba02414c94305c8e7bb1e45bcd835a614168",
+    "kuro_repo.json": "a91ca94e07430469f712a447e6054f66e8395936549be711b22a554f8ba1a338",
+    "kuro_sample_info.json": "486402389e537f15ef6729d0005f64ea1e6aed412c52099df9acbebe08be5263",
+    "kuro_train_head.tar": "8ff18a0ab985da820560ebf4261601261f4e5e810aeb4904b5accb9da28ca867",
+    "kuro_web.json": "a7a23f901477826fe146bbf0f9067611516f13a3f87d80ff322f0e7d252938e8",
+    "terramind_tree.json": "9d83212efe5330118143fc49d4d5a4e89e4f3b5a910f4af2bb17c8fb0b1a7d2e",
+    "worldfloods.json": "70685ead88440d9c41374f5436432b9db3561c1b27bbc2194c148a113b397799",
+    "worldfloods_card.json": "c4222249322734ebea3dac79670fb4a5e361661247aac0aa0dd90077b9d81929",
+    "worldfloods_sample_meta.json": "c740f0c8fec55fd6d3cffec4e7985aafedc5bbb868a95fa4f069118a98a3e4b9",
+    "worldfloods_train_meta.json": "167b5c9e343996f279d6f41ff2c3d211d7e9c72aee9f5cc5b1b37040de46ffd1"
+  }
+}
