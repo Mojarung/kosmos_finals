@@ -14,6 +14,8 @@ const selectedIds = ref([])
 const busy = ref(false)
 const planning = ref(false)
 const error = ref('')
+// Без ключа каталог SkyFi недоступен: не шлём заведомо проваленных запросов и объясняем, что делать.
+const configured = ref(true)
 const quoteMessage = ref('')
 const enlarged = ref(false)
 const view = ref('gallery')
@@ -203,6 +205,8 @@ onMounted(async () => {
       if (!loaded.assets?.length) throw new Error('Импортируйте объекты проекта перед подбором снимков.')
       project.value = loaded
     }
+    configured.value = (await api('/status').catch(() => ({ skyfi_configured: true }))).skyfi_configured !== false
+    if (!configured.value || disposed) return
     if (state.region) { await search(); return }
     const saved = await api('/catalogs/latest?scene_id=' + encodeURIComponent(state.sceneId))
     if (disposed) return
@@ -241,9 +245,10 @@ onUnmounted(() => {
       <label>По<input type="date" v-model="query.to_date" :max="today" aria-label="Конец периода съёмки" :disabled="busy" /></label>
       <label>Каталог<select v-model="query.market" aria-label="Тип предложений" :disabled="busy"><option value="commercial">Коммерческий</option><option value="open">Открытые данные</option></select></label>
       </div></details>
-      <button class="primary-button" :disabled="busy" @click="search"><RefreshCw :size="15" :class="{ spin: busy }" />{{ busy ? 'Поиск в SkyFi…' : 'Обновить из SkyFi' }}</button>
+      <button class="primary-button" :disabled="busy || !configured" @click="search"><RefreshCw :size="15" :class="{ spin: busy }" />{{ busy ? 'Поиск в SkyFi…' : 'Обновить из SkyFi' }}</button>
     </div>
-    <div v-if="!state.procurementMapMode" class="source-strip"><span>{{ catalog ? 'Ответ SkyFi от ' + date(catalog.captured_at) + ', ' + new Date(catalog.captured_at).toLocaleTimeString('ru-RU') : 'Ищем доступные архивные кадры и превью поставщиков' }}</span><button :disabled="busy" @click="eventPeriod">Неделя паводка</button><button :disabled="busy" @click="entireArchive">Весь архив территории</button></div>
+    <div v-if="!state.procurementMapMode" class="source-strip"><span>{{ catalog ? 'Ответ SkyFi от ' + date(catalog.captured_at) + ', ' + new Date(catalog.captured_at).toLocaleTimeString('ru-RU') : configured ? 'Ищем доступные архивные кадры и превью поставщиков' : 'Каталог SkyFi не подключён на этом сервере' }}</span><button :disabled="busy || !configured" @click="eventPeriod">Неделя паводка</button><button :disabled="busy || !configured" @click="entireArchive">Весь архив территории</button></div>
+    <div v-if="!configured && !catalog" class="catalog-empty" role="status" data-testid="skyfi-not-configured"><Satellite :size="36" /><h3>Каталог SkyFi не подключён</h3><p>Реальные архивные снимки и цены поставщиков приходят из SkyFi по ключу API: укажите SKYFI_API_KEY в .env рядом с compose.yaml (образец в .env.example) и перезапустите сервис. Покупок сервис не делает. Без ключа работает расчёт по ТЗ: A/B/C в рублях по ПП № 840 и выгрузка комплекта.</p><button class="primary-button" @click="projectMode ? backToProject() : (state.procurementOpen = false)">{{ projectMode ? 'Вернуться к проекту' : 'Открыть расчёт по ТЗ' }}</button></div>
     <p v-if="error" class="imagery-error" role="alert">{{ error }}</p>
     <div v-if="!catalog && busy" class="catalog-loading" role="status"><Satellite :size="36" /><h3>Получаем снимки из SkyFi</h3><p>Запрашиваем реальные контуры, цены и изображения поставщиков.</p></div>
     <div v-else-if="catalog && !catalog.offers.length" class="catalog-empty" role="status"><Satellite :size="36" /><h3>В этом периоде снимков не найдено</h3><p>Исходная сцена паводка снята {{ date(catalog.event_date) }}. Можно посмотреть весь доступный архив территории.</p><button class="primary-button" :disabled="busy" @click="entireArchive">Показать весь архив</button></div>
