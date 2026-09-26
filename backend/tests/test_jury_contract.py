@@ -132,3 +132,14 @@ def test_an_image_keeps_the_revision_its_build_proved(monkeypatch):
     assert exporter.gitverse_status() == "verified_in_gitverse_remote"
     monkeypatch.setenv("FLOODVALUE_GITVERSE_STATUS", "anything else")
     assert exporter.gitverse_status() == "declared_access_unverified"
+
+
+def test_every_priced_line_names_its_rate_source_and_rounding():
+    files = export(client)
+    catalog = {feature["properties"]["candidate_id"]: feature["properties"]
+               for feature in json.loads(files["candidate_orders.geojson"])["features"]}
+    lines = table(files, "procurement_plan.csv")
+    assert lines
+    for line in lines:
+        assert line["base_rate_source"] == catalog[line["candidate_id"]]["base_rate_source"] != ""
+        assert "ROUND_HALF_UP" in line["rounding"] and "discount_coef" in line["rounding"]

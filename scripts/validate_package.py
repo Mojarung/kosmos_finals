@@ -209,8 +209,10 @@ def validate(path: str | Path) -> dict:
                         f"{strategy}: {zone_id} discount group {line['discount_group_id']} != {expected['discount_group_id']}")
                 for key in LINE_NUMBERS:
                     close(float(line[key]), expected[key], f"{strategy}: {zone_id} {key}", 1e-6)
-                for key in ("sensor_type", "processing_level", "usage_type", "acquisition_type"):
+                for key in ("sensor_type", "processing_level", "usage_type", "acquisition_type", "base_rate_status",
+                            "base_rate_source"):
                     require(line[key] == catalog[key], f"{strategy}: {zone_id} {key} differs from the catalog")
+                require("ROUND_HALF_UP" in line["rounding"], f"{strategy}: {zone_id} does not state its rounding")
                 require(line["guaranteed_purchase"] == str(catalog["guaranteed_purchase"]).lower()
                         and float(line["resolution_m"]) == float(catalog["resolution_m"]),
                         f"{strategy}: {zone_id} product differs from the catalog")
