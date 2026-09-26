@@ -10,7 +10,7 @@
 
 ## Запуск
 
-Нужны Podman Compose или Docker Compose, а для нового региона доступ к Microsoft Planetary Computer. Три подготовленные сцены лежат в репозитории и работают офлайн. Ещё 446 официальных чипов Sen1Floods11 открываются из списка стран в шапке («Ещё N»): сервис скачает S1, ручную метку и слой постоянной воды JRC, запустит ту же замороженную модель и добавит сцену на карту. Расчёт идёт в контейнере на CPU весами из Git LFS, обучение и GPU не нужны. Повторное открытие берёт результат из томов `live-observations` и `runtime-observations`; импортированные проекты живут в `operator-projects`.
+Нужны Podman Compose или Docker Compose, а для нового региона доступ к Microsoft Planetary Computer. Три подготовленные сцены лежат в репозитории и работают офлайн. Ещё 446 официальных чипов Sen1Floods11 открываются из списка стран в шапке («Ещё N»): сервис скачает S1, ручную метку, постоянную воду JRC и подходящую по дате S2, запустит замороженную модель next_optical и добавит сцену на карту. Расчёт идёт в контейнере на CPU весами из Git LFS, обучение и GPU не нужны. Повторное открытие берёт результат из томов `live-observations` и `runtime-observations`; импортированные проекты живут в `operator-projects`.
 
 Сборка для сдачи требует чистого checkout: запуск через обёртку записывает точный Git commit в контейнер и каждый ZIP.
 
@@ -35,7 +35,7 @@ cd frontend && npm ci && npm run dev
 
 | Шаг | Источник | Результат |
 |---|---|---|
-| Вода | VV/VH Sentinel‑1, 5 моделей U‑Net ResNet34, калибровка Platt | p, маска при p ≥ 0,41, разброс ансамбля |
+| Вода | next_optical: S1 + допустимая S2, иначе S1 fallback; isotonic-калибровка | p, маска при p ≥ 0,46, расхождение моделей |
 | Постоянная вода | JRCWaterHand Sen1Floods11 (вода и в 1984, и в 2018 году); для рамки на карте JRC Global Surface Water (вода и в 1984, и в 2021 году) | паводок = вода минус постоянная; обязательный EL = p × V × q считается и на постоянной воде, им же ранжируются объекты и корзина C; ущерб только от паводка (0 на ней) идёт отдельной колонкой |
 | Сравнение | порог VH < −23,6 dB; ручная метка только для проверки | IoU/F1/precision/recall обоих методов на одних пикселях, всей воды и только паводка |
 | Сомнения карты | шанс ошибки из калиброванной p: 1 − p на воде, p на суше | сомнительная площадь: шанс ≥ 8%, верхний дециль энтропии на validation; на независимом test_core там ошибается 29,4% пикселей против 4,6% в среднем |
@@ -73,30 +73,27 @@ curl -o floodvalue-Nigeria_812045.zip 'http://localhost:18080/api/export?scene_i
 uv run --project backend --extra demo python scripts/validate_package.py floodvalue-Nigeria_812045.zip
 ```
 
-Валидатор проверяет обязательные файлы, 10 уникальных типов объектов, статусы только ok/partial/no_data, EL = p × V × q у каждого оценённого объекта (в том числе на постоянной воде) и нулевой ущерб только от паводка на постоянной воде, p в пикселе объекта, ранги по EL с равенством по asset_id, чувствительность каждого объекта, Polygon без вырезов и площадью от 1 км², цену B/C и группу скидки, охват ущерба B и C по геометрии, бюджет и равенство маски правилу p ≥ 0,41.
+Валидатор проверяет обязательные файлы, 10 уникальных типов объектов, статусы только ok/partial/no_data, EL = p × V × q у каждого оценённого объекта (в том числе на постоянной воде) и нулевой ущерб только от паводка на постоянной воде, p в пикселе объекта, ранги по EL с равенством по asset_id, чувствительность каждого объекта, Polygon без вырезов и площадью от 1 км², цену B/C и группу скидки, охват ущерба B и C по геометрии, бюджет и равенство маски порогу из паспорта (у next_optical — 0,46).
 
 ## Воспроизведение данных
 
-Компактные выходы модели лежат в `data/demo`. Исходные GeoTIFF и промежуточный inference в Git не входят. Для полного пересоздания скачайте `S1Hand`, `LabelHand` и `JRCWaterHand` трёх чипов из бакета `sen1floods11/v1.1` в `data/source`, затем:
+Сервис использует `ml/artifacts/next_optical/recipe.json` из [последнего исследования](ml/research/NEXT_RESULTS.md). Нигерия и Меконг используют S1+S2; Гана и произвольная RTC-область — S1 fallback. Оптика допускается в дату радара или на 1–2 дня раньше. Подпись под левой панелью показывает фактический режим.
+
+Пересоздание трёх демо-сцен на CPU, без обучения (одинаковые команды в Bash и PowerShell):
 
 ```bash
 git lfs install --local
 git lfs pull
-uv sync --project ml
+uv sync --project ml --group research
 uv sync --project backend --extra demo
-for chip in Nigeria_812045 Ghana_313799 Mekong_333434; do
-  uv run --project ml floodvalue infer --s1 "data/source/${chip}_S1Hand.tif" --out "data/inference/${chip}"
-done
-uv run --project backend --extra demo python scripts/prepare_demo.py
+uv run --project backend --extra demo python scripts/prepare_demo.py --infer
 ```
 
-В PowerShell цикл выглядит так, остальные команды те же:
+Скрипт скачивает недостающие исходники и использует зафиксированные даты S1/S2. На macOS путь к OpenMP из установленного torch задаётся автоматически. Новый рецепт и SHA256 записываются в паспорте сцены и ZIP; текущий порог проверяется по каждому пикселю. Исходные GeoTIFF и промежуточный inference хранятся в игнорируемых `data/source` и `data/inference`.
 
-```powershell
-foreach ($chip in 'Nigeria_812045', 'Ghana_313799', 'Mekong_333434') {
-  uv run --project ml floodvalue infer --s1 "data/source/${chip}_S1Hand.tif" --out "data/inference/$chip"
-}
-```
+Проверка закупки на 70 участках и общие таблицы `quality.json` относятся к **прежней модели service_s1**. В CSV метрик версия указана в `model_id`; локальные метрики пересчитаны для новой модели. Порог сомнений пока сохранён как правило планирования прежней версии, прежние reliability-поправки к новой модели не применяются. Исторический результат закупки не является результатом next_optical.
+
+Следующие сведения о повторе обучения и межплатформенной погрешности относятся к прежней S1-модели.
 
 **Повтор обучения.** Полный прогон из чистого клона GitVerse на RTX 5070 занял 38 минут и дал те же веса побайтно: sha256 пяти файлов совпали с `ml/artifacts/model/model_card.json`, метрики те же (test_core IoU 0,6966, Bolivia 0,6551). На другой модели GPU веса могут отличаться в пределах разброса между seed (около 0,01 IoU на validation).
 
@@ -115,13 +112,13 @@ ML-этапы запускаются из папки `ml`, остальные и
 | Настройка baseline | `uv run floodvalue baseline` | порог VH на train, канал по validation |
 | Эксперимент и обучение | `sh scripts/train_experiments.sh`, `uv run floodvalue experiments ...`, `sh scripts/train_final.sh`, `uv run floodvalue package ...` | три конфигурации по два seed, ансамбль из пяти seed в `artifacts/model` |
 | Независимая проверка | `uv run floodvalue evaluate`, `uv run floodvalue failure --chip Bolivia_242570 --reference bolivia` | калибровка и порог по validation, метрики test_core и Bolivia, разбор провала |
-| Inference на другом официальном S1 | `uv run --project ml floodvalue infer --s1 data/source/<chip>_S1Hand.tif --out data/inference/<chip>` или выбор страны в шапке | p, маска, разброс ансамбля |
+| Inference на другом официальном чипе | `uv run --project ml floodvalue infer --chip <chip> --recipe ml/artifacts/next_optical/recipe.json --out data/inference/<chip>` или выбор страны в шапке | p, маска, разброс ансамбля |
 | Объекты, зоны, A/B/C | `uv run --project backend --extra demo python scripts/prepare_demo.py`, затем `GET /api/analysis?scene_id=<chip>` | 10 объектов, EL, каталог зон, план C |
 | Пересчёт бюджета | `GET /api/analysis?scene_id=Nigeria_812045&budget=5000` или поле бюджета во вкладке «Съёмка» | новая корзина C за десятки миллисекунд, без inference и без смены порогов |
 | Интерфейс | `docker compose up --build` | <http://localhost:18080> |
 | Экспорт и проверка | `GET /api/export?scene_id=<chip>&budget=6500`, затем `scripts/validate_package.py` | ZIP из 21 файла, включая карту зон поверх снимка `zones_overlay.png`, `"status": "ok"` |
 
-Основной метод и сервис используют только VV и VH Sentinel‑1, это и есть режим без вспомогательных данных. Вариант S1+S2 из ML-пакета в сервис не входит. Версии зависимостей зафиксированы в `ml/uv.lock`, `backend/uv.lock` и `frontend/package-lock.json`:
+Сервис использует next_optical; режим без вспомогательных данных — его S1 fallback. Пакет содержит прежние пять радарных моделей и четыре оптических классификатора. Версии зависимостей зафиксированы в `ml/uv.lock`, `backend/uv.lock` и `frontend/package-lock.json`:
 
 | Часть | Точные версии | Откуда |
 |---|---|---|

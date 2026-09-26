@@ -26,21 +26,23 @@ from rasterio.vrt import WarpedVRT
 from .catalog import LIVE_DIR
 from .planning import intersects, rectangle_area_km2
 from .scene_builder import ASSET_TYPES
+from .model_runtime import RECIPE, identity
 
 STAC = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 SAS = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc"
 ROOT = Path(__file__).resolve().parents[2]
-MODEL = Path(os.environ.get("MODEL_DIR", ROOT / "ml" / "artifacts" / "model"))
-CALIBRATION = Path(os.environ.get("CALIBRATION_FILE", ROOT / "ml" / "artifacts" / "evaluation" / "calibration.json"))
 # RTC gamma0 of Planetary Computer is brighter over water than the Sen1Floods11 GRD the model
 # learned on; this per-band mapping (fitted on train chips) brings it back to GRD dB.
 HARMONIZATION = Path(os.environ.get("RTC_HARMONIZATION_FILE", ROOT / "ml" / "artifacts" / "rtc" / "harmonization.json"))
+# Legacy model retained only for permanent.history_permanent research reproduction.
+MODEL = Path(os.environ.get("MODEL_DIR", ROOT / "ml" / "artifacts" / "model"))
+CALIBRATION = Path(os.environ.get("CALIBRATION_FILE", ROOT / "ml" / "artifacts" / "evaluation" / "calibration.json"))
+_members = None
 GRID = 512
 PIXEL_M = 10
 MAX_SIDE_PIXELS = 2048
 GEOD = Geod(ellps="WGS84")
 _lock = threading.Lock()
-_members = None
 
 
 class LiveError(Exception):
@@ -272,29 +274,29 @@ def _passport(source: dict, vv: np.ndarray, vh: np.ndarray) -> list[dict]:
 
 def _infer_tiled(s1: np.ndarray, progress=None) -> tuple[np.ndarray, np.ndarray]:
     """Run unchanged 512px model on a variable-size ~10m grid with a 32px halo."""
-    import torch
-    from floodvalue.ensemble import run_ensemble
-    from floodvalue.infer import load_calibration
-    height, width = s1.shape[1:]
-    probability = np.zeros((height, width), dtype=np.float32)
-    spread = np.zeros_like(probability)
-    calibration, _ = load_calibration(CALIBRATION)
-    step, halo = GRID - 64, 32
-    tiles = [(y, x) for y in range(0, height, step) for x in range(0, width, step)]
-    torch.set_num_threads(2)
-    for index, (y, x) in enumerate(tiles, 1):
-        patch = np.full((2, GRID, GRID), np.nan, dtype=np.float32)
-        y0, x0 = max(0, y - halo), max(0, x - halo)
-        y1, x1 = min(height, y + step + halo), min(width, x + step + halo)
-        patch[:, y0 - y + halo:y1 - y + halo, x0 - x + halo:x1 - x + halo] = s1[:, y0:y1, x0:x1]
-        with torch.inference_mode():
-            result = run_ensemble(_ensemble(), [patch], calibration)
-        h, w = min(step, height - y), min(step, width - x)
-        probability[y:y+h, x:x+w] = result.prob[0, halo:halo+h, halo:halo+w]
-        spread[y:y+h, x:x+w] = result.member_std[0, halo:halo+h, halo:halo+w]
+    # Local API and ML environments are separate. Containers ship ML in the API environment.
+    import importlib.util
+    if importlib.util.find_spec("torch") is not None:
+        from floodvalue.service_raster import predict_tiled
+        return predict_tiled(s1, RECIPE, progress)
+    import subprocess
+    import tempfile
+    ml_python = ROOT / "ml/.venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not ml_python.exists():
+        raise LiveError("Среда модели не установлена. Выполните uv sync --project ml --group research.")
+    with tempfile.TemporaryDirectory(prefix="floodvalue-rtc-model-") as folder:
+        source, output = Path(folder) / "input.npy", Path(folder) / "output.npz"
+        np.save(source, s1, allow_pickle=False)
         if progress:
-            progress("inference", index / len(tiles), f"Модель: фрагмент {index} из {len(tiles)}")
-    return probability, spread
+            progress("inference", 0, "Модель обрабатывает радарные фрагменты")
+        result = subprocess.run([str(ml_python), "-m", "floodvalue.service_raster", "--input", str(source),
+                                 "--output", str(output), "--recipe", str(RECIPE)],
+                                capture_output=True, text=True, timeout=1800,
+                                env={**os.environ, "OMP_NUM_THREADS": "2"})
+        if result.returncode:
+            raise LiveError("Ошибка модели: " + " ".join(result.stderr.strip().splitlines()[-2:]))
+        with np.load(output, allow_pickle=False) as arrays:
+            return arrays["probability"].copy(), arrays["spread"].copy()
 
 
 def _cached_scene(folder: Path) -> dict | None:
@@ -318,9 +320,9 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
     area = validate_area(bounds)
     features = _features(bounds, item_id)
     feature = features[0]
-    cache_key = b"live-v5-10m:" + ("|".join(item["id"] for item in features) + ":" +
+    cache_key = b"live-v6-next-optical-10m:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
-    cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()
+    cache_key += hashlib.sha256(RECIPE.read_bytes()
                                 + (HARMONIZATION.read_bytes() if HARMONIZATION.is_file() else b"")).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]
     scene_id = f"live_{digest}"
@@ -359,8 +361,7 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
         if valid.mean() < 0.05:
             raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
         progress("inference", 0, "Радар прочитан. Модель ищет воду")
-        from floodvalue.infer import load_calibration
-        _, threshold = load_calibration(CALIBRATION)
+        threshold = identity()["threshold"]
         probability, spread = _infer_tiled(s1, progress)
         model = valid & (probability >= threshold)
         baseline = valid & (vh < -23.6)
@@ -385,6 +386,7 @@ def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
             "model_water_pixels": int(model.sum()), "model_water_area_km2": round(float(model.sum() / (width*height) * area), 3),
             "baseline_water_pixels": int(baseline.sum()), "baseline_water_area_km2": round(float(baseline.sum() / (width*height) * area), 3),
             "model_threshold": threshold, "baseline_threshold_db": -23.6,
+            "model": {**identity(), "mode": "S1 fallback", "optical_used_pixels": 0},
             "portfolio_seed": PORTFOLIO_SEED, "portfolio_rule": PORTFOLIO_RULE, "assets": _portfolio(bounds, probability, spread, baseline, valid),
             "source_kind": "live_sentinel1_rtc", "source_item_id": feature["id"],
             "source_item_ids": [source["id"] for source in used_features],

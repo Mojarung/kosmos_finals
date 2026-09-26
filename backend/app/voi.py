@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from .analysis import context
-from .catalog import default_scene_id, known_scene_ids
+from .catalog import default_scene_id, known_scene_ids, metadata
 from .costs import decision_costs
 from .planning import quote, today
 
@@ -22,7 +22,7 @@ METHOD = ("At each assessed asset, L=V*q and a visit costs C. Before new imagery
           "after an ideal timely observation pay p*min(C,L). VOI is their difference. Basket benefit is the "
           "sum of VOI on the union of covered assets, without double counting. Maximise basket VOI minus "
           "the exact scenario data quote over all timely subsets; buy only for positive net benefit.")
-LIMITATION = ("Scenario only: p comes from the S1 model (calibration was checked on Sen1Floods11, not live RTC); "
+LIMITATION = ("Scenario only: p comes from the current scene model; probability calibration and decision savings require independent validation; "
               "V/q and visit cost are assumptions; the "
               "new image is treated as perfect and timely. No field visits, actual damage reduction, cloud "
               "availability or supplier price have been measured. Review/processing costs are disclosed "
@@ -124,7 +124,7 @@ def calculate(scene_id: str, bounds: list[float] | None, visit_cost_rub: float,
                                 "no_new_information" if marginal_benefit <= 0 else "not_economic_in_optimal_basket"})
     baseline_cost = round(sum(row["before_rub"] or 0 for row in asset_rows), 2)
     after_cost = round(baseline_cost - float(benefit[index]), 2)
-    return {"scene_id": scene_id, "inputs": {"visit_cost_rub": visit_cost_rub,
+    return {"scene_id": scene_id, "model": metadata(scene_id).get("model", {"id": "service_s1"}), "inputs": {"visit_cost_rub": visit_cost_rub,
             "deadline_hours": deadline_hours, "must_cover": must_cover, "bbox": bounds},
             "status": "positive_net_basket" if index else "no_positive_net_basket",
             "method": METHOD, "limitation": LIMITATION,

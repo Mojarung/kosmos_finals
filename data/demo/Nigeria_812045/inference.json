@@ -1,0 +1,22 @@
+{
+  "s1": "Nigeria_812045_S1Hand.tif",
+  "s2": "Nigeria_812045_S2Hand.tif",
+  "recipe": "ml/artifacts/next_optical/recipe.json",
+  "recipe_sha256": "7527a498b586c396661f51d0b373e1b36e7b11ae483161af47efd69f3de1c9e0",
+  "threshold": 0.46,
+  "optical_used_pixels": 261565,
+  "dates": {
+    "s1_date": "2018-09-21",
+    "s2_date": "2018-09-20"
+  },
+  "mode": "S1+S2",
+  "valid_pixels": 261565,
+  "date_policy": "S2 calendar date no later than S1 and at most two days earlier; time-of-day unavailable",
+  "uncertainty": "sqrt(.25*(optical_mean-radar)^2+.5*optical_member_variance); radar std on fallback; not a confidence interval",
+  "files": {
+    "flood_probability.tif": "08350fe061ffe63a02445423c4afc23a1172db58459fa55533d5a8d8907d9230",
+    "flood_mask.tif": "69b550df0c2c0af234c69118ce5438799acd381fcb0e8ee90018b3825e39c80c",
+    "flood_uncertainty.tif": "e9a1f08dc276a0f32cb902ce676228d43479ff71bef661875bfa203a2b2b41ea",
+    "baseline_mask.tif": "5d51af9ce28b11de93a011621085d75fac345f218de0cc12d4647d116451f801"
+  }
+}

@@ -203,8 +203,13 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
     if not radar_valid.any():
         raise ValueError(f"{spec.chip_id}: the S1 chip has no valid VV/VH pixels")
     valid = radar_valid & (truth != -1)
-    if not np.all(prediction[radar_valid] == (prob[radar_valid] >= MODEL_THRESHOLD)):
-        raise ValueError(f"{spec.chip_id}: flood_mask.tif is not p >= {MODEL_THRESHOLD}")
+    report_path = spec.inference_dir / "inference.json"
+    report = json.loads(report_path.read_text()) if report_path.exists() else {}
+    threshold = float(report.get("threshold", MODEL_THRESHOLD))
+    if not 0 < threshold < 1:
+        raise ValueError("Invalid model threshold")
+    if not np.all(prediction[radar_valid] == (prob[radar_valid] >= threshold)):
+        raise ValueError(f"{spec.chip_id}: flood_mask.tif is not p >= {threshold}")
 
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, path in grid["files"].items():
@@ -228,6 +233,8 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
     pixel_area = area / (SIZE * SIZE)
     has_label = bool(valid.any())
     sources = [(spec.s1_path, "S1Hand", "model_input")]
+    if report.get("s2") and report.get("optical_used_pixels", 0):
+        sources.append((Path(report["s2"]), "S2Hand", "model_input"))
     if spec.label_path is not None:
         sources.append((spec.label_path, "LabelHand", "diagnostic_label_only"))
     source_manifest = [{
@@ -252,7 +259,7 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
         "baseline_water_area_km2": round(int((baseline == 1).sum()) * pixel_area, 3),
         "model_water_labeled_pixels": int(((prediction == 1) & valid).sum()),
         "baseline_water_labeled_pixels": int(((baseline == 1) & valid).sum()),
-        "model_threshold": MODEL_THRESHOLD, "baseline_threshold_db": BASELINE_THRESHOLD_DB,
+        "model_threshold": threshold, "baseline_threshold_db": BASELINE_THRESHOLD_DB,
         "model_quality": quality_metrics(prediction, truth, valid) if has_label else None,
         "baseline_quality": quality_metrics(baseline, truth, valid) if has_label else None,
         "assets": assets, "source_manifest": source_manifest,
@@ -260,6 +267,20 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
         "probability_status": "frozen_ensemble_calibrated_on_validation",
         "reference_status": "manual_label_for_diagnostics_only" if spec.label_path else "no_manual_label",
     }
+    if report.get("recipe_sha256"):
+        meta["model"] = {"id": "next_optical", "recipe_sha256": report["recipe_sha256"],
+                         "mode": report.get("mode", "S1 fallback"), "threshold": threshold,
+                         "optical_used_pixels": report.get("optical_used_pixels", 0),
+                         "dates": report.get("dates"), "source": "ml/research/NEXT_RESULTS.md"}
+        meta["probability_status"] = "frozen_next_optical_isotonic"
+        meta["metrics_independent"] = False  # Known evaluation events, not a new blind test.
+        meta["evaluation_role"] = "known_test_events_diagnostic"
+        portable = {**report}
+        for key in ("s1", "s2"):
+            if portable.get(key):
+                portable[key] = Path(portable[key]).name
+        portable["recipe"] = "ml/artifacts/next_optical/recipe.json"
+        (out_dir / "inference.json").write_text(json.dumps(portable, indent=2))
     if spec.jrc_path is not None:
         meta = add_permanent_water(out_dir, spec.jrc_path, meta, spec.source_meta)
     (out_dir / "metadata.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -268,7 +289,7 @@ def build_scene(spec: SceneSpec, out_dir: Path) -> dict:
             "reference_water_area_km2": meta["water_area_km2"],
             "model_iou": meta["model_quality"]["iou"] if meta["model_quality"] else None,
             "flood_water_area_km2": meta.get("flood_water_area_km2"),
-            "split_part": spec.split_part, "metrics_independent": independent, "origin": spec.origin}
+            "split_part": spec.split_part, "metrics_independent": meta["metrics_independent"], "origin": spec.origin}
 
 
 def add_permanent_water(out_dir: Path, jrc_path: Path, meta: dict, source_meta: dict | None = None) -> dict:

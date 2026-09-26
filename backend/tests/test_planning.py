@@ -72,7 +72,7 @@ def test_frozen_model_metrics_and_case_export():
     client = TestClient(app)
     result = client.get("/api/analysis").json()
     assert result["chip"]["chip_id"] == "Nigeria_812045"
-    assert result["region"]["model_water_area_km2"] == 14.796
+    assert result["region"]["model_water_area_km2"] == 12.951
     assert result["region"]["model_quality"]["iou"] > result["region"]["baseline_quality"]["iou"]
     assert result["quality"]["parts"]["test_core"]["model"]["iou"] > result["quality"]["parts"]["test_core"]["baseline"]["iou"]
     assert result["quality"]["parts"]["test_core"]["chips"] == 55

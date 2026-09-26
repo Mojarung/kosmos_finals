@@ -37,7 +37,19 @@ def prepare_scene(chip: str, label_name: str, observed_at: str, seed: int, sourc
                      s1_path=SOURCE / f"{chip}_S1Hand.tif", label_path=SOURCE / f"{chip}_LabelHand.tif",
                      inference_dir=INFERENCE / chip, split_part="test_core", origin="demo",
                      source_meta=source_meta, jrc_path=SOURCE / f"{chip}_JRCWaterHand.tif")
-    return build_scene(spec, OUTPUT / chip)
+    metadata_path = OUTPUT / chip / "metadata.json"
+    previous = json.loads(metadata_path.read_text()) if metadata_path.exists() else {}
+    row = build_scene(spec, OUTPUT / chip)
+    current = json.loads(metadata_path.read_text())
+    old = {item["name"]: item for item in previous.get("source_manifest", [])}
+    for item in current["source_manifest"]:
+        known = old.get(item["name"], {})
+        if item["sha256"] == known.get("sha256"):
+            for key, value in known.items():
+                if item.get(key) is None:
+                    item[key] = value
+    metadata_path.write_text(json.dumps(current, ensure_ascii=False, indent=2))
+    return row
 
 
 def write_quality() -> None:
@@ -47,7 +59,7 @@ def write_quality() -> None:
     previous = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
     doubt = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text(encoding="utf-8"))
     reported = doubt["report_only"]["parts"]
-    quality = {"threshold": evaluation["threshold"], "calibration": evaluation["platt"],
+    quality = {"model_id": "service_s1", "scope": "legacy model benchmark; current scene metrics are in metadata.json", "threshold": evaluation["threshold"], "calibration": evaluation["platt"],
                "doubt_threshold": {key: doubt[key] for key in ("source_part", "chips", "pixels",
                                                                 "entropy_top_decile_bits", "map_error_chance_threshold",
                                                                 "valid_at_threshold", "measure_auroc")}
@@ -109,7 +121,22 @@ def main() -> None:
     if "--quality-only" in sys.argv:
         write_quality()
         return
+    if "--infer" in sys.argv:
+        from app.ingest import _fetch, _run_model
+        from app.model_runtime import acquisition, optical_allowed
+        SOURCE.mkdir(parents=True, exist_ok=True)
+        for chip, *_ in SCENES:
+            for layer in ("S1Hand", "LabelHand", "JRCWaterHand"):
+                if not (SOURCE / f"{chip}_{layer}.tif").exists():
+                    _fetch(chip, layer, SOURCE)
+            s1 = SOURCE / f"{chip}_S1Hand.tif"
+            if optical_allowed(acquisition(chip)):
+                _fetch(chip, "S2Hand", SOURCE)
+            print(f"Inference: {chip}", flush=True)
+            _run_model(s1, INFERENCE / chip)
     source_meta = load_source_meta(DOWNLOAD_MANIFEST)
+    for sidecar in SOURCE.glob("*.meta.json"):
+        source_meta[sidecar.name.removesuffix(".meta.json")] = json.loads(sidecar.read_text())
     scenes = [prepare_scene(*scene, source_meta) for scene in SCENES]
     (OUTPUT / "scenes.json").write_text(json.dumps({"default_chip_id": scenes[0]["chip_id"],
                                                    "scenes": scenes}, ensure_ascii=False, indent=2), encoding="utf-8")

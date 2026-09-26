@@ -1,0 +1,22 @@
+{
+  "s1": "Mekong_333434_S1Hand.tif",
+  "s2": "Mekong_333434_S2Hand.tif",
+  "recipe": "ml/artifacts/next_optical/recipe.json",
+  "recipe_sha256": "7527a498b586c396661f51d0b373e1b36e7b11ae483161af47efd69f3de1c9e0",
+  "threshold": 0.46,
+  "optical_used_pixels": 262144,
+  "dates": {
+    "s1_date": "2018-08-05",
+    "s2_date": "2018-08-04"
+  },
+  "mode": "S1+S2",
+  "valid_pixels": 262144,
+  "date_policy": "S2 calendar date no later than S1 and at most two days earlier; time-of-day unavailable",
+  "uncertainty": "sqrt(.25*(optical_mean-radar)^2+.5*optical_member_variance); radar std on fallback; not a confidence interval",
+  "files": {
+    "flood_probability.tif": "13259d1035682456c36cb71306e450044de70ce3c5a8befa50bbb55bd9787b0d",
+    "flood_mask.tif": "5dcb22408d7e93c75ad16d1ea91005e59c615e05c83f46f5dcc948bfe584746e",
+    "flood_uncertainty.tif": "7acfe7f75122ab54e1ecc6f7ae6e62aa5017d668aed761ec6410e0f1ce3c375d",
+    "baseline_mask.tif": "74bfde4d5c28308384befa22661b824f871849859d6dbb5ded61fdbacb162ce2"
+  }
+}
