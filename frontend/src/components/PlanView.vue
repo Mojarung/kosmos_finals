@@ -250,7 +250,7 @@ function hover(id) { state.hoverZoneId = id }
     <button :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
       @click="state.procurementOpen = true">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
   </div>
-  <ProcurementView v-if="state.procurementOpen" :key="state.sceneId" />
+  <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
   <template v-else>
   <section class="block">
     <label class="budget-label" for="budget">

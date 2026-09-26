@@ -8,6 +8,7 @@ export const state = reactive({
   procurementOpen: false,
   procurementMapMode: false,
   procurementOverlay: null,
+  procurementProjectId: null,
   projectOverlay: null,
   analysis: null,
   error: '',
@@ -101,7 +102,8 @@ watch(() => state.tab, value => { if (value === 'plan') state.showZones = true }
 export function chooseScene(id) {
   if (state.sceneId === id) return false
   Object.assign(state, { sceneId: id, region: null, selectedAssetId: null, mustCover: null, layerMode: 'model', drawing: false,
-    liveCandidates: [], liveItemId: null, liveStatus: 'idle', liveError: '', liveStage: '', liveProgress: 0, overlayOpacity: 58 })
+    liveCandidates: [], liveItemId: null, liveStatus: 'idle', liveError: '', liveStage: '', liveProgress: 0, overlayOpacity: 58,
+    procurementProjectId: null })
   return true
 }
 let regionRequest = 0

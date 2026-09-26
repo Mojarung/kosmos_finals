@@ -41,6 +41,9 @@ def _connect() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS operator_plans (
           id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           created_at TEXT NOT NULL, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS imagery_requests (
+          id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          created_at TEXT NOT NULL, payload TEXT NOT NULL);
     """)
     return db
 
@@ -70,7 +73,8 @@ def list_projects() -> list[dict]:
         return [dict(row) for row in db.execute("""
           SELECT p.*, (SELECT count(*) FROM assets a WHERE a.project_id=p.id) asset_count,
           (SELECT count(*) FROM decisions d WHERE d.project_id=p.id) decision_count,
-          (SELECT count(*) FROM operator_plans op WHERE op.project_id=p.id) operator_plan_count
+          (SELECT count(*) FROM operator_plans op WHERE op.project_id=p.id) operator_plan_count,
+          (SELECT count(*) FROM imagery_requests ir WHERE ir.project_id=p.id) imagery_request_count
           FROM projects p ORDER BY p.updated_at DESC""")]
 
 
@@ -85,7 +89,16 @@ def get(project_id: str) -> dict:
         operator_plans = [{"id": row["id"], "created_at": row["created_at"], **json.loads(row["payload"])}
                           for row in db.execute("SELECT * FROM operator_plans WHERE project_id=? "
                                                 "ORDER BY created_at DESC LIMIT 50", (project_id,))]
-    return {**project, "assets": assets, "decisions": decisions, "operator_plans": operator_plans}
+        imagery_requests = []
+        for row in db.execute("SELECT * FROM imagery_requests WHERE project_id=? ORDER BY created_at DESC LIMIT 50", (project_id,)):
+            payload = json.loads(row["payload"])
+            imagery_requests.append({"id": row["id"], "created_at": row["created_at"],
+                                     **{key: payload.get(key) for key in ("status", "catalog_id", "catalog_captured_at",
+                                         "currency", "cost", "price_verified", "purchase_submitted", "deadline_hours",
+                                         "covered_expected_loss_rub", "covered_asset_count", "covered_el_percent",
+                                         "selected_ids", "blockers")}})
+    return {**project, "assets": assets, "decisions": decisions, "operator_plans": operator_plans,
+            "imagery_requests": imagery_requests}
 
 
 def _rows(content: str, fmt: str) -> list[dict]:

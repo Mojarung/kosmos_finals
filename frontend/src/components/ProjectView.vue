@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { ArrowLeft, FileUp, Save, FolderPlus, ArrowRight } from '@lucide/vue'
+import { ArrowLeft, FileUp, Save, FolderPlus, ArrowRight, Satellite, Download } from '@lucide/vue'
 import { compactRub, percent, plural } from '../lib/format'
 import { createProject, importProjectAssets, loadProjects, openProject, saveProjectDecision, state, workspace } from '../store'
 
@@ -49,6 +49,12 @@ function calculateOperatorPlan() {
       .map(zone => ({ type: 'Feature', geometry: zone.geometry,
         properties: { id: zone.id, kind: zone.kind, active: selected.has(zone.id) ? 1 : 0, hover: 0 } }))
   })
+}
+function openProjectImagery() {
+  state.procurementProjectId = workspace.active.id
+  state.procurementOpen = true
+  state.tab = 'plan'
+  state.showZones = true
 }
 function saveOperatorPlan() {
   run(async () => {
@@ -110,6 +116,23 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
       <p class="project-help">Стоимость и уязвимость берём из вашего файла. Вероятность воды — из текущего снимка. Это оценка риска, а не подтверждённый ущерб.</p>
     </section>
 
+    <section v-if="workspace.active.assets.length" class="block project-imagery-entry" data-testid="project-imagery-entry">
+      <span class="caption">Следующий шаг · коммерческий архив</span>
+      <div class="project-imagery-entry-head"><Satellite :size="19" /><strong>Снимки для вашего реестра</strong></div>
+      <p class="project-help">SkyFi покажет кадры, которые покрывают именно ваши объекты, их риск и цену в USD. Расчёт A/B/C выше остаётся отдельным сценарием в ₽.</p>
+      <button class="tonal-button wide" @click="openProjectImagery">Подобрать снимки SkyFi <ArrowRight :size="15" /></button>
+    </section>
+
+    <section v-if="workspace.active.imagery_requests?.length" class="block" data-testid="project-imagery-history">
+      <span class="caption">Черновики заявок · {{ workspace.active.imagery_requests.length }}</span>
+      <div v-for="request in workspace.active.imagery_requests" :key="request.id" class="project-decision imagery-request-row">
+        <strong>{{ new Date(request.created_at).toLocaleString('ru-RU') }} · {{ request.status === 'draft_quote_checked' ? 'оценка цены проверена' : 'цена по каталогу' }}</strong>
+        <small>{{ request.selected_ids.length }} снимок(ов) · {{ request.covered_asset_count }} объектов · {{ percent((request.covered_el_percent || 0) / 100, 1) }} EL ({{ compactRub(request.covered_expected_loss_rub) }})</small>
+        <small>{{ new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'USD' }).format(request.cost) }} · заказ не отправлен</small>
+        <a :href="`/api/projects/${workspace.active.id}/imagery/requests/${request.id}/export`" :download="`project-imagery-${request.id}.zip`"><Download :size="13" /> Скачать черновик</a>
+      </div>
+    </section>
+
     <section v-if="workspace.active.assets.length" class="block project-plan" data-testid="operator-plan">
       <span class="caption">План по вашим объектам</span>
       <h3>Что снять дополнительно?</h3>
@@ -158,4 +181,5 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
 <style scoped>
 .project-intro{padding:20px 20px 9px}.project-intro h3,.project-active h3,.project-plan h3{margin:5px 0;font-size:20px;letter-spacing:-.03em}.project-intro p,.project-help{font-size:12px;line-height:1.5;color:var(--muted-foreground);margin:7px 0}.project-create{display:flex;gap:8px;margin-top:10px}.project-create input{flex:1;min-width:0;border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface-1);color:var(--foreground);font:inherit}.project-list-row{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px}.project-list-row small,.project-asset small,.project-decision small{color:var(--muted-foreground)}.project-back{display:flex;align-items:center;gap:6px;padding:0;border:0;background:none;color:var(--primary);font:inherit;cursor:pointer}.project-upload{position:relative;display:inline-flex;margin:10px 0 4px;cursor:pointer}.project-upload input{position:absolute;width:1px;height:1px;opacity:0}.project-upload.disabled{opacity:.5;pointer-events:none}.project-asset{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);font-size:13px}.project-asset div,.project-asset-value,.project-decision{display:flex;flex-direction:column;gap:4px}.project-asset-value{text-align:right;white-space:nowrap}.project-decision{padding:11px 0;border-bottom:1px solid var(--border);font-size:12px}
 .project-plan-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.project-plan-controls label{display:grid;gap:5px;color:var(--muted-foreground);font-size:12px}.project-plan-controls input{width:100%;min-width:0;border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface-1);color:var(--foreground);font:inherit}.project-plan-total{font-size:12px;font-weight:650;margin:13px 0 7px}.project-plan-rows{border-top:1px solid var(--border);margin-bottom:10px}.project-plan-row{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}.project-plan-row.chosen .project-plan-key{background:var(--primary-container);color:var(--on-primary-container)}.project-plan-key{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:8px;background:var(--surface-3);font-weight:750}.project-plan-row>div{display:grid;gap:3px;min-width:0}.project-plan-row>div:nth-child(2){flex:1}.project-plan-row small{color:var(--muted-foreground)}.project-plan-money{text-align:right;white-space:nowrap}
+.project-imagery-entry{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding-block:16px}.project-imagery-entry-head{display:flex;align-items:center;gap:8px;margin:9px 0 5px;color:var(--foreground)}.project-imagery-entry-head svg{color:var(--primary)}.project-imagery-entry .tonal-button{margin-top:9px;justify-content:space-between}.imagery-request-row a{display:inline-flex;align-items:center;gap:5px;width:max-content;margin-top:5px;color:var(--primary);font-weight:650;text-decoration:none}.imagery-request-row a:hover{text-decoration:underline}
 </style>
