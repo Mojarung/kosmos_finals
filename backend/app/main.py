@@ -12,6 +12,8 @@ from .catalog import default_scene_id, known_scene_ids, metadata, scene_catalog,
 from .chips import official_chips, official_events
 from .exporter import package
 from .live import LiveError, discover, prepare
+from .layers import doubt_png
+from .permanent import separate_live
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 
@@ -105,6 +107,17 @@ def prepare_scene(bbox: str, item_id: str) -> dict:
             "valid_pixels": info["valid_pixels"]}
 
 
+@app.post("/api/live/permanent")
+def separate_permanent(scene_id: str) -> dict:
+    """Permanent water of a live region from Sentinel-1 scenes of the year before the event."""
+    if scene_id not in known_scene_ids():
+        raise HTTPException(404, "Unknown scene")
+    try:
+        return separate_live(scene_id)
+    except LiveError as error:
+        raise HTTPException(422 if "снимк" in str(error) or "области" in str(error) else 503, str(error)) from error
+
+
 @app.get("/api/pixel")
 def pixel(
     longitude: float = Query(..., ge=-180, le=180),
@@ -129,14 +142,21 @@ def get_analysis(
     return response(bbox, budget, priority, deadline, must_cover, scene_id)
 
 
+LAYER_FILES = {"radar.png", "model.png", "baseline.png", "reference.png", "probability.png", "uncertainty.png",
+               "permanent.png"}
+CACHE = {"Cache-Control": "public, max-age=3600"}
+
+
 @app.get("/api/demo/{scene_id}/{asset_name}")
-def demo_asset(scene_id: str, asset_name: str) -> FileResponse:
-    if scene_id not in known_scene_ids() or asset_name not in {
-        "radar.png", "model.png", "baseline.png", "reference.png",
-        "probability.png", "uncertainty.png",
-    }:
+def demo_asset(scene_id: str, asset_name: str) -> Response:
+    if scene_id not in known_scene_ids():
         raise HTTPException(404)
-    return FileResponse(scene_dir(scene_id) / asset_name, media_type="image/png")
+    if asset_name == "doubt.png":
+        return Response(doubt_png(scene_id), media_type="image/png", headers=CACHE)
+    path = scene_dir(scene_id) / asset_name
+    if asset_name not in LAYER_FILES or not path.is_file():
+        raise HTTPException(404)
+    return FileResponse(path, media_type="image/png", headers=CACHE)
 
 
 @app.get("/api/export")

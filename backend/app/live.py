@@ -23,8 +23,9 @@ from rasterio.enums import Resampling
 from rasterio.transform import from_bounds
 from rasterio.vrt import WarpedVRT
 
-from .catalog import LIVE_DIR, metadata
+from .catalog import LIVE_DIR
 from .planning import intersects, rectangle_area_km2
+from .scene_builder import ASSET_TYPES
 
 STAC = "https://planetarycomputer.microsoft.com/api/stac/v1/search"
 SAS = "https://planetarycomputer.microsoft.com/api/sas/v1/token/sentinel-1-rtc"
@@ -64,10 +65,10 @@ def _covers(bounds: list[float], scene: list[float]) -> bool:
     return scene[0] <= bounds[0] and scene[1] <= bounds[1] and scene[2] >= bounds[2] and scene[3] >= bounds[3]
 
 
-def _groups(bounds: list[float]) -> list[dict]:
+def _groups(bounds: list[float], period: str = "2024-01-01/..", limit: int = 80) -> list[dict]:
     query = urlencode({
         "collections": "sentinel-1-rtc", "bbox": ",".join(map(str, bounds)),
-        "datetime": "2024-01-01/..", "sortby": "-datetime", "limit": 80,
+        "datetime": period, "sortby": "-datetime", "limit": limit,
     })
     features = _json(f"{STAC}?{query}").get("features", [])
     by_pass: dict[tuple, list[dict]] = {}
@@ -130,7 +131,7 @@ def _read_band(href: str, token: str, bounds: list[float]) -> np.ndarray:
                                width=GRID, height=GRID, resampling=Resampling.bilinear) as warped:
                     values = warped.read(1, masked=True).astype("float32")
     except Exception as error:
-        raise LiveError(f"Не удалось прочитать Sentinel-1 COG: {error}") from error
+        raise LiveError(f"Не удалось прочитать снимок Sentinel-1: {error}") from error
     linear = np.asarray(values.filled(np.nan), dtype=np.float32)
     linear[linear <= 0] = np.nan
     return (10 * np.log10(linear)).astype(np.float32)
@@ -182,34 +183,62 @@ def _raster(path: Path, values: np.ndarray, bounds: list[float], dtype: str, nod
         target.write(values.astype(dtype), 1)
 
 
+PORTFOLIO_SEED = 2026
+PORTFOLIO_RULE = ("numpy default_rng(2026).choice over pixels with valid VV and VH, 10 without replacement, "
+                  "one per case asset type in table order; coordinates at the pixel centre; "
+                  "independent of p, masks and labels")
+LICENSE = {"id": "CC-BY-4.0", "url": "https://creativecommons.org/licenses/by/4.0/",
+           "providers": ["Catalyst", "Microsoft"],
+           "attribution": "Sentinel-1 RTC derived from Copernicus Sentinel-1 GRD (ESA), processed by Catalyst"}
+
+
 def _portfolio(bounds: list[float], probability: np.ndarray, spread: np.ndarray,
                baseline: np.ndarray, valid: np.ndarray) -> list[dict]:
-    templates = metadata("Nigeria_812045")["assets"]
-    rows = [0.12, 0.32, 0.52, 0.72, 0.88]
-    sites = [(x, y) for y in (0.27, 0.73) for x in rows]
+    """Seeded random points over valid pixels, placed at pixel centres so p is read where the point is."""
+    rows, cols = np.nonzero(valid)
+    chosen = np.random.default_rng(PORTFOLIO_SEED).choice(len(rows), size=len(ASSET_TYPES), replace=False)
+    dx = (bounds[2] - bounds[0]) / GRID
+    dy = (bounds[3] - bounds[1]) / GRID
     result = []
-    for template, (xf, yf) in zip(templates, sites):
-        row, col = int(yf * (GRID - 1)), int(xf * (GRID - 1))
-        neighborhood = valid[max(0, row-1):row+2, max(0, col-1):col+2]
-        p_values = probability[max(0, row-1):row+2, max(0, col-1):col+2][neighborhood]
+    for number, ((kind, name, value, vulnerability), index) in enumerate(zip(ASSET_TYPES, chosen), 1):
+        row, col = int(rows[index]), int(cols[index])
+        window = (slice(max(0, row - 1), row + 2), slice(max(0, col - 1), col + 2))
+        p_values = probability[window][valid[window]]
         result.append({
-            **{key: template[key] for key in ("id", "class", "name", "value_rub", "vulnerability")},
-            "longitude": bounds[0] + (bounds[2] - bounds[0]) * xf,
-            "latitude": bounds[3] - (bounds[3] - bounds[1]) * yf,
-            "p_flood": round(float(probability[row, col]), 5) if valid[row, col] else None,
+            "id": f"A{number:02d}", "class": kind, "name": name, "value_rub": value, "vulnerability": vulnerability,
+            "longitude": bounds[0] + (col + 0.5) * dx, "latitude": bounds[3] - (row + 0.5) * dy,
+            "row": row, "col": col,
+            "p_flood": round(float(probability[row, col]), 5),
             "p_window3": round(float(p_values.mean()), 5) if p_values.size else None,
-            "uncertainty": round(float(spread[row, col]), 5) if valid[row, col] else None,
-            "baseline_water_at_point": bool(baseline[row, col]) if valid[row, col] else None,
-            "portfolio_status": "scenario_locations_and_values",
+            "uncertainty": round(float(spread[row, col]), 5),
+            "baseline_water_at_point": bool(baseline[row, col]),
+            "permanent_water_at_point": None,
+            "status": "ok", "portfolio_status": "scenario_locations_and_values",
         })
     return result
+
+
+def _passport(source: dict, vv: np.ndarray, vh: np.ndarray) -> list[dict]:
+    """What each Sentinel-1 RTC input is, when it was observed and under which licence."""
+    props = source["properties"]
+    digest = hashlib.sha256(np.ascontiguousarray(np.stack([vv, vh])).tobytes()).hexdigest()
+    return [{
+        "name": f"Sentinel-1 RTC {band.upper()} · {source['id']}", "url": source["assets"][band]["href"],
+        "stac_item_id": source["id"], "collection": "sentinel-1-rtc", "band": band.upper(),
+        "observed_at": props.get("datetime"), "platform": props.get("platform"),
+        "orbit_state": props.get("sat:orbit_state"), "relative_orbit": props.get("sat:relative_orbit"),
+        "absolute_orbit": props.get("sat:absolute_orbit"), "datatake_id": props.get("s1:datatake_id"),
+        "license": LICENSE["id"], "license_url": LICENSE["url"], "providers": LICENSE["providers"],
+        "attribution": LICENSE["attribution"], "role": "model_input",
+        "window_sha256": digest, "window_rule": "VV and VH of this item warped to the 512x512 EPSG:4326 grid, dB",
+    } for band in ("vv", "vh")]
 
 
 def prepare(bounds: list[float], item_id: str) -> dict:
     area = validate_area(bounds)
     features = _features(bounds, item_id)
     feature = features[0]
-    cache_key = b"live-v3:" + ("|".join(item["id"] for item in features) + ":" +
+    cache_key = b"live-v4:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
     cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]
@@ -225,6 +254,7 @@ def prepare(bounds: list[float], item_id: str) -> dict:
         vh = np.full((GRID, GRID), np.nan, dtype=np.float32)
         valid = np.zeros((GRID, GRID), dtype=bool)
         used_features = []
+        passport = []
         for source in features:
             source_vv = _read_band(source["assets"]["vv"]["href"], token, bounds)
             source_vh = _read_band(source["assets"]["vh"]["href"], token, bounds)
@@ -233,11 +263,12 @@ def prepare(bounds: list[float], item_id: str) -> dict:
             valid |= fill
             if fill.any():
                 used_features.append(source)
+                passport += _passport(source, np.where(fill, source_vv, np.nan), np.where(fill, source_vh, np.nan))
             if valid.all():
                 break
         s1 = np.stack([vv, vh])
         if valid.mean() < 0.05:
-            raise LiveError("На выбранном снимке нет валидных VV/VH пикселей в области. Выберите другую дату.")
+            raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
         import torch
         from floodvalue.ensemble import run_ensemble
         from floodvalue.infer import load_calibration
@@ -269,16 +300,15 @@ def prepare(bounds: list[float], item_id: str) -> dict:
             "model_water_pixels": int(model.sum()), "model_water_area_km2": round(float(model.sum() / (GRID*GRID) * area), 3),
             "baseline_water_pixels": int(baseline.sum()), "baseline_water_area_km2": round(float(baseline.sum() / (GRID*GRID) * area), 3),
             "model_threshold": threshold, "baseline_threshold_db": -23.6,
-            "portfolio_seed": 2026, "assets": _portfolio(bounds, probability, spread, baseline, valid),
+            "portfolio_seed": PORTFOLIO_SEED, "portfolio_rule": PORTFOLIO_RULE, "assets": _portfolio(bounds, probability, spread, baseline, valid),
             "source_kind": "live_sentinel1_rtc", "source_item_id": feature["id"],
             "source_item_ids": [source["id"] for source in used_features],
-            "source_manifest": [{"name": f"Sentinel-1 RTC {band.upper()} · {source['id']}",
-                                 "url": source["assets"][band]["href"]}
-                                for source in used_features for band in ("vv", "vh")],
+            "source_manifest": passport, "source_license": LICENSE,
             "processed_at": datetime.now(timezone.utc).isoformat(),
             "pixel_size_m_approx": round((area * 1_000_000 / (GRID * GRID)) ** 0.5, 1),
             "portfolio_status": "scenario_locations_and_values",
             "reference_status": "no_manual_label",
+            "permanent_status": "not_separated",
         }
         (folder / "metadata.json").write_text(json.dumps(metadata_record, ensure_ascii=False, indent=2), encoding="utf-8")
         return metadata_record
