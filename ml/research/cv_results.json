@@ -1,0 +1,3087 @@
+{
+  "note": "Compare only identical completed folds, seeds and plan hashes. CV is development, not final test.",
+  "models": [
+    {
+      "name": "cv_r34_balanced",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5927764897598289,
+        "f1": 0.7443310390012252,
+        "precision": 0.7693406193523924,
+        "recall": 0.7208962781933147,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5534958,
+        "fp": 1659460,
+        "fn": 2142926,
+        "tn": 68216067
+      },
+      "event_mean_iou": 0.5619526941289457,
+      "brier": 0.036298393859987656,
+      "weighted_fold_ece": 0.012830557505897969,
+      "events": {
+        "Mekong": 0.7847053522906206,
+        "Nigeria": 0.7956167736065136,
+        "Spain": 0.6818234851408476,
+        "USA": 0.5110156199597894,
+        "India": 0.429008934877758,
+        "Pakistan": 0.37942232192933256,
+        "Sri-Lanka": 0.6074153174770289,
+        "Ghana": 0.6174023060989092,
+        "Paraguay": 0.5481013500324953,
+        "Somalia": 0.265015479876161
+      },
+      "training_seconds": 357.5
+    },
+    {
+      "name": "cv_r34_balanced_context",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5765580847978558,
+        "f1": 0.7314136920896019,
+        "precision": 0.7122206103671965,
+        "recall": 0.7516698611231949,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5771234,
+        "fp": 2331921,
+        "fn": 1906650,
+        "tn": 67543606
+      },
+      "event_mean_iou": 0.5558491349607101,
+      "brier": 0.03758521880699502,
+      "weighted_fold_ece": 0.018687941120633954,
+      "events": {
+        "Mekong": 0.8645913226926017,
+        "Nigeria": 0.7593012655603296,
+        "Spain": 0.6947564620017447,
+        "USA": 0.43394003099350154,
+        "India": 0.39056346973958805,
+        "Pakistan": 0.43418473101488025,
+        "Sri-Lanka": 0.5955951850808394,
+        "Ghana": 0.5874599811249755,
+        "Paraguay": 0.5200512402196789,
+        "Somalia": 0.27804766117896096
+      },
+      "training_seconds": 488.1
+    },
+    {
+      "name": "cv_r34_balanced_lovasz",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5966511775413754,
+        "f1": 0.7473782450843606,
+        "precision": 0.7708380050351948,
+        "recall": 0.7253042635184381,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5568802,
+        "fp": 1655546,
+        "fn": 2109082,
+        "tn": 68219981
+      },
+      "event_mean_iou": 0.5678329507179363,
+      "brier": 0.036015818174325566,
+      "weighted_fold_ece": 0.014706459445714136,
+      "events": {
+        "Mekong": 0.8277945061238062,
+        "Nigeria": 0.7792833616264363,
+        "Spain": 0.7248269063526595,
+        "USA": 0.5254385109404934,
+        "India": 0.4339892084417203,
+        "Pakistan": 0.40712962841343436,
+        "Sri-Lanka": 0.6249052187386674,
+        "Ghana": 0.6242681724262772,
+        "Paraguay": 0.4871913358240078,
+        "Somalia": 0.24350265829185955
+      },
+      "training_seconds": 378.4
+    },
+    {
+      "name": "cv_r34_context",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5776611686356558,
+        "f1": 0.7323006740860724,
+        "precision": 0.7744878169515711,
+        "recall": 0.69447207069031,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5332076,
+        "fp": 1552572,
+        "fn": 2345808,
+        "tn": 68322955
+      },
+      "event_mean_iou": 0.5350949249168518,
+      "brier": 0.03756066809844746,
+      "weighted_fold_ece": 0.013916658174246579,
+      "events": {
+        "Mekong": 0.8486451718490332,
+        "Nigeria": 0.7441101183400539,
+        "Spain": 0.7290838614409647,
+        "USA": 0.46140656902930655,
+        "India": 0.45627011375070087,
+        "Pakistan": 0.2739656947711851,
+        "Sri-Lanka": 0.49199422618272554,
+        "Ghana": 0.5439036618096229,
+        "Paraguay": 0.5181894989093367,
+        "Somalia": 0.28338033308558963
+      },
+      "training_seconds": 487.9
+    },
+    {
+      "name": "cv_r34_control",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.575209146461496,
+        "f1": 0.7303273317751222,
+        "precision": 0.7392981679356512,
+        "recall": 0.7215715944653501,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5540143,
+        "fp": 1953644,
+        "fn": 2137741,
+        "tn": 67921883
+      },
+      "event_mean_iou": 0.5405751272123391,
+      "brier": 0.03819527026170517,
+      "weighted_fold_ece": 0.01585874804602127,
+      "events": {
+        "Mekong": 0.8417158921137208,
+        "Nigeria": 0.7349765567105984,
+        "Spain": 0.734790665376197,
+        "USA": 0.5470605540149427,
+        "India": 0.43564694765092205,
+        "Pakistan": 0.3313587175135146,
+        "Sri-Lanka": 0.5389639843962624,
+        "Ghana": 0.4901812960689189,
+        "Paraguay": 0.5090790645863911,
+        "Somalia": 0.24197759369192454
+      },
+      "training_seconds": 364.7
+    },
+    {
+      "name": "cv_r34_control",
+      "seed": 1,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5957132696802045,
+        "f1": 0.7466419951494054,
+        "precision": 0.7786459393906484,
+        "recall": 0.7171650418266283,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5506310,
+        "fp": 1565338,
+        "fn": 2171574,
+        "tn": 68310189
+      },
+      "event_mean_iou": 0.5621679138849214,
+      "brier": 0.03625862982738453,
+      "weighted_fold_ece": 0.014588582261695711,
+      "events": {
+        "Mekong": 0.8424727880056055,
+        "Nigeria": 0.7446636351324364,
+        "Spain": 0.7543511739695571,
+        "USA": 0.5520421884890698,
+        "India": 0.4418755386906538,
+        "Pakistan": 0.3718152447050377,
+        "Sri-Lanka": 0.5863784416359649,
+        "Ghana": 0.5714173032467099,
+        "Paraguay": 0.5082954496789174,
+        "Somalia": 0.24836737529526193
+      },
+      "training_seconds": 357.5
+    },
+    {
+      "name": "cv_r34_control_rot4",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5818607489809217,
+        "f1": 0.7356662074784679,
+        "precision": 0.756601483282648,
+        "recall": 0.7158583015841343,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5496277,
+        "fp": 1768151,
+        "fn": 2181607,
+        "tn": 68107376
+      },
+      "event_mean_iou": 0.5432851995589175,
+      "brier": 0.037452511971484706,
+      "weighted_fold_ece": 0.01525529343521176,
+      "events": {
+        "Mekong": 0.83983784150453,
+        "Nigeria": 0.743144276680862,
+        "Spain": 0.7388083431558972,
+        "USA": 0.5499247015089184,
+        "India": 0.44921440278596525,
+        "Pakistan": 0.3429975218805059,
+        "Sri-Lanka": 0.5354137521197964,
+        "Ghana": 0.4759326527799175,
+        "Paraguay": 0.5108047210776334,
+        "Somalia": 0.24677378209514864
+      },
+      "training_seconds": 0
+    },
+    {
+      "name": "cv_r34_control_rot4",
+      "seed": 1,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.597671900437677,
+        "f1": 0.748178521852887,
+        "precision": 0.7807914100482781,
+        "recall": 0.7181808164853754,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5514109,
+        "fp": 1548096,
+        "fn": 2163775,
+        "tn": 68327431
+      },
+      "event_mean_iou": 0.5633819574368703,
+      "brier": 0.03589224029671659,
+      "weighted_fold_ece": 0.014205849252685764,
+      "events": {
+        "Mekong": 0.8400655365807549,
+        "Nigeria": 0.7512052710214036,
+        "Spain": 0.753527991799213,
+        "USA": 0.5554590134576737,
+        "India": 0.43534907881978113,
+        "Pakistan": 0.3809047066723643,
+        "Sri-Lanka": 0.598302742084734,
+        "Ghana": 0.5628534162899593,
+        "Paraguay": 0.5081546502824745,
+        "Somalia": 0.24799716736034477
+      },
+      "training_seconds": 0
+    },
+    {
+      "name": "cv_r34_lovasz",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.6020784199469763,
+        "f1": 0.7516216590282805,
+        "precision": 0.7811075177531299,
+        "recall": 0.724280934695028,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5560945,
+        "fp": 1558363,
+        "fn": 2116939,
+        "tn": 68317164
+      },
+      "event_mean_iou": 0.5703633158799006,
+      "brier": 0.03767746882294502,
+      "weighted_fold_ece": 0.021428494340166842,
+      "events": {
+        "Mekong": 0.8521290440861629,
+        "Nigeria": 0.7487180072604397,
+        "Spain": 0.7440424530136838,
+        "USA": 0.5508956441930242,
+        "India": 0.438208814216116,
+        "Pakistan": 0.4140938706291692,
+        "Sri-Lanka": 0.5766764796185592,
+        "Ghana": 0.5903287007820832,
+        "Paraguay": 0.5160324665136375,
+        "Somalia": 0.2725076784861317
+      },
+      "training_seconds": 392.0
+    },
+    {
+      "name": "cv_r34_lovasz",
+      "seed": 1,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5840537814515646,
+        "f1": 0.7374166057876654,
+        "precision": 0.7958324123410204,
+        "recall": 0.6869900613241877,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5274630,
+        "fp": 1353185,
+        "fn": 2403254,
+        "tn": 68522342
+      },
+      "event_mean_iou": 0.5467590988374156,
+      "brier": 0.0459958947235335,
+      "weighted_fold_ece": 0.027573168683069152,
+      "events": {
+        "Mekong": 0.8252237804357663,
+        "Nigeria": 0.6692091751495386,
+        "Spain": 0.7362407670998461,
+        "USA": 0.5538905161704176,
+        "India": 0.4554035061658243,
+        "Pakistan": 0.40119554445249445,
+        "Sri-Lanka": 0.5404833004820714,
+        "Ghana": 0.5087716469412106,
+        "Paraguay": 0.5290127242066534,
+        "Somalia": 0.24816002727033268
+      },
+      "training_seconds": 386.0
+    },
+    {
+      "name": "cv_r34_lovasz_rot4",
+      "seed": 0,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.6098749724780822,
+        "f1": 0.7576674995317195,
+        "precision": 0.783955936662783,
+        "recall": 0.7330849228771885,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5628541,
+        "fp": 1551124,
+        "fn": 2049343,
+        "tn": 68324403
+      },
+      "event_mean_iou": 0.5780995796430342,
+      "brier": 0.03727561970319871,
+      "weighted_fold_ece": 0.021801929024200885,
+      "events": {
+        "Mekong": 0.8526473365091559,
+        "Nigeria": 0.7591048700573725,
+        "Spain": 0.7489790009347315,
+        "USA": 0.5721196040412287,
+        "India": 0.43959916226675977,
+        "Pakistan": 0.42912304477364893,
+        "Sri-Lanka": 0.5891590357957219,
+        "Ghana": 0.5956640971527409,
+        "Paraguay": 0.5198679052045019,
+        "Somalia": 0.27473173969447995
+      },
+      "training_seconds": 0
+    },
+    {
+      "name": "cv_r34_lovasz_rot4",
+      "seed": 1,
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "pooled": {
+        "iou": 0.5949062123373869,
+        "f1": 0.7460077686518414,
+        "precision": 0.7726448839283334,
+        "recall": 0.7211460866040695,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5536876,
+        "fp": 1629257,
+        "fn": 2141008,
+        "tn": 68246270
+      },
+      "event_mean_iou": 0.556788779858821,
+      "brier": 0.04485763945712451,
+      "weighted_fold_ece": 0.026803219376440354,
+      "events": {
+        "Mekong": 0.8102316996386072,
+        "Nigeria": 0.7477849834799675,
+        "Spain": 0.7227382117650523,
+        "USA": 0.569763964639552,
+        "India": 0.45664248319115575,
+        "Pakistan": 0.41156880878359764,
+        "Sri-Lanka": 0.5468252244628813,
+        "Ghana": 0.5197313485563799,
+        "Paraguay": 0.5341033801379466,
+        "Somalia": 0.24849769393306984
+      },
+      "training_seconds": 0
+    }
+  ],
+  "blends": {
+    "balanced_context_seed0": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5619176243689626,
+      "pooled": {
+        "iou": 0.6003919091828072,
+        "f1": 0.7503061040709454,
+        "precision": 0.7756932668932571,
+        "recall": 0.7265280381938566,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5578198,
+        "fp": 1613044,
+        "fn": 2099686,
+        "tn": 68262483
+      },
+      "brier": 0.035222454003656915,
+      "weighted_fold_ece": 0.012103011898313904,
+      "events": {
+        "Mekong": 0.8307759608349762,
+        "Nigeria": 0.7875635156552911,
+        "Spain": 0.726649333852091,
+        "USA": 0.5101913036486887,
+        "India": 0.45060590446211324,
+        "Pakistan": 0.3308253944440277,
+        "Sri-Lanka": 0.5600737624066865,
+        "Ghana": 0.5912381370562935,
+        "Paraguay": 0.5421623129794582,
+        "Somalia": 0.2890906183500006
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_balanced/seed0/fold0",
+          "runs/cv/cv_r34_context/seed0/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_balanced/seed0/fold1",
+          "runs/cv/cv_r34_context/seed0/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_balanced/seed0/fold2",
+          "runs/cv/cv_r34_context/seed0/fold2"
+        ]
+      }
+    },
+    "balanced_lovasz_probs_seed0": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5701890565361001,
+      "pooled": {
+        "iou": 0.5998519912257296,
+        "f1": 0.749884357447531,
+        "precision": 0.771562807280621,
+        "recall": 0.7293908061127259,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5600178,
+        "fp": 1658049,
+        "fn": 2077706,
+        "tn": 68217478
+      },
+      "brier": 0.03556943061173235,
+      "weighted_fold_ece": 0.013261877811899324,
+      "events": {
+        "Mekong": 0.7911464687177979,
+        "Nigeria": 0.7960230305803401,
+        "Spain": 0.689226003712454,
+        "USA": 0.5308759899036144,
+        "India": 0.43921080941283935,
+        "Pakistan": 0.4099456269581854,
+        "Sri-Lanka": 0.6121786346501326,
+        "Ghana": 0.6134011240245758,
+        "Paraguay": 0.5450912232585243,
+        "Somalia": 0.27479165414253687
+      },
+      "space": "probabilities",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_balanced/seed0/fold0",
+          "runs/cv/cv_r34_lovasz/seed0/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_balanced/seed0/fold1",
+          "runs/cv/cv_r34_lovasz/seed0/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_balanced/seed0/fold2",
+          "runs/cv/cv_r34_lovasz/seed0/fold2"
+        ]
+      }
+    },
+    "balanced_lovasz_seed0": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5694769041782642,
+      "pooled": {
+        "iou": 0.599373046340576,
+        "f1": 0.7495100004491928,
+        "precision": 0.7735252332583604,
+        "recall": 0.7269410426101774,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5581369,
+        "fp": 1634128,
+        "fn": 2096515,
+        "tn": 68241399
+      },
+      "brier": 0.03528532634687909,
+      "weighted_fold_ece": 0.010572097908621644,
+      "events": {
+        "Mekong": 0.7908321770559329,
+        "Nigeria": 0.7963700975858571,
+        "Spain": 0.6885924408766354,
+        "USA": 0.529542896458484,
+        "India": 0.43546733451081876,
+        "Pakistan": 0.41003686204723644,
+        "Sri-Lanka": 0.6096483071453241,
+        "Ghana": 0.6145099394503587,
+        "Paraguay": 0.5453162766275976,
+        "Somalia": 0.27445271002439786
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_balanced/seed0/fold0",
+          "runs/cv/cv_r34_lovasz/seed0/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_balanced/seed0/fold1",
+          "runs/cv/cv_r34_lovasz/seed0/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_balanced/seed0/fold2",
+          "runs/cv/cv_r34_lovasz/seed0/fold2"
+        ]
+      }
+    },
+    "control_balanced_seed0": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5616089948621121,
+      "pooled": {
+        "iou": 0.5967074369776131,
+        "f1": 0.7474223807801796,
+        "precision": 0.7645973471394227,
+        "recall": 0.7310020573376728,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5612549,
+        "fp": 1727980,
+        "fn": 2065335,
+        "tn": 68147547
+      },
+      "brier": 0.03573215112266714,
+      "weighted_fold_ece": 0.013234700967316264,
+      "events": {
+        "Mekong": 0.8255191527628177,
+        "Nigeria": 0.7794890059123659,
+        "Spain": 0.7246894581328286,
+        "USA": 0.5420219852017785,
+        "India": 0.4367040981509109,
+        "Pakistan": 0.3829075498202424,
+        "Sri-Lanka": 0.5875616750620047,
+        "Ghana": 0.5410186301512759,
+        "Paraguay": 0.5368886157807722,
+        "Somalia": 0.25928977764612376
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control/seed0/fold0",
+          "runs/cv/cv_r34_balanced/seed0/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control/seed0/fold1",
+          "runs/cv/cv_r34_balanced/seed0/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control/seed0/fold2",
+          "runs/cv/cv_r34_balanced/seed0/fold2"
+        ]
+      }
+    },
+    "control_lovasz_seed0": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5484966921772492,
+      "pooled": {
+        "iou": 0.5843480239095553,
+        "f1": 0.7376510906582399,
+        "precision": 0.7511515143987229,
+        "recall": 0.7246273843157829,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5563605,
+        "fp": 1843163,
+        "fn": 2114279,
+        "tn": 68032364
+      },
+      "brier": 0.03674936475220942,
+      "weighted_fold_ece": 0.012611634755686992,
+      "events": {
+        "Mekong": 0.8405100501463845,
+        "Nigeria": 0.7395308291387556,
+        "Spain": 0.7340255489891608,
+        "USA": 0.5502155480243596,
+        "India": 0.43990907464229617,
+        "Pakistan": 0.3536089496602506,
+        "Sri-Lanka": 0.5531260085374252,
+        "Ghana": 0.5037209367792633,
+        "Paraguay": 0.5165653600315133,
+        "Somalia": 0.25375461582308284
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control/seed0/fold0",
+          "runs/cv/cv_r34_lovasz/seed0/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control/seed0/fold1",
+          "runs/cv/cv_r34_lovasz/seed0/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control/seed0/fold2",
+          "runs/cv/cv_r34_lovasz/seed0/fold2"
+        ]
+      }
+    },
+    "control_rot4_seeds01": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.558835181348372,
+      "pooled": {
+        "iou": 0.5961959558680199,
+        "f1": 0.7470210078859715,
+        "precision": 0.7796193232082164,
+        "recall": 0.7170393561559408,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5505345,
+        "fp": 1556236,
+        "fn": 2172539,
+        "tn": 68319291
+      },
+      "brier": 0.0359787295982441,
+      "weighted_fold_ece": 0.014058207935691394,
+      "events": {
+        "Mekong": 0.8413990575518042,
+        "Nigeria": 0.7459490541084469,
+        "Spain": 0.7509800846793163,
+        "USA": 0.557492676639673,
+        "India": 0.44486720443953376,
+        "Pakistan": 0.37713680391600257,
+        "Sri-Lanka": 0.5726006429961168,
+        "Ghana": 0.5196828834967996,
+        "Paraguay": 0.5192904719320232,
+        "Somalia": 0.2589529337240041
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold0",
+          "runs/cv/cv_r34_control_rot4/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold1",
+          "runs/cv/cv_r34_control_rot4/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold2",
+          "runs/cv/cv_r34_control_rot4/seed1/fold2"
+        ]
+      }
+    },
+    "control_rot4_seeds01_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5593279184556489,
+      "pooled": {
+        "iou": 0.5963170492022277,
+        "f1": 0.7471160563000213,
+        "precision": 0.7766365721163184,
+        "recall": 0.7197575529924651,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5526215,
+        "fp": 1589359,
+        "fn": 2151669,
+        "tn": 68286168
+      },
+      "brier": 0.035384735369100126,
+      "weighted_fold_ece": 0.009548236997397088,
+      "events": {
+        "Mekong": 0.8403034616378965,
+        "Nigeria": 0.748144089630449,
+        "Spain": 0.7501146036277258,
+        "USA": 0.5566996782637267,
+        "India": 0.4450963075256874,
+        "Pakistan": 0.37638356013138646,
+        "Sri-Lanka": 0.5730371208796285,
+        "Ghana": 0.5242168989176906,
+        "Paraguay": 0.52033922977403,
+        "Somalia": 0.2589442341682686
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "isotonic",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold0",
+          "runs/cv/cv_r34_control_rot4/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold1",
+          "runs/cv/cv_r34_control_rot4/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control_rot4/seed0/fold2",
+          "runs/cv/cv_r34_control_rot4/seed1/fold2"
+        ]
+      }
+    },
+    "control_seeds01": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5592976248701526,
+      "pooled": {
+        "iou": 0.595030592576658,
+        "f1": 0.7461055547723741,
+        "precision": 0.769450358891819,
+        "recall": 0.724135582147373,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5559829,
+        "fp": 1665886,
+        "fn": 2118055,
+        "tn": 68209641
+      },
+      "brier": 0.03632650489331976,
+      "weighted_fold_ece": 0.014008396023313576,
+      "events": {
+        "Mekong": 0.8407218283556549,
+        "Nigeria": 0.7452651895473286,
+        "Spain": 0.7475642551690693,
+        "USA": 0.5591319107821481,
+        "India": 0.4426502436568035,
+        "Pakistan": 0.3683996604673514,
+        "Sri-Lanka": 0.5756253163146384,
+        "Ghana": 0.5314924627569149,
+        "Paraguay": 0.5212629597190255,
+        "Somalia": 0.26086242193259124
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control/seed0/fold0",
+          "runs/cv/cv_r34_control/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control/seed0/fold1",
+          "runs/cv/cv_r34_control/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control/seed0/fold2",
+          "runs/cv/cv_r34_control/seed1/fold2"
+        ]
+      }
+    },
+    "control_seeds01_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5587260324298586,
+      "pooled": {
+        "iou": 0.5949172086613005,
+        "f1": 0.7460164144327547,
+        "precision": 0.7702833153439786,
+        "recall": 0.7232318175163887,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5552890,
+        "fp": 1656003,
+        "fn": 2124994,
+        "tn": 68219524
+      },
+      "brier": 0.035779885692687925,
+      "weighted_fold_ece": 0.009746681894476321,
+      "events": {
+        "Mekong": 0.8406033809276459,
+        "Nigeria": 0.7454819553564873,
+        "Spain": 0.7473969605934696,
+        "USA": 0.5590054989160528,
+        "India": 0.4429153063393524,
+        "Pakistan": 0.367191846785348,
+        "Sri-Lanka": 0.5762258175208206,
+        "Ghana": 0.5267372391137995,
+        "Paraguay": 0.5204785436698218,
+        "Somalia": 0.26122377507578826
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "isotonic",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_control/seed0/fold0",
+          "runs/cv/cv_r34_control/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_control/seed0/fold1",
+          "runs/cv/cv_r34_control/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_control/seed0/fold2",
+          "runs/cv/cv_r34_control/seed1/fold2"
+        ]
+      }
+    },
+    "lovasz_rot4_seeds01": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5733881867891752,
+      "pooled": {
+        "iou": 0.6094264209505502,
+        "f1": 0.7573212580797751,
+        "precision": 0.778654848545468,
+        "recall": 0.7371254892624062,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5659564,
+        "fp": 1608822,
+        "fn": 2018320,
+        "tn": 68266705
+      },
+      "brier": 0.03818160166283036,
+      "weighted_fold_ece": 0.02460989251828983,
+      "events": {
+        "Mekong": 0.8368667559787191,
+        "Nigeria": 0.7692835613998669,
+        "Spain": 0.7418240418609057,
+        "USA": 0.5835051449392122,
+        "India": 0.45426293696919257,
+        "Pakistan": 0.42749219779633774,
+        "Sri-Lanka": 0.5783598461271594,
+        "Ghana": 0.549683902736832,
+        "Paraguay": 0.5319635669512294,
+        "Somalia": 0.2606399131322984
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold0",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold1",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold2",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold2"
+        ]
+      }
+    },
+    "lovasz_rot4_seeds01_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5736621476653367,
+      "pooled": {
+        "iou": 0.6090313666707579,
+        "f1": 0.7570161518117611,
+        "precision": 0.7872626936690416,
+        "recall": 0.7290077578666205,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5597237,
+        "fp": 1512508,
+        "fn": 2080647,
+        "tn": 68363019
+      },
+      "brier": 0.03397342407033914,
+      "weighted_fold_ece": 0.010793763229069385,
+      "events": {
+        "Mekong": 0.8498589813234853,
+        "Nigeria": 0.7523509715822911,
+        "Spain": 0.7512816178626233,
+        "USA": 0.5781191070016425,
+        "India": 0.45429395367929015,
+        "Pakistan": 0.4272750342587423,
+        "Sri-Lanka": 0.5783817973455029,
+        "Ghana": 0.551457931250326,
+        "Paraguay": 0.53304720246066,
+        "Somalia": 0.26055487988880455
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "isotonic",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold0",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold1",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_lovasz_rot4/seed0/fold2",
+          "runs/cv/cv_r34_lovasz_rot4/seed1/fold2"
+        ]
+      }
+    },
+    "lovasz_seeds01": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.567180927335815,
+      "pooled": {
+        "iou": 0.6041971708482163,
+        "f1": 0.7532704605491208,
+        "precision": 0.791951675700161,
+        "recall": 0.7181918872439333,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5514194,
+        "fp": 1448597,
+        "fn": 2163690,
+        "tn": 68426930
+      },
+      "brier": 0.03858407529365001,
+      "weighted_fold_ece": 0.024906070340407097,
+      "events": {
+        "Mekong": 0.8466340145407554,
+        "Nigeria": 0.7470603878522778,
+        "Spain": 0.7496248303754357,
+        "USA": 0.5695782911624496,
+        "India": 0.455038588599635,
+        "Pakistan": 0.41570633383437655,
+        "Sri-Lanka": 0.563894919893397,
+        "Ghana": 0.536203313438191,
+        "Paraguay": 0.5265876113847076,
+        "Somalia": 0.2614809822769245
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "platt",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_lovasz/seed0/fold0",
+          "runs/cv/cv_r34_lovasz/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_lovasz/seed0/fold1",
+          "runs/cv/cv_r34_lovasz/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_lovasz/seed0/fold2",
+          "runs/cv/cv_r34_lovasz/seed1/fold2"
+        ]
+      }
+    },
+    "lovasz_seeds01_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5675543725955411,
+      "pooled": {
+        "iou": 0.6045639713157314,
+        "f1": 0.7535554607025023,
+        "precision": 0.7877170323730635,
+        "recall": 0.7222337560713342,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5545227,
+        "fp": 1494391,
+        "fn": 2132657,
+        "tn": 68381136
+      },
+      "brier": 0.03436787804044514,
+      "weighted_fold_ece": 0.010768092199923038,
+      "events": {
+        "Mekong": 0.8424194551531611,
+        "Nigeria": 0.7522299306243806,
+        "Spain": 0.7480079760086723,
+        "USA": 0.5722628390713791,
+        "India": 0.4553333361326542,
+        "Pakistan": 0.41426554268173144,
+        "Sri-Lanka": 0.5641105580089235,
+        "Ghana": 0.5379750021647071,
+        "Paraguay": 0.5276694871903106,
+        "Somalia": 0.2612695989194903
+      },
+      "space": "logits",
+      "weights": [
+        0.5,
+        0.5
+      ],
+      "calibration_method": "isotonic",
+      "runs_by_fold": {
+        "0": [
+          "runs/cv/cv_r34_lovasz/seed0/fold0",
+          "runs/cv/cv_r34_lovasz/seed1/fold0"
+        ],
+        "1": [
+          "runs/cv/cv_r34_lovasz/seed0/fold1",
+          "runs/cv/cv_r34_lovasz/seed1/fold1"
+        ],
+        "2": [
+          "runs/cv/cv_r34_lovasz/seed0/fold2",
+          "runs/cv/cv_r34_lovasz/seed1/fold2"
+        ]
+      }
+    }
+  },
+  "calibrations": {
+    "balanced_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5619151211833919,
+      "pooled": {
+        "iou": 0.5927675502345154,
+        "f1": 0.7443239914665988,
+        "precision": 0.7699769128355474,
+        "recall": 0.7203252875401608,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5530574,
+        "fp": 1652205,
+        "fn": 2147310,
+        "tn": 68223322
+      },
+      "brier": 0.03588680175808817,
+      "weighted_fold_ece": 0.009456157701656831,
+      "events": {
+        "Mekong": 0.7847279706439839,
+        "Nigeria": 0.7954061433753145,
+        "Spain": 0.6818641375611684,
+        "USA": 0.5112112894412464,
+        "India": 0.42868569075051677,
+        "Pakistan": 0.3796294993089354,
+        "Sri-Lanka": 0.60721642441709,
+        "Ghana": 0.6172695612258136,
+        "Paraguay": 0.5480511882998171,
+        "Somalia": 0.26508930681003284
+      }
+    },
+    "control_identity": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5401540320241203,
+      "pooled": {
+        "iou": 0.5749591775107374,
+        "f1": 0.7301258162379483,
+        "precision": 0.7385564487587307,
+        "recall": 0.7218854830315228,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5542553,
+        "fp": 1962023,
+        "fn": 2135331,
+        "tn": 67913504
+      },
+      "brier": 0.0393677793678278,
+      "weighted_fold_ece": 0.01879528245048773,
+      "events": {
+        "Mekong": 0.8413966780081458,
+        "Nigeria": 0.7358373886939086,
+        "Spain": 0.7341812170521376,
+        "USA": 0.5465138103549076,
+        "India": 0.4360331686180704,
+        "Pakistan": 0.32951076740267454,
+        "Sri-Lanka": 0.5387964346718029,
+        "Ghana": 0.488632087180021,
+        "Paraguay": 0.5084402074783402,
+        "Somalia": 0.242198560781193
+      }
+    },
+    "control_temperature": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5401111293943558,
+      "pooled": {
+        "iou": 0.5748696621432811,
+        "f1": 0.7300536367700753,
+        "precision": 0.7384631332991516,
+        "recall": 0.7218335155884095,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5542154,
+        "fp": 1962830,
+        "fn": 2135730,
+        "tn": 67912697
+      },
+      "brier": 0.03906957495538696,
+      "weighted_fold_ece": 0.01942602807714983,
+      "events": {
+        "Mekong": 0.8415272727708306,
+        "Nigeria": 0.7354202802214351,
+        "Spain": 0.7344709585354293,
+        "USA": 0.5468170579295133,
+        "India": 0.4361499468724165,
+        "Pakistan": 0.3287218734282424,
+        "Sri-Lanka": 0.538767324193933,
+        "Ghana": 0.4885987160418698,
+        "Paraguay": 0.5084168222434409,
+        "Somalia": 0.24222104170644607
+      }
+    },
+    "control_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.540111247100593,
+      "pooled": {
+        "iou": 0.5750765850075138,
+        "f1": 0.730220473698135,
+        "precision": 0.7399283008241982,
+        "recall": 0.7207640803117109,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5533943,
+        "fp": 1945083,
+        "fn": 2143941,
+        "tn": 67930444
+      },
+      "brier": 0.037867256417469956,
+      "weighted_fold_ece": 0.011976226932503204,
+      "events": {
+        "Mekong": 0.8414896834213135,
+        "Nigeria": 0.7355370947138115,
+        "Spain": 0.7343933224497056,
+        "USA": 0.5467333568735941,
+        "India": 0.435725625869103,
+        "Pakistan": 0.33096259722956956,
+        "Sri-Lanka": 0.5389533918302425,
+        "Ghana": 0.48720373639276204,
+        "Paraguay": 0.5077448978279416,
+        "Somalia": 0.24236876439788588
+      }
+    },
+    "control_seed1_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5624058916320591,
+      "pooled": {
+        "iou": 0.5959377666842073,
+        "f1": 0.7468183022228425,
+        "precision": 0.7781831175897712,
+        "recall": 0.7178838596675855,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5511829,
+        "fp": 1571117,
+        "fn": 2166055,
+        "tn": 68304410
+      },
+      "brier": 0.03551728428580478,
+      "weighted_fold_ece": 0.010320776561685513,
+      "events": {
+        "Mekong": 0.8413936905635834,
+        "Nigeria": 0.7474222492629679,
+        "Spain": 0.7536711324798826,
+        "USA": 0.5512700972594521,
+        "India": 0.44078273494694803,
+        "Pakistan": 0.37478310599515713,
+        "Sri-Lanka": 0.5849349240909323,
+        "Ghana": 0.5735470901395077,
+        "Paraguay": 0.5083717691666407,
+        "Somalia": 0.24788212241552016
+      }
+    },
+    "lovasz_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5708425955184934,
+      "pooled": {
+        "iou": 0.6025236270687568,
+        "f1": 0.7519684788309275,
+        "precision": 0.7758388250320346,
+        "recall": 0.729523134238548,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5601194,
+        "fp": 1618339,
+        "fn": 2076690,
+        "tn": 68257188
+      },
+      "brier": 0.03498194930711683,
+      "weighted_fold_ece": 0.011560158272849778,
+      "events": {
+        "Mekong": 0.847791949319334,
+        "Nigeria": 0.7537780924133127,
+        "Spain": 0.7434789947013302,
+        "USA": 0.5549347918752066,
+        "India": 0.4388970396712754,
+        "Pakistan": 0.41003285005063356,
+        "Sri-Lanka": 0.5775953973559087,
+        "Ghana": 0.5925725330702478,
+        "Paraguay": 0.5171391150359644,
+        "Somalia": 0.2722051916917212
+      }
+    },
+    "lovasz_seed1_isotonic": {
+      "folds": [
+        0,
+        1,
+        2
+      ],
+      "event_mean_iou": 0.5491652616275605,
+      "pooled": {
+        "iou": 0.5880094796917488,
+        "f1": 0.7405616744880998,
+        "precision": 0.7708623856313446,
+        "recall": 0.7125529638113834,
+        "n_pixels": 77553411,
+        "n_water": 7677884,
+        "tp": 5470899,
+        "fp": 1626216,
+        "fn": 2206985,
+        "tn": 68249311
+      },
+      "brier": 0.03598772920929834,
+      "weighted_fold_ece": 0.010502831019488772,
+      "events": {
+        "Mekong": 0.8098166538232258,
+        "Nigeria": 0.7222421776148388,
+        "Spain": 0.7158238378137715,
+        "USA": 0.5617716206412035,
+        "India": 0.45771217352614335,
+        "Pakistan": 0.3904132858793015,
+        "Sri-Lanka": 0.5402554061417968,
+        "Ghana": 0.5131960507303898,
+        "Paraguay": 0.5329191542533089,
+        "Somalia": 0.24750225585162475
+      }
+    }
+  },
+  "provenance": [
+    {
+      "config": {
+        "name": "cv_r34_balanced",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.5904453760451526,
+      "calibration": {
+        "platt": {
+          "a": 0.8916736506744988,
+          "b": -0.7447711526073382
+        },
+        "threshold": 0.44,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5971141599989555,
+          "f1": 0.7477413637098378,
+          "precision": 0.7592778879989858,
+          "recall": 0.7365501661051741,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 1006129,
+          "fp": 318984,
+          "fn": 359873,
+          "tn": 11051654
+        }
+      },
+      "device": "mps",
+      "training_seconds": 119.9,
+      "path": "runs/cv/cv_r34_balanced/seed0/fold0",
+      "weights_sha256": "1d177ec2e01311ecfc6c7d8f1f3872787160b7ad4fe0f5a2df6598214b7d0bf3"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 26,
+      "inner_valid_best_iou": 0.6926752207911497,
+      "calibration": {
+        "platt": {
+          "a": 0.9605987919680963,
+          "b": -0.09257834358736965
+        },
+        "threshold": 0.37,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6960559542517751,
+          "f1": 0.8207936212326724,
+          "precision": 0.8342600149287533,
+          "recall": 0.8077550631149876,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1245068,
+          "fp": 247354,
+          "fn": 296325,
+          "tn": 12242178
+        }
+      },
+      "device": "mps",
+      "training_seconds": 120.3,
+      "path": "runs/cv/cv_r34_balanced/seed0/fold1",
+      "weights_sha256": "a09ada810cc4dc5513bd9ffe4f8ac8b98650e425a520a608df778e2413398e86"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.7140138921043905,
+      "calibration": {
+        "platt": {
+          "a": 0.9914213730331882,
+          "b": -0.29401214340455717
+        },
+        "threshold": 0.41,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7143042312993324,
+          "f1": 0.8333459350537048,
+          "precision": 0.8563464004831475,
+          "recall": 0.8115486840336794,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1261972,
+          "fp": 211698,
+          "fn": 293045,
+          "tn": 12014028
+        }
+      },
+      "device": "mps",
+      "training_seconds": 117.3,
+      "path": "runs/cv/cv_r34_balanced/seed0/fold2",
+      "weights_sha256": "0e5bd46fdbe500d1a4de735b06dc385604289b32c29d6e416086b4242dc4a7bf"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 16,
+      "inner_valid_best_iou": 0.5644730746960046,
+      "calibration": {
+        "platt": {
+          "a": 0.8198267476578373,
+          "b": -0.6416879291430274
+        },
+        "threshold": 0.32,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5650521016806627,
+          "f1": 0.7220872724606039,
+          "precision": 0.7162318754991822,
+          "recall": 0.7280391976000035,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 994503,
+          "fp": 394018,
+          "fn": 371499,
+          "tn": 10976620
+        }
+      },
+      "device": "mps",
+      "training_seconds": 164.0,
+      "path": "runs/cv/cv_r34_balanced_context/seed0/fold0",
+      "weights_sha256": "01b79b0f01b44f314fcc0335c738d234e4a038148f6e69af373f51509ed2fea5"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 20,
+      "inner_valid_best_iou": 0.6787746558414417,
+      "calibration": {
+        "platt": {
+          "a": 0.9485376807008707,
+          "b": -0.3885786839771807
+        },
+        "threshold": 0.44,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6791311735887364,
+          "f1": 0.8089078259886724,
+          "precision": 0.8194787012867703,
+          "recall": 0.7986061958241668,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1230966,
+          "fp": 271167,
+          "fn": 310427,
+          "tn": 12218365
+        }
+      },
+      "device": "mps",
+      "training_seconds": 164.6,
+      "path": "runs/cv/cv_r34_balanced_context/seed0/fold1",
+      "weights_sha256": "4fd98c971edd0b23d5a39681254e6aaa930b50fa75ab28017a51acf566414690"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 18,
+      "inner_valid_best_iou": 0.7112270156381263,
+      "calibration": {
+        "platt": {
+          "a": 0.8676394161328222,
+          "b": -0.5364254670766914
+        },
+        "threshold": 0.35,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7116488723836151,
+          "f1": 0.8315360514245941,
+          "precision": 0.8436735766349925,
+          "recall": 0.8197428066702808,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1274714,
+          "fp": 236195,
+          "fn": 280303,
+          "tn": 11989531
+        }
+      },
+      "device": "mps",
+      "training_seconds": 159.5,
+      "path": "runs/cv/cv_r34_balanced_context/seed0/fold2",
+      "weights_sha256": "857347c6dfce7abac227ad5807725f695af68fce038e9f78d81eb5d059d8a349"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.6036050200949025,
+      "calibration": {
+        "platt": {
+          "a": 2.4202953479429294,
+          "b": -0.24801231831786397
+        },
+        "threshold": 0.44,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6036030458738315,
+          "f1": 0.7528085549936301,
+          "precision": 0.771309217231551,
+          "recall": 0.7351746190708359,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 1004250,
+          "fp": 297757,
+          "fn": 361752,
+          "tn": 11072881
+        }
+      },
+      "device": "mps",
+      "training_seconds": 125.6,
+      "path": "runs/cv/cv_r34_balanced_lovasz/seed0/fold0",
+      "weights_sha256": "0b6a9a12928634b495aada930a1d3b02d93d645b4252cbf16589b2d7fd26ace2"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 26,
+      "inner_valid_best_iou": 0.6958266238395061,
+      "calibration": {
+        "platt": {
+          "a": 2.0685783765881904,
+          "b": -0.11404891505882446
+        },
+        "threshold": 0.42,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.696550919347247,
+          "f1": 0.8211376521669589,
+          "precision": 0.8332767806092732,
+          "recall": 0.8093471295120712,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1247522,
+          "fp": 249606,
+          "fn": 293871,
+          "tn": 12239926
+        }
+      },
+      "device": "mps",
+      "training_seconds": 127.6,
+      "path": "runs/cv/cv_r34_balanced_lovasz/seed0/fold1",
+      "weights_sha256": "7650c6fb3dd5cd67314d78542abf57e3485d26e0edd58722ff94c7ed038b88e7"
+    },
+    {
+      "config": {
+        "name": "cv_r34_balanced_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "balanced",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.7112045950336243,
+      "calibration": {
+        "platt": {
+          "a": 1.6809264030981643,
+          "b": -0.3934555417085505
+        },
+        "threshold": 0.4,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7112017016241495,
+          "f1": 0.8312307087459393,
+          "precision": 0.8517133485517021,
+          "recall": 0.8117100970600322,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1262223,
+          "fp": 219758,
+          "fn": 292794,
+          "tn": 12005968
+        }
+      },
+      "device": "mps",
+      "training_seconds": 125.2,
+      "path": "runs/cv/cv_r34_balanced_lovasz/seed0/fold2",
+      "weights_sha256": "3ee21d89f198bb343eaa0dc7640545eef2bcdd4d3c75ab1bd40be74d6316e4c5"
+    },
+    {
+      "config": {
+        "name": "cv_r34_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 26,
+      "inner_valid_best_iou": 0.5683237457672348,
+      "calibration": {
+        "platt": {
+          "a": 0.7527159083828748,
+          "b": -0.26430815136010105
+        },
+        "threshold": 0.38,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5702008839248397,
+          "f1": 0.7262776244267269,
+          "precision": 0.7498894827324079,
+          "recall": 0.7041073146305789,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 961812,
+          "fp": 320793,
+          "fn": 404190,
+          "tn": 11049845
+        }
+      },
+      "device": "mps",
+      "training_seconds": 161.4,
+      "path": "runs/cv/cv_r34_context/seed0/fold0",
+      "weights_sha256": "4c84c2cadc8ac9e32b6478bd69a84e5ddddc716ddb01989dbd59e74298a6c9a2"
+    },
+    {
+      "config": {
+        "name": "cv_r34_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.6756931914896099,
+      "calibration": {
+        "platt": {
+          "a": 0.9368865243013054,
+          "b": 0.16327895357883795
+        },
+        "threshold": 0.36,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6867726534266105,
+          "f1": 0.8143037557924118,
+          "precision": 0.8224681223909597,
+          "recall": 0.8062998858824453,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1242825,
+          "fp": 268267,
+          "fn": 298568,
+          "tn": 12221265
+        }
+      },
+      "device": "mps",
+      "training_seconds": 165.4,
+      "path": "runs/cv/cv_r34_context/seed0/fold1",
+      "weights_sha256": "3fabbf4f02fc75fe96b8f3f25ca78a657df64bcc2c0bd2ed4646d21644357b70"
+    },
+    {
+      "config": {
+        "name": "cv_r34_context",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 384,
+        "large_crop_epoch": 21,
+        "large_batch_size": 4
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 22,
+      "inner_valid_best_iou": 0.7078556950689917,
+      "calibration": {
+        "platt": {
+          "a": 0.822947047065389,
+          "b": 0.30870151485220915
+        },
+        "threshold": 0.35,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7247720800399846,
+          "f1": 0.8404264985819837,
+          "precision": 0.8643082682136803,
+          "recall": 0.8178290012263532,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1271738,
+          "fp": 199656,
+          "fn": 283279,
+          "tn": 12026070
+        }
+      },
+      "device": "mps",
+      "training_seconds": 161.1,
+      "path": "runs/cv/cv_r34_context/seed0/fold2",
+      "weights_sha256": "2b00aecc8ebc03ace60cfcf3d9a6cf772ac98f67b33dbc70dc61c0a3c9d14bd6"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.5756879748255889,
+      "calibration": {
+        "platt": {
+          "a": 0.7420519665717268,
+          "b": -0.4766766987171843
+        },
+        "threshold": 0.36,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5759499875973021,
+          "f1": 0.7309241944605072,
+          "precision": 0.7487816395557313,
+          "recall": 0.7138986619346092,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 975187,
+          "fp": 327178,
+          "fn": 390815,
+          "tn": 11043460
+        }
+      },
+      "device": "mps",
+      "training_seconds": 121.4,
+      "path": "runs/cv/cv_r34_control/seed0/fold0",
+      "weights_sha256": "f0f32052f3df59a66f8276e6da4a2770095d2013bbec6ab1a4967b5ec6e830ea"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.6689762587346205,
+      "calibration": {
+        "platt": {
+          "a": 1.0334108153318575,
+          "b": 0.450560306991912
+        },
+        "threshold": 0.34,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6880477686549117,
+          "f1": 0.8151994054092074,
+          "precision": 0.8145760270094847,
+          "recall": 0.8158237386571757,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1257505,
+          "fp": 286249,
+          "fn": 283888,
+          "tn": 12203283
+        }
+      },
+      "device": "mps",
+      "training_seconds": 124.7,
+      "path": "runs/cv/cv_r34_control/seed0/fold1",
+      "weights_sha256": "5c8448939cd7f38e0f6462d28e0cbe1faa9bd740822f31e62c84b83cce3d8e90"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 14,
+      "inner_valid_best_iou": 0.6719639410220711,
+      "calibration": {
+        "platt": {
+          "a": 0.8524414564909477,
+          "b": -0.7908922640941398
+        },
+        "threshold": 0.33,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6722630382890779,
+          "f1": 0.8040159028771959,
+          "precision": 0.8077318232707567,
+          "recall": 0.8003340156409866,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1244533,
+          "fp": 296242,
+          "fn": 310484,
+          "tn": 11929484
+        }
+      },
+      "device": "mps",
+      "training_seconds": 118.6,
+      "path": "runs/cv/cv_r34_control/seed0/fold2",
+      "weights_sha256": "ab0e01c7212ffe244c82e6735e2f9d06ad9e8ffa2c064bf6968b2e4f0df56d78"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.5714120949743587,
+      "calibration": {
+        "platt": {
+          "a": 0.770004969003086,
+          "b": -0.23773353112715964
+        },
+        "threshold": 0.36,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.57389295968656,
+          "f1": 0.7292655528503673,
+          "precision": 0.7218044411872901,
+          "recall": 0.7368825228659988,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 1006583,
+          "fp": 387954,
+          "fn": 359419,
+          "tn": 10982684
+        }
+      },
+      "device": "mps",
+      "training_seconds": 116.3,
+      "path": "runs/cv/cv_r34_control/seed1/fold0",
+      "weights_sha256": "722b0511e6003384eb6fe8f857a8446aed7eb21932b37c102a36f628ee07ab9c"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.6735800886027958,
+      "calibration": {
+        "platt": {
+          "a": 0.8858262926468641,
+          "b": 0.19997555297469127
+        },
+        "threshold": 0.42,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.6782126942738723,
+          "f1": 0.8082559458499637,
+          "precision": 0.8258225284206493,
+          "recall": 0.7914211365952746,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1219891,
+          "fp": 257292,
+          "fn": 321502,
+          "tn": 12232240
+        }
+      },
+      "device": "mps",
+      "training_seconds": 122.6,
+      "path": "runs/cv/cv_r34_control/seed1/fold1",
+      "weights_sha256": "518249e7f11e99d17352251ae11104743ab7c58c9ce6f8dd8ea723d98f1fc8ca"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.7240731855115755,
+      "calibration": {
+        "platt": {
+          "a": 0.8775384194905627,
+          "b": -0.322734055253029
+        },
+        "threshold": 0.44,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7241491915105066,
+          "f1": 0.8400075759987894,
+          "precision": 0.8579097064191396,
+          "recall": 0.8228373066017928,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1279526,
+          "fp": 211920,
+          "fn": 275491,
+          "tn": 12013806
+        }
+      },
+      "device": "mps",
+      "training_seconds": 118.6,
+      "path": "runs/cv/cv_r34_control/seed1/fold2",
+      "weights_sha256": "34d162b8b88a5c2489557f637357adbb2ab9acaadec09670b7e6d55fb7aa0311"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.5756879748255889,
+      "calibration": {
+        "platt": {
+          "a": 0.7431924375506145,
+          "b": -0.44830187558067636
+        },
+        "threshold": 0.33
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed0/fold0",
+      "source_run": "runs/cv/cv_r34_control/seed0/fold0"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.6689762587346205,
+      "calibration": {
+        "platt": {
+          "a": 1.0437764858030787,
+          "b": 0.4796423820006911
+        },
+        "threshold": 0.36
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed0/fold1",
+      "source_run": "runs/cv/cv_r34_control/seed0/fold1"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 14,
+      "inner_valid_best_iou": 0.6719639410220711,
+      "calibration": {
+        "platt": {
+          "a": 0.9022475705279566,
+          "b": -0.814552495223126
+        },
+        "threshold": 0.38
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed0/fold2",
+      "source_run": "runs/cv/cv_r34_control/seed0/fold2"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.5714120949743587,
+      "calibration": {
+        "platt": {
+          "a": 0.7768920982004924,
+          "b": -0.17154705826179284
+        },
+        "threshold": 0.34
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed1/fold0",
+      "source_run": "runs/cv/cv_r34_control/seed1/fold0"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.6735800886027958,
+      "calibration": {
+        "platt": {
+          "a": 0.8937974722640419,
+          "b": 0.2797693951092961
+        },
+        "threshold": 0.41
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed1/fold1",
+      "source_run": "runs/cv/cv_r34_control/seed1/fold1"
+    },
+    {
+      "config": {
+        "name": "cv_r34_control_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_dice",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 24,
+      "inner_valid_best_iou": 0.7240731855115755,
+      "calibration": {
+        "platt": {
+          "a": 0.891512235085124,
+          "b": -0.291525372502588
+        },
+        "threshold": 0.45
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_control_rot4/seed1/fold2",
+      "source_run": "runs/cv/cv_r34_control/seed1/fold2"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 22,
+      "inner_valid_best_iou": 0.5781238213332984,
+      "calibration": {
+        "platt": {
+          "a": 3.779239972310598,
+          "b": -0.5103920673501694
+        },
+        "threshold": 0.37,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5827371230072005,
+          "f1": 0.7363662790697675,
+          "precision": 0.7710505784213048,
+          "recall": 0.7046680751565517,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 962578,
+          "fp": 285820,
+          "fn": 403424,
+          "tn": 11084818
+        }
+      },
+      "device": "mps",
+      "training_seconds": 128.7,
+      "path": "runs/cv/cv_r34_lovasz/seed0/fold0",
+      "weights_sha256": "9cd8b2d4788b85a06e08a281fbd8ca2d0d2f2289f3d2963b476c2821e3355d72"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.7007219575545922,
+      "calibration": {
+        "platt": {
+          "a": 2.509341074621364,
+          "b": 0.09142440308861888
+        },
+        "threshold": 0.41,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7059071955071955,
+          "f1": 0.8276032803734287,
+          "precision": 0.8401056551716762,
+          "recall": 0.8154675673238427,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1256956,
+          "fp": 239232,
+          "fn": 284437,
+          "tn": 12250300
+        }
+      },
+      "device": "mps",
+      "training_seconds": 132.5,
+      "path": "runs/cv/cv_r34_lovasz/seed0/fold1",
+      "weights_sha256": "cc563a83b4e3e273ddfab7f90377d747c463cc37c5fc265b760b6c21bda30a7d"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.7030691089857891,
+      "calibration": {
+        "platt": {
+          "a": 2.4508427969572204,
+          "b": -0.4805748226113667
+        },
+        "threshold": 0.44,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.70536646027792,
+          "f1": 0.8272315384494754,
+          "precision": 0.8407417565450572,
+          "recall": 0.8141486556095529,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1266015,
+          "fp": 239816,
+          "fn": 289002,
+          "tn": 11985910
+        }
+      },
+      "device": "mps",
+      "training_seconds": 130.8,
+      "path": "runs/cv/cv_r34_lovasz/seed0/fold2",
+      "weights_sha256": "b62519a48481c418a3e78ac186f664f988aaed0ba8967563f14d85d1b2155d79"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.5313150084032144,
+      "calibration": {
+        "platt": {
+          "a": 2.114359926922363,
+          "b": -0.29106338472930016
+        },
+        "threshold": 0.43,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.5151882705764745,
+          "f1": 0.6800320205494516,
+          "precision": 0.7948296881655675,
+          "recall": 0.5942099645534926,
+          "n_pixels": 12736640,
+          "n_water": 1366002,
+          "tp": 811692,
+          "fp": 209523,
+          "fn": 554310,
+          "tn": 11161115
+        }
+      },
+      "device": "mps",
+      "training_seconds": 128.8,
+      "path": "runs/cv/cv_r34_lovasz/seed1/fold0",
+      "weights_sha256": "82b1282f19affbe9c3f3758fd86c908407d3d42e7ed6f68556baea8c3383d158"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.6798419387845686,
+      "calibration": {
+        "platt": {
+          "a": 2.1353912121741914,
+          "b": 0.15324727266699542
+        },
+        "threshold": 0.41,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.688474167508639,
+          "f1": 0.815498609048298,
+          "precision": 0.8319206704114214,
+          "recall": 0.799712338125319,
+          "n_pixels": 14030925,
+          "n_water": 1541393,
+          "tp": 1232671,
+          "fp": 249046,
+          "fn": 308722,
+          "tn": 12240486
+        }
+      },
+      "device": "mps",
+      "training_seconds": 130.5,
+      "path": "runs/cv/cv_r34_lovasz/seed1/fold1",
+      "weights_sha256": "82ef8133c627f03beafd98141e6d7cc303a1003e19c0f871932c5ffbc2aa908a"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 18,
+      "inner_valid_best_iou": 0.7195917447184064,
+      "calibration": {
+        "platt": {
+          "a": 2.076216054421991,
+          "b": -0.15996019057138483
+        },
+        "threshold": 0.48,
+        "rule": "inner validation only; outer scoring events excluded",
+        "valid_at_threshold": {
+          "iou": 0.7196786427236473,
+          "f1": 0.836992011000162,
+          "precision": 0.8610772766192439,
+          "recall": 0.8142174651466833,
+          "n_pixels": 13780743,
+          "n_water": 1555017,
+          "tp": 1266122,
+          "fp": 204271,
+          "fn": 288895,
+          "tn": 12021455
+        }
+      },
+      "device": "mps",
+      "training_seconds": 126.7,
+      "path": "runs/cv/cv_r34_lovasz/seed1/fold2",
+      "weights_sha256": "595dc0071814e30eea0ac68ceb98481b80ce91d6246620a3381e0dbc94bbfe66"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 22,
+      "inner_valid_best_iou": 0.5781238213332984,
+      "calibration": {
+        "platt": {
+          "a": 3.3285298206775344,
+          "b": -0.49052467780336634
+        },
+        "threshold": 0.37
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed0/fold0",
+      "source_run": "runs/cv/cv_r34_lovasz/seed0/fold0"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.7007219575545922,
+      "calibration": {
+        "platt": {
+          "a": 2.4736763252701377,
+          "b": 0.10725389638154818
+        },
+        "threshold": 0.44
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed0/fold1",
+      "source_run": "runs/cv/cv_r34_lovasz/seed0/fold1"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 0,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 30,
+      "inner_valid_best_iou": 0.7030691089857891,
+      "calibration": {
+        "platt": {
+          "a": 2.442967951284759,
+          "b": -0.45883572812311385
+        },
+        "threshold": 0.44
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed0/fold2",
+      "source_run": "runs/cv/cv_r34_lovasz/seed0/fold2"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 0,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.5313150084032144,
+      "calibration": {
+        "platt": {
+          "a": 2.1708531571061283,
+          "b": -0.2331839566842925
+        },
+        "threshold": 0.44
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed1/fold0",
+      "source_run": "runs/cv/cv_r34_lovasz/seed1/fold0"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 1,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 28,
+      "inner_valid_best_iou": 0.6798419387845686,
+      "calibration": {
+        "platt": {
+          "a": 2.1675960854518,
+          "b": 0.20664677745515217
+        },
+        "threshold": 0.4
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed1/fold1",
+      "source_run": "runs/cv/cv_r34_lovasz/seed1/fold1"
+    },
+    {
+      "config": {
+        "name": "cv_r34_lovasz_rot4",
+        "channel_set": "vv_vh",
+        "encoder": "resnet34",
+        "encoder_weights": "imagenet",
+        "epochs": 30,
+        "batch_size": 8,
+        "crop": 256,
+        "crops_per_chip": 2,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "dice_weight": 0.5,
+        "seed": 1,
+        "eval_every": 2,
+        "augment": true,
+        "sampler": "uniform",
+        "loss": "bce_lovasz",
+        "large_crop": 0,
+        "large_crop_epoch": 0,
+        "large_batch_size": 8
+      },
+      "fold": 2,
+      "plan_sha256": "8e01a04a9d5e91c28675732987d0dfc2acc819caa259d93fd497fc81aadff76c",
+      "best_epoch": 18,
+      "inner_valid_best_iou": 0.7195917447184064,
+      "calibration": {
+        "platt": {
+          "a": 2.0820712580068554,
+          "b": -0.10708381909437875
+        },
+        "threshold": 0.47
+      },
+      "device": "mps",
+      "training_seconds": 0,
+      "path": "runs/cv/cv_r34_lovasz_rot4/seed1/fold2",
+      "source_run": "runs/cv/cv_r34_lovasz/seed1/fold2"
+    }
+  ]
+}

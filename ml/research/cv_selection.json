@@ -1,0 +1,37 @@
+{
+  "chosen_before_seed1": true,
+  "metric": "mean event IoU on three seed0 folds",
+  "candidate": "lovasz",
+  "ranking": [
+    {
+      "name": "cv_r34_lovasz",
+      "event_mean_iou": 0.5703633158799006,
+      "brier": 0.03767746882294502
+    },
+    {
+      "name": "cv_r34_balanced_lovasz",
+      "event_mean_iou": 0.5678329507179363,
+      "brier": 0.036015818174325566
+    },
+    {
+      "name": "cv_r34_balanced",
+      "event_mean_iou": 0.5619526941289457,
+      "brier": 0.036298393859987656
+    },
+    {
+      "name": "cv_r34_balanced_context",
+      "event_mean_iou": 0.5558491349607101,
+      "brier": 0.03758521880699502
+    },
+    {
+      "name": "cv_r34_control",
+      "event_mean_iou": 0.5405751272123391,
+      "brier": 0.03819527026170517
+    },
+    {
+      "name": "cv_r34_context",
+      "event_mean_iou": 0.5350949249168518,
+      "brier": 0.03756066809844746
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "accessed_on": "2026-09-25",
+  "floodvalue_commit": "ded71d08e8231d645b9d6349c726f79c8ee23868",
+  "notebooks": [
+    {
+      "ref": "junkoda/contrails-submit",
+      "url": "https://www.kaggle.com/code/junkoda/contrails-submit",
+      "version": 49,
+      "sha256_source": "817fffb1d721dcefd517c0e8c39a6b69ea091a3cea65dfdbb574b82ba670828a",
+      "reviewed": "source_read_not_executed"
+    },
+    {
+      "ref": "tikutiku/hubmap-tilespadded-inference-v2",
+      "url": "https://www.kaggle.com/code/tikutiku/hubmap-tilespadded-inference-v2",
+      "version": 46,
+      "sha256_source": "f1acde033f53f036460642378f8b31cec50b23c2fdb176179f5010d8b3615df8",
+      "reviewed": "source_read_not_executed"
+    },
+    {
+      "ref": "shaunakmandal/flood-detection-using-sentinel-satellite-pictures",
+      "url": "https://www.kaggle.com/code/shaunakmandal/flood-detection-using-sentinel-satellite-pictures",
+      "version": 1,
+      "sha256_source": "2cdefecaa17e3f0e5e041a523f03e3120841d8da9dad10f94a7bcc819298eeda",
+      "reviewed": "source_read_not_executed"
+    },
+    {
+      "ref": "sameernadeem66/floodcastnet-phase3-realdata",
+      "url": "https://www.kaggle.com/code/sameernadeem66/floodcastnet-phase3-realdata",
+      "version": 4,
+      "sha256_source": "58c67e90b845f7fddab1029a25ccaadf43d2cd59186ca7e255edfe28e4efb71b",
+      "reviewed": "source_read_not_executed"
+    }
+  ],
+  "author_repositories": [
+    {
+      "url": "https://github.com/junkoda/kaggle_contrails_solution",
+      "commit": "08a15beb36f9cbed4c3990e74c625c1332b61fe8",
+      "files_reviewed": [
+        "README.md",
+        "notebook/contrails-submit-v43.ipynb",
+        "notebook/contrails-submit-v47.ipynb",
+        "src/submit/unet1024/model.py",
+        "src/unet5/data.py"
+      ],
+      "winning_notebook": "notebook/contrails-submit-v43.ipynb"
+    },
+    {
+      "url": "https://github.com/ybabakhin/kaggle_salt_bes_phalanx",
+      "commit": "2f81d4dd8d50a01579e5f7650259dde92c5c3b8d",
+      "files_reviewed": [
+        "README.md",
+        "train.sh",
+        "bes/train.py",
+        "phalanx/train_cv.py"
+      ]
+    }
+  ],
+  "notes": [
+    "Notebook latest versions may differ from historical winning submissions.",
+    "Competition ranks are attributed to author writeups and Kaggle writeup labels, not independently downloaded full leaderboards.",
+    "No training or leaderboard submissions performed."
+  ]
+}

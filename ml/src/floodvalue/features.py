@@ -16,6 +16,7 @@ from floodvalue.chips import s1_valid
 CHANNEL_SETS = {
     "vv_vh": ("VV", "VH"),
     "vv_vh_diff": ("VV", "VH", "VV-VH"),
+    "s2_six": ("B2", "B3", "B4", "B8", "B11", "B12"),
 }
 CLIP_PERCENTILES = (0.1, 99.9)
 MIN_STD = 1e-6
@@ -23,6 +24,8 @@ MIN_STD = 1e-6
 
 def build_channels(s1: np.ndarray, channel_set: str) -> np.ndarray:
     """Stack the requested channels from S1 [2, H, W] in dB; NaN stays NaN."""
+    if channel_set == "s2_six":
+        raise ValueError("S2 models require floodvalue.optical_cnn, not the S1 loader")
     vv, vh = s1[0], s1[1]
     available = {"VV": vv, "VH": vh, "VV-VH": vv - vh}
     return np.stack([available[name] for name in CHANNEL_SETS[channel_set]]).astype(np.float32)

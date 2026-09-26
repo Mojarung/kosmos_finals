@@ -1,0 +1,19 @@
+{
+  "name": "goal072/models/unet_sar50",
+  "architecture": "unet",
+  "encoder": "resnet50",
+  "encoder_weights": null,
+  "epochs": 60,
+  "batch_size": 16,
+  "crop": 256,
+  "crops_per_chip": 4,
+  "lr": 0.0005,
+  "encoder_lr_scale": 0.2,
+  "ema_decay": 0.995,
+  "checkpoint_metric": "best_threshold",
+  "grad_clip": 1.0,
+  "normalization": "ssl4eo_s1",
+  "encoder_checkpoint": "runs/research/ssl4eo_s1/encoder.safetensors",
+  "encoder_checkpoint_sha256": "7f4204d4e7ee4c7fa33e082832d9416e60a46e97b9c64e0a725844b21ef1f0f8",
+  "resume_training": true
+}

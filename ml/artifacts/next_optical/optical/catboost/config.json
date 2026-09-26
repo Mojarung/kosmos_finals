@@ -1,0 +1,10 @@
+{
+  "backend": "catboost",
+  "iterations": 1500,
+  "lr": 0.04,
+  "seed": 75,
+  "name": "catboost",
+  "samples_per_chip": 10000,
+  "feature_version": "optical47_v1",
+  "early_stopping": "original inner validation chips, 3000 sampled pixels/chip, log loss"
+}

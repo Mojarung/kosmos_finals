@@ -1,0 +1,10 @@
+{
+  "backend": "hgb",
+  "iterations": 1200,
+  "lr": 0.03,
+  "seed": 73,
+  "name": "hgb_large",
+  "samples_per_chip": 10000,
+  "feature_version": "optical47_v1",
+  "early_stopping": "original inner validation chips, 3000 sampled pixels/chip, log loss"
+}

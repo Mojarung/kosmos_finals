@@ -1,0 +1,10 @@
+{
+  "backend": "lightgbm",
+  "iterations": 2000,
+  "lr": 0.035,
+  "seed": 74,
+  "name": "lightgbm",
+  "samples_per_chip": 10000,
+  "feature_version": "optical47_v1",
+  "early_stopping": "original inner validation chips, 3000 sampled pixels/chip, log loss"
+}

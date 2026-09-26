@@ -115,6 +115,33 @@ def _cmd_infer(args: argparse.Namespace) -> None:
     from floodvalue.package import member_dirs
 
     s1_path = Path(args.s1) if args.s1 else layer_path(paths.SEN1FLOODS11_DIR, Chip.from_name(args.chip), "S1Hand")
+    if args.recipe:
+        recipe = json.loads(Path(args.recipe).read_text())
+        if "optical_member" in recipe or "fusion_members" in recipe:
+            from floodvalue.optical import event_dates, infer_optical
+            if bool(args.s1_date) != bool(args.s2_date):
+                raise ValueError("provide both --s1-date and --s2-date")
+            acquisition = ({"s1_date": args.s1_date, "s2_date": args.s2_date} if args.s1_date else None)
+            s2_path = Path(args.s2) if args.s2 else None
+            if args.chip and not args.no_optical:
+                chip = Chip.from_name(args.chip)
+                acquisition = acquisition or event_dates(paths.SEN1FLOODS11_DIR).get(chip.event)
+                candidate = layer_path(paths.SEN1FLOODS11_DIR, chip, "S2Hand")
+                s2_path = s2_path or (candidate if candidate.exists() else None)
+            if s2_path and acquisition is None:
+                raise ValueError("custom optical input requires --s1-date and --s2-date")
+            report = infer_optical(s1_path, Path(args.recipe), Path(args.out),
+                                   None if args.no_optical else s2_path, acquisition)
+            print(json.dumps(report, indent=2))
+            return
+        if args.s2 or args.s1_date or args.s2_date or args.no_optical:
+            raise ValueError("optical arguments require an S1+S2 recipe")
+        from floodvalue.refine import infer_recipe
+        report = infer_recipe(s1_path, Path(args.recipe), Path(args.out), load_baseline(BASELINE_PATH))
+        print(json.dumps(report, indent=2))
+        return
+    if args.s2 or args.s1_date or args.s2_date or args.no_optical:
+        raise ValueError("optical arguments require --recipe with an S1+S2 model")
     platt, threshold = load_calibration(CALIBRATION_PATH)
     members = load_members(member_dirs(MODEL_DIR))
     report = infer_s1(s1_path, members, platt, threshold, Path(args.out), load_baseline(BASELINE_PATH))
@@ -156,6 +183,12 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--chip", help="official chip name, e.g. Ghana_313799")
     source.add_argument("--s1", help="path to any S1Hand GeoTIFF")
     infer.add_argument("--out", required=True)
+    infer.add_argument("--recipe", help="optional frozen refinement recipe; defaults to the shipped v1 ensemble")
+    optical = infer.add_mutually_exclusive_group()
+    optical.add_argument("--s2", help="optional 13-band S2Hand GeoTIFF for an S1+S2 recipe")
+    optical.add_argument("--no-optical", action="store_true", help="force S1 fallback for an S1+S2 recipe")
+    infer.add_argument("--s1-date", help="S1 acquisition date YYYY-MM-DD for custom optical input")
+    infer.add_argument("--s2-date", help="S2 acquisition date YYYY-MM-DD for custom optical input")
     infer.set_defaults(handler=_cmd_infer)
     return parser
 

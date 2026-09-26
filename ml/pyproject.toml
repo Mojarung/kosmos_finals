@@ -36,3 +36,7 @@ testpaths = ["tests"]
 dev = [
     "pytest>=9.1.1",
 ]
+research = [
+    "catboost>=1.2.10",
+    "lightgbm>=4.7.0",
+]

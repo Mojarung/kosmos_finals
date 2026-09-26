@@ -1,1 +1,4 @@
 ml/artifacts/model/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+ml/artifacts/refined_model/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+ml/artifacts/goal072_optical/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+ml/artifacts/next_optical/**/*.safetensors filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,16 @@
+{
+  "name": "goal072/models/unet_effb4",
+  "architecture": "unet",
+  "encoder": "efficientnet-b4",
+  "decoder_attention": "scse",
+  "epochs": 60,
+  "batch_size": 8,
+  "crop": 256,
+  "crops_per_chip": 4,
+  "lr": 0.0005,
+  "encoder_lr_scale": 0.2,
+  "ema_decay": 0.995,
+  "checkpoint_metric": "best_threshold",
+  "grad_clip": 1.0,
+  "resume_training": true
+}

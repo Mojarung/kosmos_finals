@@ -1,0 +1,12 @@
+{
+  "name": "cv_r34_balanced_context",
+  "epochs": 30,
+  "batch_size": 8,
+  "crops_per_chip": 2,
+  "eval_every": 2,
+  "lr": 0.0005,
+  "sampler": "balanced",
+  "large_crop": 384,
+  "large_crop_epoch": 21,
+  "large_batch_size": 4
+}

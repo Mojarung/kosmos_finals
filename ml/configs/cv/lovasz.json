@@ -1,0 +1,9 @@
+{
+  "name": "cv_r34_lovasz",
+  "epochs": 30,
+  "batch_size": 8,
+  "crops_per_chip": 2,
+  "eval_every": 2,
+  "lr": 0.0005,
+  "loss": "bce_lovasz"
+}

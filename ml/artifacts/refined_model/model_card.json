@@ -1,0 +1,48 @@
+{
+  "status": "experimental: test_core improvement, Bolivia regression; not the default",
+  "recipe_sha256": "4f17e08780401836bf7d2d43a43fde49e94b3a725b5570654644965fa0e4db1b",
+  "networks": "five original U-Net/ResNet34 checkpoints; original training-only normalization",
+  "changes": "positive ensemble weights, four rotations, isotonic calibration; validation selected",
+  "forward_passes_per_chip": 20,
+  "threshold": 0.41,
+  "comparison_recipe_sha256": "db60ca6454136d6c06c03d834cc58049ef6c2990e70f43368a00c1b8a840a05e",
+  "same_device_iou": {
+    "test_core": {
+      "original": 0.6969582070856678,
+      "candidate": 0.7043834687464797
+    },
+    "test_adjacent": {
+      "original": 0.6484418346587757,
+      "candidate": 0.6484835425028689
+    },
+    "bolivia": {
+      "original": 0.6592763907406316,
+      "candidate": 0.652735464821258
+    }
+  },
+  "test_core_delta_iou_bootstrap_95": [
+    -0.0009357224474330683,
+    0.019981466014734654
+  ],
+  "inference_checks": {
+    "cpu_parity": {
+      "chip": "Ghana_5079",
+      "cpu_seconds": 2.2804183330154046,
+      "max_abs_probability_difference_from_mps_cache": 0.00031007733196020126,
+      "mean_abs_difference": 3.5201734860379474e-09,
+      "finite_spread": true
+    },
+    "cpu_smoke": {
+      "seconds": 6.936538000009023,
+      "recipe": "artifacts/refined_model/recipe.json",
+      "chip": "Bolivia_103757",
+      "device": "cpu"
+    },
+    "release_checks": {
+      "original_and_packaged_weights_match": true,
+      "geotiff_contract_verified": true,
+      "test_predictions_after_recipe_freeze": true,
+      "valid_pixels": 101623
+    }
+  }
+}

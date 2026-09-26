@@ -1,0 +1,10 @@
+{
+  "name": "refine_context_lovasz",
+  "epochs": 12,
+  "batch_size": 8,
+  "crops_per_chip": 4,
+  "crop": 384,
+  "lr": 3e-05,
+  "eval_every": 2,
+  "loss": "bce_lovasz"
+}

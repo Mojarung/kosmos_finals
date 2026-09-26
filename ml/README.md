@@ -4,6 +4,20 @@
 
 Всё запускается через `uv` из этой папки. Обучение шло на RTX 5070 12 ГБ; inference и оценка работают и на CPU, только медленнее.
 
+Идеи из открытых Kaggle-решений собраны в [KAGGLE_RESEARCH.md](KAGGLE_RESEARCH.md). Новые ML-эксперименты используют три фолда с исключением целых событий: [результаты](research/CV_RESULTS.md), [протокол и команды CV](research/CV_PROTOCOL.md). Их веса и прогнозы сохраняются отдельно в `runs/cv`; test_core и Bolivia в подборе не участвуют. Для обучения на Apple GPU можно явно задать `FLOODVALUE_DEVICE=mps`.
+
+Продолжение работы с готовыми весами коллеги на исходном split дало **test_core IoU 0,70438 против 0,69696** при повторной оценке исходника на том же устройстве. Победил взвешенный ансамбль исходных пяти сетей с четырьмя поворотами и изотонической калибровкой. Все параметры выбраны на validation и зафиксированы до теста. [Полное сравнение, ограничения и запуск](research/REFINEMENT_RESULTS.md), [протокол](research/REFINEMENT_PROTOCOL.md). Эти цифры относятся к исходному test_core, а не к отдельному event-held-out CV.
+
+На Bolivia этот рецепт снизил IoU с 0,65928 до 0,65274. Он сохранён как отдельный экспериментальный вариант; исходный v1 остаётся вариантом по умолчанию. Устойчивое улучшение на новых событиях пока не подтверждено.
+
+Отдельный режим **S1+S2 достиг test_core IoU 0,84869 и Bolivia 0,83684**. Это расширение входных данных оптикой, а не результат S1-only. S2 допускается только в дату S1 или на 1–2 дня раньше; иначе используется S1. Смесь, калибровка и порог выбраны на validation и event CV до финальной проверки. Все test-пиксели остались прежними. [Результаты, ограничения и воспроизведение](research/GOAL072_OPTICAL_RESULTS.md), [исследованные решения](research/GOAL072_RESEARCH.md).
+
+Следующая серия проверила 35 конфигураций на той же event CV. Выбран ансамбль HGB/LightGBM/CatBoost с прежним радаром: **S1+S2 test_core 0,84938, test_adjacent 0,83813, Bolivia 0,83735**. Event-CV IoU вырос с 0,77421 до 0,78410. Прирост на test небольшой: парный bootstrap разности test_core включает ноль. Новый пакет — `artifacts/next_optical/`; прежний сохранён. [Все эксперименты, сравнение и проверка CPU](research/NEXT_RESULTS.md).
+
+Чистый S1-контроль из этой серии получил **0,70617 на test_core и 0,66314 на Bolivia** за счёт усреднения вероятностей исходных пяти моделей. Он доступен отдельно; результаты S1 и S1+S2 приводятся раздельно.
+
+Разметка Sen1Floods11 основана на классификации по S2 с ручными исправлениями. Эту зависимость учитываем при сравнении режимов; подробнее — в разделе о данных и ограничениях отчёта.
+
 ## Установка
 
 ```bash
@@ -43,7 +57,32 @@ uv run floodvalue train --config configs/unet_r34_vvvh.json --overfit 4 --epochs
 ```bash
 uv run floodvalue infer --chip Bolivia_103757 --out outputs/Bolivia_103757
 uv run floodvalue infer --s1 path/to/EVENT_ID_S1Hand.tif --out outputs/my_chip
+uv run floodvalue infer --chip Bolivia_103757 --recipe artifacts/refined_model/recipe.json --out outputs/refined_Bolivia_103757
+uv run floodvalue infer --chip Bolivia_103757 --recipe artifacts/goal072_optical/radar/recipe.json --out outputs/radar_Bolivia_103757
 ```
+
+`--recipe` включает новый вариант; без этого параметра запускается исходный v1. Новый рецепт делает 20 проходов сети вместо 5 и также работает на CPU. Веса находятся отдельно в `artifacts/refined_model/` и проверяются по SHA256 при загрузке.
+
+Для дополнительного S1+S2 режима:
+
+```bash
+uv run python scripts/goal072_download_s2.py --parts train valid test_core test_adjacent bolivia
+uv run floodvalue infer --chip Bolivia_103757 --recipe artifacts/goal072_optical/recipe.json --out outputs/optical_Bolivia_103757
+uv run floodvalue infer --chip Bolivia_103757 --no-optical --recipe artifacts/goal072_optical/recipe.json --out outputs/fallback_Bolivia_103757
+```
+
+Загрузчик S2 проверяет MD5 и скачивает около 1,02 ГБ на все чипы. Отсутствующая или более поздняя S2 приводит к S1 fallback. Для своих файлов нужны `--s1`, `--s2`, `--s1-date`, `--s2-date`; оптика должна содержать 13 полос reflectance×10000 на сетке S1. `--no-optical` проверяет fallback расширенного рецепта с его общей калибровкой; отдельный чистый S1-контроль запускается через `radar/recipe.json`.
+
+Для нового ансамбля бустингов нужны дополнительные зависимости:
+
+```bash
+uv sync --group research
+# На Mac LightGBM может использовать OpenMP из уже установленного torch:
+export DYLD_LIBRARY_PATH="$PWD/.venv/lib/python3.13/site-packages/torch/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}"
+uv run floodvalue infer --chip Bolivia_103757 --recipe artifacts/next_optical/recipe.json --out outputs/next_Bolivia_103757
+```
+
+Команда работает на CPU; порог 0,46 и веса смеси уже зафиксированы. `--no-optical` поддерживается и этим рецептом.
 
 В папке `--out` появятся:
 
@@ -51,11 +90,11 @@ uv run floodvalue infer --s1 path/to/EVENT_ID_S1Hand.tif --out outputs/my_chip
 |---|---|---|
 | `flood_probability.tif` | Float32, nodata -9999 | откалиброванная вероятность воды p |
 | `flood_mask.tif` | UInt8, nodata 255 | 1 вода, 0 не вода; `mask == 1` ровно там, где `p >= threshold` |
-| `flood_uncertainty.tif` | Float32, nodata -9999 | стандартное отклонение вероятностей членов ансамбля |
-| `baseline_mask.tif` | UInt8, nodata 255 | маска порогового baseline |
+| `flood_uncertainty.tif` | Float32, nodata -9999 | разброс S1-ансамбля; с S2 — расхождение S1/S2, в новом рецепте также учитывается разброс оптических моделей |
+| `baseline_mask.tif` | UInt8, nodata 255 | маска порогового baseline в S1-режиме |
 | `inference.json` | JSON | порог, параметры калибровки, доли, sha256 файлов |
 
-CRS, transform и размер копируются из входного S1. Модель работает только по S1, никакие дополнительные данные не нужны. Повторная подгонка на новом чипе не выполняется.
+CRS, transform и размер копируются из входного S1. По умолчанию модель работает только по S1, дополнительные данные не нужны. S1+S2 выбирается явно через отдельный рецепт. Повторная подгонка на новом чипе не выполняется.
 
 ## Протокол проверки
 
@@ -64,7 +103,7 @@ CRS, transform и размер копируются из входного S1. М
 - На validation выбираются: канал baseline, checkpoint каждой модели, конфигурация, параметры калибровки Platt и порог бинаризации. Test и Bolivia ни в каком выборе не участвуют.
 - Нормализация: клип по перцентилям 0,1-99,9 и среднее/σ, посчитанные только по train.
 
-## Результаты
+## Результаты поставляемого ансамбля v1
 
 IoU по всем валидным пикселям части; оба метода на одном наборе пикселей. Полная таблица: `artifacts/evaluation/summary.md`, разбор: [REPORT.md](REPORT.md).
 

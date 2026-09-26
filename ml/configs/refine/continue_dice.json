@@ -1,0 +1,9 @@
+{
+  "name": "refine_continue_dice",
+  "epochs": 12,
+  "batch_size": 16,
+  "crops_per_chip": 4,
+  "crop": 256,
+  "lr": 5e-05,
+  "eval_every": 2
+}

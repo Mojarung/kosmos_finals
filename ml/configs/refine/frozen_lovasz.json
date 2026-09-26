@@ -1,0 +1,5 @@
+{
+  "name": "refine_frozen_lovasz", "epochs": 8, "batch_size": 16,
+  "crop": 256, "crops_per_chip": 4, "lr": 0.00001,
+  "eval_every": 2, "loss": "bce_lovasz", "freeze_bn": true
+}
