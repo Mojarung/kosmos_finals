@@ -15,34 +15,34 @@ def scene_timing(info: dict) -> dict:
     uploaded = info.get("source_kind") == "uploaded_sentinel1_geotiff"
     if uploaded:
         return {"analysis_mode": "uploaded_observation", "water_reference_status": "not_separated",
-                "water_reference_note": "No permanent-water layer was supplied with this GeoTIFF.",
-                "availability_note": ("The observation date was entered by the uploader. Its provenance and "
-                                      "availability on the event date have not been independently verified.")}
+                "water_reference_note": "К этому GeoTIFF не приложен слой постоянной воды.",
+                "availability_note": ("Дату наблюдения ввёл тот, кто загрузил файл. Происхождение снимка и его "
+                                      "доступность на дату события независимо не проверены.")}
     live = info.get("source_kind") == "live_sentinel1_rtc"
     if live:
         if year is not None and year > 2021:
-            water = ("JRC GSW uses observations through 2021, before this Sentinel-1 RTC image. "
-                     "It may miss later changes to rivers and reservoirs.")
+            water = ("JRC GSW построен по наблюдениям до 2021 года, то есть раньше этого снимка Sentinel-1 RTC. "
+                     "Более поздние изменения рек и водохранилищ в нём могут не отражаться.")
             water_status = "pre_event_historical_reference"
         else:
-            water = ("The JRC GSW 1984-2021 reference is not proven to predate this image. "
-                     "Do not interpret the separated mask as an operational flood estimate.")
+            water = ("Не доказано, что слой JRC GSW 1984–2021 старше этого снимка. "
+                     "Отделённую маску паводка нельзя считать оперативной оценкой.")
             water_status = "not_proven_pre_event"
         return {"analysis_mode": "rtc_observation", "water_reference_status": water_status,
                 "water_reference_note": water,
-                "availability_note": ("The image date is shown separately from processing time. "
-                                      "Local segmentation quality has not been measured for this region.")}
+                "availability_note": ("Дата снимка показана отдельно от времени расчёта. "
+                                      "Качество карты воды в этом регионе на месте не измерялось.")}
     if year is not None and year <= 2018:
-        water = ("Sen1Floods11 JRCWaterHand uses annual observations through 2018; this includes "
-                 "months after a 2018 event and later years after a 2016-2017 event. "
-                 "The permanent-water separation is retrospective.")
+        water = ("JRCWaterHand из Sen1Floods11 построен по годовым наблюдениям до 2018 года включительно: "
+                 "для паводка 2018 года туда попали месяцы после события, для паводков 2016–2017 годов "
+                 "более поздние годы. Постоянная вода отделена ретроспективно.")
         water_status = "post_event_observations_possible"
     else:
-        water = ("Sen1Floods11 JRCWaterHand uses observations through 2018. "
-                 "Check the scene date and source publication before interpreting historical availability.")
+        water = ("JRCWaterHand из Sen1Floods11 построен по наблюдениям до 2018 года. Прежде чем судить, "
+                 "был ли слой доступен в прошлом, сверьте дату сцены и дату публикации источника.")
         water_status = "historical_reference"
     return {"analysis_mode": "retrospective_dataset_demo", "water_reference_status": water_status,
             "water_reference_note": water,
-            "availability_note": ("Sen1Floods11 is a later published research dataset. Its label and JRC layer "
-                                  "are used for retrospective demonstration, not claimed available "
-                                  "within 6-12 hours of the historical flood.")}
+            "availability_note": ("Sen1Floods11 опубликован позже как исследовательский набор данных. Его разметка и слой JRC "
+                                  "нужны для ретроспективной демонстрации; мы не утверждаем, что они были "
+                                  "доступны в первые 6–12 часов исторического паводка.")}

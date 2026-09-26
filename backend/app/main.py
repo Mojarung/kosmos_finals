@@ -35,23 +35,23 @@ def parse_bounds(bbox: str | None) -> list[float] | None:
     try:
         numbers = [float(piece) for piece in bbox.split(",")]
     except ValueError as error:
-        raise HTTPException(422, "bbox must contain four decimal coordinates") from error
+        raise HTTPException(422, "Рамка задаётся четырьмя десятичными координатами.") from error
     if (len(numbers) != 4 or numbers[0] >= numbers[2] or numbers[1] >= numbers[3]
             or not (-180 <= numbers[0] < numbers[2] <= 180)
             or not (-85 <= numbers[1] < numbers[3] <= 85)):
-        raise HTTPException(422, "bbox must be west,south,east,north within supported map bounds")
+        raise HTTPException(422, "Рамка задаётся как запад,юг,восток,север в пределах поддерживаемой области карты.")
     return numbers
 
 
 def response(bbox: str | None, budget: float, priority: str, deadline: int,
              must_cover: str | None, scene_id: str | None) -> dict:
     if priority not in {"risk", "information"}:
-        raise HTTPException(422, "priority must be risk or information")
+        raise HTTPException(422, "Цель планирования: risk (ущерб) или information (сомнения).")
     scene_id = scene_id or default_scene_id()
     if scene_id not in known_scene_ids():
-        raise HTTPException(404, "Unknown scene")
+        raise HTTPException(404, "Сцена не найдена.")
     if must_cover and must_cover not in {asset["id"] for asset in metadata(scene_id)["assets"]}:
-        raise HTTPException(422, "Unknown asset")
+        raise HTTPException(422, "Объект не найден.")
     return analyze(parse_bounds(bbox), budget, priority, deadline, must_cover, scene_id)
 
 
@@ -102,7 +102,7 @@ def get_project(project_id: str) -> dict:
     try:
         return projects.get(project_id)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
 
 
 @app.post("/api/projects/{project_id}/assets/import")
@@ -110,7 +110,7 @@ def import_project_assets(project_id: str, request: AssetImport) -> dict:
     try:
         return projects.import_assets(project_id, request.content, request.format)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except (ValueError, TypeError, UnicodeError) as error:
         raise HTTPException(422, str(error)) from error
 
@@ -123,7 +123,7 @@ def save_project_decision(project_id: str, request: DecisionCreate) -> dict:
                             request.must_cover, detail["scene_id"])
         return projects.save_decision(project_id, analysis)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -133,7 +133,7 @@ def preview_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
     try:
         return projects.operator_plan(project_id, request.budget, request.deadline)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -143,7 +143,7 @@ def save_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
     try:
         return projects.save_operator_plan(project_id, request.budget, request.deadline)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -153,7 +153,7 @@ def preview_project_imagery(project_id: str, request: project_imagery.Input) -> 
     try:
         return project_imagery.preview(project_id, request)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -163,7 +163,7 @@ def save_project_imagery(project_id: str, request: project_imagery.Input) -> dic
     try:
         return project_imagery.save(project_id, request)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -173,7 +173,7 @@ def export_project_imagery(project_id: str, request_id: str) -> StreamingRespons
     try:
         return project_imagery.export(project_id, request_id)
     except KeyError as error:
-        raise HTTPException(404, str(error)) from error
+        raise HTTPException(404, "Проект не найден.") from error
 
 
 @app.get("/api/scenes")
@@ -251,7 +251,7 @@ def create_scene(request: IngestRequest, response: Response) -> dict:
     try:
         job = ingest.start(request.chip_id)
     except KeyError as error:
-        raise HTTPException(404, "Unknown official Sen1Floods11 hand-labeled chip") from error
+        raise HTTPException(404, "Такого официального чипа Sen1Floods11 с ручной разметкой нет.") from error
     if job["id"] is None:
         response.status_code = 200
     return job
@@ -261,7 +261,7 @@ def create_scene(request: IngestRequest, response: Response) -> dict:
 def job_status(job_id: str) -> dict:
     job = ingest.get(job_id)
     if job is None:
-        raise HTTPException(404, "Unknown job")
+        raise HTTPException(404, "Задача не найдена.")
     return job
 
 
@@ -309,7 +309,7 @@ def create_live_job(request: LiveJobCreate) -> dict:
 def get_live_job(job_id: str) -> dict:
     job = live_jobs.get(job_id)
     if job is None:
-        raise HTTPException(404, "Unknown live job")
+        raise HTTPException(404, "Задача расчёта рамки не найдена.")
     return job
 
 
@@ -317,7 +317,7 @@ def get_live_job(job_id: str) -> dict:
 def separate_permanent(scene_id: str) -> dict:
     """Permanent water of a live region from the JRC Global Surface Water archive (1984-2021)."""
     if scene_id not in known_scene_ids():
-        raise HTTPException(404, "Unknown scene")
+        raise HTTPException(404, "Сцена не найдена.")
     try:
         return separate_live(scene_id)
     except LiveError as error:
@@ -332,7 +332,7 @@ def pixel(
 ) -> dict:
     scene_id = scene_id or default_scene_id()
     if scene_id not in known_scene_ids():
-        raise HTTPException(404, "Unknown scene")
+        raise HTTPException(404, "Сцена не найдена.")
     return inspect_pixel(longitude, latitude, scene_id)
 
 
