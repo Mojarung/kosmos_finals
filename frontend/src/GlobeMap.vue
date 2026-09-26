@@ -188,14 +188,18 @@ const reliefTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevat
 function addRelief() {
   const before = map.getStyle().layers.find(layer => /^waterway|^water$/.test(layer.id))?.id
   map.addSource('relief', { type: 'raster', tiles: [reliefTiles], tileSize: 256, maxzoom: 16,
-    attribution: 'Relief © Esri, USGS, NGA, NASA, CGIAR' })
+    attribution: 'Рельеф © Esri, USGS, NGA, NASA, CGIAR' })
   const dark = state.theme === 'dark'
   map.addLayer({ id: 'relief-layer', type: 'raster', source: 'relief', minzoom: 5,
     paint: { 'raster-opacity': dark ? 0.5 : 0.2, 'raster-brightness-max': dark ? 0.32 : 1, 'raster-fade-duration': 200 } }, before)
 }
-// Подписи по-русски, где в OSM есть русское имя, иначе латиницей: по умолчанию стиль пишет
-// латиницу и местное письмо в две строки. Номера дорог (ref) не трогаем.
-const LABEL = ['coalesce', ['get', 'name:ru'], ['get', 'name:latin'], ['get', 'name']]
+// Подписи по-русски: русское имя из OSM, иначе местное, если оно кириллицей (посёлки России и соседей
+// часто без name:ru), и только потом латиница. По умолчанию стиль пишет латиницу и местное письмо в две строки.
+// Кириллица узнаётся сравнением строк: всё, что начинается с U+0400–U+04FF, лежит между 'Ѐ' и 'Ԁ'.
+// Номера дорог (ref) не трогаем.
+const LOCAL = ['to-string', ['get', 'name']]
+const LABEL = ['coalesce', ['get', 'name:ru'],
+  ['case', ['all', ['>=', LOCAL, 'Ѐ'], ['<', LOCAL, 'Ԁ']], LOCAL, ['coalesce', ['get', 'name:latin'], ['get', 'name']]]]
 function localizeLabels() {
   for (const layer of map.getStyle().layers) {
     const field = layer.type === 'symbol' && layer.layout?.['text-field']
@@ -233,7 +237,7 @@ function buildOverlays() {
   for (const id of ['chip', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey']) map.addSource(id, { type: 'geojson', data: empty })
   map.addSource('satellite', {
     type: 'raster', tiles: [satelliteTiles], tileSize: 256,
-    attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community',
+    attribution: 'Снимки © Esri, Maxar, Earthstar Geographics и сообщество пользователей ГИС',
   })
   map.addLayer({ id: 'satellite-layer', type: 'raster', source: 'satellite',
     layout: { visibility: state.basemap === 'satellite' ? 'visible' : 'none' },
