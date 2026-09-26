@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import hashlib
 import io
 import json
@@ -218,6 +219,11 @@ def demo():
 
 def load_source(scene_id, source, progress=None, deadline=None):
     info = catalog.metadata(scene_id)
+    prepared_path = sources.ROOT / "data/buildings/prepared.json"
+    prepared = json.loads(prepared_path.read_text()) if prepared_path.exists() else {}
+    if source == "auto" and scene_id in prepared:
+        with gzip.open(sources.ROOT / "data/buildings" / prepared[scene_id], "rt", encoding="utf-8") as handle:
+            return json.load(handle)
     if source == "paiporta" or source == "auto" and scene_id == "Paiporta_20241101":
         return sources.normalize(json.loads((sources.ROOT / "data/buildings/paiporta.geojson").read_text()))
     if source in {"auto", "osm"}:

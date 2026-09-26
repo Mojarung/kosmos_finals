@@ -6,9 +6,11 @@ import CalibrationBadge from './CalibrationBadge.vue'
 import MorphPanel from './MorphPanel.vue'
 import ShareBar from './ShareBar.vue'
 import { calibrationChecked, doubtThreshold, hasData, isLive, permanentJob, permanentSeparated, resetRegion, retryRegion, state, testQuality } from '../store'
+import { sceneCollection } from '../lib/sceneCollections'
 import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
+const showcase = computed(() => sceneCollection(state.analysis?.chip) === 'showcase')
 const region = computed(() => state.analysis?.region)
 const livePending = computed(() => ['searching', 'preparing', 'error'].includes(state.liveStatus))
 
@@ -26,7 +28,7 @@ const headline = computed(() => {
   const r = region.value
   if (!r) return null
   return permanentSeparated.value
-    ? { caption: 'Паводок по модели', value: r.flood_water_area_km2,
+    ? { caption: showcase.value ? 'Вода вне постоянных водоёмов' : 'Паводок по модели', value: r.flood_water_area_km2,
         hint: r.permanent_status === 'jrc_gsw'
           ? 'Вода по модели минус постоянная вода JRC Global Surface Water: реки и озёра, которые были водой и в 1984, и в 2021 году'
           : 'Вода по модели минус постоянная вода JRC (реки и озёра, которые были водой и в 1984, и в 2018 году)' }
@@ -54,7 +56,7 @@ const segments = computed(() => {
   const water = r.model_water_area_km2
   const dry = Math.max(r.observed_area_km2 - water, 0)
   const parts = permanentSeparated.value
-    ? [{ key: 'flood', label: 'Паводок', value: r.flood_water_area_km2, color: 'var(--water-shallow)' },
+    ? [{ key: 'flood', label: showcase.value ? 'Вне водоёмов' : 'Паводок', value: r.flood_water_area_km2, color: 'var(--water-shallow)' },
        { key: 'river', label: 'Река, озеро', value: r.permanent_water_area_km2, color: 'var(--water-deep)' }]
     : [{ key: 'water', label: 'Вода', value: water, color: 'var(--water)' }]
   return [...parts, { key: 'dry', label: 'Суша', value: dry, color: 'var(--surface-3)' }]
@@ -76,7 +78,7 @@ function toggleDrawing() {
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть панель воды'" @click="state.observeOpen = true">
         <Waves :size="16" class="accent" />
-        <span v-if="hasData && headline" class="tabular">{{ number(headline.value, headline.value < 10 ? 2 : 1) }} км² {{ permanentSeparated ? 'паводка' : 'воды' }}</span>
+        <span v-if="hasData && headline" class="tabular">{{ number(headline.value, headline.value < 10 ? 2 : 1) }} км² {{ permanentSeparated ? showcase ? 'воды вне водоёмов' : 'паводка' : 'воды' }}</span>
         <span v-else>Вода</span>
       </button>
     </template>

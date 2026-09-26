@@ -1,0 +1,42 @@
+[
+  {
+    "scene_id": "Surgut_20260920",
+    "prepared_from": "live_f4678c22d8ab4a00",
+    "bbox": [
+      73.22574185384656,
+      61.15902589870771,
+      73.53660744821465,
+      61.30413006802664
+    ],
+    "water_area_km2": 56.41,
+    "outside_permanent_water_km2": 8.741,
+    "buildings": 21379,
+    "buildings_intersecting_model_water": 152,
+    "sha256": {
+      "probability.f32": "cc4106de86d715128d3ecc5cc63a7df9c5ffc80dc6c620edfdaa11642202c3bc",
+      "model_mask.bin": "7ef23fb088b75eb21f7aaa6db209a85ec5b35a0e18c34449fba8c32c99dbb615",
+      "permanent_mask.bin": "b7fbb996d1710896b20a5ecccaf30b034cc894eda2894190cd3cd3b6b14b63fa"
+    },
+    "note": "Raster coordinates and values unchanged. Water outside JRC is model output, not confirmed flooding. OSM footprints are contemporary, damage amounts are scenarios."
+  },
+  {
+    "scene_id": "Civita_20260923",
+    "prepared_from": "live_7d2f260840204530",
+    "bbox": [
+      12.334382231316795,
+      42.24336369967742,
+      12.497881720880656,
+      42.34759538632983
+    ],
+    "water_area_km2": 6.533,
+    "outside_permanent_water_km2": 6.329,
+    "buildings": 3957,
+    "buildings_intersecting_model_water": 3,
+    "sha256": {
+      "probability.f32": "b182e17261ea376f60394299a02ea12e9b33fc8e91c4f7b62c2521e1f786712d",
+      "model_mask.bin": "b7bb84d862d7c4c1069a6872e1eb55da7e46d64454435bdfd004ec119fe66c32",
+      "permanent_mask.bin": "d56a08e0411586cbef3ceddb33582c0696d3430ef5bc4c70244a2ed32e42ee51"
+    },
+    "note": "Raster coordinates and values unchanged. Water outside JRC is model output, not confirmed flooding. OSM footprints are contemporary, damage amounts are scenarios."
+  }
+]

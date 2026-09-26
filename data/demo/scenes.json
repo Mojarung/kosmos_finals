@@ -17,7 +17,8 @@
       "flood_water_area_km2": 11.332,
       "split_part": "test_core",
       "metrics_independent": false,
-      "origin": "demo"
+      "origin": "demo",
+      "collection": "official"
     },
     {
       "chip_id": "Ghana_313799",
@@ -35,7 +36,8 @@
       "flood_water_area_km2": 0.353,
       "split_part": "test_core",
       "metrics_independent": false,
-      "origin": "demo"
+      "origin": "demo",
+      "collection": "official"
     },
     {
       "chip_id": "Mekong_333434",
@@ -53,7 +55,46 @@
       "flood_water_area_km2": 0.264,
       "split_part": "test_core",
       "metrics_independent": false,
-      "origin": "demo"
+      "origin": "demo",
+      "collection": "official"
+    },
+    {
+      "chip_id": "Surgut_20260920",
+      "event": "Сургут · город и Обь",
+      "observed_at": "2026-09-20T01:23:34.712834Z",
+      "bbox": [
+        73.22574185384656,
+        61.15902589870771,
+        73.53660744821465,
+        61.30413006802664
+      ],
+      "model_water_area_km2": 56.41,
+      "origin": "demo",
+      "source_kind": "live_sentinel1_rtc",
+      "collection": "showcase",
+      "demo_note": "Реальный снимок Sentinel‑1 и контуры OSM. Вода по модели; наличие паводка и повреждение домов не подтверждены. Дополнительный пример, не официальный чип Sen1Floods11.",
+      "flood_water_area_km2": 8.741,
+      "building_count": 21379,
+      "buildings_intersecting_water_mask": 152
+    },
+    {
+      "chip_id": "Civita_20260923",
+      "event": "Чивита-Кастеллана · Италия",
+      "observed_at": "2026-09-23T17:05:40.100040Z",
+      "bbox": [
+        12.334382231316795,
+        42.24336369967742,
+        12.497881720880656,
+        42.34759538632983
+      ],
+      "model_water_area_km2": 6.533,
+      "origin": "demo",
+      "source_kind": "live_sentinel1_rtc",
+      "collection": "showcase",
+      "demo_note": "Реальный снимок Sentinel‑1 и контуры OSM. Вода по модели; наличие паводка и повреждение домов не подтверждены. Дополнительный пример, не официальный чип Sen1Floods11.",
+      "flood_water_area_km2": 6.329,
+      "building_count": 3957,
+      "buildings_intersecting_water_mask": 3
     },
     {
       "chip_id": "Paiporta_20241101",
@@ -67,7 +108,9 @@
       ],
       "model_water_area_km2": 0.005,
       "origin": "demo",
-      "source_kind": "live_sentinel1_rtc"
+      "source_kind": "live_sentinel1_rtc",
+      "collection": "showcase",
+      "demo_recommended": false
     }
   ]
 }

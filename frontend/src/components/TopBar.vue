@@ -7,6 +7,7 @@ import UploadS1 from './UploadS1.vue'
 import { chooseScene, loadLiveItem, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date } from '../lib/format'
+import { sceneCollection } from '../lib/sceneCollections'
 import { eventKey, flagUrl } from '../lib/flags'
 
 const emit = defineEmits(['globe', 'focus-chip', 'tilt', 'place'])
@@ -34,11 +35,12 @@ const origin = computed(() => {
   const scene = current.value
   if (!scene || scene.chip_id === 'live_pending') return null
   const chip = state.analysis?.chip?.chip_id === scene.chip_id ? state.analysis.chip : null
-  if (chip?.source_kind === 'uploaded_sentinel1_geotiff') {
+  const sourceKind = chip?.source_kind || scene.source_kind
+  if (sourceKind === 'uploaded_sentinel1_geotiff') {
     return { label: 'Свой GeoTIFF', value: chip.source_filename || scene.chip_id,
       tip: `Загруженный двухканальный Sentinel‑1 GeoTIFF · VV/VH · дата ${date(scene.observed_at)}. Источник и лицензия указаны пользователем, локальная точность не измерена.` }
   }
-  if (!scene.chip_id.startsWith('live_') && chip?.source_kind !== 'live_sentinel1_rtc') {
+  if (!scene.chip_id.startsWith('live_') && sourceKind !== 'live_sentinel1_rtc') {
     return { label: 'S1‑чип', value: scene.chip_id,
       tip: `S1‑чип ${scene.chip_id} из Sen1Floods11 v1.1: радар Sentinel‑1 GRD, поляризации VV и VH, снимок ${date(scene.observed_at)}` }
   }
@@ -62,6 +64,7 @@ const origin = computed(() => {
       v-tip="origin?.tip || 'Радар Sentinel‑1, поляризации VV и VH'">
       <Transition name="roll" mode="out-in">
         <div :key="current.chip_id" class="scene-title-body">
+          <span v-if="current.chip_id !== 'live_pending'" class="scene-collection-label">{{ sceneCollection(current) === 'official' ? 'По ТЗ · Sen1Floods11' : 'Наши демо · Sentinel‑1' }}</span>
           <h1 class="scene-country">
             <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
               @error="failedFlags.add(flag)" />{{ current.event }}
@@ -70,6 +73,7 @@ const origin = computed(() => {
               v-if="origin" class="scene-source"><span class="scene-kind">{{ origin.label }}</span> <span class="scene-chip tabular">{{ origin.value }}</span></span><span
               v-else class="scene-source">Sentinel‑1</span><span v-if="state.analysis?.chip?.chip_id === current.chip_id && state.analysis.chip.timing?.analysis_mode === 'retrospective_dataset_demo'"
               class="scene-timing" v-tip="state.analysis.chip.timing.availability_note">Ретроспектива</span></p>
+          <p v-if="current.demo_note" class="scene-demo-note">Вода по модели · паводок не подтверждён</p>
         </div>
       </Transition>
     </div>
@@ -84,7 +88,7 @@ const origin = computed(() => {
             <option v-for="item in state.liveCandidates" :key="item.id" :value="item.id">{{ date(item.datetime) }} · {{ utcTime(item.datetime) }} UTC · {{ item.platform }}{{ item.item_count > 1 ? ` · ${item.item_count} кадра` : '' }}</option>
           </select>
         </label>
-        <button class="live-demo-link" v-tip="'Вернуться к подготовленным снимкам Sen1Floods11'" @click="chooseScene('Nigeria_812045')">Готовые снимки</button>
+        <button class="live-demo-link" v-tip="'Вернуться к каталогу подготовленных снимков'" @click="chooseScene('Nigeria_812045')">Готовые снимки</button>
       </div>
       <CountryPicker v-else @focus-chip="emit('focus-chip')" />
     </div>

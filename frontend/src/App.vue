@@ -1,4 +1,5 @@
 <script setup>
+import { sceneCollection } from './lib/sceneCollections'
 import { gsap } from 'gsap'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import GlobeMap from './GlobeMap.vue'
@@ -38,7 +39,7 @@ const doubtHint = computed(() => {
 // Легенда называет ровно то, что сейчас нарисовано на карте.
 const legend = computed(() => {
   const water = permanentSeparated.value
-    ? [{ key: 'flood', label: 'Паводок', hint: 'Вода, которой нет на карте постоянной воды JRC' },
+    ? [{ key: 'flood', label: sceneCollection(state.analysis?.chip) === 'showcase' ? 'Вода вне водоёмов' : 'Паводок', hint: 'Вода, которой нет на карте постоянной воды JRC' },
        { key: 'river', label: 'Река, озеро', hint: state.analysis?.region.permanent_status === 'jrc_gsw'
          ? 'Постоянная вода JRC Global Surface Water. В обязательном p × V × q она не обнуляется; поправка только на паводок показана отдельно'
          : 'Постоянная вода JRC. В обязательном p × V × q она не обнуляется; поправка только на паводок показана отдельно' }]
