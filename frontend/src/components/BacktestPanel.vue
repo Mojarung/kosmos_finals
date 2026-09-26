@@ -37,38 +37,34 @@ const barWidth = (value, maximum) => `${maximum ? Math.max(value > 0 ? 2 : 0, va
 </script>
 
 <template>
-  <section class="backtest block" data-testid="backtest" :aria-busy="loading">
-    <div class="backtest-heading"><div><span class="caption">ПРОВЕРКА НА ПРОШЛЫХ ПАВОДКАХ</span><h3>Что исправил бы заказ</h3></div><span class="backtest-tag">ретроспектива</span></div>
-    <p v-if="loading" role="status">Загружаем результаты 70 чипов…</p>
-    <div v-else-if="error" role="alert"><p>{{ error }}</p><button type="button" class="backtest-action" @click="load">Повторить</button></div>
-    <template v-else-if="summary">
-      <p class="backtest-lead">При лимите <b>{{ rub(result.budget_rub) }}</b> и сроке <b>{{ result.deadline_hours }} ч</b> стратегия C снизила ошибку EL‑прокси на <strong>{{ fmt(summary.c_error_reduction_percent) }}</strong> за <strong>{{ fmt(summary.c_price_share_of_b_percent) }}</strong> цены широкой съёмки B.</p>
-      <figure class="backtest-chart" data-testid="backtest-chart" aria-label="Сравнение A, B и C: сумма ошибки EL-прокси и цена данных на 70 чипах">
-        <figcaption>Что даёт заказ на 70 чипах <small>меньше ошибка и цена — лучше</small></figcaption>
-        <div class="backtest-axis"><span>Стратегия</span><span>Ошибка EL‑прокси</span><span>Цена данных</span></div>
-        <div v-for="row in comparisons" :key="row.key" class="backtest-chart-row">
-          <span class="backtest-chart-name"><b>{{ row.key }}</b><small>{{ row.name }}</small></span>
-          <div class="backtest-measure"><b>{{ compactRub(row.error) }}</b><div class="backtest-track"><span class="backtest-error-bar" :style="{ width: barWidth(row.error, summary.error_a_rub) }" /></div></div>
-          <div class="backtest-measure"><b>{{ compactRub(row.cost) }}</b><div class="backtest-track"><span class="backtest-cost-bar" :style="{ width: barWidth(row.cost, summary.b_cost_rub) }" /></div></div>
-        </div>
-        <p>B — идеальный верхний предел: метка открыта по всей области; широкий заказ может превышать лимит на чип.</p>
-      </figure>
-      <div class="backtest-numbers">
-        <div><b>{{ compactRub(summary.error_a_rub) }} → {{ compactRub(summary.error_c_rub) }}</b><span>сумма |pVq − yVq|, A → C</span></div>
-        <div><b>{{ summary.c_corrected_statuses }} из {{ summary.b_corrected_statuses }}</b><span>статусов вода/суша исправлено C от возможных у B</span></div>
-        <div><b>{{ summary.labelled_assets }} из {{ summary.chips * 10 }}</b><span>объектов с валидной меткой</span></div>
-      </div>
-      <p class="backtest-range">Разброс по чипам: {{ fmt(summary.c_reduction_chip_bootstrap_95_percent[0]) }}–{{ fmt(summary.c_reduction_chip_bootstrap_95_percent[1]) }} (описательный 95% bootstrap). B стоит {{ compactRub(summary.b_cost_rub) }} на всех 70 чипах и может выходить за лимит; C — {{ compactRub(summary.c_cost_rub) }}.</p>
-      <details class="backtest-details">
-        <summary>По выборкам и как считали</summary>
-        <div class="backtest-splits"><div v-for="part in ['test_core', 'bolivia']" :key="part"><b>{{ part === 'test_core' ? 'test_core' : 'Bolivia' }} · {{ result.parts[part].chips }} чипов</b><span>−{{ fmt(result.parts[part].c_error_reduction_percent) }} ошибки · C за {{ fmt(result.parts[part].c_price_share_of_b_percent) }} B</span></div></div>
-        <p>Десять объектов на чип взяты из S1 без знания меток. По вероятностям построили зоны и выбрали C точным перебором; только после этого открыли ручную метку внутри купленных зон. На некупленных участках p оставили прежней. A не покупает снимок, B покрывает весь чип.</p>
-        <p>Метка Sen1Floods11 построена по S2 с шагом около 10 м. Она заменяет предполагаемое наблюдение в эксперименте, но не равна кадру 1 м. Это ошибка прокси воды и учебного EL, а не измеренный ущерб или предотвращённые потери. Чипы одного события зависимы; test и Bolivia уже изучались.</p>
-      </details>
-      <p v-if="current" class="backtest-current">Текущий чип {{ current.chip_id }}: C исправила {{ current.C.corrected_statuses }} статусов среди {{ current.labelled_assets }} размеченных объектов; ошибка {{ compactRub(current.A.error_after_rub) }} → {{ compactRub(current.C.error_after_rub) }}. Это фиксированный тест при {{ rub(result.budget_rub) }}, а не текущие настройки ползунка.</p>
-      <p v-else class="backtest-current">Для текущей области ручной метки нет. Числа выше относятся только к историческим чипам.</p>
-    </template>
-  </section>
+  <details class="backtest disclosure" data-testid="backtest" :aria-busy="loading">
+    <summary>Проверка на 70 участках <span v-if="summary">−{{ fmt(summary.c_error_reduction_percent) }} ошибки</span></summary>
+    <div class="disclosure-body">
+      <p v-if="loading" role="status">Загружаем результаты…</p>
+      <div v-else-if="error" role="alert"><p>{{ error }}</p><button type="button" class="backtest-action" @click="load">Повторить</button></div>
+      <template v-else-if="summary">
+        <p class="panel-note">Исторический тест прежней модели S1. На каждом участке выбирали зоны в пределах {{ rub(result.budget_rub) }}, затем сверяли прогноз с ручной разметкой.</p>
+        <figure class="backtest-chart" data-testid="backtest-chart" aria-label="Ошибка расчётного ущерба и цена на 70 участках">
+          <figcaption>Суммы за 70 участков</figcaption>
+          <div class="backtest-axis"><span>Заказ</span><span>Ошибка оценки</span><span>Цена снимков</span></div>
+          <div v-for="row in comparisons" :key="row.key" class="backtest-chart-row">
+            <span class="backtest-chart-name"><b>{{ row.key }}</b><small>{{ row.name }}</small></span>
+            <div class="backtest-measure"><b>{{ compactRub(row.error) }}</b><div class="backtest-track"><span class="backtest-error-bar" :style="{ width: barWidth(row.error, summary.error_a_rub) }" /></div></div>
+            <div class="backtest-measure"><b>{{ compactRub(row.cost) }}</b><div class="backtest-track"><span class="backtest-cost-bar" :style="{ width: barWidth(row.cost, summary.b_cost_rub) }" /></div></div>
+          </div>
+        </figure>
+        <p class="panel-note">Выбор зон C: на {{ fmt(summary.c_error_reduction_percent) }} меньше ошибки за {{ fmt(summary.c_price_share_of_b_percent) }} цены съёмки всей области B. Это уточнение оценки, а не предотвращённый ущерб.</p>
+        <details class="backtest-details"><summary>Выборка и ограничения</summary>
+          <p>{{ summary.labelled_assets }} размеченных объектов; исправлено {{ summary.c_corrected_statuses }} из {{ summary.b_corrected_statuses }} ошибочных статусов «вода / суша».</p>
+          <p>Разброс: {{ fmt(summary.c_reduction_chip_bootstrap_95_percent[0]) }}–{{ fmt(summary.c_reduction_chip_bootstrap_95_percent[1]) }} (описательный 95% bootstrap).</p>
+          <div v-for="part in ['test_core', 'bolivia']" :key="part">{{ part === 'test_core' ? 'test_core' : 'Bolivia' }}: {{ result.parts[part].chips }} участков · −{{ fmt(result.parts[part].c_error_reduction_percent) }} ошибки.</div>
+          <p>Метка по S2 с шагом 10 м заменяет покупку в эксперименте; это не проверка снимка 1 м. B открывает метку везде и может превышать бюджет. Участки одного события зависимы.</p>
+          <p v-if="current">{{ current.chip_id }} в старом тесте: ошибка {{ compactRub(current.A.error_after_rub) }} → {{ compactRub(current.C.error_after_rub) }}.</p>
+          <p>Это фиксированный тест при {{ rub(result.budget_rub) }} и {{ result.deadline_hours }} ч. Ползунок и новая модель эти результаты не меняют.</p>
+        </details>
+      </template>
+    </div>
+  </details>
 </template>
 
 <style scoped>
@@ -105,4 +101,14 @@ const barWidth = (value, maximum) => `${maximum ? Math.max(value > 0 ? 2 : 0, va
 .backtest-splits div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
 .backtest-action { border: 0; background: transparent; padding: 0; color: var(--reference); text-decoration: underline; cursor: pointer; }
 @media (max-width: 520px) { .backtest-numbers { grid-template-columns: 1fr; } }
+</style>
+
+<style scoped>
+.backtest { border-left: 0; }
+.backtest > summary { flex-wrap: wrap; }
+.backtest > summary span { font-size: 12px; color: var(--reference); }
+.backtest-chart { border: 0; background: none; padding: 0; }
+.backtest-chart-name small, .backtest-measure b, .backtest-axis { font-size: 12px; }
+.backtest-details { font-size: 12px; }
+.backtest-details summary { padding-block: 10px; }
 </style>

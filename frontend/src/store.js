@@ -6,6 +6,8 @@ import { computed, reactive, watch } from 'vue'
  */
 export const state = reactive({
   procurementOpen: false,
+  procurementMethod: 'budget',
+  voiExportHref: null,
   procurementMapMode: false,
   procurementOverlay: null,
   procurementProjectId: null,

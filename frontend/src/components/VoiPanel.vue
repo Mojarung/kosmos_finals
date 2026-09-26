@@ -1,6 +1,5 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { Download, Info } from '@lucide/vue'
 import { compactRub, plural, rub } from '../lib/format'
 import BubbleTabs from './BubbleTabs.vue'
 import { state } from '../store'
@@ -40,8 +39,10 @@ function overlay() {
       || result.value.inputs.must_cover !== state.mustCover
       || result.value.inputs.visit_cost_rub !== Number(visitCost.value)) {
     state.procurementOverlay = null
+    state.voiExportHref = null
     return
   }
+  state.voiExportHref = exportHref.value
   const selected = new Set(result.value.plan.zone_ids)
   const zoneAssets = new Map(result.value.zones.map(zone => [zone.zone_id, zone.asset_ids]))
   state.procurementOverlay = state.analysis.zones
@@ -80,11 +81,12 @@ async function load() {
 }
 watch(() => [props.active, state.sceneId, state.region, state.deadline, state.mustCover, visitCost.value], () => {
   clearTimeout(timer)
+  state.voiExportHref = null
   if (props.active) timer = setTimeout(load, 180)
   else { controller?.abort(); overlay() }
 }, { immediate: true })
 watch(() => state.analysis, overlay)
-onBeforeUnmount(() => { clearTimeout(timer); controller?.abort(); state.procurementOverlay = null })
+onBeforeUnmount(() => { clearTimeout(timer); controller?.abort(); state.procurementOverlay = null; state.voiExportHref = null })
 
 function zoneName(zone) {
   if (zone.kind === 'broad') return 'Вся область'
@@ -103,86 +105,53 @@ function reason(zone) {
 <template>
   <div class="voi" data-testid="voi-panel">
     <section class="block voi-intro">
-      <span class="caption">ЭКОНОМИЧЕСКОЕ ПРАВИЛО</span>
-      <h3>Стоит ли покупать снимок?</h3>
-      <p>Сравниваем цену снимка с ожидаемой экономией решений о выезде к объектам.</p>
-      <label for="visit-cost">Цена одного выезда, ₽ <span class="scenario-label">сценарий</span></label>
-      <input id="visit-cost" v-model.number="visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" :aria-invalid="!validVisitCost" aria-describedby="visit-cost-hint" />
-      <div class="voi-control"><span>Решение нужно через</span><BubbleTabs v-model="state.deadline" :options="deadlineOptions" size="sm" label="Срок решения" /></div>
-      <label for="voi-must-cover">Обязательно проверить</label>
-      <select id="voi-must-cover" v-model="mustCoverModel" aria-label="Обязательный объект">
-        <option value="">Без условия</option>
-        <option v-for="asset in state.analysis?.assets || []" :key="asset.id" :value="asset.id">{{ asset.name }}</option>
-      </select>
-      <p id="visit-cost-hint" class="voi-hint">Вероятность и V×q — из текущих объектов. Цена выезда, цена снимка и идеальность наблюдения — сценарии.</p>
-      <p v-if="state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="voi-hint">Для новой области калибровка вероятностей не проверена по ручной метке; оценка пользы особенно предварительна.</p>
+      <h3>Окупится ли снимок?</h3>
+      <label for="visit-cost">Цена выезда к одному объекту, ₽</label>
+      <input id="visit-cost" v-model.number="visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" :aria-invalid="!validVisitCost" />
+      <div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="deadlineOptions" size="sm" label="Срок решения" /></div>
     </section>
-
-    <p v-if="loading" class="block" role="status">Пересчитываем все корзины…</p>
+    <p v-if="loading" class="block" role="status">Считаем…</p>
     <div v-if="error" class="block error-note" role="alert">{{ error }} <button @click="load">Повторить</button></div>
-    <template v-if="result && !loading">
+    <div v-if="result" class="voi-output" :class="{ dimmed: loading }" :inert="loading || undefined">
       <section class="block voi-result">
-        <span class="caption">РЕШЕНИЕ ПРИ ЭТИХ ДОПУЩЕНИЯХ</span>
         <h3 v-if="result.plan.zone_ids.length">{{ plural(result.plan.zone_ids.length, ['зона', 'зоны', 'зон']) }} за {{ rub(result.plan.derived_budget_rub) }}</h3>
         <h3 v-else>Заказ не окупается</h3>
-        <figure class="voi-chart" data-testid="voi-chart" aria-label="Сравнение пользы снимков и цены данных для выбранной корзины">
-          <figcaption>Польза и цена выбранной корзины <small>₽ · один масштаб для обеих полос</small></figcaption>
-          <div class="voi-chart-line"><span>Польза</span><b>{{ compactRub(result.plan.voi_rub) }}</b><div class="voi-track"><span class="voi-benefit-bar" :style="{ width: barWidth(result.plan.voi_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
-          <div class="voi-chart-line"><span>Цена данных</span><b>{{ compactRub(result.plan.derived_budget_rub) }}</b><div class="voi-track"><span class="voi-price-bar" :style="{ width: barWidth(result.plan.derived_budget_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
+        <figure class="voi-chart" data-testid="voi-chart" aria-label="Ожидаемая экономия на решениях и цена снимков в рублях">
+          <figcaption>Экономия и цена <small>ожидаемые суммы, ₽</small></figcaption>
+          <div class="voi-chart-line"><span>Экономия на решениях</span><b>{{ compactRub(result.plan.voi_rub) }}</b><div class="voi-track"><span class="voi-benefit-bar" :style="{ width: barWidth(result.plan.voi_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
+          <div class="voi-chart-line"><span>Цена снимков</span><b>{{ compactRub(result.plan.derived_budget_rub) }}</b><div class="voi-track"><span class="voi-price-bar" :style="{ width: barWidth(result.plan.derived_budget_rub, Math.max(result.plan.voi_rub, result.plan.derived_budget_rub)) }" /></div></div>
         </figure>
-        <p v-if="result.status === 'no_positive_net_basket' && state.mustCover">Обязательный объект нельзя покрыть с положительной чистой пользой при заданной цене выезда и сроке.</p>
-        <p v-else-if="!result.plan.zone_ids.length">При выбранной цене выезда ни одна своевременная корзина не даёт положительной выгоды после цены снимков.</p>
-        <div class="voi-totals">
-          <div><span>Польза наблюдения</span><b>{{ rub(result.plan.voi_rub) }}</b></div>
-          <div><span>Цена данных · выведенный бюджет</span><b>{{ rub(result.plan.derived_budget_rub) }}</b></div>
-          <div class="voi-net"><span>Чистая польза после данных</span><b>{{ rub(result.plan.net_after_data_rub) }}</b></div>
-        </div>
-        <p class="voi-action">Ожидаемая стоимость решений о выездах: {{ compactRub(result.plan.action_cost_before_rub) }} без снимка → {{ compactRub(result.plan.action_cost_after_observation_rub) }} с идеальным снимком внутри заказа.</p>
-        <p class="voi-action">Работа и обработка: {{ rub(result.plan.other_cost_rub) }} отдельно. Полная сценарная стоимость решения с данными: {{ rub(result.plan.decision_cost_rub) }}.</p>
+        <div class="voi-totals"><div class="voi-net"><span>Выгода после снимков</span><b>{{ rub(result.plan.net_after_data_rub) }}</b></div></div>
+        <p class="panel-note">Сценарий: снимок помогает избежать лишних выездов и пропусков затопленных объектов. Обработка — ещё {{ rub(result.plan.other_cost_rub) }}.</p>
+        <p v-if="result.status === 'no_positive_net_basket' && state.mustCover" class="panel-note">Проверить обязательный объект с положительной выгодой в этот срок не получится.</p>
       </section>
-
-      <section class="block">
-        <span class="caption">ПОЧЕМУ ЭТИ ЗОНЫ</span>
-        <p v-if="chosen.length" class="voi-zone-guide">Нажмите зону, чтобы найти её на карте. Полосы сравнивают пользу и цену отдельного заказа; цена в корзине учитывает скидку.</p>
-        <div v-if="!chosen.length" class="voi-hint">Выбранных зон нет. Измените цену выезда или срок, чтобы посмотреть другое решение.</div>
+      <details class="disclosure voi-settings"><summary>Условия расчёта</summary><div class="disclosure-body voi-intro">
+        <label for="voi-must-cover">Обязательно проверить</label>
+        <select id="voi-must-cover" v-model="mustCoverModel" aria-label="Обязательный объект"><option value="">Без условия</option><option v-for="asset in state.analysis?.assets || []" :key="asset.id" :value="asset.id">{{ asset.name }}</option></select>
+        <p class="panel-note">Цена выезда, тариф и ущерб — допущения. Снимок считается идеальным: точно показывает воду у объекта.</p>
+        <p v-if="state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="panel-note">Точность вероятностей на этой новой территории ещё не проверена.</p>
+      </div></details>
+      <details class="disclosure"><summary>Выбранные зоны · {{ chosen.length }}</summary><div class="disclosure-body">
+        <p class="panel-note">Нажмите на зону, чтобы найти её на карте.</p>
+        <div v-if="!chosen.length" class="panel-note">Нет выгодных зон при этих условиях.</div>
         <div class="voi-zones">
-          <button v-for="zone in chosen" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)"
-            @pointerenter="state.hoverZoneId = zone.zone_id" @pointerleave="state.hoverZoneId = null"
-            @focus="state.hoverZoneId = zone.zone_id" @blur="state.hoverZoneId = null">
-            <span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ plural(zone.asset_ids.length, ['объект', 'объекта', 'объектов']) }} · {{ reason(zone) }}</small>
+          <button v-for="zone in chosen" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)" @pointerenter="state.hoverZoneId = zone.zone_id" @pointerleave="state.hoverZoneId = null" @focus="state.hoverZoneId = zone.zone_id" @blur="state.hoverZoneId = null">
+            <span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ plural(zone.asset_ids.length, ['объект', 'объекта', 'объектов']) }}</small>
               <span class="voi-zone-bars" aria-label="Польза и цена зоны отдельно">
                 <span><small>Польза {{ rub(zone.voi_alone_rub) }}</small><span class="voi-track"><span class="voi-benefit-bar" :style="{ width: zoneWidth(zone, zone.voi_alone_rub) }" /></span></span>
                 <span><small>Цена {{ rub(zone.price_alone_rub) }}</small><span class="voi-track"><span class="voi-price-bar" :style="{ width: zoneWidth(zone, zone.price_alone_rub) }" /></span></span>
-              </span>
-              <small>Цена в корзине со скидкой: {{ rub(lines.get(zone.candidate_id) ?? zone.price_alone_rub) }}</small>
+              </span><small>Вместе с другими: {{ rub(lines.get(zone.candidate_id) ?? zone.price_alone_rub) }}</small>
             </span>
           </button>
         </div>
         <button v-if="rejected.length" class="voi-more" :aria-expanded="showRejected" @click="showRejected = !showRejected">{{ showRejected ? 'Скрыть' : 'Показать' }} остальные зоны ({{ rejected.length }})</button>
-        <div v-if="showRejected" class="voi-zones">
-          <button v-for="zone in rejected" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)"
-            @pointerenter="state.hoverZoneId = zone.zone_id" @pointerleave="state.hoverZoneId = null"
-            @focus="state.hoverZoneId = zone.zone_id" @blur="state.hoverZoneId = null">
-            <span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ reason(zone) }}</small>
-              <span class="voi-zone-bars" aria-label="Польза и цена зоны отдельно">
-                <span><small>Польза {{ rub(zone.voi_alone_rub) }}</small><span class="voi-track"><span class="voi-benefit-bar" :style="{ width: zoneWidth(zone, zone.voi_alone_rub) }" /></span></span>
-                <span><small>Цена {{ rub(zone.price_alone_rub) }}</small><span class="voi-track"><span class="voi-price-bar" :style="{ width: zoneWidth(zone, zone.price_alone_rub) }" /></span></span>
-              </span>
-              <small>Итог отдельного заказа: {{ rub(zone.net_alone_rub) }}</small>
-            </span>
-          </button>
-        </div>
-      </section>
-
-      <section class="block voi-method">
-        <details><summary>Как считаем пользу</summary>
-          <p>Для объекта L = V×q. Без снимка выбираем меньшую стоимость: выезд C или ожидаемый пропуск p×L. Идеальный снимок оставляет ожидаемую стоимость p×min(C,L). Разница — ценность информации объекта. Для зоны складываем её по объектам без повторного счёта пересечений.</p>
-          <p>Сервис перебирает все допустимые корзины и максимизирует ценность минус точную цену данных с групповой скидкой. Выбранная цена становится бюджетом. Цена выезда, V/q, тариф, доставка и идеальность снимка — сценарии. Цена из SkyFi и реальный ущерб этим расчётом не подтверждены.</p>
-        </details>
-        <a class="voi-export" :href="exportHref" download><Download :size="14" />Скачать расчёт зон и допущения</a>
-        <p class="voi-caution"><Info :size="13" />Польза здесь означает меньше затрат на решение о выезде, а не предотвращённый ущерб от паводка.</p>
-      </section>
-    </template>
+        <div v-if="showRejected" class="voi-zones"><button v-for="zone in rejected" :key="zone.zone_id" class="voi-zone" @click="emit('zone', zone.zone_id)"><span class="voi-zone-main"><strong>{{ zoneName(zone) }}</strong><small>{{ reason(zone) }}</small><small>Польза {{ rub(zone.voi_alone_rub) }} · цена {{ rub(zone.price_alone_rub) }}</small></span></button></div>
+      </div></details>
+      <details class="disclosure"><summary>Расходы до и после</summary><div class="disclosure-body">
+        <div class="voi-totals"><div><span>Решения без снимков</span><b>{{ rub(result.plan.action_cost_before_rub) }}</b></div><div><span>Решения со снимками</span><b>{{ rub(result.plan.action_cost_after_observation_rub) }}</b></div><div><span>Снимки и обработка</span><b>{{ rub(result.plan.decision_cost_rub) }}</b></div></div>
+        <p class="panel-note">В расходах на решения учтены выезды и ожидаемые потери от пропуска объекта. Подробный расчёт — в выгрузке.</p>
+      </div></details>
+    </div>
   </div>
 </template>
 
@@ -227,4 +196,17 @@ function reason(zone) {
 .voi-method details p { color: var(--muted-foreground); font-size: 11px; }
 .voi-export { display: inline-flex; align-items: center; gap: 7px; margin-top: 15px; color: var(--reference); font-size: 12px; }
 .voi-caution { display: flex; gap: 6px; color: var(--muted-foreground); font-size: 11px !important; }
+</style>
+
+<style scoped>
+.voi-result { border-left: 0; }
+.voi-chart { padding: 0; border: 0; background: none; }
+.voi-chart-line { grid-template-columns: 1fr auto; font-size: 13px; margin-top: 14px; }
+.voi-chart figcaption { font-size: 13px; }
+.voi-chart figcaption small { display: inline; margin-left: 8px; font-size: 12px; }
+.voi-zone { background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 12px 0; }
+.voi-zone small, .voi-totals div, .voi-more { font-size: 12px; }
+.voi-zone-bars > span { grid-template-columns: 135px 1fr; }
+.voi-result .panel-note { font-size: 12px; }
+.voi-export { margin: 16px 0; }
 </style>

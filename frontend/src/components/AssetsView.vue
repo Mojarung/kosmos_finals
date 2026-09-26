@@ -70,13 +70,13 @@ function select(asset) {
     <p v-if="analysis.chip.portfolio_status" class="source-line portfolio-note">10 учебных объектов: места и стоимости сценарные</p>
     <p v-if="!calibrationChecked" class="portfolio-note"><CalibrationBadge /></p>
     <p v-if="analysis.region.data_status === 'partial_coverage'" class="source-line portfolio-note">Снимок покрывает {{ percent(analysis.region.observed_area_km2 / analysis.region.area_km2, 1) }} рамки. В остальных точках ущерб не оценить.</p>
-    <span class="caption">Ожидаемый ущерб · p × V × q</span>
+    <span class="caption">Ожидаемый ущерб · сценарий</span>
     <div class="hero">
       <AnimatedNumber class="display" :value="analysis.metrics.expected_loss_rub / 1e6" :format="v => v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })" />
       <span class="unit">млн ₽</span>
       <span class="hero-aside">{{ analysis.metrics.high_probability_assets }} из {{ analysis.assets.length }}<br>в воде</span>
     </div>
-    <p v-if="permanentSeparated" class="source-line">Только паводок, без точек на постоянной воде JRC: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}. Число выше считает все 10 точек по формуле кейса p × V × q.</p>
+    <p v-if="permanentSeparated" class="source-line">Без постоянной воды: {{ compactRub(analysis.metrics.flood_expected_loss_rub) }}.</p>
     <p v-if="state.region" class="source-line">В рамке {{ analysis.metrics.assets_in_region }} из 10 объектов · {{ compactRub(analysis.metrics.region_expected_loss_rub) }}. План A/B/C сравнивает весь портфель.</p>
     <p v-if="analysis.metrics.unestimated_assets" class="warn-note"
       v-tip="'Радар не дал сигнала в точках этих объектов. Их стоимость × уязвимость показана как риск, который пока не оценён'">
@@ -108,7 +108,7 @@ function select(asset) {
           <div class="mini-rows">
             <div v-tip="pHint(asset)"><span>Вероятность воды<small v-if="biasLabel(asset)" class="bias-mark">{{ biasLabel(asset) }}</small></span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="errorHint"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>
-            <div v-tip="'Насколько расходятся пять моделей в этой точке, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
+            <div v-tip="'Различия прогнозов участников ансамбля в этой точке'"><span>Расхождение моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
             <div v-tip="'V × q: сколько объект теряет, если окажется в воде'"><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ number(asset.vulnerability, 2) }}</b></div>
           </div>
           <span class="caption sensitivity-caption" v-tip="'Каждый вход по очереди меняется на −20% и +20%, остальные на месте. Видно, какой из них двигает объект в рейтинге'">Если вход ошибается на 20%</span>

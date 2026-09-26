@@ -174,8 +174,8 @@ function toggleDrawing() {
     </div>
 
     <footer class="panel-foot">
-      <span class="source" v-tip="isLive || livePending ? 'Снимок: Sentinel‑1 RTC. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён. Ручной метки для этой области нет' : 'Снимки, ручная метка и постоянная вода: Sen1Floods11 v1.1. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён и откалиброван'">
-        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV и VH · U‑Net' : 'Sen1Floods11 · U‑Net · JRC' }}
+      <span class="source" v-tip="'Замороженная модель next_optical. S2 используется только в дату радара или за 1–2 дня до него; иначе работает радарная ветка.'">
+        <Info :size="14" />Модель {{ state.analysis?.chip.model?.mode === 'S1+S2' ? 'S1 + S2' : 'S1 · без оптики' }}
       </span>
     </footer>
   </MorphPanel>
