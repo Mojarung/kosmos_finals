@@ -133,20 +133,23 @@ def map_error_probability(p: float | None, threshold: float) -> float | None:
 
 
 def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
-    """EL = p·V·q; a point on permanent water gets no flood loss, and the reason is kept."""
+    """EL = p·V·q for every estimated point, as the case requires.
+
+    A point on JRC permanent water keeps that EL; flood_expected_loss_rub = 0 beside it
+    records that the water was there before the flood (an additional view, not the model).
+    """
     result = []
     for asset in assets:
         p = asset["p_flood"]
         permanent = bool(asset.get("permanent_water_at_point"))
         if p is None:
-            loss, status = None, "no_data"
-        elif permanent:
-            loss, status = 0.0, "permanent_water"
+            loss, flood_loss, status = None, None, "no_data"
         else:
-            loss, status = round(p * asset["value_rub"] * asset["vulnerability"], 2), "ok"
+            loss = round(p * asset["value_rub"] * asset["vulnerability"], 2)
+            flood_loss, status = (0.0 if permanent else loss), "ok"
         result.append({
             **asset,
-            "expected_loss_rub": loss, "loss_status": status,
+            "expected_loss_rub": loss, "flood_expected_loss_rub": flood_loss, "loss_status": status,
             "exposure_rub": round(asset["value_rub"] * asset["vulnerability"], 2),
             "map_error_probability": map_error_probability(p, threshold),
             "probability_status": "frozen_ensemble",

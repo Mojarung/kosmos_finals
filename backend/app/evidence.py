@@ -26,8 +26,7 @@ def asset_proxy_check(scene_id: str) -> dict:
     reference = mask(scene_id, "water")
     rows, skipped = [], 0
     for asset in info["assets"]:
-        # No p, or a point on permanent water whose flood loss is zero by definition.
-        if asset.get("p_flood") is None or asset.get("permanent_water_at_point"):
+        if asset.get("p_flood") is None:
             skipped += 1
             continue
         row, col = _pixel(info, asset)

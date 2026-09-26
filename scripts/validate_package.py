@@ -28,7 +28,7 @@ REQUIRED = {
     "strategy_plans.json", "sensitivity.csv", "metrics.csv", "run_metadata.json",
     "source_manifest.json", "analysis.json", "zone_decisions.csv",
 }
-LOSS_STATUSES = {"ok", "partial", "no_data", "permanent_water"}
+LOSS_STATUSES = {"ok", "partial", "no_data"}
 
 
 def require(condition: bool, message: str) -> None:
@@ -81,10 +81,11 @@ def validate(path: str | Path) -> dict:
             if row["status"] == "no_data":
                 require(row["p_flood"] == row["expected_loss_rub"] == "", "No-data loss is filled")
                 continue
-            if row["status"] == "permanent_water":
-                require(float(row["expected_loss_rub"]) == 0 and row["permanent_water_at_point"] == "True",
-                        f"{row['asset_id']}: loss on permanent water must be 0")
-                continue
+            flood_loss = float(row["flood_expected_loss_rub"])
+            if row["permanent_water_at_point"] == "True":
+                require(flood_loss == 0, f"{row['asset_id']}: flood loss on permanent water must be 0")
+            else:
+                close(flood_loss, float(row["expected_loss_rub"]), f"{row['asset_id']}: flood loss differs from EL")
             probability = float(row["p_flood"])
             require(0 <= probability <= 1, "Probability outside [0,1]")
             asset = by_id[row["asset_id"]]

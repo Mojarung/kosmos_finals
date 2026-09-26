@@ -84,7 +84,7 @@ def test_doubt_threshold_is_fitted_on_validation_only():
     assert check["error_rate_doubtful"] > 4 * check["error_rate"]
 
 
-def test_permanent_water_is_split_and_carries_no_loss(tmp_path):
+def test_permanent_water_is_split_and_keeps_the_case_loss_model(tmp_path):
     files = make_chip(tmp_path / "source", "X_2")
     spec = SceneSpec(chip_id="X_2", event="Тест", observed_at="2018-09-21", seed=3, s1_path=files["s1"],
                      label_path=files["label"], inference_dir=files["inference"], split_part="test_core",
@@ -95,8 +95,11 @@ def test_permanent_water_is_split_and_carries_no_loss(tmp_path):
     assert meta["flood_water_area_km2"] < meta["model_water_area_km2"]
     for asset in enrich_assets(meta["assets"]):
         assert asset["permanent_water_at_point"] == (asset["row"] < PERMANENT_ROWS)
-        if asset["permanent_water_at_point"]:
-            assert asset["expected_loss_rub"] == 0 and asset["loss_status"] == "permanent_water"
+        assert asset["loss_status"] in {"ok", "no_data"}
+        if asset["p_flood"] is not None:
+            expected = round(asset["p_flood"] * asset["value_rub"] * asset["vulnerability"], 2)
+            assert asset["expected_loss_rub"] == expected
+            assert asset["flood_expected_loss_rub"] == (0 if asset["permanent_water_at_point"] else expected)
     nigeria = analyze(None, 6500, "risk", 8, None, "Nigeria_812045")["region"]
     assert nigeria["permanent_status"] == "jrc_waterhand"
     total = nigeria["flood_water_area_km2"] + nigeria["permanent_water_area_km2"]

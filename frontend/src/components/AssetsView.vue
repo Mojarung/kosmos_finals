@@ -26,9 +26,8 @@ function rankRange({ low, high }) {
   return low.rank === high.rank ? `место ${low.rank}` : `место ${low.rank} → ${high.rank}`
 }
 function status(asset) {
-  if (asset.loss_status === 'permanent_water') return 'на реке'
   if (asset.p_flood == null) return 'нет данных'
-  return 'вода ' + percent(asset.p_flood)
+  return (asset.permanent_water_at_point ? 'река, ' : 'вода ') + percent(asset.p_flood)
 }
 
 function select(asset) {
@@ -71,7 +70,7 @@ function select(asset) {
 
       <Transition name="expand">
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
-          <p v-if="asset.loss_status === 'permanent_water'" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка, ущерб от паводка не считается.</p>
+          <p v-if="asset.permanent_water_at_point" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка. Ущерб посчитан по правилу кейса p × V × q, но паводку из него не приходится ничего.</p>
           <div class="mini-rows">
             <div v-tip="'Вероятность воды в пикселе, где стоит объект'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="'Вероятность, что карта окрасила точку объекта неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>

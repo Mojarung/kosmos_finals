@@ -158,8 +158,8 @@ function buildOverlays() {
 }
 
 function markerTip(asset, rank) {
-  const where = asset.loss_status === 'permanent_water' ? 'на постоянной воде, ущерба от паводка нет'
-    : asset.p_flood == null ? 'нет данных радара' : `вода ${percent(asset.p_flood)} · ущерб ${compactRub(asset.expected_loss_rub)}`
+  const where = asset.p_flood == null ? 'нет данных радара'
+    : `${asset.permanent_water_at_point ? 'постоянная вода' : 'вода'} ${percent(asset.p_flood)} · ущерб ${compactRub(asset.expected_loss_rub)}`
   return `${rank}. ${asset.name}: ${where}`
 }
 

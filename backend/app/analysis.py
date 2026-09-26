@@ -175,6 +175,15 @@ class Context:
     space: BasketSpace
     exposure: float
     unestimated: list[dict]
+    portfolio: list[dict]  # all ten assets, enriched, whatever the region
+
+
+def _raster_p(scene_id: str, info: dict) -> list[dict]:
+    """p of each asset straight from the probability raster, so EL = p·V·q matches the GeoTIFF."""
+    prob = float_map(scene_id, "probability")
+    width = info["width"]
+    return [{**asset, "p_flood": float(prob[asset["row"] * width + asset["col"]])}
+            if asset["p_flood"] is not None and "row" in asset else asset for asset in info["assets"]]
 
 
 @lru_cache(maxsize=64)
@@ -182,7 +191,7 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     info = metadata(scene_id)
     bounds = list(bounds_key) if bounds_key else None
     region = _region(scene_id, bounds_key)
-    all_assets = enrich_assets(info["assets"], info["model_threshold"])
+    all_assets = enrich_assets(_raster_p(scene_id, info), info["model_threshold"])
     assets = [asset for asset in all_assets if bounds is None or contains(bounds, asset)]
     chip = info["bbox"]
     broad_bounds = chip
@@ -202,7 +211,7 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     space = BasketSpace(zones, assets, masks, masses, total)
     exposure = round(sum(asset["expected_loss_rub"] or 0 for asset in assets), 2)
     unestimated = [asset for asset in assets if asset["loss_status"] == "no_data"]
-    return Context(info, region, assets, zones, space, exposure, unestimated)
+    return Context(info, region, assets, zones, space, exposure, unestimated, all_assets)
 
 
 on_refresh(_region.cache_clear)
@@ -300,7 +309,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                    "deadline_hours": deadline_hours, "must_cover": must_cover},
         "metrics": {"portfolio_count": len(assets), "expected_loss_rub": exposure,
                     "high_probability_assets": sum((a["p_flood"] or 0) >= info["model_threshold"] for a in assets),
-                    "permanent_water_assets": sum(a["loss_status"] == "permanent_water" for a in assets),
+                    "permanent_water_assets": sum(bool(a.get("permanent_water_at_point")) for a in assets),
                     "unestimated_assets": len(ctx.unestimated),
                     "unestimated_exposure_rub": round(sum(a["exposure_rub"] for a in ctx.unestimated), 2),
                     "model_water_area_km2": region["model_water_area_km2"],

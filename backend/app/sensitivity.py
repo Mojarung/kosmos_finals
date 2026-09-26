@@ -8,9 +8,6 @@ from .planning import BasketSpace
 
 
 def _loss(asset: dict, values: dict) -> float:
-    # A point on permanent water carries no flood loss whatever the inputs.
-    if asset.get("loss_status") == "permanent_water":
-        return 0.0
     return round(values["p"] * values["V"] * values["q"], 2)
 
 

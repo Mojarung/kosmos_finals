@@ -71,7 +71,7 @@ def package(result: dict) -> io.BytesIO:
     info = metadata(scene_id)
     inputs = result["inputs"]
     ctx = context(scene_id, inputs.get("bbox"))
-    all_assets = enrich_assets(info["assets"], info["model_threshold"])
+    all_assets = ctx.portfolio
     region_ids = [asset["id"] for asset in result["assets"]]
     region_rank = {asset_id: index for index, asset_id in enumerate(
         [asset["id"] for asset in result["assets"] if asset["loss_status"] != "no_data"], 1)}
@@ -115,11 +115,13 @@ def package(result: dict) -> io.BytesIO:
               asset["longitude"], asset["latitude"]] for asset in info["assets"]]))
         archive.writestr("asset_loss.csv", _csv(
             ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status",
-             "p_window3", "permanent_water_at_point", "ensemble_spread", "exposure_rub"],
+             "p_window3", "permanent_water_at_point", "flood_expected_loss_rub", "ensemble_spread",
+             "exposure_rub"],
             [[asset["id"], scene_id, _blank(asset["p_flood"]), _blank(asset["expected_loss_rub"]),
               _blank(asset["map_error_probability"]), region_rank.get(asset["id"], ""),
               str(asset["id"] in region_ids).lower(), asset["loss_status"], _blank(asset.get("p_window3")),
-              _blank(asset.get("permanent_water_at_point")), _blank(asset["uncertainty"]),
+              _blank(asset.get("permanent_water_at_point")), _blank(asset["flood_expected_loss_rub"]),
+              _blank(asset["uncertainty"]),
               asset["exposure_rub"]]
              for asset in all_assets]))
         asset_rows = result["sensitivity"]["asset"]
@@ -252,7 +254,8 @@ def package(result: dict) -> io.BytesIO:
             "budget_rub": inputs["budget_rub"],
             "deadline_hours": inputs["deadline_hours"],
             "priority": inputs["priority"],
-            "expected_loss_model": "p_flood * asset_value_rub * vulnerability_coef; 0 on JRC permanent water",
+            "expected_loss_model": ("p_flood * asset_value_rub * vulnerability_coef for every estimated asset; "
+                                    "flood_expected_loss_rub is 0 on JRC permanent water as an additional view"),
             "expected_loss_units": "RUB; scenario asset values and vulnerabilities",
             "covered_loss_rule": "sum of unique asset expected_loss_rub covered by selected zones",
             "coverage_share_rule": "covered / estimated EL of region assets; empty with coverage_status when the denominator is 0",
@@ -295,7 +298,8 @@ def package(result: dict) -> io.BytesIO:
         archive.writestr("README.txt",
                          "FloodValue: один согласованный комплект для выбранного чипа и бюджета.\n"
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
-                         "permanent_water.tif (если есть): постоянная вода JRC; ущерб на ней не считается.\n"
+                         "permanent_water.tif (если есть): постоянная вода JRC. EL объекта на ней = p·V·q по правилу кейса,\n"
+                         "а flood_expected_loss_rub = 0: вода там была и до паводка.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
                          "Ручная метка использована только для проверки качества.\n"
                          "zone_decisions.csv: почему каждая зона вошла или не вошла в заказ C.\n"

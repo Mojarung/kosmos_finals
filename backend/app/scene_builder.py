@@ -32,7 +32,7 @@ PROBABILITY_RULE = ("flood_probability.tif value in the pixel that contains the 
                     "valid 3x3 mean kept as a robustness check (p_window3)")
 PERMANENT_RULE = ("JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global "
                   "Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water "
-                  "minus this layer; a portfolio point on it gets EL = 0 with status permanent_water")
+                  "minus this layer; a portfolio point on it keeps EL = p·V·q and gets flood_expected_loss_rub = 0")
 PERMANENT_PERIOD_NOTE = ("Observations up to 2018: fully before 2019 events; for 2016-2018 events the period ends "
                          "near the event, but water in both 1984 and 2018 selects long-lived water bodies")
 PORTFOLIO_RULE = ("numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without "
