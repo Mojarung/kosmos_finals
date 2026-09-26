@@ -4,9 +4,14 @@ import { ArrowUpRight, Check, Cloud, Download, Expand, Map as MapIcon, RefreshCw
 import { state, openProject, loadProjects, workspace } from '../store'
 import { compactRub, plural } from '../lib/format'
 
+const props = defineProps({ buildingContext: { type: Object, default: null }, buildingBounds: { type: Array, default: null }, buildingSummary: { type: Object, default: null } })
+const buildingMode = computed(() => !!props.buildingContext)
 const project = ref(null)
-const projectDeadline = ref(24)
+const projectDeadline = ref(props.buildingContext ? state.deadline : 24)
 const projectMode = computed(() => !!project.value)
+const targetMode = computed(() => projectMode.value || buildingMode.value)
+const targetWords = computed(() => buildingMode.value ? ['здание', 'здания', 'зданий'] : ['объект', 'объекта', 'объектов'])
+const portfolioPercent = computed(() => buildingMode.value ? (result.value?.asset_count ? result.value.covered_asset_count / result.value.asset_count * 100 : 0) : result.value?.coverage_percent || 0)
 const catalog = ref(null)
 const result = ref(null)
 const focusedId = ref(null)
@@ -45,8 +50,8 @@ const years = computed(() => {
 })
 const maxYearCount = computed(() => Math.max(1, ...years.value.map(y => y.count)))
 const shown = computed(() => {
-  const list = offers.value.filter(o => (!year.value || o.capture_date.startsWith(year.value)) && (!onlyMatches.value || (projectMode.value ? o.project_eligible : o.eligible) && o.within_budget))
-  return [...list].sort((a, b) => sort.value === 'price' ? a.price - b.price : sort.value === 'date' ? b.capture_date.localeCompare(a.capture_date) : sort.value === 'detail' ? a.resolution_m - b.resolution_m : Number(!!b.eligible && b.within_budget) - Number(!!a.eligible && a.within_budget) || (projectMode.value ? (b.covered_expected_loss_rub - a.covered_expected_loss_rub) : (b.coverage_percent - a.coverage_percent)) || (a.cloud_percent ?? 101) - (b.cloud_percent ?? 101) || a.price - b.price)
+  const list = offers.value.filter(o => (!year.value || o.capture_date.startsWith(year.value)) && (!onlyMatches.value || (targetMode.value ? o.project_eligible : o.eligible) && o.within_budget))
+  return [...list].sort((a, b) => sort.value === 'price' ? a.price - b.price : sort.value === 'date' ? b.capture_date.localeCompare(a.capture_date) : sort.value === 'detail' ? a.resolution_m - b.resolution_m : Number(!!b.eligible && b.within_budget) - Number(!!a.eligible && a.within_budget) || (targetMode.value ? (b.covered_expected_loss_rub - a.covered_expected_loss_rub) : (b.coverage_percent - a.coverage_percent)) || (a.cloud_percent ?? 101) - (b.cloud_percent ?? 101) || a.price - b.price)
 })
 const eventGap = computed(() => {
   const days = focused.value?.days_from_event
@@ -74,8 +79,17 @@ async function projectApi(path, body, signal) {
   if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Не удалось подготовить проектную заявку')
   return data
 }
+async function buildingApi(path, body, signal) {
+  const response = await fetch('/api/building-plans/imagery' + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(typeof data.detail === 'string' ? data.detail : 'Не удалось подобрать снимки зданий')
+  }
+  return path === '/export' ? response.blob() : response.json()
+}
 function payload() { return { catalog_id: catalog.value.id, ...filters, selected_ids: [...selectedIds.value],
-  ...(projectMode.value ? { deadline_hours: projectDeadline.value } : {}) } }
+  ...(targetMode.value ? { deadline_hours: projectDeadline.value } : {}),
+  ...(buildingMode.value ? { buildings: props.buildingContext } : {}) } }
 function backToProject() { state.procurementOpen = false; state.procurementProjectId = null; state.tab = 'projects' }
 async function calculate() {
   if (!catalog.value || disposed) return
@@ -84,7 +98,7 @@ async function calculate() {
   controller = new AbortController()
   planning.value = true
   try {
-    const next = projectMode.value ? await projectApi('/plan', payload(), controller.signal) : await api('/plan', payload(), controller.signal)
+    const next = buildingMode.value ? await buildingApi('/plan', payload(), controller.signal) : projectMode.value ? await projectApi('/plan', payload(), controller.signal) : await api('/plan', payload(), controller.signal)
     if (disposed || token !== generation) return
     result.value = next
     if (!focusedId.value) focusedId.value = next.recommendation?.ids[0] || shown.value[0]?.id
@@ -102,7 +116,7 @@ async function search() {
   clearTimeout(timer)
   try {
     const next = await api('/catalogs', { scene_id: state.sceneId, source: 'skyfi', ...query,
-      ...(state.region ? { bbox: state.region } : {}) })
+      ...(props.buildingBounds || state.region ? { bbox: props.buildingBounds || state.region } : {}) })
     if (disposed) return
     catalog.value = next
     result.value = null
@@ -125,8 +139,8 @@ function toggle(offer) {
 }
 function updateMap() {
   const ids = new Set([...selectedIds.value, focusedId.value])
-  state.procurementOverlay = (catalog.value?.offers || []).filter(o => ids.has(o.id)).map(o => ({ type: 'Feature', geometry: o.coverage_geometry,
-    properties: { id: o.id, kind: 'object', active: 1, hover: o.id === focusedId.value ? 1 : 0 } }))
+  state.procurementOverlay = offers.value.filter(o => ids.has(o.id)).map(o => ({ type: 'Feature', geometry: o.coverage_geometry,
+    properties: { id: o.id, kind: 'object', active: 1, hover: o.id === focusedId.value ? 1 : 0, building_ids: buildingMode.value ? o.covered_asset_ids || [] : [] } }))
   state.showZones = true
 }
 function useRecommendation() {
@@ -150,6 +164,14 @@ async function download() {
   busy.value = true
   error.value = ''
   try {
+    if (buildingMode.value) {
+      const blob = await buildingApi('/export', payload())
+      if (disposed) return
+      const url = URL.createObjectURL(blob), link = document.createElement('a')
+      link.href = url; link.download = 'building-skyfi-plan.zip'; link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      return
+    }
     if (projectMode.value) {
       const saved = await projectApi('/requests', payload())
       await openProject(project.value.id)
@@ -207,7 +229,7 @@ onMounted(async () => {
     }
     configured.value = (await api('/status').catch(() => ({ skyfi_configured: true }))).skyfi_configured !== false
     if (!configured.value || disposed) return
-    if (state.region) { await search(); return }
+    if (props.buildingContext || state.region) { await search(); return }
     const saved = await api('/catalogs/latest?scene_id=' + encodeURIComponent(state.sceneId))
     if (disposed) return
     catalog.value = saved
@@ -232,9 +254,10 @@ onUnmounted(() => {
 <template>
   <div class="imagery" :class="{ 'map-mode': state.procurementMapMode }" data-testid="procurement">
     <header class="imagery-heading">
-      <div><span class="eyebrow"><Satellite :size="13" /> SKYFI · РЕАЛЬНЫЙ КАТАЛОГ</span><h2>{{ projectMode ? 'Снимки для объектов' : 'Снимки для территории' }}</h2><p>{{ state.sceneId }} <template v-if="catalog">· {{ num(catalog.area_km2, 2) }} км²</template></p></div>
+      <div><span class="eyebrow"><Satellite :size="13" /> SKYFI · РЕАЛЬНЫЙ КАТАЛОГ</span><h2>{{ buildingMode ? 'Снимки для зданий' : projectMode ? 'Снимки для объектов' : 'Снимки для территории' }}</h2><p>{{ state.sceneId }} <template v-if="catalog">· {{ num(catalog.area_km2, 2) }} км²</template></p></div>
       <button class="quiet-button" @click="state.procurementMapMode = !state.procurementMapMode"><MapIcon :size="15" />{{ state.procurementMapMode ? 'Открыть каталог' : 'На карте' }}</button>
     </header>
+    <div v-if="buildingMode" class="project-context" data-testid="building-imagery-context"><div><span class="eyebrow">РЕАЛЬНЫЕ КОНТУРЫ ЗДАНИЙ</span><strong>{{ plural(result?.asset_count ?? props.buildingSummary?.count ?? 0, targetWords) }} · ущерб {{ compactRub(result?.total_expected_loss_rub ?? props.buildingSummary?.total_expected_loss_rub) }}</strong><p>Подбор по охвату целых зданий и их ущербу. Пересечения учитываются один раз. Архив показывает состояние только на свою дату.</p></div></div>
     <div v-if="projectMode" class="project-context" data-testid="project-imagery-context">
       <div><span class="eyebrow">ПРОЕКТ · {{ project.name }}</span><strong>{{ plural(result?.asset_count ?? project.assets.length, ['объект', 'объекта', 'объектов']) }} · EL {{ compactRub(result?.total_expected_loss_rub ?? project.assets.reduce((sum, asset) => sum + (asset.expected_loss_rub || 0), 0)) }}</strong><p>Риск оценён для {{ result?.estimated_asset_count ?? project.assets.filter(asset => asset.expected_loss_rub != null).length }} объектов. Архив в USD, A/B/C в ₽. Заказ не отправляется.</p></div>
       <button class="text-button" @click="backToProject">Вернуться к проекту</button>
@@ -248,31 +271,31 @@ onUnmounted(() => {
       <button class="primary-button" :disabled="busy || !configured" @click="search"><RefreshCw :size="15" :class="{ spin: busy }" />{{ busy ? 'Поиск в SkyFi…' : 'Обновить из SkyFi' }}</button>
     </div>
     <div v-if="!state.procurementMapMode" class="source-strip"><span>{{ catalog ? 'Ответ SkyFi от ' + date(catalog.captured_at) + ', ' + new Date(catalog.captured_at).toLocaleTimeString('ru-RU') : configured ? 'Ищем доступные архивные кадры и превью поставщиков' : 'Каталог SkyFi не подключён на этом сервере' }}</span><button :disabled="busy || !configured" @click="eventPeriod">Неделя паводка</button><button :disabled="busy || !configured" @click="entireArchive">Весь архив территории</button></div>
-    <div v-if="!configured && !catalog" class="catalog-empty" role="status" data-testid="skyfi-not-configured"><Satellite :size="36" /><h3>Каталог SkyFi не подключён</h3><p>Реальные архивные снимки и цены поставщиков приходят из SkyFi по ключу API: укажите SKYFI_API_KEY в .env рядом с compose.yaml (образец в .env.example) и перезапустите сервис. Покупок сервис не делает. Без ключа работает расчёт по ТЗ: A/B/C в рублях по ПП № 840 и выгрузка комплекта.</p><button class="primary-button" @click="projectMode ? backToProject() : (state.procurementOpen = false)">{{ projectMode ? 'Вернуться к проекту' : 'Открыть расчёт по ТЗ' }}</button></div>
+    <div v-if="!configured && !catalog" class="catalog-empty" role="status" data-testid="skyfi-not-configured"><Satellite :size="36" /><h3>Каталог SkyFi не подключён</h3><p v-if="buildingMode">Коммерческий каталог пока недоступен. Можно рассчитать съёмку ваших зданий по сценарному тарифу и скачать план.</p><p v-else>Реальные архивные снимки и цены поставщиков приходят из SkyFi по ключу API: укажите SKYFI_API_KEY в .env рядом с compose.yaml (образец в .env.example) и перезапустите сервис. Покупок сервис не делает. Без ключа работает расчёт по ТЗ: A/B/C в рублях по ПП № 840 и выгрузка комплекта.</p><button class="primary-button" @click="projectMode ? backToProject() : (state.procurementOpen = false)">{{ projectMode ? 'Вернуться к проекту' : buildingMode ? 'К расчёту зданий' : 'Открыть расчёт по ТЗ' }}</button></div>
     <p v-if="error" class="imagery-error" role="alert">{{ error }}</p>
     <div v-if="!catalog && busy" class="catalog-loading" role="status"><Satellite :size="36" /><h3>Получаем снимки из SkyFi</h3><p>Запрашиваем реальные контуры, цены и изображения поставщиков.</p></div>
     <div v-else-if="catalog && !catalog.offers.length" class="catalog-empty" role="status"><Satellite :size="36" /><h3>В этом периоде снимков не найдено</h3><p>Исходная сцена паводка снята {{ date(catalog.event_date) }}. Можно посмотреть весь доступный архив территории.</p><button class="primary-button" :disabled="busy" @click="entireArchive">Показать весь архив</button></div>
     <template v-else-if="catalog">
       <div v-if="!state.procurementMapMode" class="catalog-metrics">
-        <div><b>{{ catalog.offers.length }}</b><span>снимков из SkyFi</span></div><div><b>{{ money(minPrice) }}</b><span>минимальная цена в выборке</span></div><div><b>{{ num(bestGsd, 2) }} м</b><span>лучшая детализация</span></div><div><b>{{ projectMode ? (result?.offers || []).filter(o => o.covered_asset_ids?.length).length : catalog.offers.filter(o => o.coverage_percent >= 95).length }}</b><span>{{ projectMode ? 'покрывают ваши объекты' : 'покрывают ≥95% территории' }}</span></div>
+        <div><b>{{ catalog.offers.length }}</b><span>снимков из SkyFi</span></div><div><b>{{ money(minPrice) }}</b><span>минимальная цена в выборке</span></div><div><b>{{ num(bestGsd, 2) }} м</b><span>лучшая детализация</span></div><div><b>{{ targetMode ? (result?.offers || []).filter(o => o.covered_asset_ids?.length).length : catalog.offers.filter(o => o.coverage_percent >= 95).length }}</b><span>{{ targetMode ? (buildingMode ? 'покрывают ваши здания' : 'покрывают ваши объекты') : 'покрывают ≥95% территории' }}</span></div>
       </div>
       <div class="imagery-layout">
         <main v-if="!state.procurementMapMode" class="catalog-main">
           <div class="catalog-filters">
             <label>Лимит на данные, $<input v-model.number="filters.budget" type="number" min="0" max="1000000000" aria-label="Бюджет закупки" :disabled="busy" /></label>
             <label>Детализация<select v-model.number="filters.resolution_m" aria-label="Детализация закупки" :disabled="busy"><option :value="0.5">До 0,5 м</option><option :value="1">До 1 м</option><option :value="10">До 10 м</option><option :value="100">Любая</option></select></label>
-            <label v-if="projectMode">Получить за, ч<select v-model.number="projectDeadline" aria-label="Срок получения снимка" :disabled="busy"><option :value="8">8 часов</option><option :value="12">12 часов</option><option :value="24">24 часа</option><option :value="48">48 часов</option><option :value="168">7 дней</option></select></label>
+            <label v-if="targetMode">Получить за, ч<select v-model.number="projectDeadline" aria-label="Срок получения снимка" :disabled="busy"><option :value="4">4 часа</option><option :value="8">8 часов</option><option :value="12">12 часов</option><option :value="24">24 часа</option><option :value="48">48 часов</option><option :value="168">7 дней</option></select></label>
             <label>Облачность<select v-model.number="filters.max_cloud_percent" aria-label="Облачность" :disabled="busy"><option :value="10">До 10%</option><option :value="30">До 30%</option><option :value="60">До 60%</option><option :value="100">Любая / неизвестна</option></select></label>
           </div>
           <div v-if="result" class="recommendation" :class="{ pending: planning }" data-testid="recommendation" :aria-busy="planning">
-            <template v-if="result.recommendation"><div><span class="eyebrow">ВАРИАНТ ПО УСЛОВИЯМ</span><b v-if="projectMode">{{ plural(result.recommendation.covered_asset_count, ['объект', 'объекта', 'объектов']) }} · {{ num(result.recommendation.covered_el_percent) }}% EL за {{ money(result.recommendation.cost) }}</b><b v-else>{{ num(result.recommendation.coverage_percent) }}% территории за {{ money(result.recommendation.cost) }}</b><p>{{ result.recommendation.ids.length }} снимка · {{ projectMode ? 'приоритет осмотра, не предотвращённый ущерб' : 'оценка по тарифам каталога' }}</p></div><button class="quiet-button" :disabled="busy || planning" @click="useRecommendation">Сравнить <ArrowUpRight :size="16" /></button></template>
-            <template v-else><div><b>Варианта в заданных условиях нет</b><p v-if="projectMode">Проверьте бюджет, срок получения и пересечение кадров с объектами. Без подходящего кадра черновик можно собрать вручную.</p><p v-else-if="result.minimum_full_cost != null">Покрытие ≥95% доступно от {{ money(result.minimum_full_cost) }}. Сейчас лимит {{ money(filters.budget) }}.</p><p v-else>Посмотрите облачность, детализацию и ограничения контура на карточках. Все найденные снимки остаются доступны ниже.</p></div></template>
+            <template v-if="result.recommendation"><div><span class="eyebrow">ВАРИАНТ ПО УСЛОВИЯМ</span><b v-if="targetMode">{{ plural(result.recommendation.covered_asset_count, targetWords) }} · {{ num(result.recommendation.covered_el_percent) }}% EL за {{ money(result.recommendation.cost) }}</b><b v-else>{{ num(result.recommendation.coverage_percent) }}% территории за {{ money(result.recommendation.cost) }}</b><p>{{ result.recommendation.ids.length }} снимка · {{ targetMode ? 'приоритет осмотра, не предотвращённый ущерб' : 'оценка по тарифам каталога' }}</p></div><button class="quiet-button" :disabled="busy || planning" @click="useRecommendation">Сравнить <ArrowUpRight :size="16" /></button></template>
+            <template v-else><div><b>Варианта в заданных условиях нет</b><p v-if="targetMode">Проверьте бюджет, срок получения и пересечение кадров с объектами. Без подходящего кадра черновик можно собрать вручную.</p><p v-else-if="result.minimum_full_cost != null">Покрытие ≥95% доступно от {{ money(result.minimum_full_cost) }}. Сейчас лимит {{ money(filters.budget) }}.</p><p v-else>Посмотрите облачность, детализацию и ограничения контура на карточках. Все найденные снимки остаются доступны ниже.</p></div></template>
           </div>
           <div class="gallery-toolbar"><div class="catalog-tabs"><button :class="{ active: view === 'gallery' }" @click="view = 'gallery'">Галерея <span>{{ shown.length }}</span></button><button :class="{ active: view === 'compare' }" @click="view = 'compare'">Сравнение <span>{{ selected.length }}</span></button><button :class="{ active: view === 'analytics' }" @click="view = 'analytics'">Графики</button></div><select v-if="view === 'gallery'" v-model="sort" aria-label="Сортировка снимков"><option value="recommended">Сначала подходящие</option><option value="date">Сначала новые</option><option value="price">По цене</option><option value="detail">По детализации</option></select></div>
           <label v-if="view === 'gallery'" class="matches-toggle"><input v-model="onlyMatches" type="checkbox" />Только в пределах лимита и фильтров</label>
           <div v-if="view === 'gallery'" class="imagery-gallery" data-testid="imagery-gallery">
             <article v-for="(o, index) in shown" :key="o.id" class="image-card" :class="{ focused: o.id === focusedId, compared: selectedIds.includes(o.id) }" :data-testid="'image-' + o.id">
-              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable"><Satellite :size="27" /><span>Превью поставщика недоступно</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью SkyFi…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ projectMode ? o.covered_asset_ids?.length + ' ваших объектов' : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (projectMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
+              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable"><Satellite :size="27" /><span>Превью поставщика недоступно</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью SkyFi…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ targetMode ? o.covered_asset_ids?.length + (buildingMode ? ' зданий' : ' ваших объектов') : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (targetMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
               <button class="compare-button" :disabled="busy || selected.length >= 4 && !selectedIds.includes(o.id)" :aria-pressed="selectedIds.includes(o.id)" @click="toggle(o)"><Check v-if="selectedIds.includes(o.id)" :size="14" />{{ selectedIds.includes(o.id) ? 'В сравнении' : 'Добавить к сравнению' }}</button>
             </article>
             <div v-if="!shown.length" class="no-filter-results">Фильтры скрыли все кадры. <button class="text-button" @click="onlyMatches = false; year = null">Показать весь каталог</button></div>
@@ -290,8 +313,8 @@ onUnmounted(() => {
           </div>
           <div v-else class="comparison-view" data-testid="comparison">
             <div v-if="!selected.length" class="catalog-empty"><h3>Выберите до четырёх снимков</h3><p>Добавьте кадры из галереи, чтобы сравнить изображения, цену и фактическое покрытие.</p><button class="quiet-button" @click="view = 'gallery'">Открыть галерею</button></div>
-            <template v-else><div class="compare-grid" :style="{ '--columns': selected.length }"><article v-for="o in selected" :key="o.id"><div class="comparison-image"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><button :aria-label="'Убрать ' + o.title" @click="toggle(o)"><X :size="14" /></button></div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span><strong>{{ money(o.price) }}</strong><dl><dt>Детализация</dt><dd>{{ num(o.resolution_m, 2) }} м</dd><dt>Территория</dt><dd>{{ num(o.coverage_percent) }}%</dd><template v-if="projectMode"><dt>Ваши объекты</dt><dd>{{ o.covered_asset_ids?.length || 0 }} · EL {{ compactRub(o.covered_expected_loss_rub) }}</dd></template><dt>Облачность</dt><dd>{{ o.cloud_percent == null ? 'Неизвестна' : num(o.cloud_percent) + '%' }}</dd><dt>Получение</dt><dd>{{ o.delivery_hours == null ? 'Неизвестно' : num(o.delivery_hours) + ' ч' }}</dd></dl><button class="text-button" @click="focus(o)">Контур и источник</button></article></div>
-            <div v-if="result && !planning" class="portfolio" data-testid="portfolio"><svg viewBox="0 0 120 120" aria-label="Доля территории, покрытой выбранными снимками"><circle cx="60" cy="60" r="45" class="donut-track" /><circle cx="60" cy="60" r="45" class="donut-value" :stroke-dasharray="(result.coverage_percent / 100 * 282.74) + ' 282.74'" /><text x="60" y="65" text-anchor="middle">{{ num(result.coverage_percent) }}%</text></svg><div><span>Все выбранные снимки вместе</span><strong>{{ money(result.cost) }}</strong><p v-if="projectMode"><b>{{ result.covered_asset_count }} из {{ result.asset_count }}</b> ваших объектов · EL {{ compactRub(result.covered_expected_loss_rub) }} · {{ num(result.covered_el_percent) }}% суммы EL</p><p>{{ num(result.coverage_km2, 2) }} км² охвачено · {{ num(result.uncovered_km2, 2) }} км² осталось</p><p>{{ num(result.overlap_km2, 2) }} км² повторного покрытия учтено один раз в охвате.</p><p v-for="blocker in result.blockers || []" :key="blocker" class="filter-warning">{{ blocker }}</p><p v-if="result.cost > filters.budget" class="filter-warning">Превышение лимита: {{ money(result.cost - filters.budget) }}</p></div></div></template>
+            <template v-else><div class="compare-grid" :style="{ '--columns': selected.length }"><article v-for="o in selected" :key="o.id"><div class="comparison-image"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><button :aria-label="'Убрать ' + o.title" @click="toggle(o)"><X :size="14" /></button></div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span><strong>{{ money(o.price) }}</strong><dl><dt>Детализация</dt><dd>{{ num(o.resolution_m, 2) }} м</dd><dt>Территория</dt><dd>{{ num(o.coverage_percent) }}%</dd><template v-if="targetMode"><dt>{{ buildingMode ? 'Здания' : 'Ваши объекты' }}</dt><dd>{{ o.covered_asset_ids?.length || 0 }} · EL {{ compactRub(o.covered_expected_loss_rub) }}</dd></template><dt>Облачность</dt><dd>{{ o.cloud_percent == null ? 'Неизвестна' : num(o.cloud_percent) + '%' }}</dd><dt>Получение</dt><dd>{{ o.delivery_hours == null ? 'Неизвестно' : num(o.delivery_hours) + ' ч' }}</dd></dl><button class="text-button" @click="focus(o)">Контур и источник</button></article></div>
+            <div v-if="result && !planning" class="portfolio" data-testid="portfolio"><svg viewBox="0 0 120 120" :aria-label="buildingMode ? 'Доля зданий, покрытых выбранными снимками' : 'Доля территории, покрытой выбранными снимками'"><circle cx="60" cy="60" r="45" class="donut-track" /><circle cx="60" cy="60" r="45" class="donut-value" :stroke-dasharray="(portfolioPercent / 100 * 282.74) + ' 282.74'" /><text x="60" y="65" text-anchor="middle">{{ num(portfolioPercent) }}%</text></svg><div><span>Все выбранные снимки вместе</span><strong>{{ money(result.cost) }}</strong><p v-if="targetMode"><b>{{ result.covered_asset_count }} из {{ result.asset_count }}</b> {{ buildingMode ? 'зданий' : 'ваших объектов' }} · EL {{ compactRub(result.covered_expected_loss_rub) }} · {{ num(result.covered_el_percent) }}% суммы EL</p><p>{{ num(result.coverage_km2, 2) }} км² охвачено · {{ num(result.uncovered_km2, 2) }} км² осталось</p><p>{{ num(result.overlap_km2, 2) }} км² повторного покрытия учтено один раз в охвате.</p><p v-for="blocker in result.blockers || []" :key="blocker" class="filter-warning">{{ blocker }}</p><p v-if="result.cost > filters.budget" class="filter-warning">Превышение лимита: {{ money(result.cost - filters.budget) }}</p></div></div></template>
           </div>
           <p class="catalog-footnote">Цены из SkyFi: предварительный расчёт для пересечения кадра с территорией. Облачность относится ко всему кадру. {{ catalog.truncated ? 'Показаны первые ' + catalog.pages + ' страницы каталога.' : 'Все страницы ответа загружены.' }} <span v-if="catalog.skipped">Пропущено некорректных записей: {{ catalog.skipped }}.</span></p>
         </main>
@@ -299,7 +322,7 @@ onUnmounted(() => {
           <div class="inspector-heading"><div><span class="eyebrow">ВЫБРАННЫЙ СНИМОК</span><h3>{{ focused.title }} <span>{{ focused.provider }}</span></h3></div><button class="icon-button" aria-label="Увеличить превью" @click="enlarged = true" :disabled="!focused.preview_url"><Expand :size="17" /></button></div>
           <button class="inspector-preview" @click="enlarged = true" :disabled="!focused.preview_url"><img v-if="focused.preview_url && !failedImages.has(focused.id)" :src="focused.preview_url" :alt="'Превью ' + focused.title" referrerpolicy="no-referrer" @error="failedImages.add(focused.id)" /><div v-else class="image-unavailable"><Satellite :size="36" /><span>Поставщик не предоставил доступное превью</span></div><span>{{ date(focused.capture_date) }} · превью целого кадра</span></button>
           <div class="inspector-price"><div><span>{{ focused.quote_validated ? 'Оценка проверена SkyFi' : 'Оценка по каталогу' }}</span><strong>{{ money(focused.price) }}</strong></div><div><span>Детализация</span><b>{{ num(focused.resolution_m, 2) }} м</b></div></div>
-          <div v-if="projectMode" class="project-offer-metrics"><b>{{ plural(focused.covered_asset_ids?.length || 0, ['ваш объект', 'ваших объекта', 'ваших объектов']) }}</b><span>EL {{ compactRub(focused.covered_expected_loss_rub) }} · {{ num(focused.covered_el_percent) }}%</span><small v-if="!focused.timely" class="filter-warning">Не укладывается в срок {{ projectDeadline }} ч</small></div>
+          <div v-if="targetMode" class="project-offer-metrics"><b>{{ plural(focused.covered_asset_ids?.length || 0, targetWords) }}</b><span>EL {{ compactRub(focused.covered_expected_loss_rub) }} · {{ num(focused.covered_el_percent) }}%</span><small v-if="!focused.timely" class="filter-warning">Не укладывается в срок {{ projectDeadline }} ч</small></div>
           <div class="footprint-heading"><b>Пересечение с территорией</b><span>{{ num(focused.coverage_percent) }}%</span></div>
           <svg class="footprint-map" viewBox="0 0 320 170" role="img" aria-label="Контур покрытия выбранного снимка"><defs><pattern id="footprint-grid" width="25" height="22" patternUnits="userSpaceOnUse"><path d="M 25 0 L 0 0 0 22" fill="none" stroke="currentColor" stroke-width=".5" opacity=".2" /></pattern><clipPath id="footprint-clip"><rect width="320" height="170" /></clipPath></defs><rect width="320" height="170" fill="url(#footprint-grid)" /><g clip-path="url(#footprint-clip)"><path :d="mapPath(focused.footprint)" fill="none" stroke="#e4ad6a" stroke-width="1.5" stroke-dasharray="4 4" /><rect x="35" y="30" width="250" height="110" class="aoi-rect" /><path :d="mapPath(focused.coverage_geometry)" class="footprint-fill" /></g><text x="12" y="18">N ↑</text><text x="160" y="160" text-anchor="middle">{{ num(focused.coverage_km2, 2) }} из {{ num(catalog.area_km2, 2) }} км²</text></svg>
           <div class="inspector-facts"><div><Cloud :size="14" /><span>Облачность</span><b>{{ focused.cloud_percent == null ? 'Неизвестна' : num(focused.cloud_percent) + '%' }}</b></div><div><span>Получение после заказа</span><b>{{ focused.delivery_hours == null ? 'Неизвестно' : num(focused.delivery_hours) + ' ч' }}</b></div><div><span>{{ focused.full_scene_only ? 'Целый кадр' : 'Тариф за км²' }}</span><b>{{ focused.full_scene_only ? money(focused.price) : money(focused.unit_price) }}</b></div></div>

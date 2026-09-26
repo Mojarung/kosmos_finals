@@ -9,6 +9,7 @@ import TopBar from './components/TopBar.vue'
 import { calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
 import { number, percent } from './lib/format'
 import { buildingMode } from './lib/buildings'
+import { buildingPlanMode, buildingPlanZones } from './lib/buildingPlans'
 
 const mapRef = ref(null)
 const chrome = ref(null)
@@ -61,7 +62,7 @@ function chooseAsset(id) {
   if (asset) mapRef.value?.focusAsset(asset)
 }
 function chooseZone(id) {
-  const zone = state.analysis?.zones.find(item => item.id === id)
+  const zone = (buildingPlanMode.value ? buildingPlanZones.value : state.analysis?.zones || []).find(item => item.id === id)
   if (!zone) return
   state.selectedZoneId = id
   state.decisionExpanded = false
@@ -144,7 +145,7 @@ onMounted(() => {
               v-tip="`Серые пиксели: радар Sentinel‑1 здесь не дал сигнала (${number(state.radarGaps)} пикс., например шов на стыке кадров). Вода там или суша, неизвестно; в площадь воды и ущерб они не входят`"><i class="legend-water nodata"></i>Нет сигнала</span>
             <span v-if="!buildingMode" class="legend-item asset-key" v-tip="'Номер показывает место объекта в рейтинге ущерба. Оранжевый кружок: объект, скорее всего, в воде. Зелёное кольцо: объект внутри зоны заказа'"><i class="legend-asset"></i>Объект</span>
             <span v-else class="legend-item">Контуры зданий</span>
-            <span v-if="state.showZones && !buildingMode" class="legend-item zone-key" v-tip="'Пунктиром показаны зоны, которые можно заказать: оранжевые вокруг объектов, фиолетовые там, где карта может ошибаться'"><i class="legend-zone"></i>Зона</span>
+            <span v-if="state.showZones && (!buildingMode || buildingPlanMode)" class="legend-item zone-key" v-tip="buildingPlanMode ? 'Контуры заказа. Голубые здания целиком попадают в выбранную съёмку.' : 'Пунктиром показаны зоны, которые можно заказать'"><i class="legend-zone"></i>Зона съёмки</span>
           </div>
           <div class="map-console-tools">
             <div class="basemap-switch" role="group" aria-label="Подложка карты">

@@ -97,9 +97,10 @@ export async function fetchAnalysis() {
   }
 }
 
-watch(() => [state.sceneId, state.region, state.budget, state.deadline, state.priority, state.mustCover], () => {
+watch(() => [state.sceneId, state.region, state.budget, state.deadline, state.priority, state.mustCover, state.objectMode, state.procurementProjectId], ([scene, region], [oldScene, oldRegion] = []) => {
   if (state.liveStatus === 'searching' || state.liveStatus === 'preparing') return
   clearTimeout(timer)
+  if (scene === oldScene && region === oldRegion && state.objectMode === 'buildings' && !state.procurementProjectId) return
   timer = setTimeout(fetchAnalysis, 110)
 })
 watch(() => state.tab, value => { if (value === 'plan') state.showZones = true })

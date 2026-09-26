@@ -33,6 +33,12 @@ def _inventory(project_id: str) -> tuple[dict, list[dict]]:
 def preview(project_id: str, request: Input) -> dict:
     project, assets = _inventory(project_id)
     catalog = procurement.read(request.catalog_id)
+    return preview_inventory(project, assets, catalog, request)
+
+
+def preview_inventory(project: dict, assets: list[dict], catalog: dict, request: Input) -> dict:
+    """Shared shortlist for project points or actual building footprints."""
+    project_id = project['id']
     if catalog['scene_id'] != project['scene_id']:
         raise ValueError('Каталог относится к другому снимку проекта.')
     if catalog.get('currency') != 'USD':
@@ -42,10 +48,11 @@ def preview(project_id: str, request: Input) -> dict:
     weights = [float(asset['expected_loss_rub'] or 0) for asset in assets]
     total_el = round(sum(weights), 2)
     masks: dict[str, int] = {}
+    footprints = [shape(asset['geometry']) if asset.get('geometry') else Point(asset['longitude'], asset['latitude']) for asset in assets]
     for offer in base['offers']:
         geometry = shape(offer['coverage_geometry'])
         mask = sum(1 << index for index, asset in enumerate(assets)
-                   if geometry.covers(Point(asset['longitude'], asset['latitude'])))
+                   if geometry.covers(footprints[index]))
         masks[offer['id']] = mask
         ids = [asset['id'] for index, asset in enumerate(assets) if mask & (1 << index)]
         covered = round(sum(weights[index] for index in range(len(assets)) if mask & (1 << index)), 2)

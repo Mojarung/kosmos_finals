@@ -6,6 +6,7 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { calibrationChecked, state } from './store'
 import { buildingMode, buildings } from './lib/buildings'
+import { buildingPlanMode, buildingPlanOverlay, buildingPlanZones, currentBuildingPlan } from './lib/buildingPlans'
 import { compactRub, number, percent } from './lib/format'
 import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
@@ -164,7 +165,7 @@ function buildOverlays() {
   }
   water.set({ theme: theme() })
   map.addLayer(water, before)
-  const buildingColor = ['case', ['==', ['get', 'water_probability_proxy'], null], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
+  const buildingColor = ['case', ['==', ['get', 'in_plan'], 1], '#4c9ec2', ['==', ['get', 'water_probability_proxy'], null], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
   map.addLayer({ id: 'building-fill', type: 'fill-extrusion', source: 'buildings', paint: {
     'fill-extrusion-color': buildingColor, 'fill-extrusion-opacity': .78,
     'fill-extrusion-height': ['coalesce', ['get', 'height_m'], 6], 'fill-extrusion-base': 0,
@@ -267,6 +268,7 @@ function updateMarkers() {
 }
 
 function zoneFeatures() {
+  if (buildingPlanMode.value) return state.procurementOpen ? state.procurementOverlay || [] : buildingPlanOverlay.value
   if (buildingMode.value) return []
   if (state.tab === 'plan' && state.procurementOverlay !== null) return state.procurementOverlay
   if (state.tab === 'projects' && state.projectOverlay !== null) return state.projectOverlay
@@ -327,7 +329,7 @@ function syncMap() {
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
   setData('zones', hidden ? empty : collection(zoneFeatures()))
-  const focused = state.analysis.zones.find(zone => zone.id === state.selectedZoneId)
+  const focused = (buildingPlanMode.value ? buildingPlanZones.value : state.analysis.zones).find(zone => zone.id === state.selectedZoneId)
   setData('focused-zone', hidden || !focused ? empty : collection([{ type: 'Feature', geometry: focused.geometry, properties: {} }]))
   if (!hidden) updateMarkers()
   else for (const entry of markers.values()) entry.element.style.visibility = 'hidden'
@@ -337,7 +339,9 @@ function syncMap() {
 function syncBuildings() {
   if (!ready) return
   const visible = buildingMode.value && buildings.data?.scene_id === state.sceneId && !['searching', 'preparing', 'error'].includes(state.liveStatus)
-  const features = visible ? buildings.data.features : []
+  const covered = new Set(!buildingPlanMode.value ? [] : state.procurementOpen
+    ? (state.procurementOverlay || []).flatMap(f => f.properties.building_ids || []) : currentBuildingPlan.value?.covered_building_ids || [])
+  const features = visible ? buildings.data.features.map(f => ({ ...f, properties: { ...f.properties, in_plan: covered.has(f.id) ? 1 : 0 } })) : []
   setData('buildings', collection(features))
   setData('selected-building', collection(features.filter(f => f.id === buildings.selectedId)))
   if (visible && features.length && !phase && !state.globeView && buildingCameraScene !== state.sceneId) {
@@ -795,6 +799,7 @@ watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy
   state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus], syncBuildings)
+watch(() => [buildingPlanOverlay.value, currentBuildingPlan.value, buildingPlanMode.value], syncMap)
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.

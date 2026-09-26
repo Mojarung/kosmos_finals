@@ -7,6 +7,8 @@ import ProcurementView from './ProcurementView.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import EconomicScenario from './EconomicScenario.vue'
 import VoiPanel from './VoiPanel.vue'
+import BuildingPlanView from './BuildingPlanView.vue'
+import { buildingPlanMode } from '../lib/buildingPlans'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
 import { activePlan, state } from '../store'
@@ -266,6 +268,9 @@ function hover(id) { state.hoverZoneId = id }
 </script>
 
 <template>
+  <BubbleTabs v-if="!state.procurementProjectId" v-model="state.objectMode" :options="[{ value: 'buildings', label: 'Здания' }, { value: 'points', label: 'Точки' }]" stretch label="Объекты для съёмки" />
+  <BuildingPlanView v-if="buildingPlanMode" @zone="id => emit('zone', id)" />
+  <template v-else>
   <div class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
     <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
@@ -429,4 +434,5 @@ function hover(id) { state.hoverZoneId = id }
   </p>
   </template>
 </template>
+  </template>
 </template>

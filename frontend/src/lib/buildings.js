@@ -7,7 +7,7 @@ function savedRates() {
 }
 export const buildings = reactive({ data: null, busy: false, exporting: false, error: '', selectedId: null, applied: null, rates: savedRates() })
 export const selectedBuilding = computed(() => buildings.data?.features.find(f => f.id === buildings.selectedId) || null)
-export const buildingMode = computed(() => state.tab === 'buildings' || state.tab === 'assets' && state.objectMode === 'buildings')
+export const buildingMode = computed(() => state.tab === 'buildings' || ['assets', 'plan'].includes(state.tab) && state.objectMode === 'buildings' && !(state.tab === 'plan' && state.procurementProjectId))
 watch(() => state.tab, tab => { if (tab === 'buildings') { state.tab = 'assets'; state.objectMode = 'buildings' } }, { immediate: true })
 export const topBuildings = computed(() => {
   const features = buildings.data?.features || []

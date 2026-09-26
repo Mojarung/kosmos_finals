@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, toRaw, watch } from 'vue'
 import { Building2, Download, Upload, MapPin } from '@lucide/vue'
 import { buildings, selectedBuilding, topBuildings, loadBuildings, openBuildingDemo, importBuildings, updateRates, updateBuildingType, exportBuildings, buildingStatus } from '../lib/buildings'
+import { planBuilding } from '../lib/buildingPlans'
 
 const emit = defineEmits(['building'])
 const fileInput = ref(null)
@@ -123,7 +124,7 @@ async function resetRates() {
           <div><span>Первый этаж · стоимость</span><strong>{{ money(selected.exposure_rub) }}</strong><small>{{ selected.synthetic_cost ? 'Условная цена' : 'Ставка по типу' }}</small></div>
           <div class="building-value-loss"><span>{{ selected.expected_loss_rub == null ? 'Потери при затоплении' : 'Сценарный ущерб' }}</span><strong>{{ money(amount(selected)) }}</strong><small>{{ selected.expected_loss_rub == null ? 'Без оценки воды по снимку' : 'С учётом сигнала воды' }}</small></div>
         </div>
-        <button class="tonal-button wide" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button>
+        <div class="building-actions"><button class="tonal-button" @click="planBuilding(selected.id)">В план съёмки</button><button class="ghost-button" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button></div>
         <details class="building-details">
           <summary>Тип и стоимость</summary>
           <label>Назначение здания<select :value="selected.building_type" :disabled="buildings.busy" aria-label="Тип выбранного здания" @change="updateBuildingType(selected.id, $event.target.value)"><option v-for="(rate, key) in data.rates" :key="key" :value="key">{{ rate.label }}</option></select></label>

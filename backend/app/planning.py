@@ -282,6 +282,9 @@ def intersects(a: list[float], b: list[float]) -> bool:
 
 
 def contains(bounds: list[float], asset: dict) -> bool:
+    if asset.get("footprint_bounds"):
+        west, south, east, north = asset["footprint_bounds"]
+        return bounds[0] <= west and bounds[1] <= south and bounds[2] >= east and bounds[3] >= north
     return bounds[0] <= asset["longitude"] <= bounds[2] and bounds[1] <= asset["latitude"] <= bounds[3]
 
 
