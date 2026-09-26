@@ -94,6 +94,27 @@ foreach ($chip in 'Nigeria_812045', 'Ghana_313799', 'Mekong_333434') {
 
 `scripts/prepare_demo.py` сверяет размер, CRS и сетку растра, фиксирует SHA‑256 источника и выходов, строит слои для карты и независимый от ручной метки учебный портфель, вычитает постоянную воду JRC. Метрики `test_core` и Bolivia копируются из [отчёта ML](ml/REPORT.md). Чтобы добавить постоянную воду к уже собранным сценам без повторного inference, есть `scripts/add_permanent_water.py`.
 
+## Этапы кейса по командам
+
+ML-этапы запускаются из папки `ml`, остальные из корня репозитория. Что именно пишет каждая команда, описано в [ml/README.md](ml/README.md#полный-прогон).
+
+| Этап | Команда | Результат |
+|---|---|---|
+| Получение и проверка Sen1Floods11 | `uv run floodvalue download`, затем `uv run floodvalue check` | S1Hand, LabelHand, JRCWaterHand со сверкой md5, `artifacts/data_check.json` |
+| Разбиение | `uv run floodvalue split` | `artifacts/split.json`: авторские списки, соседние с train чипы вынесены в `test_adjacent` |
+| Настройка baseline | `uv run floodvalue baseline` | порог VH на train, канал по validation |
+| Эксперимент и обучение | `sh scripts/train_experiments.sh`, `uv run floodvalue experiments ...`, `sh scripts/train_final.sh`, `uv run floodvalue package ...` | три конфигурации по два seed, ансамбль из пяти seed в `artifacts/model` |
+| Независимая проверка | `uv run floodvalue evaluate`, `uv run floodvalue failure --chip Bolivia_242570 --reference bolivia` | калибровка и порог по validation, метрики test_core и Bolivia, разбор провала |
+| Inference на другом официальном S1 | `uv run --project ml floodvalue infer --s1 data/source/<chip>_S1Hand.tif --out data/inference/<chip>` или выбор страны в шапке | p, маска, разброс ансамбля |
+| Объекты, зоны, A/B/C | `uv run --project backend --extra demo python scripts/prepare_demo.py`, затем `GET /api/analysis?scene_id=<chip>` | 10 объектов, EL, каталог зон, план C |
+| Пересчёт бюджета | `GET /api/analysis?scene_id=Nigeria_812045&budget=5000` или поле бюджета во вкладке «Съёмка» | новая корзина C за десятки миллисекунд, без inference и без смены порогов |
+| Интерфейс | `docker compose up --build` | <http://localhost:18080> |
+| Экспорт и проверка | `GET /api/export?scene_id=<chip>&budget=6500`, затем `scripts/validate_package.py` | ZIP из 20 файлов, `"status": "ok"` |
+
+Основной метод и сервис используют только VV и VH Sentinel‑1, это и есть режим без вспомогательных данных. Вариант S1+S2 из ML-пакета в сервис не входит. Версии зависимостей зафиксированы в `ml/uv.lock`, `backend/uv.lock` и `frontend/package-lock.json`.
+
+Точный commit сдачи: TODO, появится после публикации в GitVerse. Тот же hash надо записать в `gitverse_commit` в `run_metadata.json`, сейчас там `null` со статусом `pending_team_publication`.
+
 ## Проверки и структура
 
 ```bash
