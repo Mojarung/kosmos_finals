@@ -3,8 +3,10 @@ FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./backend/
 RUN uv sync --project backend --frozen --no-dev --extra demo
+# The PyTorch index also carries an old requests (2.28.1); without best-match uv takes only that one
+# and pystac-client 0.9.0 (requests>=2.28.2) cannot be installed.
 RUN uv pip install --python /app/backend/.venv/bin/python \
-    --index https://download.pytorch.org/whl/cpu \
+    --index https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match \
     'torch==2.14.0+cpu' 'torchvision==0.29.0+cpu' \
     'segmentation-models-pytorch==0.5.0' 'safetensors>=0.6,<1' 'scipy>=1.16,<2' 'scikit-learn==1.9.1' 'lightgbm==4.7.0' 'catboost==1.2.10' \
     'pystac-client==0.9.0' 'planetary-computer==1.0.0'
