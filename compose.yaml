@@ -10,6 +10,7 @@ services:
     volumes:
       - live-observations:/app/data/live
       - runtime-observations:/app/data/runtime
+      - operator-projects:/app/data/projects
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
       interval: 15s
@@ -29,3 +30,4 @@ services:
 volumes:
   live-observations:
   runtime-observations:
+  operator-projects:

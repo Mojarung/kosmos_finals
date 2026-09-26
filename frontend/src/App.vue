@@ -37,8 +37,8 @@ const legend = computed(() => {
   const water = permanentSeparated.value
     ? [{ key: 'flood', label: 'Паводок', hint: 'Вода, которой нет на карте постоянной воды JRC' },
        { key: 'river', label: 'Река, озеро', hint: state.analysis?.region.permanent_status === 'jrc_gsw'
-         ? 'Постоянная вода JRC Global Surface Water: была водой и в 1984, и в 2021 году. Ущерб на ней не считается'
-         : 'Постоянная вода JRC: была водой и в 1984, и в 2018 году. Ущерб на ней не считается' }]
+         ? 'Постоянная вода JRC Global Surface Water. В обязательном p × V × q она не обнуляется; поправка только на паводок показана отдельно'
+         : 'Постоянная вода JRC. В обязательном p × V × q она не обнуляется; поправка только на паводок показана отдельно' }]
     : [{ key: 'flood', label: 'Вода по модели', hint: 'Постоянная вода для этой области не отделена: карта показывает всю воду' }]
   return {
     model: water,
@@ -102,7 +102,7 @@ onMounted(() => {
       <Transition name="pop">
         <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="panel capsule live-flow" role="status">
           <MorphLoader :size="25" />
-          <span>{{ state.liveStatus === 'searching' ? 'Ищем снимки Sentinel‑1 с VV и VH' : 'Читаем снимок, модель ищет воду' }}</span>
+          <span>{{ state.liveStage || 'Загружаем снимок' }}<b v-if="state.liveProgress" class="tabular"> · {{ Math.round(state.liveProgress * 100) }}%</b></span>
         </div>
         <div v-else-if="state.liveStatus === 'ready' && state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="panel capsule live-flow ready" role="status">
           <span class="live-flow-dot"></span>

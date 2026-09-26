@@ -133,10 +133,10 @@ def _label(value: int, positive: str, negative: str) -> str:
     return f"{abs(value)}{positive if value >= 0 else negative}"
 
 
-def gsw_permanent(bounds: list[float]) -> tuple[np.ndarray, list[str]]:
-    """JRC GSW permanent water on the GRID over bounds; tiles are 10 degree squares named by west and north edges."""
-    transform = from_bounds(*bounds, GRID, GRID)
-    result = np.zeros((GRID, GRID), dtype=bool)
+def gsw_permanent(bounds: list[float], width: int = GRID, height: int = GRID) -> tuple[np.ndarray, list[str]]:
+    """JRC GSW permanent water on the scene grid over bounds."""
+    transform = from_bounds(*bounds, width, height)
+    result = np.zeros((height, width), dtype=bool)
     urls = []
     for west in range(floor(bounds[0] / 10) * 10, ceil(bounds[2] / 10) * 10, 10):
         for north in range(ceil(bounds[3] / 10) * 10, floor(bounds[1] / 10) * 10, -10):
@@ -144,7 +144,7 @@ def gsw_permanent(bounds: list[float]) -> tuple[np.ndarray, list[str]]:
             try:
                 with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="2"):
                     with rasterio.open("/vsicurl/" + url) as source:
-                        with WarpedVRT(source, crs="EPSG:4326", transform=transform, width=GRID, height=GRID,
+                        with WarpedVRT(source, crs="EPSG:4326", transform=transform, width=width, height=height,
                                        resampling=Resampling.nearest) as warped:
                             result |= np.isin(warped.read(1), GSW_CLASSES)
             except Exception as error:
@@ -154,12 +154,13 @@ def gsw_permanent(bounds: list[float]) -> tuple[np.ndarray, list[str]]:
 
 
 def _write(folder, layer: np.ndarray, bounds: list[float]) -> None:
+    height, width = layer.shape
     (folder / "permanent_mask.bin").write_bytes(np.ascontiguousarray(layer).tobytes())
-    with rasterio.open(folder / "permanent_water.tif", "w", driver="GTiff", height=GRID, width=GRID, count=1,
-                       dtype="uint8", crs="EPSG:4326", transform=from_bounds(*bounds, GRID, GRID),
+    with rasterio.open(folder / "permanent_water.tif", "w", driver="GTiff", height=height, width=width, count=1,
+                       dtype="uint8", crs="EPSG:4326", transform=from_bounds(*bounds, width, height),
                        nodata=255, compress="deflate") as target:
         target.write(layer, 1)
-    rgba = np.zeros((GRID, GRID, 4), dtype=np.uint8)
+    rgba = np.zeros((height, width, 4), dtype=np.uint8)
     rgba[layer == 1] = (18, 58, 118, 220)
     Image.fromarray(rgba, "RGBA").save(folder / "permanent.png", optimize=True)
 
@@ -174,12 +175,12 @@ def separate_live(scene_id: str) -> dict:
     folder = scene_dir(scene_id)
     if folder.parent != LIVE_DIR:
         raise LiveError("Сцена не найдена среди выбранных областей.")
-    permanent, urls = gsw_permanent(info["bbox"])
-    model_mask = np.frombuffer((folder / "model_mask.bin").read_bytes(), dtype=np.uint8).reshape(GRID, GRID)
+    permanent, urls = gsw_permanent(info["bbox"], info["width"], info["height"])
+    model_mask = np.frombuffer((folder / "model_mask.bin").read_bytes(), dtype=np.uint8).reshape(info["height"], info["width"])
     valid = model_mask != 255
     permanent &= valid
     _write(folder, np.where(valid, permanent, 255).astype(np.uint8), info["bbox"])
-    pixel_area = info["area_km2"] / (GRID * GRID)
+    pixel_area = info["area_km2"] / (info["width"] * info["height"])
     assets = [{**asset, "permanent_water_at_point": bool(permanent[asset["row"], asset["col"]])} for asset in info["assets"]]
     water = model_mask == 1
     # Terms as stated on the JRC GSW download page; the exporter adds the quote and the check date.

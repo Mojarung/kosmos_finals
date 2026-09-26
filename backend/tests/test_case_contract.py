@@ -88,8 +88,9 @@ def test_point_on_permanent_water_keeps_the_mandatory_el(permanent_point, tmp_pa
 
     shown = client.get("/api/analysis", params={"scene_id": SCENE}).json()
     point = next(asset for asset in shown["assets"] if asset["id"] == ON_WATER)
-    # The screen keeps its flood-only reading; the case EL travels next to it.
-    assert point["loss_status"] == "permanent_water" and point["expected_loss_rub"] == 0
+    # Screen and procurement must use mandatory EL, with a separate JRC adjustment.
+    assert point["loss_status"] == "ok" and point["expected_loss_rub"] == pytest.approx(el[ON_WATER], abs=0.011)
+    assert point["flood_expected_loss_rub"] == 0
     assert point["case_expected_loss_rub"] == pytest.approx(el[ON_WATER], abs=0.011)
     assert point["case_loss_status"] == "ok"
     assert ON_WATER in {row["asset_id"] for row in shown["asset_proxy_check"]["rows"]}

@@ -12,8 +12,10 @@ from .catalog import default_scene_id, known_scene_ids, metadata, scene_catalog,
 from .chips import official_chips, official_events
 from .exporter import package
 from .live import LiveError, discover, prepare
+from . import live_jobs
 from .layers import doubt_png
 from .permanent import separate_live
+from . import projects
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 
@@ -48,6 +50,68 @@ def response(bbox: str | None, budget: float, priority: str, deadline: int,
 def health() -> dict:
     return {"status": "ok", "default_chip_id": default_scene_id(),
             "scenes": len(known_scene_ids()), "model": "frozen_ensemble"}
+
+
+class ProjectCreate(BaseModel):
+    name: str
+    scene_id: str
+
+
+class AssetImport(BaseModel):
+    format: str
+    content: str
+
+
+class DecisionCreate(BaseModel):
+    bbox: str | None = None
+    budget: float = 6500
+    priority: str = "risk"
+    deadline: int = 8
+    must_cover: str | None = None
+
+
+@app.get("/api/projects")
+def list_projects() -> dict:
+    return {"projects": projects.list_projects()}
+
+
+@app.post("/api/projects", status_code=201)
+def create_project(request: ProjectCreate) -> dict:
+    try:
+        return projects.create(request.name, request.scene_id)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.get("/api/projects/{project_id}")
+def get_project(project_id: str) -> dict:
+    try:
+        return projects.get(project_id)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/assets/import")
+def import_project_assets(project_id: str, request: AssetImport) -> dict:
+    try:
+        return projects.import_assets(project_id, request.content, request.format)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except (ValueError, TypeError, UnicodeError) as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/decisions", status_code=201)
+def save_project_decision(project_id: str, request: DecisionCreate) -> dict:
+    try:
+        detail = projects.get(project_id)
+        analysis = response(request.bbox, request.budget, request.priority, request.deadline,
+                            request.must_cover, detail["scene_id"])
+        return projects.save_decision(project_id, analysis)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
 
 
 @app.get("/api/scenes")
@@ -105,6 +169,30 @@ def prepare_scene(bbox: str, item_id: str) -> dict:
             "source_item_id": info["source_item_id"],
             "source_item_ids": info.get("source_item_ids", [info["source_item_id"]]),
             "valid_pixels": info["valid_pixels"]}
+
+
+class LiveJobCreate(BaseModel):
+    bbox: str
+    item_id: str
+
+
+@app.post("/api/live/jobs", status_code=202)
+def create_live_job(request: LiveJobCreate) -> dict:
+    bounds = parse_bounds(request.bbox)
+    try:
+        from .live import validate_area
+        validate_area(bounds)
+    except LiveError as error:
+        raise HTTPException(422, str(error)) from error
+    return live_jobs.start(bounds, request.item_id)
+
+
+@app.get("/api/live/jobs/{job_id}")
+def get_live_job(job_id: str) -> dict:
+    job = live_jobs.get(job_id)
+    if job is None:
+        raise HTTPException(404, "Unknown live job")
+    return job
 
 
 @app.post("/api/live/permanent")

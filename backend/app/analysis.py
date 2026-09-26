@@ -185,21 +185,19 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     bounds = list(bounds_key) if bounds_key else None
     region = _region(scene_id, bounds_key)
     all_assets = enrich_assets(info["assets"], info["model_threshold"])
-    assets = [asset for asset in all_assets if bounds is None or contains(bounds, asset)]
+    # A/B/C is a fixed-chip experiment. The ROI changes pixel statistics and
+    # doubt sampling, never its ten seeded assets or their p, V and q.
+    assets = all_assets
     chip = info["bbox"]
     broad_bounds = chip
     window = pixel_window(info, chip)
     if bounds and region["data_status"] in WITH_DATA:
         overlap = _overlap(bounds, chip)
         window = pixel_window(info, overlap)
-        broad_bounds = overlap if rectangle_area_km2(overlap) >= 1 else square_around(
-            {"longitude": (overlap[0] + overlap[2]) / 2,
-             "latitude": (overlap[1] + overlap[3]) / 2}, chip)
     zones: list[dict] = []
     if region["data_status"] in WITH_DATA:
         doubtful = uncertainty_zones(scene_id, window, rectangle_area_km2)
-        zones = [zone for zone in candidates(all_assets, chip, broad_bounds, doubtful, info.get("observed_at"))
-                 if zone["kind"] != "object" or any(contains(zone["bounds"], asset) for asset in assets)]
+        zones = candidates(all_assets, chip, broad_bounds, doubtful, info.get("observed_at"))
     masks, masses, total = doubt_atoms(scene_id, window, zones) if zones else (None, None, 0.0)
     space = BasketSpace(zones, assets, masks, masses, total)
     exposure = round(sum(asset["expected_loss_rub"] or 0 for asset in assets), 2)
@@ -226,7 +224,7 @@ def _case_coverage(ctx: Context, covered_ids: list[str]) -> dict:
     covered = round(sum(losses[asset_id] for asset_id in covered_ids), 2)
     return {"case_covered_expected_loss_rub": covered,
             "case_coverage_share": _share(covered, ctx.case_exposure),
-            "case_coverage_status": None if ctx.case_exposure else "no_estimated_exposure_in_region"}
+            "case_coverage_status": None if ctx.case_exposure else "no_estimated_exposure_in_portfolio"}
 
 
 def _broad(ctx: Context) -> tuple[dict | None, int | None]:
@@ -252,7 +250,7 @@ def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, o
     b_covered_ids = b["covered_asset_ids"] if b_timely else []
     b_covered = b["covered_expected_loss_rub"] if b_timely else 0
     b_doubt = (b["covered_doubt_share"] if b_timely else 0) if space.doubt_total else None
-    no_exposure = None if exposure else "no_estimated_exposure_in_region"
+    no_exposure = None if exposure else "no_estimated_exposure_in_portfolio"
     return {
         "A": {"label": "Открытые данные", "zone_ids": [], "data_cost_rub": 0, "covered_asset_ids": [],
               "covered_expected_loss_rub": 0, "coverage_share": 0 if exposure else None,
@@ -338,7 +336,11 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
         "metrics": {"portfolio_count": len(assets), "expected_loss_rub": exposure,
                     "case_expected_loss_rub": ctx.case_exposure,
                     "high_probability_assets": sum((a["p_flood"] or 0) >= info["model_threshold"] for a in assets),
-                    "permanent_water_assets": sum(a["loss_status"] == "permanent_water" for a in assets),
+                    "permanent_water_assets": sum(a["flood_loss_status"] == "permanent_water" for a in assets),
+                    "assets_in_region": sum(contains(region["bounds"], a) for a in assets),
+                    "region_expected_loss_rub": round(sum(a["expected_loss_rub"] or 0 for a in assets
+                                                          if contains(region["bounds"], a)), 2),
+                    "flood_expected_loss_rub": round(sum(a["flood_expected_loss_rub"] or 0 for a in assets), 2),
                     "unestimated_assets": len(ctx.unestimated),
                     "unestimated_exposure_rub": round(sum(a["exposure_rub"] for a in ctx.unestimated), 2),
                     "model_water_area_km2": region["model_water_area_km2"],
@@ -388,7 +390,7 @@ def _limitations(info: dict, region: dict) -> list[str]:
     rows = [
         water,
         "Обязательный EL = p × V × q считается для всех объектов, в том числе на постоянной воде. "
-        "Ущерб только от паводка (0 на постоянной воде) идёт отдельной оценкой, по ней выбирается корзина C.",
+        "Ущерб только от паводка (0 на постоянной воде) идёт отдельной оценкой; корзина C использует обязательный EL.",
         "V и q объектов заданы кейсом; сами точки учебные, а не реальный реестр.",
         "Базовая ставка 788,64 ₽/км² и доступность новой съёмки (оптика через 6 часов, радар через 4 часа) сценарные.",
         "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
