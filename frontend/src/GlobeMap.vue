@@ -207,6 +207,9 @@ function updateMarkers() {
   if (!map || !state.analysis) return
   const currentIds = new Set()
   const ranks = new Map(state.analysis.assets.map((asset, index) => [asset.id, index + 1]))
+  const coveredIds = state.tab === 'plan' && !state.procurementOpen && state.procurementOverlay !== null
+    ? new Set(state.procurementOverlay.filter(zone => zone.properties.active).flatMap(zone => zone.properties.asset_ids || []))
+    : new Set(state.analysis.strategies[state.strategy]?.covered_asset_ids || [])
   for (const asset of state.analysis.assets) {
     currentIds.add(asset.id)
     let entry = markers.get(asset.id)
@@ -231,7 +234,7 @@ function updateMarkers() {
     entry.marker.setLngLat([asset.longitude, asset.latitude])
     entry.element.classList.toggle('selected', asset.id === state.selectedAssetId)
     entry.element.classList.toggle('high-risk', asset.loss_status === 'ok' && asset.p_flood >= state.analysis.chip.model_threshold)
-    entry.element.classList.toggle('covered', (state.analysis.strategies[state.strategy]?.covered_asset_ids || []).includes(asset.id) && state.showZones)
+    entry.element.classList.toggle('covered', coveredIds.has(asset.id) && state.showZones)
     const text = markerTip(asset, rank)
     entry.element.setAttribute('aria-label', text)
     entry.untip?.()
