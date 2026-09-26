@@ -149,12 +149,46 @@ def test_api_import_export_same_values_and_validation(scene):
 
 def test_real_paiporta_snapshot_is_reproducible(tmp_path, monkeypatch):
     monkeypatch.setattr(building_sources, 'CACHE', tmp_path)
-    result = buildings.load(buildings.LoadRequest(scene_id='Paiporta_20241101',source='paiporta'))
+    result = buildings.load(buildings.LoadRequest(scene_id='Paiporta_20241101'))
     assert result['summary']['count'] == 908
-    assert result['summary']['estimated'] == 237
-    assert result['summary']['unknown_type'] == 671
+    assert result['summary']['estimated'] == 239
+    assert result['summary']['unknown_type'] == 669
     assert result['observed_at'].startswith('2024-11-01')
     assert result['source']['retrieved_date'] == '2026-09-26'
     assert result['model']['mode'] == 'S1 fallback'
     assert result['summary']['with_water'] == 0  # late urban radar: do not claim detected damage
-    assert result['summary']['expected_loss_rub'] == pytest.approx(7606862.806959196)
+    assert result['summary']['expected_loss_rub'] == pytest.approx(7903003.121871223)
+    assert len(result['top_building_ids']) == 10
+    ranked = sorted(result['features'], key=lambda f: f['properties']['risk_rank'])
+    assert [f['id'] for f in ranked[:10]] == result['top_building_ids']
+    assert any(f['properties']['building_type'] == 'unknown' for f in ranked[:10])
+    assert all(f['properties']['height_m'] > 0 for f in result['features'])
+
+
+@pytest.mark.parametrize('tags,height,estimated', [
+    ({'height':'12.5 m','building:levels':'99'},12.5,False),
+    ({'building:levels':'4'},12,True), ({'height':'nan'},6,True),
+    ({'height':'50 ft'},6,True), ({'height':'-10','building:levels':'2'},6,True),
+])
+def test_display_height_uses_source_or_explicit_assumption(tags,height,estimated):
+    result = building_rates.display_height(tags)
+    assert result['height_m'] == height
+    assert result['height_estimated'] == estimated
+
+
+def test_contained_poi_type_evidence_and_conflicts():
+    poi = {'id':'node/1','kind':'school','evidence':'amenity=school'}
+    assert building_rates.resolve_type({'tags':{'building':'yes'},'contained_uses':[poi]}) == ('school','OSM node/1 внутри контура: amenity=school')
+    assert building_rates.resolve_type({'tags':{'building':'warehouse'},'contained_uses':[poi]})[0] == 'warehouse'
+    assert building_rates.resolve_type({'tags':{'building':'yes'},'contained_uses':[poi,{'id':'node/2','kind':'retail','evidence':'shop=books'}]})[0] == 'unknown'
+
+
+def test_rank_does_not_hide_unknown_high_water_building(scene):
+    rows = [feature('known-dry',box(0,0,.001,.001)),feature('unknown-water',box(.001,0,.002,.001),{'building':'yes'}),
+            feature('outside',box(.005,0,.006,.001))]
+    result, _ = evaluate(rows)
+    assert result['top_building_ids'] == ['unknown-water','known-dry']
+    props = {f['id']:f['properties'] for f in result['features']}
+    assert props['unknown-water']['expected_loss_rub'] is None
+    assert props['unknown-water']['risk_rank'] == 1
+    assert props['outside']['risk_rank'] is None

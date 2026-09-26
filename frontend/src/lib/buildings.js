@@ -1,5 +1,5 @@
 import { computed, reactive, watch } from 'vue'
-import { chooseScene, state } from '../store'
+import { chooseScene, hasData, state } from '../store'
 
 const STORAGE = 'floodvalue-building-rates-v1'
 function savedRates() {
@@ -7,15 +7,31 @@ function savedRates() {
 }
 export const buildings = reactive({ data: null, busy: false, exporting: false, error: '', selectedId: null, applied: null, rates: savedRates() })
 export const selectedBuilding = computed(() => buildings.data?.features.find(f => f.id === buildings.selectedId) || null)
+export const buildingMode = computed(() => state.tab === 'buildings' || state.tab === 'assets' && state.objectMode === 'buildings')
+watch(() => state.tab, tab => { if (tab === 'buildings') { state.tab = 'assets'; state.objectMode = 'buildings' } }, { immediate: true })
+export const topBuildings = computed(() => {
+  const features = buildings.data?.features || []
+  return (buildings.data?.top_building_ids || []).map(id => features.find(f => f.id === id)).filter(Boolean)
+})
 let generation = 0
 let controller
+let attemptedContext = null
+const context = computed(() => state.sceneId + '|' + (state.region || []).join(','))
+const pending = computed(() => ['searching', 'preparing', 'error'].includes(state.liveStatus))
 
 function reset() {
   ++generation
   controller?.abort()
+  attemptedContext = null
   Object.assign(buildings, { data: null, busy: false, exporting: false, error: '', selectedId: null, applied: null })
 }
-watch(() => [state.sceneId, state.region, state.liveStatus === 'searching' || state.liveStatus === 'preparing'], reset, { flush: 'sync' })
+watch([context, pending], reset, { flush: 'sync' })
+// Load once when this scene's radar is ready, including when its object panel is folded.
+// A failed source request is retried explicitly, not on every budget change.
+watch(() => [context.value, pending.value, state.analysis?.chip.chip_id, state.loading, hasData.value], () => {
+  if (!pending.value && !state.loading && hasData.value && state.analysis?.chip.chip_id === state.sceneId
+      && !buildings.busy && !buildings.data && attemptedContext !== context.value) loadBuildings()
+}, { immediate: true })
 // Separating permanent water changes the raster used in the calculation.
 watch(() => state.analysis?.chip.permanent_status, (value, old) => {
   if (old !== undefined && value !== old && buildings.applied) run('/evaluate', buildings.applied)
@@ -50,7 +66,8 @@ async function run(url, body) {
   }
 }
 
-export function loadBuildings(source = 'osm') {
+export function loadBuildings(source = 'auto') {
+  attemptedContext = context.value
   return run('/load', { scene_id: state.sceneId, source, rate_overrides: buildings.rates })
 }
 export async function openBuildingDemo() {
@@ -60,9 +77,10 @@ export async function openBuildingDemo() {
     const demo = await json('/demo')
     if (current !== generation) return
     if (!demo.scene_id) throw new Error('Пример не установлен на сервере')
-    chooseScene(demo.scene_id)
-    state.tab = 'buildings'
-    return await loadBuildings(demo.source)
+    const changed = chooseScene(demo.scene_id)
+    state.objectMode = 'buildings'
+    state.tab = 'assets'
+    if (!changed) return await loadBuildings(demo.source)
   } catch (error) { buildings.error = error.message }
 }
 export async function importBuildings(file) {

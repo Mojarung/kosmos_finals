@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 // Real backend, real SkyFi and actual remote thumbnails; no substituted network responses.
 async function open(page) {
   await page.goto('/')
-  if (page.viewportSize().width < 1024) await page.getByRole('button', { name: /^EL / }).click()
+  if (page.viewportSize().width < 1024) await page.getByRole('button', { name: /^(EL |Здания)/ }).click()
   await page.getByRole('tab', { name:'Съёмка', exact:true }).click()
   await page.getByRole('button', { name:'Каталог SkyFi', exact:true }).click()
   await expect(page.getByTestId('imagery-gallery').or(page.getByRole('button', { name:'Показать весь архив', exact:true }))).toBeVisible({ timeout:90000 })

@@ -50,7 +50,7 @@ class Evaluation(BaseModel):
 
 class LoadRequest(BaseModel):
     scene_id: str = Field(max_length=150)
-    source: str = "osm"
+    source: str = "auto"
     rate_overrides: dict[str, Rate] = Field(default_factory=dict, max_length=30)
 
 
@@ -117,7 +117,7 @@ def evaluate(request: Evaluation) -> dict:
     rows = []
     for index, (feature, geometry) in enumerate(zip(features, geometries)):
         props = feature["properties"]
-        kind, type_source = assumptions.classify(props["tags"])
+        kind, type_source = assumptions.resolve_type(props)
         if feature["id"] in request.type_overrides:
             kind, type_source = request.type_overrides[feature["id"]], "Уточнено пользователем"
         area = sources.area_m2(geometry)
@@ -133,13 +133,19 @@ def evaluate(request: Evaluation) -> dict:
         exposure = area * rate["cost_rub_m2"] if rate else None
         conditional = exposure * rate["damage_ratio"] if rate else None
         loss = conditional * stats["water_probability_proxy"] if status == "ok" else None
-        rows.append({**feature, "properties": {**props, **stats,
+        rows.append({**feature, "properties": {**props, **stats, **assumptions.display_height(props["tags"]),
             "building_type": kind, "type_label": rate["label"] if rate else "Тип не определён",
             "type_source": type_source, "area_m2": area, "levels": props["tags"].get("building:levels"),
             "cost_rub_m2": rate["cost_rub_m2"] if rate else None, "damage_ratio": rate["damage_ratio"] if rate else None,
             "exposure_rub": exposure, "conditional_damage_rub": conditional,
             "expected_loss_rub": loss, "status": status, "overlapping_footprint": index in overlaps,
         }})
+    ranked = sorted((f for f in rows if f["properties"]["water_probability_proxy"] is not None),
+                    key=lambda f: (-(f["properties"]["water_probability_proxy"]),
+                                   -(f["properties"]["expected_loss_rub"] or 0), f["id"]))
+    ranks = {f["id"]: i + 1 for i, f in enumerate(ranked)}
+    for feature in rows:
+        feature["properties"]["risk_rank"] = ranks.get(feature["id"])
     estimated = [f["properties"]["expected_loss_rub"] for f in rows if f["properties"]["expected_loss_rub"] is not None]
     total = sum(estimated) if estimated else None
     return {"type": "FeatureCollection", "features": rows, "scene_id": request.scene_id, "catalog_id": request.catalog_id,
@@ -151,6 +157,8 @@ def evaluate(request: Evaluation) -> dict:
                     "expected_loss_rub": total},
         "rates": rates, "rate_version": assumptions.VERSION, "rate_source": assumptions.SOURCE,
         "type_overrides": request.type_overrides, "method": METHOD,
+        "top_building_ids": [f["id"] for f in ranked[:10]],
+        "ranking_rule": "По убыванию среднего p воды внутри контура; при равном p — по сценарию ущерба. Без данных радара место не присваивается.",
         "source_sha256": hashlib.sha256(json.dumps(dataset, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
         "raster_sha256": hashlib.sha256(probability.astype('<f4').tobytes() + model.tobytes() + (permanent_raw or b'')).hexdigest(),
     }
@@ -180,9 +188,9 @@ def demo():
 def load(request: LoadRequest):
     def action():
         info = catalog.metadata(request.scene_id)
-        if request.source == "paiporta":
+        if request.source == "paiporta" or request.source == "auto" and request.scene_id == "Paiporta_20241101":
             data = sources.normalize(json.loads((sources.ROOT / "data/buildings/paiporta.geojson").read_text()))
-        elif request.source == "osm":
+        elif request.source in {"auto", "osm"}:
             data = sources.load_osm(info["bbox"])
         else:
             raise ValueError("Неизвестный источник контуров")
@@ -209,7 +217,7 @@ def evaluate_buildings(request: Evaluation):
 
 def package(result: dict) -> bytes:
     target, table = io.BytesIO(), io.StringIO()
-    columns = ["id", "name", "building_type", "type_source", "area_m2", "radar_coverage", "water_probability_proxy", "water_fraction",
+    columns = ["id", "name", "building_type", "type_source", "risk_rank", "height_m", "height_source", "area_m2", "radar_coverage", "water_probability_proxy", "water_fraction",
                "cost_rub_m2", "damage_ratio", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
     writer = csv.DictWriter(table, fieldnames=columns, extrasaction="ignore")
     writer.writeheader()

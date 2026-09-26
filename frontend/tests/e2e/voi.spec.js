@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 async function open(page) {
   await page.goto('/')
-  if (page.viewportSize().width < 1024) await page.getByRole('button', { name: /^EL / }).click()
+  if (page.viewportSize().width < 1024) await page.getByRole('button', { name: /^(EL |Здания)/ }).click()
   await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
   await page.getByRole('button', { name: 'По ценности информации' }).click()
   await expect(page.getByTestId('voi-chart')).toBeVisible()

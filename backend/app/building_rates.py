@@ -1,4 +1,5 @@
 """Editable scenario assumptions, not a market appraisal or measured repair bill."""
+import re
 
 VERSION = "building-scenario-rub-v1"
 SOURCE = "Сценарные ставки команды, 26.09.2026; рыночная оценка не проводилась"
@@ -45,3 +46,26 @@ def classify(tags: dict) -> tuple[str, str]:
         if value in TYPE_TAGS:
             return TYPE_TAGS[value], f"{key}={value}"
     return "unknown", "Назначение не указано или неоднозначно"
+
+
+def resolve_type(properties: dict) -> tuple[str, str]:
+    kind, evidence = classify(properties["tags"])
+    if kind != "unknown":
+        return kind, evidence
+    uses = properties.get("contained_uses", [])
+    kinds = {use["kind"] for use in uses if use.get("kind") in RATES}
+    if len(kinds) == 1:
+        use = next(use for use in uses if use.get("kind") in kinds)
+        return use["kind"], f"OSM {use['id']} внутри контура: {use['evidence']}"
+    return "unknown", "Внутри указаны разные назначения" if len(kinds) > 1 else evidence
+
+
+def display_height(tags: dict) -> dict:
+    """Display geometry only. Floor count never multiplies monetary exposure."""
+    height = re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*(?:m|м)?\s*", tags.get("height", ""))
+    if height and 1 <= float(height[1].replace(",", ".")) <= 500:
+        return {"height_m": float(height[1].replace(",", ".")), "height_source": "Высота из OSM: height", "height_estimated": False}
+    levels = re.fullmatch(r"\s*(\d+(?:[.,]\d+)?)\s*", tags.get("building:levels", ""))
+    if levels and 0 < float(levels[1].replace(",", ".")) <= 150:
+        return {"height_m": max(2, float(levels[1].replace(",", ".")) * 3), "height_source": "По этажности OSM: 3 м на этаж", "height_estimated": True}
+    return {"height_m": 6, "height_source": "Условная высота 6 м: в источнике высота не указана", "height_estimated": True}

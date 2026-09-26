@@ -1,11 +1,13 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Building2, Download, Upload, MapPin } from '@lucide/vue'
-import { buildings, selectedBuilding, loadBuildings, openBuildingDemo, importBuildings, updateRates, updateBuildingType, exportBuildings, buildingStatus } from '../lib/buildings'
+import { buildings, selectedBuilding, topBuildings, loadBuildings, openBuildingDemo, importBuildings, updateRates, updateBuildingType, exportBuildings, buildingStatus } from '../lib/buildings'
 
 const emit = defineEmits(['building'])
 const fileInput = ref(null)
 const filter = ref('all')
+const listMode = ref('top')
+const card = ref(null)
 const search = ref('')
 const limit = ref(40)
 const draft = ref({})
@@ -20,10 +22,16 @@ watch(() => data.value?.rates, rates => {
   if (rates) draft.value = Object.fromEntries(Object.entries(rates).map(([key, r]) => [key, { cost_rub_m2: r.cost_rub_m2, damage_ratio: r.damage_ratio * 100 }]))
 }, { immediate: true })
 watch([filter, search, () => data.value?.catalog_id], () => { limit.value = 40 })
+watch(() => buildings.selectedId, async id => {
+  if (id) { await nextTick(); card.value?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }
+})
 const filtered = computed(() => (data.value?.features || []).filter(({ properties: p }) =>
   (filter.value === 'all' || filter.value === 'water' && p.water_fraction > 0 || filter.value === 'unknown' && p.building_type === 'unknown' || filter.value === 'missing' && p.expected_loss_rub == null)
   && `${p.name} ${p.id} ${p.type_label}`.toLowerCase().includes(search.value.toLowerCase()))
-  .sort((a, b) => (b.properties.expected_loss_rub ?? -1) - (a.properties.expected_loss_rub ?? -1)))
+  .sort((a, b) => (a.properties.risk_rank ?? Infinity) - (b.properties.risk_rank ?? Infinity)))
+const topMode = computed(() => listMode.value === 'top' && filter.value === 'all' && !search.value)
+const visibleBuildings = computed(() => topMode.value ? topBuildings.value : filtered.value.slice(0, limit.value))
+const additional = computed(() => selected.value && !data.value?.top_building_ids.includes(selected.value.id))
 
 function choose(feature) {
   buildings.selectedId = feature.id
@@ -49,11 +57,11 @@ async function applyRates() {
 
 <template>
   <section class="buildings-view" aria-label="Оценка зданий" :aria-busy="buildings.busy">
-    <div class="building-title"><Building2 :size="20" /><h2>Ущерб реальным зданиям</h2></div>
-    <p class="building-note">Контур → назначение → стоимость первого этажа → сценарный ущерб по сигналу воды.</p>
+    <div class="building-title"><Building2 :size="20" /><h2>Топ‑10 зданий по риску</h2></div>
+    <p class="building-note">Здания загружаются автоматически. Выше — больший сигнал воды в контуре. Нажмите на любое здание на карте, чтобы открыть его отдельно.</p>
     <div class="building-actions">
-      <button class="tonal-button" :disabled="buildings.busy" @click="loadBuildings()">Загрузить здания области</button>
-      <button class="tonal-button" :disabled="buildings.busy" @click="openBuildingDemo">Пример: Пайпорта</button>
+      <button class="tonal-button" @click="openBuildingDemo">Пример: Пайпорта</button>
+      <button class="ghost-button" :disabled="buildings.busy" @click="loadBuildings()">Повторить загрузку</button>
       <button class="ghost-button" :disabled="buildings.busy" @click="fileInput.click()"><Upload :size="14" /> Свой GeoJSON</button>
       <input ref="fileInput" type="file" accept=".geojson,.json,application/geo+json" hidden aria-label="Загрузить контуры GeoJSON" @change="upload" />
     </div>
@@ -67,9 +75,10 @@ async function applyRates() {
       </div>
       <p class="building-note">{{ data.source.name }} · контуры {{ (data.source.retrieved_at || data.source.retrieved_date || '').slice(0, 10) }}<br />Радар: {{ data.observed_at.slice(0, 10) }}. Контуры и назначение на дату снимка не подтверждены.</p>
       <p v-if="!data.permanent_separated" class="building-warning">Постоянная вода не отделена: расчёт использует сигнал всей воды.</p>
-      <div class="building-legend"><span class="water-dot">Есть сигнал воды</span><span class="dry-dot">Нет пересечения маски</span><span class="unknown-dot">Тип / данные требуют уточнения</span></div>
+      <div class="building-legend"><span class="water-dot">Есть сигнал воды</span><span class="dry-dot">Нет пересечения маски</span><span class="unknown-dot">Нет данных радара</span></div>
 
-      <article v-if="selected" class="building-card" data-testid="building-card">
+      <article v-if="selected" ref="card" class="building-card" data-testid="building-card">
+        <span class="building-note">{{ additional ? 'Дополнительное здание · выбрано отдельно от топ‑10' : 'Место в рейтинге: ' + selected.risk_rank }}</span>
         <div class="building-card-head"><h3>{{ selected.name }}</h3><button class="ghost-button" aria-label="Закрыть карточку здания" @click="buildings.selectedId = null">×</button></div>
         <label>Тип здания
           <select :value="selected.building_type" :disabled="buildings.busy" aria-label="Тип выбранного здания" @change="updateBuildingType(selected.id, $event.target.value)">
@@ -81,6 +90,7 @@ async function applyRates() {
         <dl class="building-facts">
           <div><dt>Площадь контура</dt><dd>{{ number(selected.area_m2) }} м²</dd></div>
           <div v-if="selected.levels"><dt>Этажей по источнику</dt><dd>{{ selected.levels }}</dd></div>
+          <div><dt>Высота на карте</dt><dd>{{ number(selected.height_m) }} м{{ selected.height_estimated ? ' ≈' : '' }}</dd></div>
           <div><dt>Покрыто радаром</dt><dd>{{ percent(selected.radar_coverage) }}</dd></div>
           <div><dt>Контур под маской воды</dt><dd>{{ percent(selected.water_fraction) }}</dd></div>
           <div><dt>Средний сигнал воды, p</dt><dd>{{ percent(selected.water_probability_proxy) }}</dd></div>
@@ -89,11 +99,31 @@ async function applyRates() {
           <div><dt>Доля повреждения, q</dt><dd>{{ percent(selected.damage_ratio) }}</dd></div>
           <div><dt>Ущерб при затоплении, V × q</dt><dd>{{ money(selected.conditional_damage_rub) }}</dd></div>
         </dl>
+        <p class="building-note">{{ selected.height_source }}. Высота влияет только на вид здания.</p>
         <div class="building-loss"><span>{{ buildingStatus[selected.status] }}</span><strong>{{ money(selected.expected_loss_rub) }}</strong></div>
         <p v-if="selected.expected_loss_rub != null" class="building-note">{{ number(selected.area_m2) }} м² × {{ money(selected.cost_rub_m2) }}/м² × {{ percent(selected.damage_ratio) }} × {{ percent(selected.water_probability_proxy) }}</p>
         <p class="building-note">p — среднее по пикселям внутри контура. Это не подтверждение затопления или повреждения дома.</p>
         <button class="ghost-button" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button>
       </article>
+
+      <div class="building-filters">
+        <input v-model="search" type="search" placeholder="Название, тип или ID" aria-label="Поиск здания" />
+        <select v-model="filter" aria-label="Фильтр зданий"><option value="all">Все типы</option><option value="water">С сигналом воды</option><option value="unknown">Неизвестный тип</option><option value="missing">Без оценки</option></select>
+      </div>
+      <div class="building-list-mode" role="group" aria-label="Список зданий">
+        <button class="ghost-button" :aria-pressed="topMode" @click="listMode = 'top'; filter = 'all'; search = ''">Топ‑10</button>
+        <button class="ghost-button" :aria-pressed="!topMode" @click="listMode = 'all'">Все {{ data.summary.count }}</button>
+      </div>
+      <p class="building-note">{{ topMode ? topBuildings.length + ' зданий с наибольшим сигналом воды' : filtered.length + ' зданий по фильтру' }}. Рейтинг не подтверждает повреждение здания.</p>
+      <div class="building-list" data-testid="building-top-list">
+        <button v-for="feature in visibleBuildings" :key="feature.id" class="building-row" :data-building-id="feature.id" :class="{ selected: feature.id === buildings.selectedId }" @click="choose(feature)">
+          <b class="building-rank">{{ feature.properties.risk_rank || '—' }}</b>
+          <span class="building-row-main"><strong>{{ feature.properties.tags.name || feature.properties.type_label }}</strong><small>{{ feature.properties.tags.name ? feature.properties.type_label + ' · ' : '' }}{{ number(feature.properties.area_m2) }} м² · p воды {{ percent(feature.properties.water_probability_proxy) }}</small></span>
+          <span class="building-row-amount">{{ money(feature.properties.expected_loss_rub) }}<small>{{ feature.properties.expected_loss_rub == null ? buildingStatus[feature.properties.status] : 'сценарий' }}</small></span>
+        </button>
+      </div>
+      <p v-if="!visibleBuildings.length" class="building-note">{{ data.summary.count ? 'Для этого списка нет зданий с данными. Откройте все здания или смените фильтр.' : 'В этой области контуры не найдены. Можно открыть другой снимок или загрузить GeoJSON.' }}</p>
+      <button v-if="!topMode && filtered.length > limit" class="ghost-button" @click="limit += 40">Показать ещё 40</button>
 
       <details class="building-details">
         <summary>Стоимость и повреждение по типам</summary>
@@ -117,23 +147,10 @@ async function applyRates() {
         <p class="building-note">Источник контуров: {{ data.source.attribution || data.source.name }}. {{ data.source.license }}. {{ data.source.scope }}</p>
       </details>
 
-      <div class="building-filters">
-        <input v-model="search" type="search" placeholder="Название, тип или ID" aria-label="Поиск здания" />
-        <select v-model="filter" aria-label="Фильтр зданий"><option value="all">Все здания</option><option value="water">С сигналом воды</option><option value="unknown">Неизвестный тип</option><option value="missing">Без оценки</option></select>
-      </div>
-      <p class="building-note">{{ filtered.length }} зданий · сначала больший сценарный ущерб</p>
-      <div class="building-list">
-        <button v-for="feature in filtered.slice(0, limit)" :key="feature.id" class="building-row" :class="{ selected: feature.id === buildings.selectedId }" @click="choose(feature)">
-          <span><strong>{{ feature.properties.name }}</strong><small>{{ feature.properties.type_label }} · {{ number(feature.properties.area_m2) }} м²</small></span>
-          <span class="building-row-amount">{{ money(feature.properties.expected_loss_rub) }}<small>{{ feature.properties.expected_loss_rub == null ? buildingStatus[feature.properties.status] : 'сценарий' }}</small></span>
-        </button>
-      </div>
-      <p v-if="!filtered.length" class="building-note">Зданий по этим условиям нет. Попробуйте другую область, фильтр или свой GeoJSON.</p>
-      <button v-if="filtered.length > limit" class="ghost-button" @click="limit += 40">Показать ещё 40</button>
       <button class="primary-button wide building-export" :disabled="buildings.busy || buildings.exporting || dirtyRates" @click="exportBuildings"><Download :size="16" />{{ buildings.exporting ? 'Готовим выгрузку…' : 'Скачать здания и расчёт' }}</button>
       <p class="building-note">ZIP: GeoJSON, CSV, применённые ставки, источники и формула.</p>
     </template>
-    <p v-else class="building-note">Для показа жюри откройте Пайпорту: сохранённые реальные контуры и обработанный снимок. Можно загрузить здания текущей области из OSM или свой GeoJSON с Polygon / MultiPolygon.</p>
+    <p v-else-if="!buildings.busy" class="building-note">Контуры появятся после загрузки снимка. Если источник недоступен, повторите загрузку или откройте сохранённый пример Пайпорты.</p>
   </section>
 </template>
 
@@ -156,4 +173,5 @@ async function applyRates() {
 .building-row { background: transparent; color: inherit; border: 0; border-bottom: 1px solid #82939830; padding: 11px 5px; display: flex; text-align: left; gap: 8px; justify-content: space-between; width: 100%; cursor: pointer; font-size: 11px; }.building-row.selected { background: #42858e18; }.building-row strong { font-weight: 550; }.building-row span { min-width: 0; overflow-wrap: anywhere; }.building-row small { display: block; font-size: 10px; opacity: .65; margin-top: 4px; }.building-row-amount { text-align: right; flex-shrink: 0; max-width: 45%; }
 .building-legend { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: 10px; }.building-legend span:before { content: ''; width: 8px; height: 8px; display: inline-block; margin-right: 4px; border-radius: 2px; }.water-dot:before { background: #d57442; }.dry-dot:before { background: #398b81; }.unknown-dot:before { background: #899199; }
 .building-export { margin-top: 6px; }.ghost-button { display: inline-flex; align-items: center; gap: 5px; }
+.building-rank { width: 20px; flex: 0 0 20px; opacity: .6; font-variant-numeric: tabular-nums; }.building-row-main { flex: 1; }.building-list-mode { display: flex; gap: 8px; }.building-list-mode [aria-pressed="true"] { background: #42858e20; border-radius: 8px; }
 </style>

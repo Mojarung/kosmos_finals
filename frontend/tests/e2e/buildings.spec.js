@@ -1,15 +1,63 @@
 import { test, expect } from '@playwright/test'
 
+// Keep external OSM availability separate from the real saved-scene UI checks.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/buildings/load', async route => {
+    if (route.request().postDataJSON().scene_id === 'Paiporta_20241101') return route.continue()
+    return route.fulfill({ status: 503, json: { detail: 'OSM временно недоступен: контролируемый сценарий проверки' } })
+  })
+})
+
 async function open(page, width = 1440) {
   await page.setViewportSize({ width, height: 1000 })
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
-  if (width < 1024) await page.getByRole('button', { name: /^EL / }).click()
+  if (width < 1024) await page.getByRole('button', { name: /^(EL |Здания)/ }).click()
   await page.getByRole('tab', { name: 'Здания', exact: true }).click()
   await page.getByRole('button', { name: 'Пример: Пайпорта', exact: true }).click()
-  await expect(page.getByTestId('building-summary')).toContainText('237 из 908')
-  await expect(page.getByTestId('building-summary')).toContainText('671 без оценки')
+  await expect(page.getByTestId('building-summary')).toContainText('239 из 908')
+  await expect(page.getByTestId('building-summary')).toContainText('669 без оценки')
 }
+
+test('scene selection automatically shows ten 3D buildings and preserves point workflows', async ({ page }) => {
+  const errors = [], loads = []
+  page.on('pageerror', error => errors.push(error.message))
+  page.on('request', request => { if (request.url().endsWith('/api/buildings/load')) loads.push(request.postDataJSON().scene_id) })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.getByRole('tab', { name: 'Здания', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect.poll(() => loads.includes('Nigeria_812045')).toBe(true)
+  const response = page.waitForResponse(r => r.url().endsWith('/api/buildings/load') && r.request().postDataJSON().scene_id === 'Paiporta_20241101')
+  await page.getByRole('tab', { name: 'Пайпорта · реальные здания', exact: true }).click()
+  const dataset = await (await response).json()
+  await expect(page.getByTestId('building-summary')).toContainText('239 из 908')
+  await expect(page.locator('.building-row')).toHaveCount(10)
+  expect(await page.locator('.building-row').evaluateAll(rows => rows.map(row => row.dataset.buildingId))).toEqual(dataset.top_building_ids)
+  await expect(page.locator('.asset-marker')).toHaveCount(0)
+  await expect(page.locator('.journey-card')).toBeHidden({ timeout: 30000 })
+  await expect(page.getByRole('button', { name: '3D-обзор', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('tab', { name: 'Точки', exact: true }).click()
+  await expect(page.locator('.asset-row')).toHaveCount(10)
+  await expect(page.locator('.asset-marker')).toHaveCount(10)
+  await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
+  await expect(page.locator('.asset-marker')).toHaveCount(10)
+  await page.getByRole('tab', { name: 'Объекты', exact: true }).click()
+  await page.getByRole('tab', { name: 'Здания', exact: true }).click()
+  await expect(page.locator('.building-row')).toHaveCount(10)
+  expect(loads.filter(id => id === 'Paiporta_20241101')).toHaveLength(1)
+  await page.getByLabel('Поиск здания').fill('Centro Sanitario Integrado Paiporta')
+  await page.locator('.building-row').click()
+  await expect(page.getByTestId('building-card')).toContainText('Дополнительное здание')
+  await expect(page.getByLabel('Тип выбранного здания')).toHaveValue('hospital')
+  await page.getByRole('button', { name: 'Топ‑10', exact: true }).click()
+  await expect(page.locator('.building-row')).toHaveCount(10)
+  await page.getByRole('button', { name: 'Закрыть карточку здания' }).click()
+  await page.mouse.click(710, 510)
+  await expect(page.getByTestId('building-card')).toContainText('Centro Sanitario Integrado Paiporta')
+  await expect(page.getByTestId('building-card')).toContainText('Дополнительное здание')
+  await page.screenshot({ path: '/private/tmp/buildings-automatic-3d.png' })
+  expect(errors).toEqual([])
+})
 
 test('real buildings: type, independent rate changes, map, export, persistence', async ({ page }) => {
   const errors = []
@@ -23,7 +71,7 @@ test('real buildings: type, independent rate changes, map, export, persistence',
   await expect(page.getByTestId('building-card')).toContainText('Нет оценки')
   await page.getByLabel('Тип выбранного здания').selectOption('warehouse')
   await expect(page.getByTestId('building-card')).toContainText('Уточнено пользователем')
-  await expect(page.getByTestId('building-summary')).toContainText('238 из 908')
+  await expect(page.getByTestId('building-summary')).toContainText('240 из 908')
   const loss = await page.locator('.building-loss strong').innerText()
   await page.getByText('Стоимость и повреждение по типам', { exact: true }).click()
   await page.getByLabel('Склад: ставка за м²', { exact: true }).fill('60000')
@@ -38,6 +86,7 @@ test('real buildings: type, independent rate changes, map, export, persistence',
   await page.getByRole('button', { name: 'Закрыть карточку здания' }).click()
   await page.getByText('Стоимость и повреждение по типам', { exact: true }).click()
   await page.getByLabel('Фильтр зданий').selectOption('all')
+  await page.getByLabel('Поиск здания').fill('Centro Sanitario Integrado Paiporta')
   await page.locator('.building-row').first().click()
   await page.getByTestId('building-card').scrollIntoViewIfNeeded()
   await expect(page.locator('.journey-card')).toBeHidden({ timeout: 30000 })
@@ -50,7 +99,7 @@ test('real buildings: type, independent rate changes, map, export, persistence',
   await page.reload()
   await page.getByRole('tab', { name: 'Здания', exact: true }).click()
   await page.getByRole('button', { name: 'Пример: Пайпорта', exact: true }).click()
-  await expect(page.getByTestId('building-summary')).toContainText('237 из 908')
+  await expect(page.getByTestId('building-summary')).toContainText('239 из 908')
   await page.getByText('Стоимость и повреждение по типам', { exact: true }).click()
   await expect(page.getByLabel('Склад: ставка за м²', { exact: true })).toHaveValue('60000')
   expect(errors).toEqual([])
@@ -63,6 +112,7 @@ test('scene change discards a late building response', async ({ page }) => {
   let arrived
   const arrivedPromise = new Promise(resolve => { arrived = resolve })
   await page.route('**/api/buildings/load', async route => {
+    if (route.request().postDataJSON().scene_id !== 'Paiporta_20241101') return route.fallback()
     const response = await route.fetch()
     arrived()
     await held
@@ -74,7 +124,7 @@ test('scene change discards a late building response', async ({ page }) => {
   release()
   await expect(page.getByTestId('building-summary')).toHaveCount(0)
   await expect(page.locator('.scene-title')).toContainText('Гана')
-  await expect(page.getByRole('button', { name: 'Загрузить здания области' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: 'Повторить загрузку' })).toBeEnabled()
 })
 
 test('mobile layout and GeoJSON upload recover after an error', async ({ page }) => {

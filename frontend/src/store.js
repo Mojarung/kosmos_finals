@@ -36,7 +36,7 @@ export const state = reactive({
   overlayOpacity: 58,
   showRadar: false,
   showZones: false,
-  tilted: false,
+  tilted: true,
   // Камера отдалена до масштаба глобуса: наклон там бессмыслен, кнопка 3D выключена.
   globeView: false,
   theme: 'light',
@@ -45,6 +45,7 @@ export const state = reactive({
   priority: 'risk',
   strategy: 'C',
   tab: 'assets',
+  objectMode: 'buildings',
   observeOpen: true,
   decisionOpen: true,
   decisionExpanded: false,

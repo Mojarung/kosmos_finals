@@ -12,12 +12,11 @@ import PlanView from './PlanView.vue'
 import ProjectView from './ProjectView.vue'
 import { exportDecision, fetchAnalysis, hasData, resetRegion, retryRegion, state } from '../store'
 import { compactRub } from '../lib/format'
-import { buildings } from '../lib/buildings'
+import { buildingMode, buildings } from '../lib/buildings'
 
 const emit = defineEmits(['asset', 'zone', 'building', 'reset'])
 const TABS = [
   { value: 'assets', label: 'Объекты', hint: 'Какие объекты под водой и во сколько обойдётся ущерб' },
-  { value: 'buildings', label: 'Здания', hint: 'Реальные контуры, назначение и сценарная стоимость ущерба' },
   { value: 'plan', label: 'Съёмка', hint: 'Какие снимки купить под бюджет и срок, и почему именно их' },
   { value: 'projects', label: 'Проекты', hint: 'Свои объекты и история решений' },
 ]
@@ -52,7 +51,7 @@ function back() {
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
         <Activity :size="16" class="accent" />
-        <span v-if="state.tab === 'buildings'" class="tabular">Здания{{ buildings.data?.summary.expected_loss_rub != null ? ' · ' + compactRub(buildings.data.summary.expected_loss_rub) : '' }}</span>
+        <span v-if="buildingMode" class="tabular">Здания{{ buildings.data?.summary.expected_loss_rub != null ? ' · ' + compactRub(buildings.data.summary.expected_loss_rub) : '' }}</span>
         <span v-else-if="hasData" class="tabular">EL {{ compactRub(state.analysis.metrics.expected_loss_rub) }}</span>
         <span v-else>Решение</span>
       </button>
@@ -85,8 +84,11 @@ function back() {
         <button class="tonal-button" @click="back">Вернуться к снимку</button>
       </div>
       <div v-else-if="hasData" ref="content" :class="{ dimmed: state.loading }">
-        <AssetsView v-if="state.tab === 'assets'" @asset="id => emit('asset', id)" />
-        <BuildingsView v-else-if="state.tab === 'buildings'" @building="(feature, reveal) => emit('building', feature, reveal)" />
+        <template v-if="state.tab === 'assets' || state.tab === 'buildings'">
+          <BubbleTabs v-model="state.objectMode" class="object-mode" :options="[{ value: 'buildings', label: 'Здания', hint: 'Реальные здания и топ‑10 по риску' }, { value: 'points', label: 'Точки', hint: 'Учебные точечные объекты и обязательный расчёт' }]" stretch label="Вид объектов" />
+          <BuildingsView v-if="buildingMode" @building="(feature, reveal) => emit('building', feature, reveal)" />
+          <AssetsView v-else @asset="id => emit('asset', id)" />
+        </template>
         <PlanView v-else-if="state.tab === 'plan'" @zone="id => emit('zone', id)" />
         <ProjectView v-else-if="state.tab === 'projects'" />
       </div>
@@ -95,7 +97,7 @@ function back() {
       </Transition>
     </div>
 
-    <footer v-if="state.tab !== 'buildings' && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
+    <footer v-if="!buildingMode && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
       <a v-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref" download @click="!state.voiExportHref && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
       <button v-else class="primary-button wide" :disabled="!hasData" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
         <Download :size="17" />Скачать решение

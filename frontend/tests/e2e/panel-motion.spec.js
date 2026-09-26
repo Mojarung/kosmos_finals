@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 async function openPlan(page, width = 1440) {
   await page.setViewportSize({ width, height: 900 })
   await page.goto('/')
-  if (width < 1024) await page.getByRole('button', { name: /^EL / }).click()
+  if (width < 1024) await page.getByRole('button', { name: /^(EL |Здания)/ }).click()
   await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
   await expect(page.getByLabel('Бюджет на снимки')).toBeVisible()
 }
@@ -15,7 +15,7 @@ for (const reduced of [false, true]) {
     page.on('pageerror', error => errors.push(error.message))
     await openPlan(page)
     const panel = page.locator('.decision-panel')
-    await expect(panel.getByRole('tablist', { name: 'Раздел решения' }).getByRole('tab')).toHaveText(['Объекты', 'Здания', 'Съёмка', 'Проекты'])
+    await expect(panel.getByRole('tablist', { name: 'Раздел решения' }).getByRole('tab')).toHaveText(['Объекты', 'Съёмка', 'Проекты'])
     const before = await panel.boundingBox()
     // Dispatch back-to-back input without Playwright waiting for animation stability.
     const resize = panel.locator('.panel-resize')
@@ -39,6 +39,7 @@ for (const reduced of [false, true]) {
     for (const name of ['Проекты', 'Объекты', 'Съёмка', 'Объекты']) {
       await panel.getByRole('tab', { name, exact: true }).dispatchEvent('click')
     }
+    await page.getByRole('tab', { name: 'Точки', exact: true }).click()
     await expect(panel.locator('.asset-rows')).toBeVisible()
     const asset = panel.locator('.asset-row').first()
     await asset.click()
@@ -66,7 +67,7 @@ for (const width of [375, 1440]) {
     await expect(panel).not.toHaveClass(/decision-expanded/)
     if (width < 1024) {
       await expect(panel).toHaveClass(/pill/)
-      await page.getByRole('button', { name: /^EL / }).click()
+      await page.getByRole('button', { name: /^(EL |Здания)/ }).click()
       await expect(page.getByTestId('voi-chart')).toBeVisible()
     }
     await expect(page.getByLabel('Цена выезда')).toHaveValue('5000')

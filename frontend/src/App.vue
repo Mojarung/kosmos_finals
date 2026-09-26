@@ -8,6 +8,7 @@ import ObservePanel from './components/ObservePanel.vue'
 import TopBar from './components/TopBar.vue'
 import { calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
 import { number, percent } from './lib/format'
+import { buildingMode } from './lib/buildings'
 
 const mapRef = ref(null)
 const chrome = ref(null)
@@ -52,6 +53,7 @@ const legend = computed(() => {
 })
 
 function chooseAsset(id) {
+  state.objectMode = 'points'
   state.selectedAssetId = id
   state.tab = 'assets'
   state.decisionOpen = true
@@ -67,7 +69,8 @@ function chooseZone(id) {
   mapRef.value?.focusZone(zone)
 }
 function chooseBuilding(feature, reveal = false) {
-  state.tab = 'buildings'
+  state.objectMode = 'buildings'
+  state.tab = 'assets'
   state.decisionOpen = !(reveal && window.innerWidth < 1024)
   mapRef.value?.focusBuilding(feature)
 }
@@ -117,7 +120,7 @@ onMounted(() => {
         <div v-else-if="state.liveStatus === 'ready' && ['live_sentinel1_rtc', 'uploaded_sentinel1_geotiff'].includes(state.analysis?.chip.source_kind)" class="panel capsule live-flow ready" role="status">
           <span class="live-flow-dot"></span>
           <span v-if="state.analysis.chip.source_kind === 'uploaded_sentinel1_geotiff'">Свой GeoTIFF · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · объекты учебные</span>
-          <span v-else>Sentinel‑1 RTC · {{ state.analysis.chip.source_item_ids?.length || 1 }} кадр{{ (state.analysis.chip.source_item_ids?.length || 1) > 1 ? 'а' : '' }} · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · {{ state.tab === 'buildings' ? 'контуры зданий' : 'объекты учебные' }}</span>
+          <span v-else>Sentinel‑1 RTC · {{ state.analysis.chip.source_item_ids?.length || 1 }} кадр{{ (state.analysis.chip.source_item_ids?.length || 1) > 1 ? 'а' : '' }} · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · {{ buildingMode ? 'контуры зданий' : 'объекты учебные' }}</span>
         </div>
       </Transition>
       <div class="panels">
@@ -139,9 +142,9 @@ onMounted(() => {
             <span v-if="maskNote" v-tip="maskNote.hint" class="legend-item legend-note tabular">{{ maskNote.label }}</span>
             <span v-if="state.radarGaps && state.layerMode !== 'none'" class="legend-item"
               v-tip="`Серые пиксели: радар Sentinel‑1 здесь не дал сигнала (${number(state.radarGaps)} пикс., например шов на стыке кадров). Вода там или суша, неизвестно; в площадь воды и ущерб они не входят`"><i class="legend-water nodata"></i>Нет сигнала</span>
-            <span v-if="state.tab !== 'buildings'" class="legend-item asset-key" v-tip="'Номер показывает место объекта в рейтинге ущерба. Оранжевый кружок: объект, скорее всего, в воде. Зелёное кольцо: объект внутри зоны заказа'"><i class="legend-asset"></i>Объект</span>
+            <span v-if="!buildingMode" class="legend-item asset-key" v-tip="'Номер показывает место объекта в рейтинге ущерба. Оранжевый кружок: объект, скорее всего, в воде. Зелёное кольцо: объект внутри зоны заказа'"><i class="legend-asset"></i>Объект</span>
             <span v-else class="legend-item">Контуры зданий</span>
-            <span v-if="state.showZones && state.tab !== 'buildings'" class="legend-item zone-key" v-tip="'Пунктиром показаны зоны, которые можно заказать: оранжевые вокруг объектов, фиолетовые там, где карта может ошибаться'"><i class="legend-zone"></i>Зона</span>
+            <span v-if="state.showZones && !buildingMode" class="legend-item zone-key" v-tip="'Пунктиром показаны зоны, которые можно заказать: оранжевые вокруг объектов, фиолетовые там, где карта может ошибаться'"><i class="legend-zone"></i>Зона</span>
           </div>
           <div class="map-console-tools">
             <div class="basemap-switch" role="group" aria-label="Подложка карты">

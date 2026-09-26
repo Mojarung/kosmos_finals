@@ -13,10 +13,12 @@ from xml.etree import ElementTree as ET
 
 import numpy as np
 from pyproj import Geod
-from shapely import get_coordinates
-from shapely.geometry import LineString, MultiPolygon, Polygon, box, mapping, shape
+from shapely import get_coordinates, STRtree
+from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
 from shapely.geometry.polygon import orient
 from shapely.ops import polygonize, unary_union
+
+from .building_rates import classify, RATES
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = Path(os.environ.get("FLOODVALUE_BUILDINGS_DIR", ROOT / "data/buildings-cache"))
@@ -70,6 +72,8 @@ def normalize(data: dict) -> dict:
         result.append({"type": "Feature", "id": identifier, "geometry": mapping(geometry), "properties": {
             "id": identifier, "tags": tags, "name": tags.get("name", identifier),
             "source_url": source_url, "source_updated_at": str(props.get("osm_updated_at", ""))[:100],
+            "contained_uses": [{"id": str(use.get("id", ""))[:100], "kind": use["kind"], "evidence": str(use.get("evidence", ""))[:500]}
+                               for use in (props.get("contained_uses") or []) if isinstance(use, dict) and use.get("kind") in RATES][:50],
         }})
     return {"type": "FeatureCollection", "features": result, "source": data.get("source", {})}
 
@@ -126,6 +130,18 @@ def parse_osm(content: bytes, source: dict) -> dict:
         pts = points(way)
         if len(pts) >= 4 and pts[0] == pts[-1]:
             add(way, "way", Polygon(pts), values)
+    # A tagged POI inside a footprint can establish use when building=yes says nothing.
+    # Conflicting POI categories remain unknown; neighbouring POIs are never borrowed.
+    pois = []
+    for node in root.findall("node"):
+        kind, evidence = classify(tags(node))
+        if kind != "unknown":
+            pois.append((Point(nodes[node.attrib["id"]]), {"id": f"node/{node.attrib['id']}", "kind": kind, "evidence": evidence}))
+    if pois:
+        tree = STRtree([point for point, _ in pois])
+        for feature in features:
+            geometry = shape(feature["geometry"])
+            feature["properties"]["contained_uses"] = [pois[int(i)][1] for i in tree.query(geometry, predicate="contains")]
     return normalize({"type": "FeatureCollection", "features": features, "source": source})
 
 
@@ -152,7 +168,7 @@ def load_osm(bounds: list[float]) -> dict:
     if area_m2(box(*bounds)) > 60_000_000:
         raise ValueError("Для OSM выберите область до 60 км² или загрузите свой GeoJSON")
     key = hashlib.sha256(json.dumps(bounds).encode()).hexdigest()[:24]
-    cached = CACHE / f"osm-{key}.json"
+    cached = CACHE / f"osm-use-v2-{key}.json"
     if cached.exists():
         return json.loads(cached.read_text())
     url = "https://api.openstreetmap.org/api/0.6/map?bbox=" + ",".join(map(str, bounds))
