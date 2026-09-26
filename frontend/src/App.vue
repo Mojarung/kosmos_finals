@@ -18,8 +18,8 @@ const legend = computed(() => {
   const water = permanentSeparated.value
     ? [{ key: 'flood', label: 'Паводок', hint: 'Вода, которой нет на карте постоянной воды JRC' },
        { key: 'river', label: 'Река, озеро', hint: state.analysis?.region.permanent_status === 'jrc_gsw'
-         ? 'Постоянная вода JRC Global Surface Water: была водой и в 1984, и в 2021 году. Ущерб на ней не считается'
-         : 'Постоянная вода JRC: была водой и в 1984, и в 2018 году. Ущерб на ней не считается' }]
+         ? 'Постоянная вода JRC Global Surface Water: была водой и в 1984, и в 2021 году. В площадь паводка не входит'
+         : 'Постоянная вода JRC: была водой и в 1984, и в 2018 году. В площадь паводка не входит' }]
     : [{ key: 'flood', label: 'Вода по модели', hint: 'Постоянная вода для этой области не отделена: карта показывает всю воду' }]
   return {
     model: water,
