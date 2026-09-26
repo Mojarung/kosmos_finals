@@ -272,11 +272,12 @@ function hover(id) { state.hoverZoneId = id }
     <section :key="state.strategy" class="block plan-result">
       <RingGauge :value="plan?.coverage_share" label="ущерба в зонах заказа" color="var(--reference)" />
       <div class="mini-rows">
-        <div v-tip="'Цена снимков. Обработка занимает секунды на CPU, проверку специалистом не оцениваем, поэтому прочие затраты не добавлены'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
+        <div v-tip="'Цена снимков по ПП № 840. Бюджет ограничивает только её'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
+        <div v-if="plan?.decision_cost_rub != null" v-tip="`Снимки плюс сценарная оценка обработки и проверки аналитиком: ${rub(plan.other_cost_rub)}. Это допущение, а не счёт`"><span>Решение целиком</span><b class="tabular">{{ rub(plan.decision_cost_rub) }}</b></div>
         <div><span>Объектов в зонах</span><b class="tabular">{{ plan?.covered_asset_ids?.length || 0 }} из {{ analysis.assets.length }}</b></div>
         <div v-tip="'Доля площади, где карта может ошибаться, которая попадает в заказанные зоны'"><span>Сомнений в зонах</span><b class="tabular">{{ percent(plan?.covered_doubt_share) }}</b></div>
         <div><span>Зон в заказе</span><b class="tabular">{{ plan?.zone_ids?.length || 0 }}</b></div>
-        <div v-tip="plan?.uncertainty_status === 'baseline' ? 'Средний шанс ошибки карты по области без новых снимков. Это исходная неопределённость' : 'Новых снимков ещё нет, поэтому снижение неопределённости не заявляем'"><span>Остаточная неопределённость</span><b class="tabular">{{ plan?.uncertainty_status === 'baseline' ? percent(plan.residual_uncertainty, 1) : 'не оценена' }}</b></div>
+        <div v-tip="plan?.uncertainty_status === 'baseline' ? 'Средний шанс ошибки карты по области без новых снимков. Это исходная неопределённость' : plan?.residual_uncertainty != null ? 'Сценарий: столько останется, если снимки придут вовремя и уточнят карту внутри заказанных зон. Новых снимков ещё нет' : 'Новых снимков ещё нет, поэтому снижение неопределённости не заявляем'"><span>Остаточная неопределённость</span><b class="tabular">{{ plan?.residual_uncertainty == null ? 'не оценена' : percent(plan.residual_uncertainty, 1) + (plan.uncertainty_status === 'scenario' ? ', сценарий' : '') }}</b></div>
       </div>
     </section>
   </Transition>
