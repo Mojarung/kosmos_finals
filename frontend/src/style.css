@@ -868,20 +868,23 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .plan-result .mini-rows > div > span:first-child { min-width: 0; }
 .plan-result .mini-rows b { white-space: nowrap; flex: none; }
 
-/* Атрибуция на телефоне: кнопка «©» слева от пульта раскрывает источники и пометку о подложке. */
-.credits-toggle, .credits-note { display: none; }
+/* Источники подложки скрыты на всех ширинах: кнопка «©» слева от пульта раскрывает их по нажатию. */
+.credits-toggle {
+  display: grid; place-items: center; grid-column: 1; grid-row: 1; justify-self: start; align-self: end;
+  width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; pointer-events: auto; cursor: pointer;
+  font: 600 14px/1 inherit; color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.credits-toggle[aria-expanded="true"] { color: var(--foreground); }
+.map-credits { display: none; }
+.map-credits.open { display: block; }
+.credits-note { display: none; }
+/* Широкий экран: источники раскрываются справа от кнопки, в той же ячейке слева от пульта. */
+@media (min-width: 1280px) { .map-credits.open { margin-left: 38px; } }
 @media (max-width: 700px) {
-  .credits-toggle {
-    display: grid; place-items: center; grid-column: 1; grid-row: 1; justify-self: start; align-self: end;
-    width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; pointer-events: auto; cursor: pointer;
-    font: 600 14px/1 inherit; color: var(--muted-foreground);
-    background: color-mix(in srgb, var(--surface-1) 86%, transparent);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 12%, transparent);
-  }
-  .credits-toggle[aria-expanded="true"] { color: var(--foreground); }
-  .map-credits { display: none; }
-  .map-credits.open { display: block; grid-row: 2; }
+  .map-credits.open { grid-row: 2; }
   .credits-note { display: inline; }
   .basemap-note { display: none; }
 }

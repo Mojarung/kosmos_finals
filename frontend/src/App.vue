@@ -119,7 +119,7 @@ onMounted(() => {
              спутник Esri World Imagery (адреса тайлов в GlobeMap.vue). Подписи OSM лежат
              поверх и спутника, поэтому строка OSM есть в обоих режимах. -->
         <!-- Одной строкой: Vue убирает пробелы-переводы строк между ссылками, и они слипались. -->
-        <!-- На телефоне источники прячутся за кнопкой «©»: строка занимала низ экрана. -->
+        <!-- Источники прячутся за кнопкой «©» на всех ширинах: строка занимала низ экрана. -->
         <button class="credits-toggle" type="button" :aria-expanded="creditsOpen" aria-controls="map-credits"
           aria-label="Источники подложки и данных" @click="creditsOpen = !creditsOpen">©</button>
         <p id="map-credits" class="map-credits" :class="{ open: creditsOpen }" aria-label="Источники подложки"><span v-if="state.basemap === 'satellite'" class="credits-note">Подложка: современный снимок, только для ориентира, в расчёт не входит. </span><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, GIS User Community; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a></p>
