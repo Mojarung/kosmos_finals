@@ -100,6 +100,9 @@ function onPointer(event) {
   if (open.value && !root.value?.contains(event.target)) open.value = false
 }
 onMounted(() => {
+  // Список грузится заранее, пока страница простаивает, чтобы подсказки были с первой буквы.
+  const idle = window.requestIdleCallback || (callback => setTimeout(callback, 2500))
+  idle(() => load(), { timeout: 5000 })
   window.addEventListener('keydown', onKey)
   window.addEventListener('pointerdown', onPointer, { capture: true })
 })
