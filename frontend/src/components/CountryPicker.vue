@@ -195,7 +195,12 @@ onBeforeUnmount(close)
   <div v-if="allScenes.length" ref="root" class="country-picker" data-enter>
     <div class="panel capsule scene-collections"><BubbleTabs v-model="collectionModel" :options="COLLECTIONS" stretch label="Набор снимков" /></div>
     <div v-if="quick.length" class="panel capsule scenes">
-      <BubbleTabs v-model="tab" :options="quick" :label="collection === 'official' ? 'Страна' : 'Демо-сцена'" />
+      <div v-if="collection === 'showcase'" class="demo-scene-tabs" role="tablist" aria-label="Демо-сцена">
+        <button v-for="scene in quick" :key="scene.value" type="button" role="tab"
+          :aria-selected="tab === scene.value" :class="{ selected: tab === scene.value }"
+          v-tip="scene.hint" @click="tab = scene.value">{{ scene.label }}</button>
+      </div>
+      <BubbleTabs v-else :key="collection" v-model="tab" :options="quick" label="Страна" />
       <button class="all-countries" :class="{ open, busy: ingestRunning }" :aria-expanded="open" aria-controls="country-menu"
         v-tip="open ? '' : ingestRunning ? 'Идёт расчёт снимка' : collection === 'official' ? 'Все страны и расчёт нового снимка' : 'Все подготовленные демо-сцены'" @click="open = !open">
         <LoaderCircle v-if="ingestRunning" :size="14" class="spin" />
