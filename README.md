@@ -21,6 +21,8 @@ uv run scripts/fetch_context_weights.py
 # если архив уже скачан: uv run scripts/fetch_context_weights.py --zip context_model_weights.zip
 ```
 
+Если Git LFS недоступен, пакет next_optical (234 МБ, те же файлы, что в `ml/artifacts/next_optical`) тоже лежит одним архивом на [Google Drive](https://drive.google.com/file/d/1vb37LBhdCjupBtDoaJFoI3Y7osDJ-UnL/view): `uv run scripts/fetch_context_weights.py --next-optical` сверяет каждый файл с его `SHA256SUMS.txt` и ставит пакет, только если рецепт совпадает с рецептом репозитория. Видео и другие материалы команды: [папка на Google Drive](https://drive.google.com/drive/folders/14OCZ3PZCMQ6m2yPuagXR_riF9-x_--R8?usp=drive_link).
+
 Скрипт сверяет sha256 каждого файла с `ml/artifacts/context_model/recipe.json` и кладёт веса в `ml/artifacts/context_model`; в копии GitVerse этот путь в `.gitignore`, так что checkout остаётся чистым. Без весов сервис тоже запускается, только рамка на карте считается S1 fallback.
 
 ```bash
