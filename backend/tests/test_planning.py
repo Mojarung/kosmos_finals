@@ -50,8 +50,13 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
     result = response.json()
     assert result["region"]["data_status"] == "outside_coverage"
     assert result["region"]["model_water_area_km2"] is None
-    assert result["assets"] == []
+    # The portfolio is fixed for the chip (one map, one portfolio for A/B/C); outside the
+    # chip nothing of it lies in the region and nothing is ordered.
+    assert len(result["assets"]) == 10
+    assert result["metrics"]["assets_in_region"] == 0
+    assert result["metrics"]["region_expected_loss_rub"] == 0
     assert result["strategies"]["C"]["data_cost_rub"] == 0
+    assert result["strategies"]["B"]["data_cost_rub"] == 0
 
     inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
