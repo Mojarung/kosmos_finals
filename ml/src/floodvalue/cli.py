@@ -181,6 +181,20 @@ def _cmd_doubt_threshold(_args: argparse.Namespace) -> None:
                                       for part, row in report.items()}}, indent=2))
 
 
+COMPARISON_PATH = EVALUATION_DIR / "method_comparison.json"
+
+
+def _cmd_compare(_args: argparse.Namespace) -> None:
+    from floodvalue.comparison import compare
+
+    evaluation = json.loads((EVALUATION_DIR / "evaluation.json").read_text(encoding="utf-8"))
+    record = {"command": "uv run --project ml floodvalue compare",
+              "source": (EVALUATION_DIR / "evaluation.json").relative_to(paths.PIPELINE_ROOT).as_posix(),
+              **compare(evaluation)}
+    COMPARISON_PATH.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    print(json.dumps(record["bootstrap_iou_difference"], indent=2))
+
+
 NORM_CHECK_PATH = EVALUATION_DIR / "norm_stats_check.json"
 
 
@@ -244,6 +258,9 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser("doubt-threshold",
                         help="fix the service's doubt threshold on valid; report test_core and bolivia only") \
         .set_defaults(handler=_cmd_doubt_threshold)
+
+    commands.add_parser("compare", help="event tables and chip bootstrap from saved per-chip counts") \
+        .set_defaults(handler=_cmd_compare)
 
     commands.add_parser("norm-check",
                         help="shipped normalisation constants against float64 train statistics") \
