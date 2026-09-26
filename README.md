@@ -21,7 +21,7 @@ podman compose up --build
 
 ```bash
 uv sync --project backend --extra demo --extra test
-backend/.venv/bin/uvicorn app.main:app --app-dir backend --reload
+uv run --project backend uvicorn app.main:app --app-dir backend --reload
 cd frontend && npm ci && npm run dev
 ```
 
@@ -62,7 +62,7 @@ ZIP содержит `flood_probability.tif`, `flood_mask.tif`, `flood_uncertain
 
 ```bash
 curl -o floodvalue-Nigeria_812045.zip 'http://localhost:18080/api/export?scene_id=Nigeria_812045&budget=6500'
-backend/.venv/bin/python scripts/validate_package.py floodvalue-Nigeria_812045.zip
+uv run --project backend --extra demo python scripts/validate_package.py floodvalue-Nigeria_812045.zip
 ```
 
 Валидатор проверяет обязательные файлы, 10 уникальных типов объектов, pVq и нулевой ущерб на постоянной воде, p в пикселе объекта, ранги по выбранной области, чувствительность каждого объекта, Polygon без вырезов и площадью от 1 км², цену B/C и группу скидки, охват ущерба B и C по геометрии, бюджет и равенство маски правилу p ≥ 0,41.
@@ -77,21 +77,31 @@ git lfs pull
 uv sync --project ml
 uv sync --project backend --extra demo
 for chip in Nigeria_812045 Ghana_313799 Mekong_333434; do
-  ml/.venv/bin/floodvalue infer --s1 "data/source/${chip}_S1Hand.tif" --out "data/inference/${chip}"
+  uv run --project ml floodvalue infer --s1 "data/source/${chip}_S1Hand.tif" --out "data/inference/${chip}"
 done
-backend/.venv/bin/python scripts/prepare_demo.py
+uv run --project backend --extra demo python scripts/prepare_demo.py
 ```
+
+В PowerShell цикл выглядит так, остальные команды те же:
+
+```powershell
+foreach ($chip in 'Nigeria_812045', 'Ghana_313799', 'Mekong_333434') {
+  uv run --project ml floodvalue infer --s1 "data/source/${chip}_S1Hand.tif" --out "data/inference/$chip"
+}
+```
+
+**Допустимая численная погрешность.** Повторный inference на другой платформе даёт те же маски. На Windows 11 x86-64 (CPU) маски трёх демо-сцен совпали побайтно, максимальная разница p 4,2·10⁻⁷, разброса ансамбля 5,8·10⁻⁷, ни один пиксель не перешёл порог 0,41. На macOS чистый клон повторил SHA‑256 всех растров. Допуск для проверки на CPU: |Δp| ≤ 10⁻⁶ при совпадающих масках. Между GPU и CPU у самого порога могут переключаться отдельные пиксели: на Bolivia_242570 это 0,13% пикселей (IoU 0,051 в GPU-оценке, 0,055 на CPU).
 
 `scripts/prepare_demo.py` сверяет размер, CRS и сетку растра, фиксирует SHA‑256 источника и выходов, строит слои для карты и независимый от ручной метки учебный портфель, вычитает постоянную воду JRC. Метрики `test_core` и Bolivia копируются из [отчёта ML](ml/REPORT.md). Чтобы добавить постоянную воду к уже собранным сценам без повторного inference, есть `scripts/add_permanent_water.py`.
 
 ## Проверки и структура
 
 ```bash
-backend/.venv/bin/pytest backend/tests -q
+uv run --project backend --extra test pytest backend/tests -q
 cd frontend && npm run build && cd ..
 # После podman compose up -d или docker compose up -d:
-python3 scripts/e2e_live.py http://127.0.0.1:18000 5.8,9.07,5.83,9.1
-python3 scripts/e2e_official.py http://127.0.0.1:18000 Ghana_1078550
+uv run --project backend python scripts/e2e_live.py http://127.0.0.1:18000 5.8,9.07,5.83,9.1
+uv run --project backend python scripts/e2e_official.py http://127.0.0.1:18000 Ghana_1078550
 # Внутри контейнера backend, нужны torch и сеть:
 python scripts/fit_rtc_harmonization.py ml/artifacts/rtc   # перевод RTC→GRD и проверка на test_core
 python scripts/check_s1_permanent.py data/demo            # строгий путь по S1 до события против JRC
