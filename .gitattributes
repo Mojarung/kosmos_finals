@@ -3,3 +3,6 @@ ml/artifacts/refined_model/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
 ml/artifacts/goal072_optical/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
 ml/artifacts/next_optical/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
 ml/artifacts/context_model/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+# sha256 рецептов пишется в паспорт выгрузки и в кэш сцен: git не должен менять в артефактах
+# концы строк (core.autocrlf на Windows давал другой хэш и пересчёт готовых сцен).
+ml/artifacts/** -text
