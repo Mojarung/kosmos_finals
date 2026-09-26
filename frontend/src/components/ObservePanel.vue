@@ -129,13 +129,14 @@ function toggleDrawing() {
         <Globe2 :size="26" />
         <strong>{{ state.liveStage || 'Загружаем радар' }}</strong>
         <span v-if="state.liveProgress" class="tabular">{{ Math.round(state.liveProgress * 100) }}% обработки</span>
-        <span>Снимок и его дата придут из каталога Sentinel‑1 RTC.</span>
+        <span>{{ state.liveCandidates.length || state.region ? 'Снимок и его дата придут из каталога Sentinel‑1 RTC.' : 'Проверяем и обрабатываем загруженный GeoTIFF.' }}</span>
       </div>
       <div v-else-if="state.liveStatus === 'error'" class="empty">
         <Info :size="26" />
         <strong>Область пока не готова</strong>
         <span>{{ state.liveError }}</span>
-        <button class="tonal-button" @click="retryRegion">Повторить загрузку</button>
+        <button v-if="state.region" class="tonal-button" @click="retryRegion">Повторить загрузку</button>
+        <span v-else>Выберите другой GeoTIFF кнопкой загрузки в шапке.</span>
       </div>
       <div v-else-if="state.analysis" class="empty">
         <Globe2 :size="26" />

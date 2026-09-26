@@ -209,7 +209,7 @@ def _overlays(folder: Path, vh: np.ndarray, probability: np.ndarray,
     rgba[..., 2] = 61
     rgba[..., 3] = np.where(valid, np.clip(uncertainty / 0.25, 0, 1) * 235, 0)
     _png(folder / "uncertainty.png", rgba)
-    _png(folder / "reference.png", np.zeros((GRID, GRID, 4), dtype="uint8"))
+    _png(folder / "reference.png", np.zeros((height, width, 4), dtype="uint8"))
 
 
 def _raster(path: Path, values: np.ndarray, bounds: list[float], dtype: str, nodata: float) -> None:

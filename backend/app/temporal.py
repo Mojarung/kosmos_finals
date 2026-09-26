@@ -12,6 +12,12 @@ def scene_timing(info: dict) -> dict:
         year = datetime.fromisoformat(observed.replace("Z", "+00:00")).year
     except ValueError:
         year = None
+    uploaded = info.get("source_kind") == "uploaded_sentinel1_geotiff"
+    if uploaded:
+        return {"analysis_mode": "uploaded_observation", "water_reference_status": "not_separated",
+                "water_reference_note": "No permanent-water layer was supplied with this GeoTIFF.",
+                "availability_note": ("The observation date was entered by the uploader. Its provenance and "
+                                      "availability on the event date have not been independently verified.")}
     live = info.get("source_kind") == "live_sentinel1_rtc"
     if live:
         if year is not None and year > 2021:

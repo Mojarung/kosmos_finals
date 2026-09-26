@@ -950,3 +950,37 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 @media (prefers-reduced-motion: reduce) {
   .decision-panel *, .decision-panel *::after { transition: none !important; animation: none !important; }
 }
+
+/* A compact file chooser that keeps the map visible behind the dialog. */
+.upload-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(18, 36, 49, .48);
+}
+.upload-dialog {
+  width: min(100%, 440px);
+  max-height: min(90vh, 740px);
+  overflow: auto;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+  color: var(--foreground);
+}
+.upload-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.upload-head h2 { margin: 4px 0 0; font-size: 1.25rem; }
+.upload-dialog p { margin: 0; line-height: 1.45; }
+.upload-field { display: grid; gap: 6px; font-weight: 650; }
+.upload-field input, .upload-field select {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: inherit;
+  background: var(--surface-1);
+  font: inherit;
+}

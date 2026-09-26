@@ -204,6 +204,7 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
 
     Checked facts override a license stored in older scene metadata.
     """
+    uploaded = info.get("source_kind") == "uploaded_sentinel1_geotiff"
     entry = {
         "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
         "observed_at": info["observed_at"], "published_at": None, "available_at": None,
@@ -211,6 +212,10 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
         "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
         **item,
     }
+    if uploaded:
+        return {**entry, "version": "user_supplied_geotiff", "license": "user_supplied_unverified",
+                "limitation": ("Two-band VV/VH GeoTIFF supplied by the operator; acquisition date, "
+                               "processing level and rights were not independently verified.")}
     if item.get("layer") == "S2Hand":
         entry["observed_at"] = info.get("model", {}).get("dates", {}).get("s2_date")
     url = str(item.get("url") or "")
@@ -271,7 +276,11 @@ def _commands(scene_id: str, info: dict, inputs: dict, live: bool) -> list[str]:
     commands += ["uv run --project ml floodvalue download",
                  "uv run --project ml floodvalue infer --chip <CHIP> --out data/inference/<CHIP>",
                  "./scripts/compose.sh up --build"]
-    if live:
+    if info.get("source_kind") == "uploaded_sentinel1_geotiff":
+        commands.append(f'curl --data-binary @source_s1.tif -H "Content-Type: image/tiff" '
+                        f'"http://localhost:18000/api/uploads?observed_at={info["observed_at"]}'
+                        f'&radiometry={info["source_radiometry"]}&filename=source_s1.tif"')
+    elif live:
         bbox = ",".join(str(value) for value in info["bbox"])
         commands.append(f'curl -X POST "http://localhost:18000/api/live/prepare?bbox={bbox}'
                         f'&item_id={info.get("source_item_id")}"')
@@ -419,7 +428,7 @@ def package(result: dict) -> io.BytesIO:
     catalog = result["catalog"]
     product_by_id = {row["candidate_id"]: row for row in catalog}
     decisions = {row["zone_id"]: row for row in result["zone_decisions"]}
-    live = info.get("source_kind") == "live_sentinel1_rtc"
+    live = info.get("source_kind") in {"live_sentinel1_rtc", "uploaded_sentinel1_geotiff"}
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         def json_file(name: str, value: object) -> None:
@@ -689,6 +698,8 @@ def package(result: dict) -> io.BytesIO:
             names.append("permanent_water.tif")
         for name in names:
             archive.write(scene_dir(scene_id) / name, arcname=name)
+        if info.get("source_kind") == "uploaded_sentinel1_geotiff":
+            archive.write(scene_dir(scene_id) / "source_s1.tif", arcname="source_s1.tif")
         selected_footprints = sorted({product_by_id[order]["footprint_id"] for order in strategies["C"]["candidate_ids"]})
         archive.writestr("zones_overlay.png", overlay_png(scene_id, info["bbox"], result["zones"], selected_footprints,
                                                           all_assets))

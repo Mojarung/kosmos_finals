@@ -52,7 +52,7 @@ export const state = reactive({
 
 export const hasData = computed(() => !['searching', 'preparing', 'error'].includes(state.liveStatus) &&
   ['covered', 'partial_coverage'].includes(state.analysis?.region.data_status))
-export const isLive = computed(() => state.analysis?.chip.source_kind === 'live_sentinel1_rtc')
+export const isLive = computed(() => ['live_sentinel1_rtc', 'uploaded_sentinel1_geotiff'].includes(state.analysis?.chip.source_kind))
 export const selectedAsset = computed(() => state.analysis?.assets.find(item => item.id === state.selectedAssetId) || null)
 export const activePlan = computed(() => state.analysis?.strategies[state.strategy])
 export const testQuality = computed(() => state.analysis?.quality.parts.test_core)
@@ -183,6 +183,45 @@ export function resetRegion() {
   ++regionRequest
   Object.assign(state, { region: null, drawing: false, selectedAssetId: null, mustCover: null,
     liveStatus: state.sceneId.startsWith('live_') ? 'ready' : 'idle', liveError: '' })
+}
+
+export const uploadJob = reactive({ job: null, busy: false, error: '' })
+export async function uploadS1File(file, observedAt, radiometry) {
+  const request = ++regionRequest
+  Object.assign(uploadJob, { job: null, busy: true, error: '' })
+  Object.assign(state, { region: null, liveCandidates: [], liveItemId: null,
+    liveStatus: 'preparing', liveError: '', liveStage: 'Передаём GeoTIFF', liveProgress: 0,
+    selectedAssetId: null, mustCover: null, tab: 'assets', layerMode: 'model' })
+  try {
+    const query = new URLSearchParams({ observed_at: observedAt, radiometry, filename: file.name })
+    let job = await apiJson('/api/uploads?' + query, {
+      method: 'POST', headers: { 'Content-Type': 'image/tiff' }, body: file,
+    })
+    uploadJob.job = job
+    while (request === regionRequest && !['done', 'error'].includes(job.stage)) {
+      Object.assign(state, { liveStage: job.message, liveProgress: job.progress || 0 })
+      await new Promise(resolve => setTimeout(resolve, 900))
+      if (request !== regionRequest) return
+      job = await apiJson('/api/uploads/' + job.id)
+      uploadJob.job = job
+    }
+    if (job.stage === 'error') throw new Error(job.error || job.message)
+    if (request !== regionRequest) return
+    state.sceneId = job.scene_id
+    await fetchAnalysis()
+    if (request === regionRequest) Object.assign(state, {
+      liveStatus: state.error ? 'error' : 'ready', liveError: state.error || '',
+      liveStage: state.error ? 'Ошибка анализа' : 'Загруженный снимок готов', liveProgress: 1,
+    })
+    if (state.error) throw new Error(state.error)
+    return job
+  } catch (error) {
+    if (request === regionRequest) Object.assign(state, { liveStatus: 'error', liveError: error.message })
+    uploadJob.error = error.message
+    throw error
+  } finally {
+    uploadJob.busy = false
+  }
 }
 export function toggleGuarantee() {
   if (!selectedAsset.value) return

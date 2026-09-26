@@ -129,7 +129,7 @@ function reason(zone) {
         <label for="voi-must-cover">Обязательно проверить</label>
         <select id="voi-must-cover" v-model="mustCoverModel" aria-label="Обязательный объект"><option value="">Без условия</option><option v-for="asset in state.analysis?.assets || []" :key="asset.id" :value="asset.id">{{ asset.name }}</option></select>
         <p class="panel-note">Цена выезда, тариф и ущерб — допущения. Снимок считается идеальным: точно показывает воду у объекта.</p>
-        <p v-if="state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="panel-note">Точность вероятностей на этой новой территории ещё не проверена.</p>
+        <p v-if="['live_sentinel1_rtc', 'uploaded_sentinel1_geotiff'].includes(state.analysis?.chip.source_kind)" class="panel-note">Точность вероятностей на этой новой территории ещё не проверена.</p>
       </div></details>
       <details class="disclosure"><summary>Выбранные зоны · {{ chosen.length }}</summary><div class="disclosure-body">
         <p class="panel-note">Нажмите на зону, чтобы найти её на карте.</p>
