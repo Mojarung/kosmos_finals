@@ -5,7 +5,7 @@ const STORAGE = 'floodvalue-building-rates-v1'
 function savedRates() {
   try { return JSON.parse(localStorage.getItem(STORAGE)) || {} } catch { return {} }
 }
-export const buildings = reactive({ data: null, busy: false, exporting: false, error: '', selectedId: null, applied: null, rates: savedRates() })
+export const buildings = reactive({ data: null, busy: false, progress: null, exporting: false, error: '', selectedId: null, applied: null, rates: savedRates() })
 export const selectedBuilding = computed(() => buildings.data?.features.find(f => f.id === buildings.selectedId) || null)
 export const buildingMode = computed(() => state.tab === 'buildings' || ['assets', 'plan'].includes(state.tab) && state.objectMode === 'buildings' && !(state.tab === 'plan' && state.procurementProjectId))
 watch(() => state.tab, tab => { if (tab === 'buildings') { state.tab = 'assets'; state.objectMode = 'buildings' } }, { immediate: true })
@@ -23,7 +23,7 @@ function reset() {
   ++generation
   controller?.abort()
   attemptedContext = null
-  Object.assign(buildings, { data: null, busy: false, exporting: false, error: '', selectedId: null, applied: null })
+  Object.assign(buildings, { data: null, busy: false, progress: null, exporting: false, error: '', selectedId: null, applied: null })
 }
 watch([context, pending], reset, { flush: 'sync' })
 // Load once when this scene's radar is ready, including when its object panel is folded.
@@ -49,9 +49,24 @@ async function run(url, body) {
   controller = new AbortController()
   const current = ++generation, scene = state.sceneId
   buildings.busy = true
+  buildings.progress = null
   buildings.error = ''
+  const signal = controller.signal
+  const options = value => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value), signal })
   try {
-    const data = await json(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal })
+    let data = await json(url === '/load' ? '/load?background=true' : url, options(body))
+    if (url === '/load') {
+      while (data.status !== 'ready') {
+        if (signal.aborted || current !== generation) return
+        if (data.status === 'error') throw new Error(data.error)
+        buildings.progress = data.progress
+        await new Promise(resolve => setTimeout(resolve, 900))
+        if (signal.aborted || current !== generation) return
+        data = await json('/load-jobs/' + data.job_id, { signal })
+      }
+      buildings.progress = 100
+      data = await json('/evaluate', options({ scene_id: scene, catalog_id: data.catalog_id, rate_overrides: body.rate_overrides || {} }))
+    }
     if (current !== generation || scene !== state.sceneId) return
     buildings.data = data
     buildings.applied = { scene_id: scene, catalog_id: data.catalog_id, rate_overrides: body.rate_overrides || {}, type_overrides: data.type_overrides }

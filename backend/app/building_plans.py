@@ -14,7 +14,7 @@ from fastapi import APIRouter, Response
 from pydantic import BaseModel, ConfigDict, Field
 from shapely.geometry import shape
 
-from . import buildings, catalog, planning, procurement, project_imagery
+from . import building_sources, buildings, catalog, planning, procurement, project_imagery
 from .costs import decision_costs
 from .voi import asset_information_value
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/building-plans", tags=["buildings"])
 
 class Scope(buildings.Evaluation):
     model_config = ConfigDict(extra="forbid")
-    target_ids: list[str] | None = Field(default=None, max_length=5000)
+    target_ids: list[str] | None = Field(default=None, max_length=building_sources.MAX_OSM_BUILDINGS)
 
 
 class PlanRequest(BaseModel):
@@ -62,7 +62,7 @@ def zone(identifier, name, bounds, observed_at, kind="object"):
     return result
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=2)
 def prepared(scope_json: str, on: str, permanent_sha: str):
     scope = Scope.model_validate_json(scope_json)
     result = buildings.evaluate(scope)
@@ -94,7 +94,7 @@ def prepared(scope_json: str, on: str, permanent_sha: str):
     bounds = padded_bounds([min(a["footprint_bounds"][0] for a in assets), min(a["footprint_bounds"][1] for a in assets),
                             max(a["footprint_bounds"][2] for a in assets), max(a["footprint_bounds"][3] for a in assets)])
     zones.append(zone("BGALL", "Все выбранные здания", bounds, result["observed_at"], "broad"))
-    return result, features, assets, planning.BasketSpace(zones, assets)
+    return result, features, assets, planning.BasketSpace(zones, assets, compact=True)
 
 
 def inventory(scope: Scope):
@@ -109,7 +109,7 @@ catalog.on_refresh(prepared.cache_clear)
 def calculate(request: PlanRequest):
     dataset, features, assets, space = inventory(request.buildings)
     values = [asset_information_value(a["p_flood"], a["exposure_rub"], request.visit_cost_rub) for a in assets]
-    benefit = space.asset_covered @ np.array([v["voi_rub"] or 0 for v in values])
+    benefit = space.losses_for(np.array([v["voi_rub"] or 0 for v in values]))
     prices = space.prices(1, request.deadline_hours)
     eligible = space.feasible(request.budget_rub, request.deadline_hours, None, 1)
     indexes = np.flatnonzero(eligible)
@@ -132,7 +132,7 @@ def calculate(request: PlanRequest):
         quoted = planning.quote(space.orders(index, request.deadline_hours), strategy=strategy)
         timely = (index & space.late(request.deadline_hours)) == 0
         effective = index if timely else 0
-        ids = [a["id"] for a, covered in zip(assets, space.asset_covered[effective]) if covered]
+        ids = [a["id"] for a, covered in zip(assets, space.covered_assets(effective)) if covered]
         return {"zone_ids": [z["id"] for z in space.selected(index)], "covered_building_ids": ids,
                 "data_cost_rub": quoted["total_rub"], "quote": quoted, "timely": timely,
                 "budget_feasible": quoted["total_rub"] <= request.budget_rub,
@@ -147,7 +147,7 @@ def calculate(request: PlanRequest):
     zones = []
     for k, z in enumerate(space.zones):
         product = planning.chosen_product(z, request.deadline_hours)
-        ids = [a["id"] for a, covered in zip(assets, space.asset_covered[1 << k]) if covered]
+        ids = [a["id"] for a, covered in zip(assets, space.covered_assets(1 << k)) if covered]
         zones.append({**{key: value for key, value in z.items() if key != "products"},
                       "building_ids": ids, "building_count": len(ids), "product": product,
                       "expected_loss_rub": round(float(losses[1 << k]), 2),

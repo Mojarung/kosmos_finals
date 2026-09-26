@@ -2,22 +2,34 @@ import { computed, reactive, watch } from 'vue'
 import { state } from '../store'
 import { buildings } from './buildings'
 
-export const buildingPlan = reactive({ scope: 'all', selectedIds: [], visitCost: 10000, result: null, busy: false, error: '', exporting: false })
+export const buildingPlan = reactive({ scope: 'all', picking: false, selectedIds: [], visitCost: 10000, result: null, busy: false, error: '', exporting: false })
 export const buildingPlanMode = computed(() => state.tab === 'plan' && state.objectMode === 'buildings' && !state.procurementProjectId)
 export const buildingTargets = computed(() => (buildings.data?.features || []).filter(f => buildingPlan.scope === 'all' || buildingPlan.selectedIds.includes(f.id)))
 export const buildingScope = computed(() => buildings.applied ? { ...buildings.applied, target_ids: buildingPlan.scope === 'all' ? null : [...buildingPlan.selectedIds].sort() } : null)
 export const currentBuildingPlan = computed(() => buildingPlan.result?.strategies[state.strategy] || null)
 export const buildingPlanZones = computed(() => buildingPlan.result?.zones || [])
 export const buildingPlanOverlay = computed(() => {
-  if (!buildingPlanMode.value || state.procurementOpen || !state.showZones || buildingPlan.busy) return []
+  if (!buildingPlanMode.value || buildingPlan.picking || state.procurementOpen || !state.showZones || buildingPlan.busy) return []
   const chosen = new Set(currentBuildingPlan.value?.zone_ids || [])
-  return buildingPlanZones.value.filter(z => z.kind !== 'broad' || chosen.has(z.id)).map(z => ({ type: 'Feature', geometry: z.geometry,
-    properties: { id: z.id, kind: z.kind, active: chosen.has(z.id) ? 1 : 0, hover: z.id === state.hoverZoneId ? 1 : 0, building_ids: z.building_ids } }))
+  return buildingPlanZones.value.filter(z => chosen.has(z.id)).map(z => ({ type: 'Feature', geometry: z.geometry,
+    properties: { building_plan: 1, building_count: z.building_count, id: z.id, kind: z.kind, active: chosen.has(z.id) ? 1 : 0, hover: z.id === state.hoverZoneId ? 1 : 0, building_ids: z.building_ids } }))
 })
 export function toggleBuildingTarget(id) {
   if (buildingPlan.selectedIds.includes(id)) buildingPlan.selectedIds = buildingPlan.selectedIds.filter(value => value !== id)
   else buildingPlan.selectedIds = [...buildingPlan.selectedIds, id]
 }
+export function startBuildingSelection() {
+  buildingPlan.scope = 'selected'
+  buildingPlan.picking = true
+  buildings.selectedId = null
+  state.decisionOpen = false
+  state.observeOpen = false
+}
+export function finishBuildingSelection() {
+  buildingPlan.picking = false
+  state.decisionOpen = true
+}
+watch(buildingPlanMode, active => { if (!active) buildingPlan.picking = false })
 export function planBuilding(id) {
   if (!buildingPlan.selectedIds.includes(id)) toggleBuildingTarget(id)
   buildingPlan.scope = 'selected'
@@ -32,13 +44,14 @@ let generation = 0, controller, timer
 watch(() => [state.sceneId, buildings.data?.catalog_id], ([scene, catalogId], [oldScene, oldCatalog] = []) => {
   if (scene !== oldScene || catalogId !== oldCatalog) {
     buildingPlan.selectedIds = []
+    buildingPlan.picking = false
     buildingPlan.scope = 'all'
   }
 })
 const body = computed(() => ({ buildings: buildingScope.value, budget_rub: Number(state.budget), deadline_hours: state.deadline,
   method: state.procurementMethod, visit_cost_rub: Number(buildingPlan.visitCost), strategy: state.strategy }))
 const key = computed(() => JSON.stringify([buildingScope.value, buildings.data?.raster_sha256, state.budget, state.deadline, state.procurementMethod, buildingPlan.visitCost]))
-watch([key, buildingPlanMode, () => buildings.busy], () => {
+watch([key, buildingPlanMode, () => buildings.busy, () => buildingPlan.picking], () => {
   ++generation
   controller?.abort()
   clearTimeout(timer)
@@ -46,7 +59,7 @@ watch([key, buildingPlanMode, () => buildings.busy], () => {
   buildingPlan.busy = false
   buildingPlan.error = ''
   state.selectedZoneId = null
-  if (buildingPlanMode.value && buildingScope.value && !buildings.busy) {
+  if (buildingPlanMode.value && buildingScope.value && !buildings.busy && !buildingPlan.picking) {
     buildingPlan.busy = true
     timer = setTimeout(loadBuildingPlan, 220)
   }

@@ -85,8 +85,9 @@ async function resetRates() {
 <template>
   <section class="buildings-view" aria-label="Оценка зданий" :aria-busy="buildings.busy">
     <input ref="fileInput" type="file" accept=".geojson,.json,application/geo+json" hidden aria-label="Загрузить контуры GeoJSON" @change="upload" />
-    <p v-if="buildings.busy" role="status" class="building-note">Загружаем здания…</p>
+    <p v-if="buildings.busy" role="status" class="building-note">{{ buildings.progress === 100 ? 'Считаем стоимость и ущерб…' : buildings.progress == null ? 'Подключаем загрузку зданий…' : `Загружено ${buildings.progress}% области. Собираем контуры зданий…` }}</p>
     <div v-if="buildings.error" role="alert" class="error-note">{{ buildings.error }}<div class="building-actions"><button class="ghost-button" :disabled="buildings.busy" @click="loadBuildings()">Повторить загрузку</button><button class="ghost-button" @click="openBuildingDemo">Пример: Пайпорта</button></div></div>
+    <p v-if="data && !data.features.length" class="building-note" role="status">В OSM для этой области не найдено контуров зданий. Можно загрузить свой GeoJSON или перейти к точкам.</p>
     <template v-if="data">
       <template v-if="!selected">
         <div class="building-title"><Building2 :size="19" /><h2>Здания</h2><span class="building-count">{{ data.summary.count }}</span></div>

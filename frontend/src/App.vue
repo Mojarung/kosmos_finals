@@ -9,7 +9,7 @@ import TopBar from './components/TopBar.vue'
 import { calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
 import { number, percent } from './lib/format'
 import { buildingMode } from './lib/buildings'
-import { buildingPlanMode, buildingPlanZones } from './lib/buildingPlans'
+import { buildingPlan, toggleBuildingTarget, finishBuildingSelection, buildingPlanMode, buildingPlanZones, currentBuildingPlan } from './lib/buildingPlans'
 
 const mapRef = ref(null)
 const chrome = ref(null)
@@ -62,14 +62,16 @@ function chooseAsset(id) {
   if (asset) mapRef.value?.focusAsset(asset)
 }
 function chooseZone(id) {
-  const zone = (buildingPlanMode.value ? buildingPlanZones.value : state.analysis?.zones || []).find(item => item.id === id)
+  const chosen = buildingPlanMode.value ? buildingPlanZones.value.filter(z => currentBuildingPlan.value?.zone_ids.includes(z.id)) : []
+  const zone = id === '__all__' && chosen.length ? { bounds: [Math.min(...chosen.map(z => z.bounds[0])), Math.min(...chosen.map(z => z.bounds[1])), Math.max(...chosen.map(z => z.bounds[2])), Math.max(...chosen.map(z => z.bounds[3]))] } : (buildingPlanMode.value ? buildingPlanZones.value : state.analysis?.zones || []).find(item => item.id === id)
   if (!zone) return
-  state.selectedZoneId = id
+  state.selectedZoneId = id === '__all__' ? null : id
   state.decisionExpanded = false
   if (window.innerWidth < 1024) state.decisionOpen = false
   mapRef.value?.focusZone(zone)
 }
 function chooseBuilding(feature, reveal = false) {
+  if (buildingPlanMode.value && buildingPlan.picking) { toggleBuildingTarget(feature.id); return }
   state.objectMode = 'buildings'
   state.tab = 'assets'
   state.decisionOpen = !(reveal && window.innerWidth < 1024)
@@ -113,6 +115,11 @@ onMounted(() => {
 
     <div ref="chrome" class="chrome">
       <TopBar @globe="mapRef?.showGlobe()" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
+      <div v-if="buildingPlanMode && buildingPlan.picking" class="panel building-picker" role="region" aria-label="Выбор зданий для съёмки">
+        <div><strong aria-live="polite">Выбрано зданий: {{ buildingPlan.selectedIds.length }}</strong><span>Нажмите на дом. Повторный клик уберёт его.</span></div>
+        <button class="ghost-button" :disabled="!buildingPlan.selectedIds.length" @click="buildingPlan.selectedIds = []">Очистить</button>
+        <button class="primary-button" @click="finishBuildingSelection">Готово</button>
+      </div>
       <Transition name="pop">
         <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="panel capsule live-flow" role="status">
           <MorphLoader :size="25" />
@@ -145,7 +152,7 @@ onMounted(() => {
               v-tip="`Серые пиксели: радар Sentinel‑1 здесь не дал сигнала (${number(state.radarGaps)} пикс., например шов на стыке кадров). Вода там или суша, неизвестно; в площадь воды и ущерб они не входят`"><i class="legend-water nodata"></i>Нет сигнала</span>
             <span v-if="!buildingMode" class="legend-item asset-key" v-tip="'Номер показывает место объекта в рейтинге ущерба. Оранжевый кружок: объект, скорее всего, в воде. Зелёное кольцо: объект внутри зоны заказа'"><i class="legend-asset"></i>Объект</span>
             <span v-else class="legend-item">Контуры зданий</span>
-            <span v-if="state.showZones && (!buildingMode || buildingPlanMode)" class="legend-item zone-key" v-tip="buildingPlanMode ? 'Контуры заказа. Голубые здания целиком попадают в выбранную съёмку.' : 'Пунктиром показаны зоны, которые можно заказать'"><i class="legend-zone"></i>Зона съёмки</span>
+            <span v-if="state.showZones && (!buildingMode || buildingPlanMode)" class="legend-item zone-key" v-tip="buildingPlanMode ? 'Голубая рамка — покрытие выбранным снимком. Голубые здания попадают в него целиком.' : 'Пунктиром показаны зоны, которые можно заказать'"><i class="legend-zone" :style="buildingPlanMode ? { borderColor: '#087dcc', borderStyle: 'solid', background: '#168de025' } : {}"></i>{{ buildingPlanMode ? 'Покрытие снимком' : 'Зона съёмки' }}</span>
           </div>
           <div class="map-console-tools">
             <div class="basemap-switch" role="group" aria-label="Подложка карты">
@@ -173,3 +180,9 @@ onMounted(() => {
     </div>
   </main>
 </template>
+
+<style scoped>
+.building-picker { position: absolute; z-index: 20; top: 76px; left: 50%; transform: translateX(-50%); width: min(500px, calc(100% - 24px)); box-sizing: border-box; padding: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; pointer-events: auto; }
+.building-picker > div { flex: 1 1 220px; display: grid; gap: 5px; font-size: 13px; }
+.building-picker span { font-size: 11px; opacity: .75; }
+</style>

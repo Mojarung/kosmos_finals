@@ -25,7 +25,7 @@ from rasterio.transform import from_bounds
 from rasterio.vrt import WarpedVRT
 
 from .catalog import LIVE_DIR
-from .planning import intersects, rectangle_area_km2
+from .planning import MAX_REGION_AREA_KM2, intersects, rectangle_area_km2
 from .scene_builder import ASSET_TYPES
 from .model_runtime import CONTEXT_RECIPE, RECIPE, context_enabled, context_identity, identity
 
@@ -62,7 +62,7 @@ def validate_area(bounds: list[float]) -> float:
     area = rectangle_area_km2(bounds)
     width = GEOD.inv(bounds[0], bounds[1], bounds[2], bounds[1])[2] / 1000
     height = GEOD.inv(bounds[0], bounds[1], bounds[0], bounds[3])[2] / 1000
-    if area > 300:
+    if area > MAX_REGION_AREA_KM2:
         raise LiveError("Область больше 300 км². Приблизьте карту и выделите меньший участок.")
     if width < 1.25 or height < 1.25:
         raise LiveError("Для зон съёмки нужна рамка не меньше 1,25 км по каждой стороне.")

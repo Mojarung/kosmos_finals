@@ -5,7 +5,7 @@ import BubbleTabs from './BubbleTabs.vue'
 import ProcurementView from './ProcurementView.vue'
 import { state } from '../store'
 import { buildings, loadBuildings, openBuildingDemo } from '../lib/buildings'
-import { buildingPlan, buildingTargets, buildingScope, currentBuildingPlan, buildingPlanZones, downloadBuildingPlan, loadBuildingPlan, toggleBuildingTarget } from '../lib/buildingPlans'
+import { buildingPlan, buildingTargets, buildingScope, currentBuildingPlan, buildingPlanZones, downloadBuildingPlan, loadBuildingPlan, toggleBuildingTarget, startBuildingSelection } from '../lib/buildingPlans'
 import { compactRub, rub, percent, plural } from '../lib/format'
 const emit = defineEmits(['zone'])
 const mode = computed({ get: () => state.procurementOpen ? 'skyfi' : state.procurementMethod, set: value => { state.procurementOpen = value === 'skyfi'; if (value !== 'skyfi') state.procurementMethod = value } })
@@ -24,10 +24,12 @@ function selectStrategy(value) { state.strategy = value; state.showZones = true 
   <section class="building-plan" data-testid="building-plan">
     <div class="plan-heading"><Building2 :size="19" /><h2>Съёмка зданий</h2><span>{{ buildingTargets.length }}</span></div>
     <BubbleTabs v-model="buildingPlan.scope" :options="scopes" stretch label="Какие здания снимать" />
-    <p v-if="buildings.busy" role="status" class="plan-note">Загружаем контуры зданий…</p>
+    <p v-if="buildings.busy" role="status" class="plan-note">{{ buildings.progress === 100 ? 'Считаем стоимость и ущерб…' : buildings.progress == null ? 'Подключаем загрузку зданий…' : `Загружено ${buildings.progress}% области. Собираем контуры зданий…` }}</p>
     <div v-else-if="!buildings.data" class="plan-note">{{ buildings.error || 'Ожидаем здания для этого снимка.' }}<div class="plan-actions"><button class="ghost-button" @click="loadBuildings()">Повторить загрузку</button><button class="ghost-button" @click="openBuildingDemo">Пример: Пайпорта</button></div></div>
     <template v-else>
-      <p v-if="buildingPlan.scope === 'selected' && !buildingTargets.length" class="plan-empty">Нажмите на здание на карте и выберите «В план съёмки».</p>
+      <p v-if="!buildings.data.features.length" class="plan-empty">В OSM нет контуров зданий для этой области. <button class="ghost-button" @click="state.objectMode = 'points'">Перейти к точкам</button></p>
+      <button v-if="buildings.data.features.length" class="tonal-button wide" @click="startBuildingSelection"><MapPin :size="16" />{{ buildingPlan.selectedIds.length ? 'Изменить выбор на карте' : 'Выбрать здания на карте' }}</button>
+      <p class="plan-note" v-if="buildings.data.features.length">{{ buildingPlan.scope === 'all' ? 'Считаем съёмку для всех загруженных зданий. «Выбранные» — ваша ручная подборка.' : buildingTargets.length ? 'Считаем съёмку только для вашей подборки.' : 'Подборка пока пустая. Нажмите «Выбрать здания на карте» и отметьте дома.' }}</p>
       <details v-if="buildingPlan.scope === 'selected' && chosenBuildings.length" class="plan-details"><summary>Здания в подборке · {{ chosenBuildings.length }}</summary><div v-for="feature in chosenBuildings" :key="feature.id" class="target-row"><span>{{ feature.properties.tags.name || feature.properties.type_label }}<small>{{ feature.id }}</small></span><button class="ghost-button" :aria-label="'Убрать из плана ' + feature.id" @click="toggleBuildingTarget(feature.id)">×</button></div></details>
       <BubbleTabs v-model="mode" :options="modes" stretch label="Подбор съёмки зданий" />
       <div v-if="buildingPlan.error" role="alert" class="error-note">{{ buildingPlan.error }} <button @click="loadBuildingPlan">Повторить</button></div>
@@ -44,6 +46,7 @@ function selectStrategy(value) { state.strategy = value; state.showZones = true 
           <div class="plan-strategies" role="group" aria-label="Варианты съёмки зданий"><button v-for="key in ['A', 'C', 'B']" :key="key" :aria-pressed="state.strategy === key" @click="selectStrategy(key)"><span>{{ strategyNames[key] }}</span><b>{{ compactRub(result.strategies[key].data_cost_rub) }}</b><small>{{ !result.strategies[key].timely ? 'Позже срока' : !result.strategies[key].budget_feasible ? 'Выше бюджета' : plural(result.strategies[key].covered_building_ids.length, ['здание', 'здания', 'зданий']) }}</small></button></div>
           <div class="plan-summary">
             <span>{{ plural(zones.length, ['зона', 'зоны', 'зон']) }} съёмки</span><strong>{{ rub(plan.data_cost_rub) }}</strong>
+            <button class="tonal-button wide" :disabled="!zones.length" @click="state.showZones = true; emit('zone', '__all__')"><MapPin :size="15" />Показать покрытие на карте</button>
             <div class="plan-control-title"><span>Зданий в охвате</span><b>{{ plan.covered_building_ids.length }} / {{ result.scope.count }}</b></div>
             <div class="plan-meter"><i :style="{ width: 100 * plan.covered_building_ids.length / result.scope.count + '%' }" /></div>
             <div class="plan-control-title"><span>Ущерб в охвате</span><b>{{ compactRub(plan.covered_expected_loss_rub) }} · {{ percent(plan.coverage_share) }}</b></div>
@@ -51,8 +54,8 @@ function selectStrategy(value) { state.strategy = value; state.showZones = true 
           </div>
           <p v-if="!plan.timely || !plan.budget_feasible" class="plan-note plan-warning">Этот вариант {{ !plan.timely ? 'не успевает к сроку' : 'превышает бюджет' }}. Он показан для сравнения.</p>
           <p v-else-if="!zones.length" class="plan-note">{{ mode === 'value' ? 'В этом бюджете нет корзины с положительной пользой.' : 'Покупка не добавляет охваченного ущерба либо не помещается в бюджет.' }}</p>
-          <div v-if="zones.length" class="plan-zones"><button v-for="zone in zones" :key="zone.id" @click="emit('zone', zone.id)" @mouseenter="state.hoverZoneId = zone.id" @mouseleave="state.hoverZoneId = null"><MapPin :size="16" /><span><b>{{ zone.name }}</b><small>{{ plural(zone.building_count, ['здание', 'здания', 'зданий']) }} · {{ zone.product.sensor_type === 'sar' ? 'Радар 3 м' : 'Оптика 1 м' }} · {{ zone.product.delivery_hours }} ч</small></span><span>↗</span></button></div>
-          <p class="plan-note">Сценарная цена съёмки — за зону от 1 км². Одно здание в нескольких зонах учитывается один раз.</p>
+          <div v-if="zones.length" class="plan-zones"><button v-for="zone in zones" :key="zone.id" @click="emit('zone', zone.id)" @mouseenter="state.hoverZoneId = zone.id" @mouseleave="state.hoverZoneId = null"><MapPin :size="16" /><span><b>Зона {{ zones.indexOf(zone) + 1 }} · {{ zone.area_km2.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) }} км²</b><small>{{ plural(zone.building_count, ['здание', 'здания', 'зданий']) }} · {{ zone.product.sensor_type === 'sar' ? 'Радар 3 м' : 'Оптика 1 м' }} · {{ zone.product.delivery_hours }} ч</small></span><span>↗</span></button></div>
+          <p class="plan-note">Зона — участок снимка, внутри которого может быть много домов. Голубая рамка показывает покрытие. Сценарная цена — за зону от 1 км². Одно здание в нескольких зонах учитывается один раз.</p>
           <details class="plan-details"><summary>Расходы и допущения</summary><p class="plan-note">В расчёте {{ result.scope.count }} зданий; сигнал и ущерб доступны у {{ result.scope.estimated }}. Условная цена у {{ result.scope.synthetic_cost }}.</p><div class="plan-control-title"><span>Снимки и обработка</span><b>{{ rub(plan.decision_cost_rub) }}</b></div><div v-if="mode === 'value'" class="plan-control-title"><span>Экономия на решениях</span><b>{{ rub(plan.voi_rub) }}</b></div><p v-for="note in result.method" :key="note" class="plan-note">{{ note }}</p></details>
           <button class="primary-button wide" :disabled="buildingPlan.busy || buildings.busy || buildingPlan.exporting" @click="downloadBuildingPlan"><Download :size="16" />{{ buildingPlan.exporting ? 'Готовим…' : 'Скачать план по зданиям' }}</button>
         </template>

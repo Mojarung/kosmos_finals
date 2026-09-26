@@ -4,9 +4,14 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import os
 import re
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor
+from threading import Lock, BoundedSemaphore
+from urllib.error import HTTPError, URLError
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
@@ -21,12 +26,30 @@ from shapely.geometry.polygon import orient
 from shapely.ops import polygonize, unary_union
 
 from .building_rates import classify, RATES
+from .planning import MAX_REGION_AREA_KM2, rectangle_area_km2
 
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = Path(os.environ.get("FLOODVALUE_BUILDINGS_DIR", ROOT / "data/buildings-cache"))
 GEOD = Geod(ellps="WGS84")
 MAX_BYTES = 12_000_000
 MAX_BUILDINGS = 5000
+# Remote OSM XML is much more verbose than uploaded GeoJSON.
+MAX_OSM_BYTES = 48_000_000
+MAX_OSM_BUILDINGS = 200_000
+MAX_OSM_VERTICES = 8_000_000
+OSM_LOAD_SECONDS = 900
+OSM_TILE_AREA_M2 = 4_000_000
+_LOAD_LOCK = Lock()
+_AREA_LOCKS = {}
+_DOWNLOAD_LIMIT = BoundedSemaphore(2)
+
+
+class OSMUnavailable(ValueError):
+    pass
+
+
+class OSMSplitRequired(ValueError):
+    pass
 
 
 def area_m2(geometry) -> float:
@@ -34,11 +57,11 @@ def area_m2(geometry) -> float:
     return sum(abs(GEOD.geometry_area_perimeter(orient(p, sign=1))[0]) for p in polygons)
 
 
-def normalize(data: dict) -> dict:
+def normalize(data: dict, *, max_buildings: int = MAX_BUILDINGS, max_vertices: int = 250000) -> dict:
     if not isinstance(data, dict) or data.get("type") != "FeatureCollection" or not isinstance(data.get("features"), list):
         raise ValueError("Нужен GeoJSON FeatureCollection с контурами зданий")
-    if len(data["features"]) > MAX_BUILDINGS:
-        raise ValueError(f"Не больше {MAX_BUILDINGS} зданий за расчёт; уменьшите область")
+    if len(data["features"]) > max_buildings:
+        raise ValueError(f"Не больше {max_buildings} зданий за расчёт; уменьшите область")
     result, seen, geometries, vertices = [], set(), set(), 0
     for index, feature in enumerate(data["features"]):
         try:
@@ -48,7 +71,7 @@ def normalize(data: dict) -> dict:
             raise ValueError(f"Некорректная геометрия здания {index + 1}") from error
         vertices += len(coordinates)
         if (geometry.geom_type not in {"Polygon", "MultiPolygon"} or geometry.is_empty or not geometry.is_valid
-                or len(coordinates) > 10000 or vertices > 250000 or not np.isfinite(coordinates).all()
+                or len(coordinates) > 10000 or vertices > max_vertices or not np.isfinite(coordinates).all()
                 or np.any(np.abs(coordinates[:, 0]) > 180) or np.any(np.abs(coordinates[:, 1]) > 85)):
             raise ValueError(f"Здание {index + 1}: нужен корректный Polygon/MultiPolygon в WGS84")
         if not 1 <= area_m2(geometry) <= 2_000_000:
@@ -73,7 +96,7 @@ def normalize(data: dict) -> dict:
             source_url = ""
         result.append({"type": "Feature", "id": identifier, "geometry": mapping(geometry), "properties": {
             "id": identifier, "tags": tags, "name": tags.get("name", identifier),
-            "source_url": source_url, "source_updated_at": str(props.get("osm_updated_at", ""))[:100],
+            "source_url": source_url, "source_updated_at": str(props.get("osm_updated_at", props.get("source_updated_at", "")))[:100],
             "contained_uses": [{"id": str(use.get("id", ""))[:100], "kind": use["kind"], "evidence": str(use.get("evidence", ""))[:500]}
                                for use in (props.get("contained_uses") or []) if isinstance(use, dict) and use.get("kind") in RATES][:50],
         }})
@@ -146,7 +169,13 @@ def parse_osm(content: bytes, source: dict) -> dict:
         for feature in features:
             geometry = shape(feature["geometry"])
             feature["properties"]["contained_uses"] = [pois[int(i)][1] for i in tree.query(geometry, predicate="contains")]
-    return normalize({"type": "FeatureCollection", "features": features, "source": source})
+    if source.get("bounds"):
+        region = box(*source["bounds"])
+        features = [f for f in features if shape(f["geometry"]).intersects(region)]
+    # Members may reappear as standalone ways in a neighbouring tile.
+    source = {**source, "relation_member_way_ids": sorted(consumed)}
+    return normalize({"type": "FeatureCollection", "features": features, "source": source},
+                     max_buildings=MAX_OSM_BUILDINGS, max_vertices=MAX_OSM_VERTICES)
 
 
 def save(data: dict) -> str:
@@ -168,19 +197,74 @@ def read(identifier: str) -> dict:
         raise ValueError("Набор зданий не найден. Загрузите контуры ещё раз") from error
 
 
-def load_osm(bounds: list[float]) -> dict:
-    if area_m2(box(*bounds)) > 60_000_000:
-        raise ValueError("Для OSM выберите область до 60 км² или загрузите свой GeoJSON")
+def _cache_path(bounds, version="v3"):
     key = hashlib.sha256(json.dumps(bounds).encode()).hexdigest()[:24]
-    cached = CACHE / f"osm-use-v2-{key}.json"
-    if cached.exists():
-        return json.loads(cached.read_text())
+    return CACHE / f"osm-use-{version}-{key}.json"
+
+
+def _cached(bounds):
+    for version in ("v3", "v2"):
+        path = _cache_path(bounds, version)
+        if path.exists():
+            return json.loads(path.read_text())
+    return None
+
+
+def _remaining(deadline):
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise OSMUnavailable("Загрузка зданий заняла слишком много времени. Уже полученные части сохранены — нажмите «Повторить загрузку», чтобы продолжить.")
+    return remaining
+
+
+def _quarters(bounds):
+    w, s, e, n = bounds
+    x, y = (w + e) / 2, (s + n) / 2
+    return [[w, s, x, y], [x, s, e, y], [w, y, x, n], [x, y, e, n]]
+
+
+def _initial_tiles(bounds):
+    if area_m2(box(*bounds)) <= OSM_TILE_AREA_M2:
+        return [bounds]
+    w, s, e, n = bounds
+    side = math.sqrt(OSM_TILE_AREA_M2)
+    width = max(GEOD.inv(w, s, e, s)[2], GEOD.inv(w, n, e, n)[2])
+    height = GEOD.inv(w, s, w, n)[2]
+    columns, rows = max(1, math.ceil(width / side)), max(1, math.ceil(height / side))
+    return [[w + (e-w)*x/columns, s + (n-s)*y/rows,
+             e if x+1 == columns else w + (e-w)*(x+1)/columns,
+             n if y+1 == rows else s + (n-s)*(y+1)/rows]
+            for y in range(rows) for x in range(columns)]
+
+
+def _download(request, timeout, deadline):
+    if not _DOWNLOAD_LIMIT.acquire(timeout=_remaining(deadline)):
+        raise OSMUnavailable("Источники зданий заняты. Повторите загрузку.")
+    try:
+        return _download_response(request, timeout, deadline)
+    finally:
+        _DOWNLOAD_LIMIT.release()
+
+
+def _download_response(request, timeout, deadline):
+    with urlopen(request, timeout=min(timeout, _remaining(deadline))) as response:
+        chunks, size = [], 0
+        while True:
+            _remaining(deadline)
+            chunk = response.read(min(262144, MAX_OSM_BYTES + 1 - size))
+            if not chunk:
+                return b"".join(chunks)
+            chunks.append(chunk)
+            size += len(chunk)
+            if size > MAX_OSM_BYTES:
+                raise OSMSplitRequired("Ответ OSM больше 48 МБ")
+
+
+def _fetch_tile(bounds, deadline, can_split):
     url = "https://api.openstreetmap.org/api/0.6/map?bbox=" + ",".join(map(str, bounds))
     west, south, east, north = bounds
     bbox = f"{south},{west},{north},{east}"
-    # Dense cities exceed the map API's 50k-node limit even for a small bbox.
-    # Overpass retrieves buildings and their geometry instead of every map object.
-    query = f'[out:xml][timeout:15];(way["building"]({bbox});relation["building"]["type"="multipolygon"]({bbox}););(._;>;);out body;'
+    query = f'[out:xml][timeout:20];(way["building"]({bbox});relation["building"]["type"="multipolygon"]({bbox}););(._;>;);out body;'
     headers = {"User-Agent": "FloodValue/0.2 building-research"}
     requests = [Request(url, headers=headers)] + [
         Request(endpoint, data=urlencode({"data": query}).encode(), headers=headers)
@@ -188,15 +272,94 @@ def load_osm(bounds: list[float]) -> dict:
     ]
     for index, request in enumerate(requests):
         try:
-            with urlopen(request, timeout=8 if index == 0 else 20) as response:
-                content = response.read(MAX_BYTES + 1)
-            if len(content) > MAX_BYTES:
-                raise ValueError("Слишком много данных OSM; уменьшите область")
+            content = _download(request, 8 if index == 0 else 25, deadline)
             data = parse_osm(content, osm_source(request.full_url, bounds, "map" if index == 0 else "overpass"))
             return cache_extract(data, bounds)
-        except Exception as error:
-            logging.getLogger(__name__).warning("Building source %s failed: %s", request.full_url.split('?')[0], error)
-    raise ValueError("Не удалось загрузить контуры из трёх источников OSM. Уменьшите область или откройте сохранённый пример.")
+        except OSMUnavailable:
+            raise
+        except (HTTPError, URLError, OSError, ValueError) as error:
+            logging.getLogger(__name__).warning("Building tile %s from %s failed: %s", bounds, request.full_url.split('?')[0], error)
+            # A dense map request will exceed the node limit on every retry.
+            # Split immediately instead of waiting through both full-area fallbacks.
+            if can_split and (isinstance(error, OSMSplitRequired) or isinstance(error, HTTPError) and error.code == 400):
+                raise OSMSplitRequired(str(error)) from error
+    raise OSMUnavailable("Серверы OSM временно не отдают часть зданий. Полученные части сохранены — нажмите «Повторить загрузку», чтобы продолжить.")
+
+
+def _merge_tiles(parts, bounds):
+    members, by_id = set(), {}
+    for part in parts:
+        members.update(part["source"].get("relation_member_way_ids", []))
+        for feature in part["features"]:
+            identifier = feature["id"]
+            previous = by_id.get(identifier)
+            if previous:
+                # Both tiles contain the entire geometry. Prefer the newest version,
+                # while combining POIs discovered on either side of the tile boundary.
+                uses = {u["id"]: u for row in (previous, feature) for u in row["properties"].get("contained_uses", [])}
+                if previous["properties"].get("source_updated_at", "") > feature["properties"].get("source_updated_at", ""):
+                    feature = previous
+                feature = {**feature, "properties": {**feature["properties"], "contained_uses": list(uses.values())}}
+            by_id[identifier] = feature
+    features = [by_id[key] for key in sorted(by_id) if not (key.startswith("way/") and key[4:] in members)]
+    source = osm_source("https://www.openstreetmap.org", bounds, "tiled")
+    source.update(relation_member_way_ids=sorted(members),
+                  parts=[part["source"] for part in parts],
+                  scope="Область загружена по частям; полные контуры объединены по ID, дубли и части OSM relations учтены один раз.")
+    data = normalize({"type": "FeatureCollection", "features": features, "source": source},
+                     max_buildings=MAX_OSM_BUILDINGS, max_vertices=MAX_OSM_VERTICES)
+    return cache_extract(data, bounds)
+
+
+def _load_tile(bounds, deadline, depth=0, progress=None):
+    cached = _cached(bounds)
+    if cached is not None:
+        if progress:
+            progress(bounds, len(cached["features"]))
+        return cached
+    _remaining(deadline)
+    can_split = depth < 3 and area_m2(box(*bounds)) > 125000
+    try:
+        data = _fetch_tile(bounds, deadline, can_split)
+        if progress:
+            progress(bounds, len(data["features"]))
+        return data
+    except (OSMSplitRequired, OSMUnavailable):
+        if not can_split:
+            raise
+        _remaining(deadline)
+        return _merge_tiles([_load_tile(child, deadline, depth + 1, progress) for child in _quarters(bounds)], bounds)
+
+
+def validate_area(bounds):
+    if rectangle_area_km2(bounds) > MAX_REGION_AREA_KM2:
+        raise ValueError("Область больше 300 км² — такой же предел, как для анализа снимка")
+
+
+def load_osm(bounds: list[float], progress=None) -> dict:
+    validate_area(bounds)
+    cached = _cached(bounds)
+    if cached is not None:
+        if progress:
+            progress(bounds, len(cached["features"]))
+        return cached
+    with _LOAD_LOCK:
+        area_lock = _AREA_LOCKS.setdefault(tuple(bounds), Lock())
+    # Only identical regions wait for each other. Source requests across all
+    # background jobs share the two-request semaphore.
+    with area_lock:
+        cached = _cached(bounds)
+        if cached is not None:
+            if progress:
+                progress(bounds, len(cached["features"]))
+            return cached
+        deadline = time.monotonic() + OSM_LOAD_SECONDS
+        tiles = _initial_tiles(bounds)
+        if len(tiles) == 1:
+            return _load_tile(bounds, deadline, progress=progress)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            parts = list(executor.map(lambda tile: _load_tile(tile, deadline, progress=progress), tiles))
+        return _merge_tiles(parts, bounds)
 
 
 def osm_source(url: str, bounds: list[float], provider: str) -> dict:
@@ -211,8 +374,7 @@ def cache_extract(data: dict, bounds: list[float]) -> dict:
     region = box(*bounds)
     data["features"] = [f for f in data["features"] if shape(f["geometry"]).intersects(region)]
     save(data)
-    key = hashlib.sha256(json.dumps(bounds).encode()).hexdigest()[:24]
-    cached = CACHE / f"osm-use-v2-{key}.json"
+    cached = _cache_path(bounds)
     with tempfile.NamedTemporaryFile(dir=CACHE, mode="w", delete=False) as handle:
         json.dump(data, handle, ensure_ascii=False)
     os.replace(handle.name, cached)

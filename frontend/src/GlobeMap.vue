@@ -6,8 +6,8 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { calibrationChecked, state } from './store'
 import { buildingMode, buildings } from './lib/buildings'
-import { buildingPlanMode, buildingPlanOverlay, buildingPlanZones, currentBuildingPlan } from './lib/buildingPlans'
-import { compactRub, number, percent } from './lib/format'
+import { buildingPlan, buildingPlanMode, buildingPlanOverlay, buildingPlanZones, currentBuildingPlan } from './lib/buildingPlans'
+import { compactRub, number, percent, plural } from './lib/format'
 import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
 import { WaterLayer } from './lib/waterLayer'
@@ -45,6 +45,8 @@ let tileErrorSeen = false
 let styleTimer
 let fallbackStyle = false
 const markers = new Map()
+const zoneLabels = new Map()
+let planCameraKey = ''
 const empty = { type: 'FeatureCollection', features: [] }
 // Маску воды рисует WebGL-слой воды, остальные слои приходят готовыми PNG.
 const rasterNames = ['radar', 'probability', 'baseline', 'reference', 'uncertainty']
@@ -165,7 +167,7 @@ function buildOverlays() {
   }
   water.set({ theme: theme() })
   map.addLayer(water, before)
-  const buildingColor = ['case', ['==', ['get', 'in_plan'], 1], '#4c9ec2', ['==', ['get', 'water_probability_proxy'], null], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
+  const buildingColor = ['case', ['==', ['get', 'picked'], 1], '#f3b632', ['==', ['get', 'in_plan'], 1], '#4c9ec2', ['==', ['get', 'water_probability_proxy'], null], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
   map.addLayer({ id: 'building-fill', type: 'fill-extrusion', source: 'buildings', paint: {
     'fill-extrusion-color': buildingColor, 'fill-extrusion-opacity': .78,
     'fill-extrusion-height': ['coalesce', ['get', 'height_m'], 6], 'fill-extrusion-base': 0,
@@ -184,16 +186,20 @@ function buildOverlays() {
     paint: { 'raster-resampling': 'nearest', 'raster-fade-duration': 0, 'raster-opacity-transition': { duration: 350 } } }, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
-  const zoneColor = ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]
+  const zoneColor = ['case', ['==', ['get', 'building_plan'], 1], '#168de0', ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]]
   map.addLayer({ id: 'zone-fill', type: 'fill', source: 'zones',
     paint: { 'fill-color': zoneColor,
-      'fill-opacity': ['case', ['==', ['get', 'kind'], 'broad'], ['case', ['==', ['get', 'active'], 1], 0.06, 0],
+      'fill-opacity': ['case', ['==', ['get', 'building_plan'], 1], .15, ['==', ['get', 'kind'], 'broad'], ['case', ['==', ['get', 'active'], 1], 0.06, 0],
         ['==', ['get', 'hover'], 1], 0.34, ['==', ['get', 'active'], 1], 0.2, 0.03] } }, before)
   map.addLayer({ id: 'zone-outline', type: 'line', source: 'zones',
     paint: { 'line-color': zoneColor,
       'line-width': ['case', ['==', ['get', 'hover'], 1], 3.2, ['==', ['get', 'active'], 1], 2.2, 1],
       'line-opacity': ['case', ['==', ['get', 'active'], 1], 1, 0.55],
       'line-dasharray': [2, 1.3] } }, before)
+  map.addLayer({ id: 'building-zone-halo', type: 'line', source: 'zones', filter: ['==', ['get', 'building_plan'], 1],
+    paint: { 'line-color': '#ffffff', 'line-width': 7, 'line-opacity': .9 } }, before)
+  map.addLayer({ id: 'building-zone-outline', type: 'line', source: 'zones', filter: ['==', ['get', 'building_plan'], 1],
+    paint: { 'line-color': '#087dcc', 'line-width': 3.5, 'line-opacity': 1 } }, before)
   map.addLayer({ id: 'focused-zone-halo', type: 'line', source: 'focused-zone',
     paint: { 'line-color': c.object, 'line-width': 11, 'line-opacity': .18 } }, before)
   map.addLayer({ id: 'focused-zone-outline', type: 'line', source: 'focused-zone',
@@ -268,6 +274,7 @@ function updateMarkers() {
 }
 
 function zoneFeatures() {
+  if (buildingPlanMode.value && buildingPlan.picking) return []
   if (buildingPlanMode.value) return state.procurementOpen ? state.procurementOverlay || [] : buildingPlanOverlay.value
   if (buildingMode.value) return []
   if (state.tab === 'plan' && state.procurementOverlay !== null) return state.procurementOverlay
@@ -291,6 +298,7 @@ function syncMap() {
     syncNoData()
     setData('chip', empty)
     setData('zones', empty)
+    syncZoneLabels([])
     setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
     for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() }
     markers.clear()
@@ -328,7 +336,9 @@ function syncMap() {
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
-  setData('zones', hidden ? empty : collection(zoneFeatures()))
+  const visibleZones = hidden ? [] : zoneFeatures()
+  setData('zones', collection(visibleZones))
+  syncZoneLabels(buildingPlanMode.value ? visibleZones : [])
   const focused = (buildingPlanMode.value ? buildingPlanZones.value : state.analysis.zones).find(zone => zone.id === state.selectedZoneId)
   setData('focused-zone', hidden || !focused ? empty : collection([{ type: 'Feature', geometry: focused.geometry, properties: {} }]))
   if (!hidden) updateMarkers()
@@ -336,14 +346,48 @@ function syncMap() {
   if (!hidden) for (const entry of markers.values()) entry.element.style.visibility = ''
 }
 
+function syncZoneLabels(features) {
+  const active = features.filter(f => f.properties.active === 1)
+  const ids = new Set(active.map(f => f.properties.id))
+  for (const [id, marker] of zoneLabels) if (!ids.has(id)) { marker.remove(); zoneLabels.delete(id) }
+  for (const [index, feature] of active.entries()) {
+    const coords = feature.geometry.coordinates.flat(feature.geometry.type === 'MultiPolygon' ? 2 : 1)
+    const xs = coords.map(p => p[0]), ys = coords.map(p => p[1])
+    const bounds = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
+    let marker = zoneLabels.get(feature.properties.id)
+    if (!marker) {
+      const pin = document.createElement('div'), button = document.createElement('button')
+      button.className = 'imagery-zone-label'
+      button.type = 'button'
+      pin.append(button)
+      marker = new maplibregl.Marker({ element: pin, anchor: 'center' }).setLngLat([(bounds[0] + bounds[2]) / 2, bounds[3]]).addTo(map)
+      zoneLabels.set(feature.properties.id, marker)
+    }
+    marker.setLngLat([(bounds[0] + bounds[2]) / 2, bounds[3]])
+    const count = feature.properties.building_count ?? feature.properties.building_ids?.length ?? 0
+    marker.getElement().firstChild.onclick = event => { event.stopPropagation(); focusZone({ bounds }) }
+    marker.getElement().firstChild.textContent = `Зона ${index + 1} · ${plural(count, ['здание', 'здания', 'зданий'])}`
+  }
+  if (!buildingPlanMode.value) { planCameraKey = ''; return }
+  if (!active.length || phase) return
+  const cameraKey = JSON.stringify(active.map(f => f.geometry))
+  if (cameraKey !== planCameraKey) {
+    planCameraKey = cameraKey
+    const coords = active.flatMap(f => f.geometry.coordinates.flat(f.geometry.type === 'MultiPolygon' ? 2 : 1))
+    const xs = coords.map(p => p[0]), ys = coords.map(p => p[1])
+    focusZone({ bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)] })
+  }
+}
+
 function syncBuildings() {
   if (!ready) return
   const visible = buildingMode.value && buildings.data?.scene_id === state.sceneId && !['searching', 'preparing', 'error'].includes(state.liveStatus)
   const covered = new Set(!buildingPlanMode.value ? [] : state.procurementOpen
     ? (state.procurementOverlay || []).flatMap(f => f.properties.building_ids || []) : currentBuildingPlan.value?.covered_building_ids || [])
-  const features = visible ? buildings.data.features.map(f => ({ ...f, properties: { ...f.properties, in_plan: covered.has(f.id) ? 1 : 0 } })) : []
+  const picked = new Set(buildingPlanMode.value && buildingPlan.picking ? buildingPlan.selectedIds : [])
+  const features = visible ? buildings.data.features.map(f => ({ ...f, properties: { ...f.properties, picked: picked.has(f.id) ? 1 : 0, in_plan: !buildingPlan.picking && covered.has(f.id) ? 1 : 0 } })) : []
   setData('buildings', collection(features))
-  setData('selected-building', collection(features.filter(f => f.id === buildings.selectedId)))
+  setData('selected-building', collection(features.filter(f => !buildingPlan.picking && f.id === buildings.selectedId)))
   if (visible && features.length && !phase && !state.globeView && buildingCameraScene !== state.sceneId) {
     buildingCameraScene = state.sceneId
     state.tilted = true
@@ -764,9 +808,9 @@ onMounted(() => {
     if (!state.drawing && buildingMode.value && ready && map.getLayer('building-fill')) {
       const hit = map.queryRenderedFeatures(event.point, { layers: ['building-selected', 'building-fill'] })[0]
       const feature = buildings.data?.features.find(f => f.id === hit?.properties.id)
-      if (feature) { buildings.selectedId = feature.id; clearProbe(); emit('building', feature); return }
+      if (feature) { if (!buildingPlan.picking) buildings.selectedId = feature.id; clearProbe(); emit('building', feature); return }
     }
-    if (!state.drawing && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
+    if (!state.drawing && !buildingPlan.picking && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
   })
   map.on('mousemove', event => {
     const overBuilding = buildingMode.value && ready && map.getLayer('building-fill') && map.queryRenderedFeatures(event.point, { layers: ['building-fill'] }).length
@@ -793,12 +837,12 @@ onMounted(() => {
   })
   map.on('touchend', event => { if (dragStart) finishSelection(event.lngLat) })
 })
-onBeforeUnmount(() => { ready = false; flight++; clearTimeout(warmTimer); clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } map?.remove() })
+onBeforeUnmount(() => { ready = false; flight++; clearTimeout(warmTimer); clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } for (const marker of zoneLabels.values()) marker.remove(); map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId, state.selectedZoneId,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab, state.objectMode,
   state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
-watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus], syncBuildings)
+watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus, buildingPlan.picking, buildingPlan.selectedIds], syncBuildings)
 watch(() => [buildingPlanOverlay.value, currentBuildingPlan.value, buildingPlanMode.value], syncMap)
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
@@ -875,3 +919,8 @@ watch(() => state.drawing, value => {
   <div v-if="mapUnavailable" class="panel capsule map-warning" role="status">Карта недоступна: браузер не запустил WebGL. Расчёты и выгрузка работают.</div>
   <div v-else-if="mapError" class="panel capsule map-warning">Подложка недоступна. Радар и расчёты сохранены.</div>
 </template>
+
+<style>
+.imagery-zone-label { color: white; background: #087dcc; border: 2px solid white; border-radius: 9px; padding: 7px 10px; font: 600 12px/1.2 sans-serif; box-shadow: 0 2px 10px #082a4266; white-space: nowrap; cursor: pointer; }
+.imagery-zone-label:focus-visible { outline: 3px solid #ffbd5b; outline-offset: 3px; }
+</style>

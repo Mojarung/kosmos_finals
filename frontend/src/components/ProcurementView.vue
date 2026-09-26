@@ -140,7 +140,7 @@ function toggle(offer) {
 function updateMap() {
   const ids = new Set([...selectedIds.value, focusedId.value])
   state.procurementOverlay = offers.value.filter(o => ids.has(o.id)).map(o => ({ type: 'Feature', geometry: o.coverage_geometry,
-    properties: { id: o.id, kind: 'object', active: 1, hover: o.id === focusedId.value ? 1 : 0, building_ids: buildingMode.value ? o.covered_asset_ids || [] : [] } }))
+    properties: { building_plan: buildingMode.value ? 1 : 0, id: o.id, kind: 'object', active: 1, hover: o.id === focusedId.value ? 1 : 0, building_ids: buildingMode.value ? o.covered_asset_ids || [] : [] } }))
   state.showZones = true
 }
 function useRecommendation() {

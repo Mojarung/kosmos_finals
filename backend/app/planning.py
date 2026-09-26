@@ -270,6 +270,9 @@ def quote(zones: list[dict], tariff_multiplier: float = 1.0, strategy: str = "C"
     return result
 
 
+MAX_REGION_AREA_KM2 = 300
+
+
 def rectangle_area_km2(bounds: list[float]) -> float:
     west, south, east, north = bounds
     x0, y0 = TO_EQUAL_AREA.transform(west, south)
@@ -429,7 +432,7 @@ class BasketSpace:
 
     def __init__(self, zones: list[dict], assets: list[dict],
                  doubt_masks: np.ndarray | None = None, doubt_mass: np.ndarray | None = None,
-                 doubt_total: float = 0.0):
+                 doubt_total: float = 0.0, *, compact: bool = False):
         if len(zones) > MAX_EXACT_ZONES:
             raise ValueError(f"Exact search supports up to {MAX_EXACT_ZONES} zones")
         self.zones = zones
@@ -442,7 +445,7 @@ class BasketSpace:
         self.area_sum = self.bits @ self.areas
         self.asset_masks = np.array([sum(1 << k for k, zone in enumerate(zones) if contains(zone["bounds"], asset))
                                      for asset in assets], dtype=np.int64)
-        self.asset_covered = (self.subsets[:, None] & self.asset_masks[None, :]) != 0
+        self.asset_covered = None if compact else (self.subsets[:, None] & self.asset_masks[None, :]) != 0
         self.losses = np.array([asset["expected_loss_rub"] or 0 for asset in assets], dtype=float)
         self.doubt_total = doubt_total
         if doubt_masks is not None and len(doubt_masks):
@@ -495,14 +498,27 @@ class BasketSpace:
             self._prices[key] = total
         return self._prices[key]
 
+    def covered_assets(self, index: int) -> np.ndarray:
+        return (index & self.asset_masks) != 0
+
     def losses_for(self, losses: np.ndarray | None) -> np.ndarray:
-        return self.asset_covered @ (self.losses if losses is None else losses)
+        weights = self.losses if losses is None else losses
+        if self.asset_covered is not None:
+            return self.asset_covered @ weights
+        # Sum weights by coverage pattern, then a subset zeta transform. Memory is
+        # O(buildings + 2**zones), never O(buildings * 2**zones).
+        sums = np.bincount(self.asset_masks, weights=weights, minlength=len(self.subsets))
+        for bit in range(len(self.zones)):
+            step = 1 << bit
+            blocks = sums.reshape(-1, step * 2)
+            blocks[:, step:] += blocks[:, :step]
+        return np.maximum(0, sums[-1] - sums[(len(sums) - 1) ^ self.subsets])
 
     def feasible(self, budget: float, deadline: int, must_cover: str | None, tariff: float) -> np.ndarray:
         ok = (self.prices(tariff, deadline) <= budget + 0.005) & ((self.subsets & self.late(deadline)) == 0)
         if must_cover:
             ids = [asset["id"] for asset in self.assets]
-            ok &= self.asset_covered[:, ids.index(must_cover)] if must_cover in ids else False
+            ok &= (self.subsets & self.asset_masks[ids.index(must_cover)]) != 0 if must_cover in ids else False
         return ok
 
     def best(self, budget: float, priority: str, deadline: int, must_cover: str | None,
@@ -534,7 +550,7 @@ class BasketSpace:
                     "covered_asset_ids": [], "covered_expected_loss_rub": 0, "covered_doubt_share": 0,
                     "feasible": False, "reason": "Обязательный объект не успевает или не помещается в бюджет"}
         orders = self.orders(index, deadline)
-        covered = [asset["id"] for asset, flag in zip(self.assets, self.asset_covered[index]) if flag]
+        covered = [asset["id"] for asset, flag in zip(self.assets, self.covered_assets(index)) if flag]
         return {"zone_ids": [zone["id"] for zone in self.selected(index)],
                 "candidate_ids": [order["candidate_id"] for order in orders],
                 "quote": quote(orders, tariff, strategy, on), "covered_asset_ids": covered,

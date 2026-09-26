@@ -47,7 +47,7 @@ class Evaluation(BaseModel):
     scene_id: str = Field(max_length=150)
     catalog_id: str = Field(max_length=24)
     rate_overrides: dict[str, Rate] = Field(default_factory=dict, max_length=30)
-    type_overrides: dict[str, str] = Field(default_factory=dict, max_length=5000)
+    type_overrides: dict[str, str] = Field(default_factory=dict, max_length=sources.MAX_OSM_BUILDINGS)
 
 
 class LoadRequest(BaseModel):
@@ -195,18 +195,30 @@ def demo():
     return json.loads(path.read_text()) if path.exists() else {"scene_id": None}
 
 
+def load_source(scene_id, source, progress=None):
+    info = catalog.metadata(scene_id)
+    if source == "paiporta" or source == "auto" and scene_id == "Paiporta_20241101":
+        return sources.normalize(json.loads((sources.ROOT / "data/buildings/paiporta.geojson").read_text()))
+    if source in {"auto", "osm"}:
+        return sources.load_osm(info["bbox"], progress=progress)
+    raise ValueError("Неизвестный источник контуров")
+
+
 @router.post("/load")
-def load(request: LoadRequest):
+def load(request: LoadRequest, background: bool = False):
+    if background:
+        from . import building_jobs
+        return checked(lambda: building_jobs.start(request.scene_id, request.source))
     def action():
-        info = catalog.metadata(request.scene_id)
-        if request.source == "paiporta" or request.source == "auto" and request.scene_id == "Paiporta_20241101":
-            data = sources.normalize(json.loads((sources.ROOT / "data/buildings/paiporta.geojson").read_text()))
-        elif request.source in {"auto", "osm"}:
-            data = sources.load_osm(info["bbox"])
-        else:
-            raise ValueError("Неизвестный источник контуров")
+        data = load_source(request.scene_id, request.source)
         return evaluate(Evaluation(scene_id=request.scene_id, catalog_id=sources.save(data), rate_overrides=request.rate_overrides))
     return checked(action)
+
+
+@router.get("/load-jobs/{job_id}")
+def load_job(job_id: str):
+    from . import building_jobs
+    return building_jobs.status(job_id)
 
 
 @router.post("/import")
