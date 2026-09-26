@@ -26,7 +26,8 @@ function move(animate) {
   if (!target || !bubble.value) return
   const next = { x: target.offsetLeft, width: target.offsetWidth }
   if (!animate || !placed) {
-    gsap.set(bubble.value, { ...next, opacity: 1 })
+    gsap.killTweensOf(bubble.value)
+    gsap.set(bubble.value, { ...next, opacity: 1, scaleY: 1 })
     placed = true
     return
   }

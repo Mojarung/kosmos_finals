@@ -6,6 +6,7 @@ import { computed, reactive, watch } from 'vue'
  */
 export const state = reactive({
   procurementOpen: false,
+  procurementMapMode: false,
   procurementOverlay: null,
   analysis: null,
   error: '',

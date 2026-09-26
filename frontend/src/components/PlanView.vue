@@ -246,7 +246,7 @@ function hover(id) { state.hoverZoneId = id }
 <template>
   <div class="procurement-mode-switch">
     <button :class="{ active: !state.procurementOpen }" @click="state.procurementOpen = false">Расчёт по ТЗ</button>
-    <button :class="{ active: state.procurementOpen }" @click="state.procurementOpen = true">Подобрать снимки</button>
+    <button :class="{ active: state.procurementOpen }" @click="state.procurementOpen = true">Каталог SkyFi</button>
   </div>
   <ProcurementView v-if="state.procurementOpen" :key="state.sceneId" />
   <template v-else>
