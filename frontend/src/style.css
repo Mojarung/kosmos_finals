@@ -893,8 +893,8 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .decision-panel.procurement-expanded .panel-scroll { padding: 6px 14px 14px; }
 }
 
-/* Decision workspace: quiet surface, expandable width, progressive disclosure. */
-.decision-panel:not(.pill) { width: 410px; background: var(--surface-1); border-radius: 14px; }
+/* Decision workspace: the same glass as the other panels, expandable width, progressive disclosure. */
+.decision-panel:not(.pill) { width: 410px; }
 .decision-panel .panel-head { padding: 12px; border-bottom: 1px solid var(--border); }
 .decision-panel .panel-scroll { padding: 8px 18px 12px; }
 .decision-panel .caption { font-size: 12px; letter-spacing: .025em; font-weight: 650; }
