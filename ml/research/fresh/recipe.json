@@ -1,0 +1,312 @@
+{
+ "rule": "per track: equal-weight mean of fold-averaged logits of up to three members with the best pooled OOF IoU; Platt a*z+b and the threshold maximise pooled OOF IoU of that blend. Every number comes from OOF predictions of the development chips; test parts are not read.",
+ "oof_pixels": 75410539,
+ "tracks": {
+  "radar": {
+   "members": [
+    "effb4_all",
+    "r34_all"
+   ],
+   "platt": {
+    "a": 1.4459573030471802,
+    "b": -0.016471145674586296
+   },
+   "threshold": 0.4,
+   "oof_iou_at_threshold": 0.6798408238117325,
+   "oof_brier": 0.027142416685819626,
+   "candidates": [
+    {
+     "members": [
+      "effb4_all",
+      "r34_all"
+     ],
+     "best_iou": 0.6798313508445146,
+     "iou_p05": 0.6762957530296699
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all",
+      "r34_s1pre"
+     ],
+     "best_iou": 0.6779745442353297,
+     "iou_p05": 0.6716019607800029
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all",
+      "r34_s1static"
+     ],
+     "best_iou": 0.6775114632761564,
+     "iou_p05": 0.6727874660364964
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all",
+      "r34_s1"
+     ],
+     "best_iou": 0.6769917811438999,
+     "iou_p05": 0.6702117165817038
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all",
+      "r34_all_s2:nos2"
+     ],
+     "best_iou": 0.676579586520172,
+     "iou_p05": 0.6703185660627048
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1pre"
+     ],
+     "best_iou": 0.6754110982592059,
+     "iou_p05": 0.6692267266789479
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all_s2:nos2"
+     ],
+     "best_iou": 0.6745652864964401,
+     "iou_p05": 0.6691147328058371
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1pre",
+      "r34_all_s2:nos2"
+     ],
+     "best_iou": 0.6744994045215196,
+     "iou_p05": 0.6666747008795261
+    },
+    {
+     "members": [
+      "effb4_all"
+     ],
+     "best_iou": 0.6744910667634193,
+     "iou_p05": 0.6699694675062736
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1static",
+      "r34_s1pre"
+     ],
+     "best_iou": 0.6740820578759393,
+     "iou_p05": 0.6687771069191282
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1static",
+      "r34_all_s2:nos2"
+     ],
+     "best_iou": 0.673534755141767,
+     "iou_p05": 0.6685732297136558
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1static"
+     ],
+     "best_iou": 0.673365632332573,
+     "iou_p05": 0.6712328634067488
+    }
+   ]
+  },
+  "optical": {
+   "members": [
+    "r34_all_s2"
+   ],
+   "platt": {
+    "a": 1.5754834413528442,
+    "b": -0.13810621201992035
+   },
+   "threshold": 0.42,
+   "oof_iou_at_threshold": 0.7602354244756738,
+   "oof_brier": 0.01942434348165989,
+   "candidates": [
+    {
+     "members": [
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7602261028908174,
+     "iou_p05": 0.7597748479096202
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7464561043667104,
+     "iou_p05": 0.7382210395037058
+    },
+    {
+     "members": [
+      "r34_all",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7417127844163752,
+     "iou_p05": 0.7378857607014278
+    },
+    {
+     "members": [
+      "r34_s1static",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7388443150185049,
+     "iou_p05": 0.7354532436930806
+    },
+    {
+     "members": [
+      "r34_s1",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.738589161872933,
+     "iou_p05": 0.7333579944740285
+    },
+    {
+     "members": [
+      "r34_s1pre",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.737513970883463,
+     "iou_p05": 0.7325188171026187
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_all",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7297188816450924,
+     "iou_p05": 0.7173201130200723
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1static",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7272021069253785,
+     "iou_p05": 0.7149895698052604
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7271898114400462,
+     "iou_p05": 0.7127854428066605
+    },
+    {
+     "members": [
+      "effb4_all",
+      "r34_s1pre",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7264810620782627,
+     "iou_p05": 0.7138001914288196
+    },
+    {
+     "members": [
+      "r34_all",
+      "r34_s1",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7227505818545794,
+     "iou_p05": 0.7114260774913456
+    },
+    {
+     "members": [
+      "r34_all",
+      "r34_s1static",
+      "r34_all_s2"
+     ],
+     "best_iou": 0.7226450227121501,
+     "iou_p05": 0.7115012367252768
+    }
+   ]
+  }
+ },
+ "configs": {
+  "effb4_all": {
+   "name": "effb4_all",
+   "groups": [
+    "s1",
+    "pre",
+    "terrain",
+    "jrc",
+    "worldcover"
+   ],
+   "architecture": "unet",
+   "encoder": "efficientnet-b4",
+   "encoder_weights": "imagenet",
+   "epochs": 40,
+   "crop": 320,
+   "batch_size": 12,
+   "crops_per_chip": 4,
+   "lr": 0.0005,
+   "weight_decay": 0.0001,
+   "lovasz_weight": 0.5,
+   "group_dropout": 0.0,
+   "s2_dropout": 0.0,
+   "seed": 0,
+   "tta": 8
+  },
+  "r34_all": {
+   "name": "r34_all",
+   "groups": [
+    "s1",
+    "pre",
+    "terrain",
+    "jrc",
+    "worldcover"
+   ],
+   "architecture": "unet",
+   "encoder": "resnet34",
+   "encoder_weights": "imagenet",
+   "epochs": 40,
+   "crop": 320,
+   "batch_size": 12,
+   "crops_per_chip": 4,
+   "lr": 0.0005,
+   "weight_decay": 0.0001,
+   "lovasz_weight": 0.5,
+   "group_dropout": 0.0,
+   "seed": 0,
+   "tta": 8
+  },
+  "r34_all_s2": {
+   "name": "r34_all_s2",
+   "groups": [
+    "s1",
+    "pre",
+    "terrain",
+    "jrc",
+    "worldcover",
+    "s2"
+   ],
+   "architecture": "unet",
+   "encoder": "resnet34",
+   "encoder_weights": "imagenet",
+   "epochs": 40,
+   "crop": 320,
+   "batch_size": 12,
+   "crops_per_chip": 4,
+   "lr": 0.0005,
+   "weight_decay": 0.0001,
+   "lovasz_weight": 0.5,
+   "group_dropout": 0.0,
+   "s2_dropout": 0.3,
+   "seed": 0,
+   "tta": 8
+  }
+ }
+}
