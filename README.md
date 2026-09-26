@@ -19,7 +19,7 @@
 # Docker: CONTAINER_CLI=docker ./scripts/compose.sh up --build
 ```
 
-На Windows/PowerShell: `$env:FLOODVALUE_COMMIT = git rev-parse HEAD; docker compose up --build`. При прямом вызове Compose передайте точный HEAD: без него сборка останавливается, чтобы экспорт не выдавал комплект с неизвестной версией. `FLOODVALUE_GITVERSE_COMMIT` задаётся отдельно после проверки зеркала и никогда не выводится из локального GitHub HEAD.
+На Windows та же обёртка работает в Git Bash; в PowerShell: `$env:FLOODVALUE_COMMIT = git rev-parse HEAD; docker compose up --build`. При прямом вызове Compose передайте точный HEAD: без него сборка останавливается, чтобы экспорт не выдавал комплект с неизвестной версией. Обёртка сама проверяет, что удалённая ветка GitVerse содержит этот commit, и только тогда передаёт его как `gitverse_commit`; из GitHub HEAD он никогда не выводится.
 
 Интерфейс: <http://localhost:18080>. API: <http://localhost:18000/docs>. Порты задаются переменными `WEB_PORT` и `API_PORT`. На macOS, если Podman VM не пробрасывает порты, в отдельном терминале можно запустить `python3 scripts/podman_tunnel.py`.
 
@@ -129,7 +129,7 @@ ML-этапы запускаются из папки `ml`, остальные и
 | ml | Python 3.13, torch 2.14.0+cu132 и torchvision 0.29.0+cu132 (на macOS 2.14.0 и 0.29.0 с PyPI), segmentation-models-pytorch 0.5.0, rasterio 1.5.1, numpy 2.5.3, scipy 1.18.1, scikit-learn 1.9.1 | `ml/.python-version`, `ml/uv.lock` |
 | frontend | Node 22 (образ `node:22-alpine`), vue 3.5.43, vite 8.3.1, maplibre-gl 6.11.2; раздача через `nginx:1.27-alpine` | `frontend/Dockerfile`, `frontend/package-lock.json` |
 
-Каждый комплект называет версию кода в `run_metadata.json/code_commit`. В контейнере hash передаёт обёртка запуска; `gitverse_commit` остаётся пустым, пока зеркало отдельно не сверено. Это предотвращает ложное утверждение, что любой GitHub commit уже опубликован в GitVerse. Итоговую версию перед защитой нужно проверить из чистого клона и пометить тегом.
+Каждый комплект называет версию кода в `run_metadata.json/code_commit`. В контейнере hash передаёт обёртка запуска. `gitverse_commit` заполняется только с доказательством: в клоне из GitVerse сервис и `scripts/compose.sh` проверяют, что удалённая ветка GitVerse содержит этот commit (`gitverse_status = verified_in_gitverse_remote`). В рабочей копии GitHub и для незапушенного commit поле пустое, поэтому GitHub commit никогда не выдаётся за опубликованный в GitVerse.
 
 ## Проверки и структура
 

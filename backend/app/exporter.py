@@ -12,16 +12,16 @@ import zipfile
 from datetime import datetime, timezone
 from urllib.parse import urlencode
 
-from .analysis import context, raster_assets
-from .layers import overlay_png
+from .analysis import context, raster_assets, residual_for
 from .catalog import ROOT, metadata, scene_dir
+from .costs import RULE as COST_RULE
+from .costs import decision_costs
+from .layers import overlay_png
 from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, SAR_DELIVERY_HOURS, SUITABILITY_RULE,
-                       as_polygon, enrich_assets)
+                       as_polygon, contains, enrich_assets)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
 from .temporal import scene_timing
-from .analysis import RESIDUAL_BASIS
-from .costs import RULE as COST_RULE
 from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
 
 REASONS = {
@@ -131,13 +131,17 @@ PLANETARY_COMPUTER_RTC_TERMS = {
 SEN1FLOODS11_LAYERS = ("S1Hand", "LabelHand", "JRCWaterHand")
 
 
-def _git_head() -> str | None:
+def _git(*args: str) -> str:
+    """Output of a read-only git command in the repository; empty when git or the repository is absent."""
     try:
-        result = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=10, check=False)
     except (OSError, subprocess.SubprocessError):
-        return None
-    commit = result.stdout.strip()
-    return commit if result.returncode == 0 and commit else None
+        return ""
+    return result.stdout if result.returncode == 0 else ""
+
+
+def _git_head() -> str | None:
+    return _git("rev-parse", "HEAD").strip() or None
 
 
 def code_commit() -> str | None:
@@ -145,9 +149,44 @@ def code_commit() -> str | None:
     return _git_head() or os.environ.get("FLOODVALUE_COMMIT") or None
 
 
+GITVERSE_HOST, GITVERSE_REPO = "gitverse.ru", "hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21"
+VERIFIED = "verified_in_gitverse_remote"
+
+
+def _is_gitverse(url: str) -> bool:
+    """HTTPS and SSH (git@gitverse.ru:owner/repo) addresses of the submission repository."""
+    return GITVERSE_HOST in url.lower() and GITVERSE_REPO in url.lower()
+
+
+def _gitverse_remote_commit() -> str | None:
+    """HEAD when a remote-tracking branch of the GitVerse repository contains it, as in a clone from GitVerse.
+
+    A GitHub checkout or a local commit not yet pushed to GitVerse proves nothing and gives None.
+    """
+    head = _git_head()
+    remotes = {line.split()[0] for line in _git("remote", "-v").splitlines()
+               if len(line.split()) > 1 and _is_gitverse(line.split()[1])}
+    if not head or not remotes:
+        return None
+    branches = [line.strip() for line in _git("branch", "-r", "--contains", head).splitlines()]
+    return head if any(branch.split("/", 1)[0] in remotes for branch in branches if branch) else None
+
+
 def gitverse_commit() -> str | None:
-    """Only a separately declared mirror revision; a GitHub commit is not proof of a GitVerse push."""
-    return os.environ.get("FLOODVALUE_GITVERSE_COMMIT") or None
+    """The GitVerse revision: proven by the checkout itself, or declared by the image build (scripts/compose.sh).
+
+    A GitHub commit alone is never taken as proof of a GitVerse push.
+    """
+    return _gitverse_remote_commit() or os.environ.get("FLOODVALUE_GITVERSE_COMMIT") or None
+
+
+def gitverse_status() -> str:
+    if _gitverse_remote_commit():
+        return VERIFIED
+    if os.environ.get("FLOODVALUE_GITVERSE_COMMIT"):
+        # compose.sh proves the build commit on a GitVerse remote branch before it passes this status on.
+        return VERIFIED if os.environ.get("FLOODVALUE_GITVERSE_STATUS") == VERIFIED else "declared_access_unverified"
+    return "mirror_commit_not_verified"
 
 
 def _sentinel_terms(observed_at: object) -> dict:
@@ -188,6 +227,9 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
         elif layer == "JRCWaterHand":
             entry["derived_from"] = ("JRC Global Surface Water; the Sen1Floods11 docs README describes the layer as "
                                      "'JRC Permement Water overlapping labeled data'")
+            # The layer is not observed on the event day: it marks water seen in both 1984 and 2018.
+            entry["observed_at"] = "1984/2018"
+            entry["observed_at_note"] = "JRC GSW observation period of the layer, not the S1 acquisition date"
             entry["underlying_data_license"] = dict(JRC_GSW_TERMS)
     else:
         entry.update(license="not_verified", license_checked_urls=[url] if url else [],
@@ -248,11 +290,21 @@ MIRROR = "https://github.com/Mojarung/kosmos_finals"
 MODEL_SOURCES = [
     {"name": "Sen1Floods11 v1.1 hand-labelled chips (train, valid, test_core, test_adjacent, bolivia)",
      "version": "Sen1Floods11_v1.1", "url": "https://github.com/cloudtostreet/Sen1Floods11",
+     # First and last event s1_date of data/catalog/sen1floods11_handlabeled.json, and the `updated` range
+     # of the 1343 v1.1 bucket objects in ml/artifacts/download_manifest.json (a test checks both).
+     "observed_at": "2016-08-12/2019-09-17",
+     "published_at": "2020-10-01T17:16:58.738Z/2020-10-15T16:16:25.190Z", "available_at": None,
      "role": "training_and_evaluation", "split": "ml/artifacts/split.json",
+     "limitation": "11 historical events; test_core shares events with train, Bolivia is the held-out event",
      "checksums": "ml/artifacts/download_manifest.json (md5 of 1343 bucket objects, downloaded 2026-09-25)",
      **SEN1FLOODS11_TERMS},
     {"name": "ResNet34 ImageNet encoder weights", "version": "segmentation-models-pytorch 0.5.0",
      "url": "https://huggingface.co/smp-hub/resnet34.imagenet", "role": "pretrained_initialisation",
+     "observed_at": None, "observed_at_note": "not an observation: pretrained image-classification weights",
+     # lastModified of revision fa54a662fb7bb5149049a30c11fac0deb86cf7e7 in the Hugging Face model API.
+     "published_at": "2025-01-15T17:51:52Z", "available_at": None,
+     "revision": "fa54a662fb7bb5149049a30c11fac0deb86cf7e7",
+     "limitation": "initialisation only; no flood or Sentinel-1 data in these weights",
      "license": "other_without_text",
      "license_note": ("Checked 2026-09-26: the model card of smp-hub/resnet34.imagenet declares license: other and "
                       "gives no license text. Used only to initialise training; the shipped weights are ours."),
@@ -271,12 +323,13 @@ def model_weights() -> list[dict]:
 
 
 def _strategy_status(key: str, item: dict) -> str:
+    """Over the budget always reads counterfactual (the case rule); lateness has its own column."""
     if key == "A":
         return "no_paid_data"
-    if not item.get("timely", True):
-        return "late_for_deadline"
     if not item["budget_feasible"]:
         return "counterfactual_over_budget"
+    if not item.get("timely", True):
+        return "late_for_deadline"
     return "within_budget" if item.get("constraints_feasible", True) else "constraints_infeasible"
 
 
@@ -295,6 +348,11 @@ def _blank(value: object) -> object:
 
 def _flag(value: object) -> str:
     return str(bool(value)).lower()
+
+
+def _bool(value: object) -> str:
+    """CSV boolean: true/false like every other flag of the package; empty when unknown."""
+    return "" if value is None else _flag(value)
 
 
 def plan_row(strategy: str, line: dict, product: dict) -> list:
@@ -330,7 +388,6 @@ def package(result: dict) -> io.BytesIO:
     # Case files and the basket use mandatory EL = p·V·q; flood-only is supplementary.
     all_assets = sorted(enrich_assets(raster_assets(scene_id, info), info["model_threshold"]),
                         key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))
-    from .planning import contains
     region_ids = [asset["id"] for asset in result["assets"]
                   if contains(result["region"]["bounds"], asset)]
     region_rank = {asset["id"]: index for index, asset in enumerate(sorted(
@@ -384,8 +441,8 @@ def package(result: dict) -> io.BytesIO:
             [[asset["id"], scene_id, _blank(asset["p_flood"]), _blank(asset["case_expected_loss_rub"]),
               _blank(asset["map_error_probability"]), region_rank.get(asset["id"], ""),
               str(asset["id"] in region_ids).lower(), asset["case_loss_status"], _blank(asset.get("p_window3")),
-              _blank(asset.get("permanent_water_at_point")), _blank(asset["flood_expected_loss_rub"]),
-              _blank(asset["uncertainty"]), asset["exposure_rub"], _blank(asset["map_doubtful"]),
+              _bool(asset.get("permanent_water_at_point")), _blank(asset["flood_expected_loss_rub"]),
+              _blank(asset["uncertainty"]), asset["exposure_rub"], _bool(asset["map_doubtful"]),
               (asset.get("p_check") or {}).get("status", "")]
              for asset in all_assets]))
         asset_rows = result["sensitivity"]["asset"]
@@ -404,11 +461,16 @@ def package(result: dict) -> io.BytesIO:
             changed_flood = dict(flood_loss)
             if changed_flood[row["asset_id"]] != 0 or case_loss[row["asset_id"]] == 0:
                 changed_flood[row["asset_id"]] = row["expected_loss_rub"]
+            # Same full-cost and residual-uncertainty rules as strategy_comparison.csv, for the re-planned C.
+            costs = decision_costs(selected["quote"]["total_rub"], selected["quote"]["lines"])
+            residual = residual_for(ctx, selected["zone_ids"])
             sensitivity_rows.append([
                 f"asset_{row['asset_id']}_{row['input']}_{row['factor']}", "C",
-                json.dumps(changed_inputs, ensure_ascii=False), "", selected["quote"]["total_rub"],
+                json.dumps(changed_inputs, ensure_ascii=False), costs["decision_cost_rub"],
+                selected["quote"]["total_rub"], costs["other_cost_rub"],
                 case_covered(selected["covered_asset_ids"], {row["asset_id"]: row["case_expected_loss_rub"]}),
                 "feasible" if selected["feasible"] else "infeasible", interpretation,
+                _blank(residual["residual_uncertainty"]), residual["uncertainty_status"],
                 row["case_expected_loss_rub"], row["case_rank"], "|".join(selected["candidate_ids"]),
                 _blank(selected["covered_doubt_share"]),
                 round(sum(changed_flood[item] for item in selected["covered_asset_ids"]), 2),
@@ -419,18 +481,20 @@ def package(result: dict) -> io.BytesIO:
                               "tariff_multiplier": row["tariff_multiplier"]}
             sensitivity_rows.append([
                 f"plan_{row['input']}_{row['factor']}", "C",
-                json.dumps(changed_inputs, ensure_ascii=False), "", row["data_cost_rub"],
-                case_covered(row["covered_asset_ids"]),
+                json.dumps(changed_inputs, ensure_ascii=False), row["decision_cost_rub"], row["data_cost_rub"],
+                row["other_cost_rub"], case_covered(row["covered_asset_ids"]),
                 "feasible" if row["feasible"] else "infeasible",
                 f"{row['input']} x{row['factor']}: {_plan_change(base_orders, row['candidate_ids'])}; "
                 "covered EL is not avoided loss",
+                _blank(row["residual_uncertainty"]), row["uncertainty_status"],
                 "", "", "|".join(row["candidate_ids"]), _blank(row["covered_doubt_share"]),
                 round(sum(flood_loss[item] for item in row["covered_asset_ids"]), 2),
             ])
         archive.writestr("sensitivity.csv", _csv(
-            ["scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub", "data_cost_rub",
-             "covered_expected_loss_rub", "result_status", "interpretation",
-             "asset_expected_loss_rub", "rank", "zone_ids", "covered_doubt_share", "covered_flood_loss_rub"],
+            ["scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub", "data_cost_rub", "other_cost_rub",
+             "covered_expected_loss_rub", "result_status", "interpretation", "residual_uncertainty",
+             "uncertainty_status", "asset_expected_loss_rub", "rank", "zone_ids", "covered_doubt_share",
+             "covered_flood_loss_rub"],
             sensitivity_rows))
         # Every product of every footprint is its own order in the one catalog B and C choose from.
         json_file("candidate_orders.geojson", {"type": "FeatureCollection", "features": [
@@ -449,13 +513,13 @@ def package(result: dict) -> io.BytesIO:
                                           "C": strategies["C"]["candidate_ids"]})
         archive.writestr("strategy_comparison.csv", _csv(
             ["strategy", "strategy_status", "data_cost_rub", "other_cost_rub", "other_cost_status", "decision_cost_rub",
-             "budget_rub", "budget_feasible", "covered_expected_loss_rub", "coverage_share", "coverage_status",
-             "covered_asset_count", "covered_doubt_share",
+             "budget_rub", "budget_feasible", "delivered_by_deadline", "covered_expected_loss_rub", "coverage_share",
+             "coverage_status", "covered_asset_count", "covered_doubt_share",
              "residual_uncertainty", "uncertainty_status", "uncertainty_basis", "covered_flood_loss_rub",
              "other_cost_basis", "compute_rub", "review_rub", "processing_rub", "field_rub", "covered_chance_share"],
             [[key, _strategy_status(key, item), item["data_cost_rub"], item["other_cost_rub"],
               item["other_costs"]["status"], item["decision_cost_rub"], inputs["budget_rub"],
-              str(item["budget_feasible"]).lower(), item["case_covered_expected_loss_rub"],
+              _flag(item["budget_feasible"]), _flag(item.get("timely", True)), item["case_covered_expected_loss_rub"],
               _blank(item["case_coverage_share"]), _blank(item["case_coverage_status"]),
               len(item.get("covered_asset_ids", [])), _blank(item.get("covered_doubt_share")),
               _blank(item["residual_uncertainty"]), item["uncertainty_status"], item["uncertainty_basis"],
@@ -525,8 +589,12 @@ def package(result: dict) -> io.BytesIO:
             "code_commit_rule": ("git rev-parse HEAD in the repository at export time; the FLOODVALUE_COMMIT build "
                                  "variable in images without .git; null when neither is available"),
             "gitverse_commit": gitverse_commit(),
-            "gitverse_status": "declared_access_unverified" if gitverse_commit() else "mirror_commit_not_verified",
-            "counterfactual_rule": "B above the budget has strategy_status=counterfactual_over_budget, for comparison only",
+            "gitverse_status": gitverse_status(),
+            "gitverse_rule": ("verified_in_gitverse_remote: a remote-tracking branch of the GitVerse repository "
+                              "contains the source commit (a clone from GitVerse, or scripts/compose.sh proved it "
+                              "before the image build); a GitHub commit alone never fills gitverse_commit"),
+            "counterfactual_rule": ("B above the budget has strategy_status=counterfactual_over_budget, for comparison "
+                                    "only, also when it is late; delivered_by_deadline tells lateness apart"),
             "priority_rule": ("rank by expected_loss_rub; map_doubtful=true flags assets whose map error chance at the "
                               "point is >= doubt_threshold, they need a look whatever their rank; no_data assets are "
                               "listed with their exposure as unestimated risk"),
@@ -579,6 +647,9 @@ def package(result: dict) -> io.BytesIO:
             "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else row
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],
+            "sensitivity_rule": ("every row re-plans C on the fixed p-map and portfolio; decision_cost_rub = data_cost_rub "
+                                 "+ other_cost_rub by decision_cost_rule; residual_uncertainty and uncertainty_status "
+                                 "follow the A/B/C rule of strategy_comparison.csv"),
             "decision_evidence": result["decision_evidence"],
             "decision_cost_rule": COST_RULE,
             "calibration_bias": result["calibration_bias"],

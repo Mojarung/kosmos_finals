@@ -3,6 +3,7 @@ services:
     environment:
       SKYFI_API_KEY: ${SKYFI_API_KEY:-}
       FLOODVALUE_GITVERSE_COMMIT: ${FLOODVALUE_GITVERSE_COMMIT:-}
+      FLOODVALUE_GITVERSE_STATUS: ${FLOODVALUE_GITVERSE_STATUS:-}
     build:
       context: .
       dockerfile: backend/Dockerfile

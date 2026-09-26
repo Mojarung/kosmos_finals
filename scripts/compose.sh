@@ -16,6 +16,20 @@ if [[ -n "${FLOODVALUE_GITVERSE_COMMIT:-}" && "$FLOODVALUE_GITVERSE_COMMIT" != "
   unset FLOODVALUE_GITVERSE_COMMIT
 fi
 
+# Proof, not a claim: the commit is on GitVerse when a remote-tracking branch of the GitVerse
+# repository contains it, as in a clone from GitVerse. A GitHub checkout proves nothing.
+unset FLOODVALUE_GITVERSE_STATUS
+while read -r remote url _; do
+  lower="$(printf '%s' "$url" | tr '[:upper:]' '[:lower:]')"
+  if [[ "$lower" == *gitverse.ru*hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21* ]] \
+      && git branch -r --contains "$FLOODVALUE_COMMIT" | grep -q "^[[:space:]]*$remote/"; then
+    export FLOODVALUE_GITVERSE_COMMIT="$FLOODVALUE_COMMIT"
+    export FLOODVALUE_GITVERSE_STATUS="verified_in_gitverse_remote"
+    echo "GitVerse remote $remote contains $FLOODVALUE_COMMIT: the export names it as the GitVerse commit." >&2
+    break
+  fi
+done < <(git remote -v)
+
 if [[ "${CONTAINER_CLI:-}" == "docker" ]]; then
   exec docker compose "$@"
 elif [[ "${CONTAINER_CLI:-}" == "podman" ]]; then

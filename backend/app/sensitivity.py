@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from .costs import decision_costs
 from .planning import BasketSpace
 
 
@@ -70,10 +71,12 @@ def plan_sensitivity(space: BasketSpace, budget_rub: float, priority: str,
             budget = round(budget_rub * factor, 2) if input_name == "budget" else budget_rub
             multiplier = factor if input_name == "tariff" else 1.0
             selected = space.plan(budget, priority, deadline_hours, must_cover, tariff=multiplier)
+            costs = decision_costs(selected["quote"]["total_rub"], selected["quote"]["lines"])
             rows.append({"input": input_name, "factor": factor,
                          "budget_rub": budget, "tariff_multiplier": multiplier,
                          "zone_ids": selected["zone_ids"], "candidate_ids": selected["candidate_ids"],
                          "data_cost_rub": selected["quote"]["total_rub"],
+                         "other_cost_rub": costs["other_cost_rub"], "decision_cost_rub": costs["decision_cost_rub"],
                          "covered_expected_loss_rub": selected["covered_expected_loss_rub"],
                          "covered_doubt_share": selected["covered_doubt_share"],
                          "covered_asset_ids": selected["covered_asset_ids"],
