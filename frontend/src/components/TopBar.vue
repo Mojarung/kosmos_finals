@@ -18,6 +18,8 @@ const current = computed(() => {
 // Без сети или при сбое CDN флаг просто не показываем, название остаётся.
 const failedFlags = reactive(new Set())
 const flag = computed(() => flagUrl(eventKey(current.value?.chip_id)))
+// Официальный чип Sen1Floods11 называем по ID, как требует кейс; у рамки RTC ID служебный.
+const chipLabel = computed(() => /^[A-Za-z]+_\d+$/.test(current.value?.chip_id || '') ? current.value.chip_id : 'Sentinel‑1 RTC')
 // Живой регион (рамка на карте) заменяет переключатель стран выбором даты снимка.
 const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandidates.length > 0)
 const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
@@ -35,7 +37,7 @@ const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-
             <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
               @error="failedFlags.add(flag)" />{{ current.event }}
           </h1>
-          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span class="scene-source">Sentinel‑1</span></p>
+          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span class="scene-source">{{ chipLabel }}</span></p>
         </div>
       </Transition>
     </div>

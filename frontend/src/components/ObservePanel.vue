@@ -153,7 +153,7 @@ function toggleDrawing() {
 
     <footer class="panel-foot">
       <span class="source" v-tip="isLive || livePending ? 'Снимок: Sentinel‑1 RTC. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён. Ручной метки для этой области нет' : 'Снимки, ручная метка и постоянная вода: Sen1Floods11 v1.1. Воду ищут пять моделей U‑Net ResNet34, их ответ усреднён и откалиброван'">
-        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV и VH · U‑Net' : 'Sen1Floods11 · U‑Net · JRC' }}
+        <Info :size="14" />{{ isLive || livePending ? 'Sentinel‑1 RTC · VV и VH' : state.sceneId }} · маска p ≥ {{ number(state.analysis?.chip?.model_threshold ?? 0.41, 2) }}
       </span>
     </footer>
   </MorphPanel>
