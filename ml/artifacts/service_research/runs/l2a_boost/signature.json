@@ -1,0 +1,46 @@
+{
+  "version": "s1texture23_l2a12_indices5_local6_usable1_v1",
+  "config": {
+    "hgb": {
+      "max_iter": 900,
+      "learning_rate": 0.04,
+      "max_leaf_nodes": 31,
+      "min_samples_leaf": 100,
+      "l2_regularization": 5.0,
+      "random_state": 2026
+    },
+    "lightgbm": {
+      "n_estimators": 1600,
+      "learning_rate": 0.04,
+      "num_leaves": 31,
+      "min_child_samples": 200,
+      "reg_lambda": 5.0,
+      "colsample_bytree": 0.9,
+      "subsample": 0.8,
+      "subsample_freq": 1,
+      "n_jobs": 4,
+      "random_state": 2026,
+      "verbosity": -1
+    },
+    "catboost": {
+      "iterations": 1200,
+      "learning_rate": 0.04,
+      "depth": 6,
+      "l2_leaf_reg": 5.0,
+      "random_seed": 2026,
+      "thread_count": 4,
+      "loss_function": "Logloss",
+      "allow_writing_files": false,
+      "nan_mode": "Min",
+      "verbose": 200
+    }
+  },
+  "pixels_per_chip": 6000,
+  "source_sha256": {
+    "l2a_boost.py": "13ec6248b270c3274985a28798af94fc89f98409a24b663677ffa4cc919837ee",
+    "l2a_data.py": "e69b7123213a962121e34e9749e6a7eced9d10005dbb16f563845c21f9e5dad3",
+    "tabular.py": "fa7a11264a2f9acbc0bae258ed2afae7a713d4a70445f7366e38bfc584c3559e"
+  },
+  "acquisition_sha256": "37efb8e7e34366e9a8d7f88a13bf6b86426ee42443a5e7cc5dbc4d16592fbfc1",
+  "folds_sha256": "f64e73fcdc5a1635aab87ac07ef747b01ce4cb84dccf74cb6a882eed16caa5e7"
+}

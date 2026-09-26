@@ -4,3 +4,9 @@ outputs/
 .venv/
 __pycache__/
 .pytest_cache/
+
+# Explicitly exported research archive; working runs/data remain ignored.
+!artifacts/service_research/runs/
+!artifacts/service_research/runs/**
+!artifacts/service_research/data/
+!artifacts/service_research/data/**

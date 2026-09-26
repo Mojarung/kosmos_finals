@@ -1,0 +1,25 @@
+{
+  "schema": "research-candidate-v1; not a floodvalue infer production recipe",
+  "selected_by": "maximum development OOF-fitted IoU among 15 disclosed recipes",
+  "name": "boost_clear_tm_missing",
+  "members": {
+    "hgb": 0.3333333333333333,
+    "lightgbm": 0.3333333333333333,
+    "catboost": 0.3333333333333333
+  },
+  "missing_optics_members": {
+    "terramind": 1.0
+  },
+  "platt": {
+    "a": 0.7914135456085205,
+    "b": -0.10004601627588272
+  },
+  "threshold": 0.39,
+  "raw_iou_p05": 0.7861237234920601,
+  "oof_fitted_iou": 0.788729234474828,
+  "model_manifest": "SERVICE_EXPERIMENT_MANIFEST.json",
+  "input_manifest": "L2A_ACQUISITION_MANIFEST.json",
+  "folds": "fresh/folds.json",
+  "new_test_evaluation": false,
+  "future_inference_rule": "mean probabilities of five fold models per member, then recipe mixture/routing, then Platt"
+}

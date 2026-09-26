@@ -1,0 +1,22 @@
+{
+  "version": "optical47_plus18_context27_81_v1",
+  "source_sha256": "af8ded9beadc537bdfa483426474ff792f170f35009cc61bc266900390d2947d",
+  "optical_source_sha256": "949286f9d59cdbb8d2834b9e7ae298cd7eb9feaf6251c466ef8aca9a55326f38",
+  "texture_source_sha256": "fa7a11264a2f9acbc0bae258ed2afae7a713d4a70445f7366e38bfc584c3559e",
+  "params": {
+    "n_estimators": 2000,
+    "learning_rate": 0.035,
+    "num_leaves": 31,
+    "min_child_samples": 200,
+    "reg_lambda": 5.0,
+    "colsample_bytree": 0.9,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "n_jobs": 4,
+    "random_state": 74,
+    "verbosity": -1
+  },
+  "train_pixels": 10000,
+  "valid_pixels": 3000,
+  "plan_sha256": "ca1a5360c9d14838d48782a94fe03994288c16e10b40b999ad7843406eff8ab7"
+}

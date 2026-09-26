@@ -1,0 +1,30 @@
+{
+  "purpose": "synthetic execution/memory probe, not a quality experiment",
+  "device": "mps",
+  "torch": "2.14.0",
+  "terratorch": "1.2.13",
+  "pretrained_sha256": "e56ea9ebcd4451078b9ca4893d5cd8a89bbee376ae16829c3e7fbbbc76de0eba",
+  "pretrained_hf_revision": "2b5ac0a3ed7dd7e922ccfd595b56607f342df343",
+  "pretrained_parameter_coverage": "all encoder state tensors, strict",
+  "backbone_parameters": 6022464,
+  "batch": 2,
+  "crop": 224,
+  "modalities": [
+    "S2L2A",
+    "S1GRD"
+  ],
+  "step_seconds": [
+    0.7581820829991557,
+    0.042240667000442045,
+    0.03947920900009194,
+    0.03887612499966053
+  ],
+  "losses": [
+    0.7051571607589722,
+    0.61179119348526,
+    0.5384641289710999,
+    0.48574358224868774
+  ],
+  "mps_allocated_bytes_after_step": 105407488,
+  "mps_driver_bytes_after_step": 355303424
+}
