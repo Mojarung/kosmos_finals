@@ -66,6 +66,16 @@ def _blank(value: object) -> object:
     return "" if value is None else value
 
 
+def _strategy_status(key: str, item: dict) -> str:
+    if key == "A":
+        return "no_paid_data"
+    if not item.get("timely", True):
+        return "late_for_deadline"
+    if not item["budget_feasible"]:
+        return "counterfactual_over_budget"
+    return "within_budget" if item.get("constraints_feasible", True) else "constraints_infeasible"
+
+
 def package(result: dict) -> io.BytesIO:
     scene_id = result["chip"]["chip_id"]
     info = metadata(scene_id)
@@ -192,12 +202,12 @@ def package(result: dict) -> io.BytesIO:
              "formula", "legal_edition"], plan_rows))
         json_file("strategy_plans.json", {key: strategies[key]["zone_ids"] for key in ("A", "B", "C")})
         archive.writestr("strategy_comparison.csv", _csv(
-            ["strategy", "data_cost_rub", "other_cost_rub", "decision_cost_rub",
+            ["strategy", "strategy_status", "data_cost_rub", "other_cost_rub", "other_cost_status", "decision_cost_rub",
              "budget_rub", "budget_feasible", "covered_expected_loss_rub", "coverage_share", "coverage_status",
              "covered_asset_count", "covered_doubt_share",
              "residual_uncertainty", "uncertainty_status", "uncertainty_basis"],
-            [[key, item["data_cost_rub"], 0, item["data_cost_rub"], inputs["budget_rub"],
-              str(item["budget_feasible"]).lower(), item["covered_expected_loss_rub"],
+            [[key, _strategy_status(key, item), item["data_cost_rub"], "", "not_estimated", "",
+              inputs["budget_rub"], str(item["budget_feasible"]).lower(), item["covered_expected_loss_rub"],
               _blank(item["coverage_share"]), _blank(item.get("coverage_status")),
               len(item.get("covered_asset_ids", [])), _blank(item.get("covered_doubt_share")),
               _blank(item["residual_uncertainty"]), item["uncertainty_status"],
@@ -260,6 +270,13 @@ def package(result: dict) -> io.BytesIO:
             "covered_loss_rule": "sum of unique asset expected_loss_rub covered by selected zones",
             "coverage_share_rule": "covered / estimated EL of region assets; empty with coverage_status when the denominator is 0",
             "covered_doubt_rule": "doubtful area inside the union of selected zones / doubtful area of the analysed region",
+            "other_cost_rule": ("processing runs on a CPU in seconds and analyst review or field checks are not priced, "
+                                "so other_cost_rub and decision_cost_rub stay empty with other_cost_status=not_estimated; "
+                                "strategies are compared by data_cost_rub"),
+            "residual_uncertainty_rule": ("A: mean map error chance over valid pixels of the analysed region (share 0-1, "
+                                          "status baseline); B and C: empty with status not_estimated, because no new "
+                                          "image has been received"),
+            "counterfactual_rule": "B above the budget has strategy_status=counterfactual_over_budget and is shown for comparison only",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
             "uncertainty_rule": ("asset_loss.uncertainty is the map error chance at the asset pixel: 1 - p where "
                                  "flood_mask = 1, p where flood_mask = 0 (calibrated p, share 0-1); "

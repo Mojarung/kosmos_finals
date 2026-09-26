@@ -43,7 +43,7 @@ function status(key) {
   const plan = analysis.value.strategies[key]
   if (!plan.timely) return 'не успеет к сроку'
   if (key === 'C' && plan.constraints_feasible === false) return 'условие не выполнить'
-  if (!plan.budget_feasible) return 'дороже бюджета'
+  if (!plan.budget_feasible) return 'дороже бюджета, для сравнения'
   return key === 'A' ? 'бесплатно' : 'в бюджете'
 }
 const warn = key => !['в бюджете', 'бесплатно'].includes(status(key))
@@ -161,7 +161,7 @@ function hover(id) { state.hoverZoneId = id }
       </span>
       <span class="strategy-cost">
         <strong class="tabular">{{ compactRub(analysis.strategies[key].data_cost_rub) }}</strong>
-        <small :class="{ warn: warn(key) }">{{ status(key) }}</small>
+        <small :class="{ warn: warn(key) }" v-tip="!analysis.strategies[key].budget_feasible ? 'Контрфактический вариант: в бюджет не входит и показан только для сравнения цены и охвата' : null">{{ status(key) }}</small>
       </span>
     </button>
   </div>
@@ -171,10 +171,11 @@ function hover(id) { state.hoverZoneId = id }
     <section :key="state.strategy" class="block plan-result">
       <RingGauge :value="plan?.coverage_share" label="ущерба в зонах заказа" color="var(--reference)" />
       <div class="mini-rows">
-        <div><span>Стоимость</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
+        <div v-tip="'Цена снимков. Обработка занимает секунды на CPU, проверку специалистом не оцениваем, поэтому прочие затраты не добавлены'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
         <div><span>Объектов в зонах</span><b class="tabular">{{ plan?.covered_asset_ids?.length || 0 }} из {{ analysis.assets.length }}</b></div>
         <div v-tip="'Доля площади, где карта может ошибаться, которая попадает в заказанные зоны'"><span>Сомнений в зонах</span><b class="tabular">{{ percent(plan?.covered_doubt_share) }}</b></div>
         <div><span>Зон в заказе</span><b class="tabular">{{ plan?.zone_ids?.length || 0 }}</b></div>
+        <div v-tip="plan?.uncertainty_status === 'baseline' ? 'Средний шанс ошибки карты по области без новых снимков. Это исходная неопределённость' : 'Новых снимков ещё нет, поэтому снижение неопределённости не заявляем'"><span>Остаточная неопределённость</span><b class="tabular">{{ plan?.uncertainty_status === 'baseline' ? percent(plan.residual_uncertainty, 1) : 'не оценена' }}</b></div>
       </div>
     </section>
   </Transition>
