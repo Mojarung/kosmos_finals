@@ -105,6 +105,29 @@ function why(row) {
 }
 
 const plan = computed(() => activePlan.value)
+const costTip = computed(() => {
+  const costs = plan.value?.other_costs
+  if (!costs) return null
+  const parts = [`данные ${rub(plan.value.data_cost_rub)}`,
+    `работа аналитика ${rub(costs.review_rub)} (${number(costs.review_hours, 2)} ч по 1 500 ₽)`]
+  if (costs.processing_rub) parts.push(`обработка радара L1 ${rub(costs.processing_rub)} (${number(costs.processing_hours, 2)} ч)`)
+  parts.push(`вычисления ${number(costs.compute_rub, 2)} ₽`)
+  return `Сценарий: ${parts.join(' + ')}. Выезды на объекты и цена ошибочных действий не оценены. Бюджет ограничивает только стоимость данных.`
+})
+const residual = computed(() => {
+  const item = plan.value
+  const before = state.analysis?.strategies?.A?.residual_uncertainty
+  if (!item || item.uncertainty_status === 'not_estimated' || item.residual_uncertainty == null) {
+    return { text: 'не оценена', tip: 'Для этой области шанс ошибки карты не посчитан' }
+  }
+  if (item.uncertainty_status === 'baseline') {
+    return { text: percent(item.residual_uncertainty, 1), tip: 'Средний шанс ошибки карты по области без новых снимков. Это исходная неопределённость' }
+  }
+  return {
+    text: `${percent(before, 1)} → ${percent(item.residual_uncertainty, 1)}`,
+    tip: `Сценарий, не измерение: если новые снимки снимут ошибки карты внутри заказанных зон, средний шанс ошибки по области станет ${percent(item.residual_uncertainty, 1)} вместо ${percent(before, 1)}. Внутри зон лежит ${percent(item.covered_chance_share)} всей массы шанса ошибки. Новых наблюдений пока нет.`,
+  }
+})
 const planKey = computed(() => state.strategy)
 const pricing = computed(() => plan.value?.quote)
 
@@ -272,11 +295,12 @@ function hover(id) { state.hoverZoneId = id }
     <section :key="state.strategy" class="block plan-result">
       <RingGauge :value="plan?.coverage_share" label="ущерба в зонах заказа" color="var(--reference)" />
       <div class="mini-rows">
-        <div v-tip="'Цена снимков. Обработка занимает секунды на CPU, проверку специалистом не оцениваем, поэтому прочие затраты не добавлены'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
+        <div v-tip="'Цена снимков по ПП № 840 со сценарной ставкой. Бюджет ограничивает только её'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
+        <div v-if="plan?.decision_cost_rub != null" v-tip="costTip"><span>Решение целиком<small class="scenario-mark">сценарий</small></span><b class="tabular">{{ rub(plan.decision_cost_rub) }}</b></div>
         <div><span>Объектов в зонах</span><b class="tabular">{{ plan?.covered_asset_ids?.length || 0 }} из {{ analysis.assets.length }}</b></div>
         <div v-tip="'Доля площади, где карта может ошибаться, которая попадает в заказанные зоны'"><span>Сомнений в зонах</span><b class="tabular">{{ percent(plan?.covered_doubt_share) }}</b></div>
         <div><span>Зон в заказе</span><b class="tabular">{{ plan?.zone_ids?.length || 0 }}</b></div>
-        <div v-tip="plan?.uncertainty_status === 'baseline' ? 'Средний шанс ошибки карты по области без новых снимков. Это исходная неопределённость' : 'Новых снимков ещё нет, поэтому снижение неопределённости не заявляем'"><span>Остаточная неопределённость</span><b class="tabular">{{ plan?.uncertainty_status === 'baseline' ? percent(plan.residual_uncertainty, 1) : 'не оценена' }}</b></div>
+        <div v-tip="residual.tip"><span>Остаточная неопределённость<small v-if="plan?.uncertainty_status === 'scenario'" class="scenario-mark">сценарий</small></span><b class="tabular">{{ residual.text }}</b></div>
       </div>
     </section>
   </Transition>
