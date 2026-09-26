@@ -160,6 +160,10 @@ def validate(path: str | Path) -> dict:
                     and p_mask[pixel_row, pixel_col], f"{row['asset_id']}: asset pixel outside valid S1")
             close(float(row["p_flood"]), float(probability[pixel_row, pixel_col]),
                   f"{row['asset_id']}: p_flood differs from flood_probability.tif at the asset pixel", 1e-5)
+            pixel_p = float(probability[pixel_row, pixel_col])
+            chance = 1 - pixel_p if flood[pixel_row, pixel_col] == 1 else pixel_p
+            close(float(row["uncertainty"]), chance,
+                  f"{row['asset_id']}: uncertainty is not the map error chance at the asset pixel", 1e-4)
         groups = {line["discount_group_id"] for line in orders}
         require(len(groups) <= 1 and (not groups or groups == {meta["pricing"]["discount_group_id"]}),
                 "Discount group differs between lines and run metadata")

@@ -114,11 +114,11 @@ def package(result: dict) -> io.BytesIO:
               asset["longitude"], asset["latitude"]] for asset in info["assets"]]))
         archive.writestr("asset_loss.csv", _csv(
             ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status",
-             "p_window3", "permanent_water_at_point", "map_error_probability", "exposure_rub"],
+             "p_window3", "permanent_water_at_point", "ensemble_spread", "exposure_rub"],
             [[asset["id"], scene_id, _blank(asset["p_flood"]), _blank(asset["expected_loss_rub"]),
-              _blank(asset["uncertainty"]), region_rank.get(asset["id"], ""),
+              _blank(asset["map_error_probability"]), region_rank.get(asset["id"], ""),
               str(asset["id"] in region_ids).lower(), asset["loss_status"], _blank(asset.get("p_window3")),
-              _blank(asset.get("permanent_water_at_point")), _blank(asset["map_error_probability"]),
+              _blank(asset.get("permanent_water_at_point")), _blank(asset["uncertainty"]),
               asset["exposure_rub"]]
              for asset in all_assets]))
         asset_rows = result["sensitivity"]["asset"]
@@ -257,7 +257,10 @@ def package(result: dict) -> io.BytesIO:
             "coverage_share_rule": "covered / estimated EL of region assets; empty with coverage_status when the denominator is 0",
             "covered_doubt_rule": "doubtful area inside the union of selected zones / doubtful area of the analysed region",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
-            "uncertainty_rule": "map error chance from calibrated p; ensemble spread is kept as a diagnostic",
+            "uncertainty_rule": ("asset_loss.uncertainty is the map error chance at the asset pixel: 1 - p where "
+                                 "flood_mask = 1, p where flood_mask = 0 (calibrated p, share 0-1); "
+                                 "ensemble_spread and flood_uncertainty.tif keep the std of the five members "
+                                 "as a diagnostic"),
             "candidate_rule": "1.12 km square around each asset, uncertainty rectangles from the doubt map, and the broad selected-region rectangle; min 1 km²",
             "zone_area_crs": "EPSG:6933",
             "proxy_check": result["asset_proxy_check"],
@@ -276,10 +279,10 @@ def package(result: dict) -> io.BytesIO:
             "sensitivity_method": result["sensitivity"]["method"],
             "decision_evidence": result["decision_evidence"],
             "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
-            "commands": ["git lfs pull", "uv sync --project ml",
-                         "ml/.venv/bin/floodvalue infer --s1 data/source/CHIP_S1Hand.tif --out data/inference/CHIP",
-                         "backend/.venv/bin/python scripts/prepare_demo.py",
-                         "backend/.venv/bin/python scripts/validate_package.py floodvalue-CHIP.zip"],
+            "commands": ["git lfs pull", "uv sync --project ml", "uv sync --project backend --extra demo",
+                         "uv run --project ml floodvalue infer --s1 data/source/CHIP_S1Hand.tif --out data/inference/CHIP",
+                         "uv run --project backend --extra demo python scripts/prepare_demo.py",
+                         "uv run --project backend --extra demo python scripts/validate_package.py floodvalue-CHIP.zip"],
             "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
                                                                   "processed_at": info.get("processed_at")}),
         })
@@ -289,7 +292,7 @@ def package(result: dict) -> io.BytesIO:
         for name in names:
             archive.write(scene_dir(scene_id) / name, arcname=name)
         archive.writestr("README.txt",
-                         "FloodValue — один согласованный комплект для выбранного чипа и бюджета.\n"
+                         "FloodValue: один согласованный комплект для выбранного чипа и бюджета.\n"
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
                          "permanent_water.tif (если есть): постоянная вода JRC; ущерб на ней не считается.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
