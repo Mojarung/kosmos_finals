@@ -479,16 +479,18 @@ async function moveCamera(center, zoom, duration, easing = t => t) {
 }
 async function orbitGlobe(from, to, zoom, token) {
   if (reducedMotion()) return moveCamera(to, zoom, 0)
-  // MapLibre выбирает кратчайшую дугу между центрами. Промежуточные точки
-  // меньше 90° заставляют глобус пройти через дальнюю сторону даже для
-  // соседних стран, сохраняя непрерывное направление вращения.
-  const shortArc = ((to[0] - from[0] + 540) % 360) - 180
-  const longArc = shortArc >= 0 ? shortArc - 360 : shortArc + 360
-  const steps = Math.ceil(Math.abs(longArc) / 65)
+  // Кратчайшая дуга по долготе, шагами меньше 90°: так MapLibre не срежет через
+  // дальнюю сторону. Время растёт с расстоянием: соседи — меньше секунды, полглобуса — ~1,8 с.
+  const arc = ((to[0] - from[0] + 540) % 360) - 180
+  const distance = Math.max(Math.abs(arc), Math.abs(to[1] - from[1]))
+  const duration = Math.min(1800, 700 + distance * 6)
+  const steps = Math.max(1, Math.ceil(Math.abs(arc) / 65))
+  const easeInOut = t => t < 0.5 ? 2 * t * t : 1 - (2 - 2 * t) ** 2 / 2
   for (let step = 1; step <= steps && token === flight; step++) {
     const progress = step / steps
-    const center = [from[0] + longArc * progress, from[1] + (to[1] - from[1]) * progress]
-    await moveCamera(center, zoom, 2300 / steps, step === steps ? t => t * (2 - t) : t => t)
+    const center = [from[0] + arc * progress, from[1] + (to[1] - from[1]) * progress]
+    const easing = steps === 1 ? easeInOut : step === steps ? t => t * (2 - t) : t => t
+    await moveCamera(center, zoom, duration / steps, easing)
   }
 }
 async function sceneFrameReady(token, limit = 8000) {

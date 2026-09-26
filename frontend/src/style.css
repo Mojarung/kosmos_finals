@@ -363,6 +363,8 @@ html.map-moving .panel {
 .calib-line { margin-top: 8px; }
 .source-line.calib-note { display: block; margin: 6px 0 4px; line-height: 1.45; cursor: default; }
 .hero { display: flex; align-items: baseline; gap: 6px; margin-top: 3px; }
+/* Справочный итог в валюте страны: бледная строка ~12px под крупным числом (Money берёт .62em). */
+.hero-local { font-size: 19px; line-height: 1; }
 .hero .display { font-size: 36px; }
 .hero.small .display { font-size: 26px; }
 .hero .unit { font-size: 14px; color: var(--muted-foreground); }

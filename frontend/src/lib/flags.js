@@ -1,6 +1,6 @@
 // Флаги стран каталога Sen1Floods11 с бесплатного flagcdn.com (SVG без ключа).
 // Ключ — префикс chip_id; Меконг — снимки из Камбоджи.
-const COUNTRY_CODES = {
+export const COUNTRY_CODES = {
   Bolivia: 'bo', Ghana: 'gh', India: 'in', Mekong: 'kh', Nigeria: 'ng', Pakistan: 'pk',
   Paraguay: 'py', Somalia: 'so', Spain: 'es', 'Sri-Lanka': 'lk', USA: 'us',
 }
