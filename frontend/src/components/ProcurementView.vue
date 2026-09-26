@@ -27,7 +27,11 @@ const SOURCES = {
     orderUrl: 'https://app.skyfi.com', orderLabel: 'Открыть SkyFi' },
 }
 const source = computed({ get: () => state.catalogSource || 'roscosmos', set: value => { state.catalogSource = value } })
-const sourceInfo = computed(() => SOURCES[catalog.value?.source || source.value] || SOURCES.roscosmos)
+const sourceInfo = computed(() => {
+  const info = SOURCES[catalog.value?.source || source.value] || SOURCES.roscosmos
+  // The free catalog falls back to Planetary Computer when Copernicus Data Space does not answer the server.
+  return catalog.value?.source_url?.includes('planetarycomputer') ? { ...info, api: 'Planetary Computer · STAC, снимки Copernicus' } : info
+})
 const status = ref({ roscosmos_configured: true, skyfi_configured: true })
 const configured = computed(() => status.value[`${source.value}_configured`] !== false)
 const quoteMessage = ref('')

@@ -257,11 +257,15 @@ def live_sources():
 
 def search_live(request, aoi, bounds, event, start, end):
     """Russian and free catalogs in the common offer shape, prices in roubles."""
+    from .copernicus import MIRROR_NOTE
     searchers, source_url, disclaimer = live_sources()[request.source]
     on = today()
     offers, skipped, seen = [], 0, set()
     for search_fn, normalize in searchers:
         for item in search_fn(aoi, start, end):
+            if item.get('_endpoint') and item['_endpoint'] != source_url:
+                # The free catalog answered from its mirror: name the service that actually answered.
+                source_url, disclaimer = item['_endpoint'], disclaimer + MIRROR_NOTE
             try:
                 offer = normalize(item, aoi, str(event), on)
                 if offer and offer['id'] not in seen:
@@ -392,6 +396,8 @@ def export(decision_id: str):
     money = (lambda v: f'{v:,.2f} ₽'.replace(',', ' ')) if rub else (lambda v: f'${v:.2f}')
     source_name = {'roscosmos': 'Геопортал Роскосмоса, API ЦБГД', 'scanex': 'СКАНЭКС «Космоснимки — Поиск»',
                    'free': 'Copernicus Data Space STAC'}.get(catalog.get('source'), 'SkyFi API')
+    if 'planetarycomputer' in (catalog.get('source_url') or ''):
+        source_name = 'Microsoft Planetary Computer STAC (снимки Copernicus Sentinel)'
     currency_note = (catalog['disclaimer'] if rub else
                      'Цены в долларах США из коммерческого каталога SkyFi. Это отдельный подбор снимков, а не расчёт по ПП № 840.')
     cards = ''.join('<article>' + (f'<img src="{esc(o["preview_url"], quote=True)}" alt="Превью поставщика">' if o['preview_url'] else '') +

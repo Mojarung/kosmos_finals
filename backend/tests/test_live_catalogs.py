@@ -96,3 +96,25 @@ def test_supplier_price_of_scanex_and_free_is_not_claimed_as_verified(client):
     c = catalog(client, "scanex")
     r = client.post(f"/api/procurement/catalogs/{c['id']}/quotes/10893679")
     assert r.status_code == 409 and "по заявке" in r.json()["detail"]
+
+
+def test_free_catalog_falls_back_to_planetary_computer_when_copernicus_is_unreachable(tmp_path, monkeypatch):
+    from urllib.error import URLError
+
+    calls = []
+
+    def fake_search(url, aoi, start, end, limit):
+        calls.append(url)
+        if url == copernicus.SEARCH:
+            raise URLError(ConnectionResetError(104, "Connection reset by peer"))
+        return [{**f, "collection": "sentinel-1-grd" if f["id"].startswith("S1") else "sentinel-2-l2a"}
+                for f in copernicus_features()]
+
+    monkeypatch.setattr(procurement, "DB", tmp_path / "procurement.sqlite3")
+    monkeypatch.setattr(copernicus, "_search", fake_search)
+    c = catalog(TestClient(app), "free")
+    assert calls == [copernicus.SEARCH, copernicus.MIRROR]
+    assert c["source_url"] == copernicus.MIRROR and "Planetary Computer" in c["disclaimer"]
+    assert {o["order_url"] for o in c["offers"]} == {copernicus.MIRROR_DATASET + "sentinel-2-l2a",
+                                                     copernicus.MIRROR_DATASET + "sentinel-1-grd"}
+    assert all(o["price"] == 0 for o in c["offers"])
