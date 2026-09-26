@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from .catalog import mask, metadata, quality
+from .catalog import mask, metadata, on_refresh, quality, scene_catalog
 
 CONTROL_POINT_RULE = ("the ten seeded portfolio asset pixels (placed independently of p, masks and labels); "
                       "points whose manual label is -1 are skipped and counted")
@@ -26,7 +26,8 @@ def asset_proxy_check(scene_id: str) -> dict:
     reference = mask(scene_id, "water")
     rows, skipped = [], 0
     for asset in info["assets"]:
-        if asset.get("p_flood") is None:
+        # No p, or a point on permanent water whose flood loss is zero by definition.
+        if asset.get("p_flood") is None or asset.get("permanent_water_at_point"):
             skipped += 1
             continue
         row, col = _pixel(info, asset)
@@ -65,3 +66,32 @@ def asset_proxy_check(scene_id: str) -> dict:
         "method": "EL = p·V·q against EL_ref = y·V·q with the manual label y at each control point pixel",
         "limitation": "The manual water label is not measured monetary loss; this only tests the p-to-EL propagation.",
     }
+
+
+@lru_cache(maxsize=1)
+def reference_proxy_check() -> dict:
+    """For a region without manual labels: the same check pooled over the labelled demo chips.
+
+    It shows how p carries into EL where labels exist; it is not a check of the new region.
+    """
+    scenes = [scene["chip_id"] for scene in scene_catalog()["scenes"] if scene.get("origin") == "demo"]
+    checks = [asset_proxy_check(scene_id) for scene_id in scenes]
+    rows = [row for check in checks for row in check["rows"]]
+    count = len(rows)
+    return {
+        "status": "reference_chips_region_not_labeled", "chip_id": None,
+        "reference_chip_ids": scenes, "control_point_rule": CONTROL_POINT_RULE,
+        "labels_independent": True,
+        "n_points": count, "n_assets": count,
+        "n_skipped_invalid_label": sum(check["n_skipped_invalid_label"] for check in checks),
+        "mean_absolute_probability_error": round(sum(abs(r["p_flood"] - r["y"]) for r in rows) / count, 4) if count else None,
+        "mean_absolute_proxy_loss_error_rub": round(sum(abs(r["el_rub"] - r["el_ref_rub"]) for r in rows) / count, 2) if count else None,
+        "mean_absolute_error_rub": round(sum(abs(r["el_rub"] - r["el_ref_rub"]) for r in rows) / count, 2) if count else None,
+        "bias_rub": round(sum(r["el_rub"] - r["el_ref_rub"] for r in rows), 2) if count else None,
+        "rows": [],
+        "method": "EL = p·V·q against EL_ref = y·V·q on the labelled test_core demo chips",
+        "limitation": "The selected region has no manual label; these numbers describe the labelled chips only.",
+    }
+
+on_refresh(asset_proxy_check.cache_clear)
+on_refresh(reference_proxy_check.cache_clear)
