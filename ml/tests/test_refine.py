@@ -102,7 +102,7 @@ def test_frozen_bn_keeps_statistics_while_updating_weights(tmp_path):
     cfg = TrainConfig("tiny_bn", epochs=2, batch_size=1, crop=32, crops_per_chip=2,
                       eval_every=1, augment=False, lr=1e-3, freeze_bn=True)
     fit(cfg, part, part, tmp_path, initial_model=model)
-    assert torch.equal(bn.running_mean, mean)
-    assert torch.equal(bn.running_var, var)
+    assert torch.equal(bn.running_mean.cpu(), mean)
+    assert torch.equal(bn.running_var.cpu(), var)
     assert bn.num_batches_tracked == 0
-    assert not torch.equal(bn.weight, affine)
+    assert not torch.equal(bn.weight.detach().cpu(), affine)
