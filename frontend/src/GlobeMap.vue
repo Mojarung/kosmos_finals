@@ -10,7 +10,7 @@ import { waterField } from './lib/water'
 import { WaterLayer } from './lib/waterLayer'
 import { bindTip } from './lib/tip'
 import MorphLoader from './components/MorphLoader.vue'
-import { preloadGlobe, preloadTilt } from './lib/prefetch'
+import { preloadGlobe, preloadJourney, preloadScene, preloadTilt } from './lib/prefetch'
 
 maplibregl.setWorkerUrl(workerUrl)
 
@@ -22,6 +22,7 @@ const probe = ref(null)
 const probeLoading = ref(false)
 const veiled = ref(false)
 const veilLoader = ref(false)
+const journey = ref(null)
 let map
 let ready = false
 let loadedScene = ''
@@ -31,9 +32,11 @@ let loadedWater = ''
 let keepCamera = false
 let dragStart = null
 let dragEnd = null
-// Смена сцены под шторкой: 'out' — шторка закрывается, снимки ещё старые; 'in' — под ней встала новая сцена.
+// Во время маршрута старый снимок скрыт; 'in' означает, что новый кадр собирается перед раскрытием.
 let phase = null
 let flight = 0
+let waterLoad = Promise.resolve(true)
+let tileErrorSeen = false
 const markers = new Map()
 const empty = { type: 'FeatureCollection', features: [] }
 // Маску воды рисует WebGL-слой воды, остальные слои приходят готовыми PNG.
@@ -66,12 +69,14 @@ async function loadWater(chip, reveal) {
   try {
     const permanent = ['jrc_waterhand', 'jrc_gsw'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
     const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent)
-    if (token !== waterToken) return
+    if (token !== waterToken) return false
     const [w, s, e, n] = chip.bbox
     const meters = (e - w) * 111320 * Math.cos(((s + n) / 2) * Math.PI / 180) / field.width
     water.setScene(field, chip.bbox, meters, { reveal })
+    return true
   } catch (error) {
     console.warn('Water field:', error)
+    return false
   }
 }
 function polygon(bounds) {
@@ -100,7 +105,7 @@ function buildOverlays() {
   if (!map) return
   const c = COLORS[theme()]
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones', 'probe']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'region', 'preview', 'zones', 'probe', 'journey']) map.addSource(id, { type: 'geojson', data: empty })
   map.addSource('satellite', {
     type: 'raster', tiles: [satelliteTiles], tileSize: 256,
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community',
@@ -141,6 +146,11 @@ function buildOverlays() {
     paint: { 'circle-radius': 14, 'circle-color': c.chip, 'circle-opacity': 0.22 } }, before)
   map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
     paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
+  map.addLayer({ id: 'journey-line', type: 'line', source: 'journey', filter: ['==', ['geometry-type'], 'LineString'],
+    paint: { 'line-color': c.chip, 'line-width': 2.5, 'line-opacity': 0.85, 'line-dasharray': [2, 1.5] } }, before)
+  map.addLayer({ id: 'journey-points', type: 'circle', source: 'journey', filter: ['==', ['geometry-type'], 'Point'],
+    paint: { 'circle-radius': ['case', ['==', ['get', 'end'], 1], 8, 5], 'circle-color': c.chip,
+      'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } }, before)
   if (probe.value?.longitude != null) setProbePoint(probe.value.longitude, probe.value.latitude)
   // Проекция всегда глобус: на крупном масштабе MapLibre сам рисует его плоским,
   // а при отдалении колесом карта плавно сворачивается в шар.
@@ -233,7 +243,7 @@ function syncMap() {
     for (const name of rasterNames) map.getSource(name).updateImage({ url: layerUrl(chip.chip_id, name), coordinates: imageCoords })
     const first = !loadedScene
     // Вода разливается при каждой новой сцене; после смены темы она уже была на экране.
-    loadWater(chip, !keepCamera)
+    waterLoad = loadWater(chip, !keepCamera)
     loadedWater = chip.chip_id + '|' + chip.permanent_status
     if (loadedScene && loadedScene !== chip.chip_id) clearProbe()
     loadedScene = chip.chip_id
@@ -242,7 +252,7 @@ function syncMap() {
   }
   if (phase !== 'out' && loadedWater !== chip.chip_id + '|' + chip.permanent_status) {
     loadedWater = chip.chip_id + '|' + chip.permanent_status
-    loadWater(chip, false)
+    waterLoad = loadWater(chip, false)
   }
   const hidden = phase !== null
   map.setLayoutProperty('radar-layer', 'visibility', state.showRadar ? 'visible' : 'none')
@@ -254,10 +264,12 @@ function syncMap() {
   }
   water.set({ visible: state.layerMode === 'model' && !hidden, opacity: state.overlayOpacity / 100 })
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
-  if (!hidden) setData('chip', collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
-  setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
-  setData('zones', collection(zoneFeatures()))
-  updateMarkers()
+  setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
+  setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
+  setData('zones', hidden ? empty : collection(zoneFeatures()))
+  if (!hidden) updateMarkers()
+  else for (const entry of markers.values()) entry.element.style.visibility = 'hidden'
+  if (!hidden) for (const entry of markers.values()) entry.element.style.visibility = ''
 }
 
 // Отступы учитывают, открыты ли панели: свёрнутая панель отдаёт место снимку.
@@ -300,12 +312,66 @@ async function tilesReady(limit) {
   // Кадр после прыжка: MapLibre должен успеть запросить тайлы нового вида.
   await wait(32)
   while (!map.areTilesLoaded() && performance.now() < deadline) await wait(50)
+  return map.areTilesLoaded()
 }
 function analysisFor(id) {
-  if (state.analysis?.chip.chip_id === id) return Promise.resolve()
+  if (state.analysis?.chip.chip_id === id) return Promise.resolve(true)
   return new Promise(resolve => {
-    const stop = watch(() => state.analysis?.chip.chip_id, value => { if (value === id) { stop(); resolve() } })
+    const timer = setTimeout(() => finish(false), 12000)
+    const stop = watch(() => [state.analysis?.chip.chip_id, state.sceneId, state.error], ([loaded, selected, error]) => {
+      if (loaded === id) finish(true)
+      else if (selected !== id || error) finish(false)
+    })
+    function finish(ok) { clearTimeout(timer); stop(); resolve(ok) }
   })
+}
+
+function sceneCenter(scene) {
+  const [w, s, e, n] = scene.bbox
+  return [(w + e) / 2, (s + n) / 2]
+}
+function travelZoom(from, to) {
+  const longitude = Math.abs(from[0] - to[0])
+  return Math.min(longitude, 360 - longitude) < 16 && Math.abs(from[1] - to[1]) < 12 ? 4.1 : 1.8
+}
+function journeyFeatures(from, to) {
+  const points = []
+  for (let i = 0; i <= 32; i++) {
+    const t = i / 32
+    points.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t])
+  }
+  return collection([
+    { type: 'Feature', geometry: { type: 'LineString', coordinates: points }, properties: {} },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: from }, properties: { end: 0 } },
+    { type: 'Feature', geometry: { type: 'Point', coordinates: to }, properties: { end: 1 } },
+  ])
+}
+async function moveCamera(center, zoom, duration) {
+  if (reducedMotion()) { map.jumpTo({ center, zoom, pitch: 0, bearing: 0 }); return }
+  await new Promise(resolve => {
+    const timer = setTimeout(done, duration + 300)
+    function done() { clearTimeout(timer); map.off('moveend', done); resolve() }
+    map.once('moveend', done)
+    map.easeTo({ center, zoom, pitch: 0, bearing: 0, duration, essential: false })
+  })
+}
+async function sceneFrameReady(token, limit = 8000) {
+  const deadline = performance.now() + limit
+  const waterReady = state.layerMode === 'model'
+    ? await Promise.race([waterLoad, wait(limit).then(() => false)]) : true
+  if (token !== flight || !waterReady) return false
+  await wait(32)
+  while (token === flight && performance.now() < deadline) {
+    const images = [state.showRadar && 'radar', state.layerMode !== 'model' && state.layerMode !== 'none' && state.layerMode]
+      .filter(Boolean)
+    if (tileErrorSeen) return false
+    if (map.areTilesLoaded() && images.every(name => map.isSourceLoaded(name))) {
+      await wait(32)
+      if (!tileErrorSeen && map.areTilesLoaded() && images.every(name => map.isSourceLoaded(name))) return true
+    }
+    await wait(80)
+  }
+  return false
 }
 
 /*
@@ -355,22 +421,93 @@ async function veiledMove(move, { whenCovered, from = 'near', limit = 3000, laye
   }
 }
 
-function flyToScene(id) {
-  const target = state.analysis?.scenes.find(scene => scene.chip_id === id)?.bbox
-  if (!map || !ready || !target) return
-  phase = 'out'
+async function revealScene(token) {
+  if (token !== flight) return
+  phase = null
   syncMap()
-  veiledMove(() => {
-    phase = 'in'
+  await wait(reducedMotion() ? 0 : 260)
+  if (token !== flight) return
+  veiled.value = false
+  veilLoader.value = false
+  journey.value = null
+  setData('journey', empty)
+  water.playReveal()
+  scheduleWarmUp()
+}
+
+async function retryJourney() {
+  if (!journey.value || journey.value.stage !== 'stalled') return
+  const token = flight
+  journey.value.stage = 'arrive'
+  tileErrorSeen = false
+  const chip = state.analysis.chip
+  const imageCoords = coordinates(chip.bbox)
+  for (const name of rasterNames) {
+    map.getSource(name)?.updateImage({ url: layerUrl(chip.chip_id, name), coordinates: imageCoords })
+  }
+  waterLoad = loadWater(chip, false)
+  map.refreshTiles()
+  if (await sceneFrameReady(token)) await revealScene(token)
+  else if (token === flight) journey.value.stage = 'stalled'
+}
+
+async function flyToScene(id) {
+  const target = state.analysis?.scenes.find(scene => scene.chip_id === id)
+  if (!map || !ready || !target || id === loadedScene) return
+  const token = ++flight
+  const originId = loadedScene
+  const origin = state.analysis.scenes.find(scene => scene.chip_id === originId) || state.analysis.chip
+  const from = sceneCenter(origin)
+  const to = sceneCenter(target)
+  const zoom = travelZoom(from, to)
+  const [w, s, e, n] = target.bbox
+  const camera = map.cameraForBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2 })
+  const analysisReady = analysisFor(id)
+  preloadScene(map, target, camera?.zoom ?? 13).catch(error => console.warn('Scene preload:', error))
+  preloadJourney(map, from, to, zoom).catch(error => console.warn('Journey preload:', error))
+
+  phase = 'out'
+  journey.value = { from: origin.event, to: target.event, stage: 'depart' }
+  syncMap()
+  veiled.value = true
+  await wait(reducedMotion() ? 0 : 210)
+  if (token !== flight) return
+  map.stop()
+  setData('journey', journeyFeatures(from, to))
+  map.jumpTo({ center: from, zoom, pitch: 0, bearing: 0 })
+  const routeReady = await tilesReady(1800)
+  if (token !== flight) return
+  journey.value.stage = 'travel'
+  if (routeReady) veiled.value = false
+  await moveCamera(to, zoom, 900)
+  if (token !== flight) return
+  journey.value.stage = 'arrive'
+  if (!await analysisReady) {
+    phase = null
+    journey.value = null
+    veiled.value = false
+    setData('journey', empty)
+    state.sceneId = originId
     syncMap()
-    const [w, s, e, n] = target
-    map.fitBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2, pitch: state.tilted ? 55 : 0, bearing: 0, duration: 0 })
-  }, { whenCovered: () => analysisFor(id), layersChange: true })
+    fitChip(0)
+    return
+  }
+  veiled.value = true
+  await wait(reducedMotion() ? 0 : 180)
+  if (token !== flight) return
+  const retryCachedTiles = tileErrorSeen
+  tileErrorSeen = false
+  phase = 'in'
+  syncMap()
+  fitChip(0)
+  if (retryCachedTiles) map.refreshTiles()
+  if (await sceneFrameReady(token)) await revealScene(token)
+  else if (token === flight) journey.value.stage = 'stalled'
 }
 
 /*
- * Когда камера успокоилась на снимке, в фоне докачиваем тайлы для кнопок
- * «Глобус» и «3D»: тогда эти переходы идут по уже загруженной подложке.
+ * Когда камера успокоилась на снимке, в фоне готовим обзор и несколько
+ * соседних готовых сцен. Остальные сцены начинают прогреваться по выбору.
  * Повторяем только при смене сцены, подложки или масштаба.
  */
 let warmTimer
@@ -386,6 +523,12 @@ function scheduleWarmUp() {
     if (key === warmedKey) return
     warmedKey = key
     preloadGlobe(map, center, zoom).then(() => preloadTilt(map, center, zoom))
+    const nextScenes = state.analysis.scenes.filter(scene => scene.chip_id !== state.analysis.chip.chip_id).slice(0, 3)
+    nextScenes.reduce((previous, scene) => previous.then(() => {
+      const [west, south, east, north] = scene.bbox
+      const camera = map.cameraForBounds([[west, south], [east, north]], { padding: padding(), maxZoom: 14.2 })
+      return preloadScene(map, scene, camera?.zoom ?? 13)
+    }), Promise.resolve()).catch(error => console.warn('Scene warm-up:', error))
   }, 1200)
 }
 
@@ -477,6 +620,8 @@ onMounted(() => {
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
   map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
   map.on('error', error => {
+    // MapLibre считает errored-тайл «загруженным» в areTilesLoaded().
+    if (error.tile) tileErrorSeen = true
     if (error.error?.message?.includes('Worker failed')) mapError.value = true
     console.warn('Map layer:', error.error)
   })
@@ -566,6 +711,18 @@ watch(() => state.drawing, value => {
   <div class="map-veil" :class="{ on: veiled }" aria-hidden="true">
     <Transition name="veil-loader"><MorphLoader v-if="veilLoader" :size="44" /></Transition>
   </div>
+  <Transition name="rise">
+    <div v-if="journey" class="journey-card panel" role="status" aria-live="polite">
+      <span class="journey-place">{{ journey.from }}</span>
+      <span class="journey-route" aria-hidden="true"><i></i></span>
+      <span class="journey-place">{{ journey.to }}</span>
+      <span v-if="journey.stage === 'arrive'" class="journey-detail">Открываем участок…</span>
+      <template v-else-if="journey.stage === 'stalled'">
+        <span class="journey-detail">Карта не загрузилась</span>
+        <button class="link-button" @click="retryJourney">Повторить</button>
+      </template>
+    </div>
+  </Transition>
   <Transition name="pop">
     <div v-if="state.drawing" class="panel capsule map-hint">
       <span class="pulse"></span>{{ dragging ? 'Отпустите, чтобы посчитать область' : 'Протяните рамку по карте' }}
