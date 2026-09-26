@@ -1,0 +1,38 @@
+import { test, expect } from '@playwright/test'
+
+test('operator changes visit cost, sees an economic basket and can inspect its zones', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.goto('/')
+  await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
+  await page.getByRole('button', { name: 'По ценности информации' }).click()
+  const panel = page.getByTestId('voi-panel')
+  await expect(panel).toContainText('8 013')
+  await expect(panel).toContainText('Чистая польза после данных')
+  await expect(panel.locator('.voi-zone')).toHaveCount(4)
+  await expect(panel.getByRole('link', { name: 'Скачать расчёт зон и допущения' })).toHaveAttribute('href', /\/api\/voi\/export\?/)
+  await panel.getByRole('button', { name: /Показать остальные зоны/ }).click()
+  expect(await panel.locator('.voi-zone').count()).toBeGreaterThan(4)
+  await panel.getByLabel('Цена выезда').fill('0')
+  await expect(panel).toContainText('Заказ не окупается')
+  await expect(panel).toContainText('Цена данных · выведенный бюджет')
+  await page.getByRole('button', { name: 'По бюджету' }).click()
+  await expect(page.getByLabel('Бюджет на снимки')).toBeVisible()
+  await page.getByRole('button', { name: 'По ценности информации' }).click()
+  await expect(panel.getByLabel('Цена выезда')).toHaveValue('0')
+  expect(errors).toEqual([])
+})
+
+test('economic calculation remains usable on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: /^EL / }).click()
+  await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
+  await page.getByRole('button', { name: 'По ценности информации' }).click()
+  const panel = page.getByTestId('voi-panel')
+  await expect(panel.getByLabel('Цена выезда')).toBeVisible()
+  await expect(panel).toContainText('Чистая польза после данных')
+  await panel.getByLabel('Цена выезда').fill('5000')
+  await expect(panel).toContainText('РЕШЕНИЕ ПРИ ЭТИХ ДОПУЩЕНИЯХ')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+})

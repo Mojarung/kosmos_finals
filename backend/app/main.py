@@ -18,10 +18,12 @@ from .permanent import separate_live
 from . import projects
 from .procurement import router as procurement_router
 from .backtest import router as backtest_router
+from .voi import router as voi_router
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 app.include_router(procurement_router)
 app.include_router(backtest_router)
+app.include_router(voi_router)
 
 
 def parse_bounds(bbox: str | None) -> list[float] | None:

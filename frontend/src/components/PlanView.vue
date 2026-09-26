@@ -4,6 +4,7 @@ import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
 import BacktestPanel from './BacktestPanel.vue'
+import VoiPanel from './VoiPanel.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
 import RingGauge from './RingGauge.vue'
@@ -11,6 +12,7 @@ import { activePlan, state } from '../store'
 import { compactRub, date, km, number, percent, plural, rub } from '../lib/format'
 
 const emit = defineEmits(['zone'])
+const procurementMethod = ref('budget')
 const analysis = computed(() => state.analysis)
 const broadCost = computed(() => analysis.value?.strategies.B.data_cost_rub || 0)
 // Слайдер доходит до цены широкой съёмки: дальше бюджет ничего не меняет.
@@ -250,6 +252,12 @@ function hover(id) { state.hoverZoneId = id }
   </div>
   <ProcurementView v-if="state.procurementOpen" :key="state.sceneId" />
   <template v-else>
+  <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
+    <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>
+    <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'">По ценности информации</button>
+  </div>
+  <VoiPanel v-show="procurementMethod === 'value'" :active="procurementMethod === 'value'" @zone="id => emit('zone', id)" />
+  <template v-if="procurementMethod === 'budget'">
   <section class="block">
     <label class="budget-label" for="budget">
       <span class="caption">Бюджет на снимки</span>
@@ -408,5 +416,6 @@ function hover(id) { state.hoverZoneId = id }
   <p class="source-line" v-tip="`Ставка 788,64 ₽/км² взята из контрольного примера постановки, это не цена поставщика. Сроки поставки (оптика ${deliveryHours.optical} ч, радар ${deliveryHours.sar} ч) тоже допущение, как и то, что над зоной оптики не будет облаков: сквозь них она воду не видит, радар видит. Ущерб в зонах показывает, что проверять первым, а не сколько потерь удалось избежать`">
     <Info :size="14" />Ставка и срок поставки сценарные
   </p>
+  </template>
 </template>
 </template>
