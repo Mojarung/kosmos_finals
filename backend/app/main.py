@@ -72,6 +72,11 @@ class DecisionCreate(BaseModel):
     must_cover: str | None = None
 
 
+class OperatorPlanCreate(BaseModel):
+    budget: float = 6500
+    deadline: int = 8
+
+
 @app.get("/api/projects")
 def list_projects() -> dict:
     return {"projects": projects.list_projects()}
@@ -110,6 +115,26 @@ def save_project_decision(project_id: str, request: DecisionCreate) -> dict:
         analysis = response(request.bbox, request.budget, request.priority, request.deadline,
                             request.must_cover, detail["scene_id"])
         return projects.save_decision(project_id, analysis)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/plan")
+def preview_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
+    try:
+        return projects.operator_plan(project_id, request.budget, request.deadline)
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/projects/{project_id}/plans", status_code=201)
+def save_operator_plan(project_id: str, request: OperatorPlanCreate) -> dict:
+    try:
+        return projects.save_operator_plan(project_id, request.budget, request.deadline)
     except KeyError as error:
         raise HTTPException(404, str(error)) from error
     except ValueError as error:

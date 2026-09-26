@@ -13,6 +13,8 @@ from pathlib import Path
 
 from .analysis import inspect_pixel
 from .catalog import known_scene_ids, metadata
+from .costs import decision_costs
+from .planning import BasketSpace, candidates
 
 DB = Path(os.environ.get("FLOODVALUE_PROJECT_DB", Path(__file__).resolve().parents[2] / "data" / "projects" / "projects.sqlite3"))
 
@@ -34,6 +36,9 @@ def _connect() -> sqlite3.Connection:
           id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           payload TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS decisions (
+          id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          created_at TEXT NOT NULL, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS operator_plans (
           id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           created_at TEXT NOT NULL, payload TEXT NOT NULL);
     """)
@@ -64,7 +69,8 @@ def list_projects() -> list[dict]:
     with _connect() as db:
         return [dict(row) for row in db.execute("""
           SELECT p.*, (SELECT count(*) FROM assets a WHERE a.project_id=p.id) asset_count,
-          (SELECT count(*) FROM decisions d WHERE d.project_id=p.id) decision_count
+          (SELECT count(*) FROM decisions d WHERE d.project_id=p.id) decision_count,
+          (SELECT count(*) FROM operator_plans op WHERE op.project_id=p.id) operator_plan_count
           FROM projects p ORDER BY p.updated_at DESC""")]
 
 
@@ -76,7 +82,10 @@ def get(project_id: str) -> dict:
         decisions = [{"id": row["id"], "created_at": row["created_at"], **json.loads(row["payload"])}
                      for row in db.execute("SELECT * FROM decisions WHERE project_id=? ORDER BY created_at DESC",
                                            (project_id,))]
-    return {**project, "assets": assets, "decisions": decisions}
+        operator_plans = [{"id": row["id"], "created_at": row["created_at"], **json.loads(row["payload"])}
+                          for row in db.execute("SELECT * FROM operator_plans WHERE project_id=? "
+                                                "ORDER BY created_at DESC LIMIT 50", (project_id,))]
+    return {**project, "assets": assets, "decisions": decisions, "operator_plans": operator_plans}
 
 
 def _rows(content: str, fmt: str) -> list[dict]:
@@ -158,3 +167,72 @@ def save_decision(project_id: str, analysis: dict) -> dict:
                                                            decision["created_at"], json.dumps(snapshot, ensure_ascii=False)))
         db.execute("UPDATE projects SET updated_at=? WHERE id=?", (_now(), project_id))
     return decision
+
+
+def operator_plan(project_id: str, budget_rub: float, deadline_hours: int) -> dict:
+    """Separate A/B/C on imported assets; the case's seeded ten remain untouched."""
+    with _connect() as db:
+        project = dict(_project(db, project_id))
+        assets = [json.loads(row["payload"]) for row in db.execute(
+            "SELECT payload FROM assets WHERE project_id=? ORDER BY id", (project_id,))]
+    if not assets:
+        raise ValueError("Сначала импортируйте объекты проекта.")
+    estimated = [asset for asset in assets if asset["expected_loss_rub"] is not None]
+    if not estimated:
+        raise ValueError("Ни один объект не попал в покрытие снимка; план нельзя оценить.")
+    if not 0 <= budget_rub <= 1_000_000 or not 1 <= deadline_hours <= 48:
+        raise ValueError("Бюджет должен быть 0–1 000 000 ₽, срок — 1–48 часов.")
+    info = metadata(project["scene_id"])
+    # The exact basket search supports at most 16 zones. Ten highest-EL assets
+    # seed candidate footprints; every imported, observed asset is still scored
+    # for coverage and can benefit from a zone around another asset.
+    anchors = sorted(estimated, key=lambda asset: (-(asset["expected_loss_rub"] or 0), asset["id"]))[:10]
+    zones = candidates(anchors, info["bbox"], info["bbox"], [], info["observed_at"])
+    if len({zone["id"] for zone in zones}) != len(zones):
+        raise ValueError("Не удалось построить уникальные зоны; повторите импорт.")
+    space = BasketSpace(zones, estimated)
+    broad = space.summary(space.index(["ZALL"]), deadline_hours, strategy="B")
+    broad_timely = space.chosen(deadline_hours)[-1]["delivery_hours"] <= deadline_hours
+    chosen = space.summary(space.best(budget_rub, "risk", deadline_hours, None), deadline_hours)
+    total = round(sum(asset["expected_loss_rub"] for asset in estimated), 2)
+
+    def strategy(label: str, summary: dict, timely: bool) -> dict:
+        covered = summary["covered_expected_loss_rub"] if timely else 0.0
+        ids = summary["covered_asset_ids"] if timely else []
+        price = summary["quote"]["total_rub"]
+        return {"label": label, "zone_ids": summary["zone_ids"], "candidate_ids": summary["candidate_ids"],
+                "covered_asset_ids": ids, "covered_expected_loss_rub": covered,
+                "coverage_share": round(covered / total, 4) if total else None,
+                "data_cost_rub": price, "budget_feasible": price <= budget_rub,
+                "timely": timely, "quote": summary["quote"],
+                **decision_costs(price, summary["quote"]["lines"])}
+
+    empty = space.summary(space.index([]), deadline_hours, strategy="A")
+    return {
+        "scope": "imported_operator_assets_separate_from_fixed_case_portfolio",
+        "project_id": project_id, "project_name": project["name"], "scene_id": project["scene_id"],
+        "observed_at": info["observed_at"], "inputs": {"budget_rub": budget_rub, "deadline_hours": deadline_hours},
+        "asset_count": len(assets), "estimated_asset_count": len(estimated),
+        "unestimated_asset_count": len(assets) - len(estimated), "expected_loss_rub": total,
+        "anchor_count": len(anchors),
+        "anchor_rule": "Top 10 observed imported assets by p×V×q seed zones; all observed assets count in coverage",
+        "price_status": "PP_RF_840_scenario_not_supplier_quote",
+        "delivery_status": "scenario_not_confirmed_by_provider",
+        "interpretation": "Covered expected loss is a priority for a new observation, not avoided damage.",
+        "asset_snapshot": assets,
+        "zones": [{key: value for key, value in zone.items() if key != "products"} for zone in zones],
+        "strategies": {"A": strategy("Без платной съёмки", empty, True),
+                       "B": strategy("Широкая съёмка", broad, broad_timely),
+                       "C": strategy("Выборочная съёмка", chosen, chosen["feasible"])},
+    }
+
+
+def save_operator_plan(project_id: str, budget_rub: float, deadline_hours: int) -> dict:
+    plan = operator_plan(project_id, budget_rub, deadline_hours)
+    record = {"id": uuid.uuid4().hex[:12], "created_at": _now(), **plan}
+    with _connect() as db:
+        _project(db, project_id)
+        db.execute("INSERT INTO operator_plans VALUES (?,?,?,?)",
+                   (record["id"], project_id, record["created_at"], json.dumps(plan, ensure_ascii=False)))
+        db.execute("UPDATE projects SET updated_at=? WHERE id=?", (_now(), project_id))
+    return record

@@ -8,6 +8,7 @@ export const state = reactive({
   procurementOpen: false,
   procurementMapMode: false,
   procurementOverlay: null,
+  projectOverlay: null,
   analysis: null,
   error: '',
   loading: false,
