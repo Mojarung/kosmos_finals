@@ -109,13 +109,13 @@ def prepare_scene(bbox: str, item_id: str) -> dict:
 
 @app.post("/api/live/permanent")
 def separate_permanent(scene_id: str) -> dict:
-    """Permanent water of a live region from Sentinel-1 scenes of the year before the event."""
+    """Permanent water of a live region from the JRC Global Surface Water archive (1984-2021)."""
     if scene_id not in known_scene_ids():
         raise HTTPException(404, "Unknown scene")
     try:
         return separate_live(scene_id)
     except LiveError as error:
-        raise HTTPException(422 if "снимк" in str(error) or "области" in str(error) else 503, str(error)) from error
+        raise HTTPException(422 if "области" in str(error) else 503, str(error)) from error
 
 
 @app.get("/api/pixel")

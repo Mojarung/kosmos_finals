@@ -346,7 +346,7 @@ def _limitations(info: dict, region: dict) -> list[str]:
     live = info.get("source_kind") == LIVE
     water = {
         "jrc_waterhand": "Постоянная вода JRC вычтена: ущерб считается только от паводка.",
-        "s1_history": "Постоянная вода найдена по снимкам Sentinel-1 за год до паводка и вычтена: ущерб считается только от паводка.",
+        "jrc_gsw": "Постоянная вода JRC Global Surface Water (вода и в 1984, и в 2021 году) вычтена: ущерб считается только от паводка.",
     }.get(region["permanent_status"], "Постоянная вода в этой области не отделена: карта показывает всю воду.")
     rows = [
         water,

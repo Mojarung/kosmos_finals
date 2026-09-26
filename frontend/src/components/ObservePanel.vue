@@ -26,8 +26,8 @@ const headline = computed(() => {
   if (!r) return null
   return permanentSeparated.value
     ? { caption: 'Паводок по модели', value: r.flood_water_area_km2,
-        hint: r.permanent_status === 's1_history'
-          ? 'Вода по модели минус постоянная вода: то, что было водой на всех снимках Sentinel‑1 за год до паводка'
+        hint: r.permanent_status === 'jrc_gsw'
+          ? 'Вода по модели минус постоянная вода JRC Global Surface Water: реки и озёра, которые были водой и в 1984, и в 2021 году'
           : 'Вода по модели минус постоянная вода JRC (реки и озёра, которые были водой и в 1984, и в 2018 году)' }
     : { caption: 'Вода по модели', value: r.model_water_area_km2,
         hint: 'Постоянная вода для этой области не отделена: число включает реки и озёра' }
@@ -92,8 +92,8 @@ function toggleDrawing() {
             <span>Снимок покрывает</span><strong class="tabular">{{ percent(region.observed_area_km2 / region.area_km2, 1) }}</strong>
           </div>
           <div v-if="isLive && permanentJob.sceneId === state.sceneId && permanentJob.status !== 'done'" class="row permanent-job"
-            v-tip="permanentJob.status === 'error' ? permanentJob.message : 'Те же пять моделей смотрят на снимки Sentinel‑1 за год до паводка. Вода, которая есть на всех, считается рекой или озером и вычитается из паводка'">
-            <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра на снимках за год до паводка…' }}</span>
+            v-tip="permanentJob.status === 'error' ? permanentJob.message : 'Берём из архива JRC воду, которая была и в 1984, и в 2021 году, и вычитаем её из паводка'">
+            <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра в архиве JRC…' }}</span>
             <LoaderCircle v-if="permanentJob.status === 'running'" :size="15" class="spin accent" />
           </div>
           <div class="row" v-tip="'Площадь, где шанс ошибки карты 8% и выше. На независимой проверке в таких точках ошибается каждый третий пиксель'">

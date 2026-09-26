@@ -17,8 +17,8 @@ const mapReady = ref(false)
 const legend = computed(() => {
   const water = permanentSeparated.value
     ? [{ key: 'flood', label: 'Паводок', hint: 'Вода, которой нет на карте постоянной воды JRC' },
-       { key: 'river', label: 'Река, озеро', hint: state.analysis?.region.permanent_status === 's1_history'
-         ? 'Постоянная вода: вода на всех снимках Sentinel‑1 за год до паводка. Ущерб на ней не считается'
+       { key: 'river', label: 'Река, озеро', hint: state.analysis?.region.permanent_status === 'jrc_gsw'
+         ? 'Постоянная вода JRC Global Surface Water: была водой и в 1984, и в 2021 году. Ущерб на ней не считается'
          : 'Постоянная вода JRC: была водой и в 1984, и в 2018 году. Ущерб на ней не считается' }]
     : [{ key: 'flood', label: 'Вода по модели', hint: 'Постоянная вода для этой области не отделена: карта показывает всю воду' }]
   return {

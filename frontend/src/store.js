@@ -43,7 +43,7 @@ export const isLive = computed(() => state.analysis?.chip.source_kind === 'live_
 export const selectedAsset = computed(() => state.analysis?.assets.find(item => item.id === state.selectedAssetId) || null)
 export const activePlan = computed(() => state.analysis?.strategies[state.strategy])
 export const testQuality = computed(() => state.analysis?.quality.parts.test_core)
-export const permanentSeparated = computed(() => ['jrc_waterhand', 's1_history'].includes(state.analysis?.region.permanent_status))
+export const permanentSeparated = computed(() => ['jrc_waterhand', 'jrc_gsw'].includes(state.analysis?.region.permanent_status))
 
 let controller
 let timer
@@ -108,7 +108,7 @@ export async function loadLiveItem(itemId) {
     state.sceneId = prepared.scene_id
     await fetchAnalysis()
     if (request === regionRequest) state.liveStatus = state.error ? 'error' : 'ready'
-    // Сразу за водой ищем постоянную воду по снимкам до паводка: без неё ущерб считался бы и от реки.
+    // Сразу за водой вычитаем постоянную воду: без неё ущерб считался бы и от реки.
     if (request === regionRequest && state.analysis?.region.permanent_status === 'not_separated') separatePermanent(prepared.scene_id)
   } catch (error) {
     if (request === regionRequest) Object.assign(state, { liveStatus: 'error', liveError: error.message })
@@ -129,8 +129,8 @@ export async function chooseRegion(bounds) {
   }
 }
 /*
- * Постоянная вода для выбранной рамки: те же пять моделей на снимках Sentinel-1
- * за год до паводка. Живёт в хранилище, чтобы ход расчёта пережил сворачивание панели.
+ * Постоянная вода для выбранной рамки из архива JRC Global Surface Water (вода
+ * и в 1984, и в 2021 году). Живёт в хранилище, чтобы ход расчёта пережил сворачивание панели.
  */
 export const permanentJob = reactive({ sceneId: null, status: 'idle', message: '' })
 export async function separatePermanent(sceneId) {

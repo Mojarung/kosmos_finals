@@ -1,12 +1,14 @@
-"""Permanent water from Sentinel-1 before the event, for regions without the JRC layer.
+"""Permanent water for a region drawn on the map, where Sen1Floods11 has no JRC layer.
 
-The experts' rule: take radar scenes from before the flood, find water that is
-always there and subtract it. Here: up to SCENES passes of one relative orbit
-spread over the year before the event (at least MIN_GAP_DAYS before it), the same
-frozen ensemble on each, and a pixel is permanent water when it is water on every
-scene where it was observed and it was observed at least MIN_OBSERVED times.
-"All scenes" mirrors the JRC rule (water both in 1984 and in 2018); four scenes
-give one per season, so seasonal floodplains do not count as permanent.
+The service uses JRC Global Surface Water v1.4 transitions 1984-2021 with the same
+rule as Sen1Floods11 JRCWaterHand: water both in the first and in the last year.
+Observations end in 2021, before any Sentinel-1 RTC event the map offers (2024 on).
+
+history_permanent() is the experts' strict variant: Sentinel-1 scenes of the year
+before the event, water on every season. Checked against JRC on Nigeria_812045 it
+finds almost nothing (IoU 0.002): in the dry season the braided Kaduna channel is
+sand bars on radar. It stays for scripts/check_s1_permanent.py and is not used by
+the service.
 """
 
 from __future__ import annotations
@@ -16,22 +18,26 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
+from math import ceil, floor
+
 import numpy as np
 from PIL import Image
 import rasterio
+from rasterio.enums import Resampling
 from rasterio.transform import from_bounds
+from rasterio.vrt import WarpedVRT
 
 from . import catalog
 from .catalog import LIVE_DIR, metadata, scene_dir
-from .live import CALIBRATION, GRID, SAS, LiveError, _ensemble, _groups, _json, _read_band
+from .live import CALIBRATION, GRID, SAS, LiveError, _ensemble, _groups, _json, _read_band, harmonize
 
 SCENES = 4
 MIN_OBSERVED = 3
 MIN_GAP_DAYS = 21
 YEAR_DAYS = 365
-RULE = (f"Sentinel-1 RTC before the event: up to {SCENES} passes of one relative orbit spread over "
-        f"{YEAR_DAYS} days ending {MIN_GAP_DAYS} days before it; the same frozen ensemble on each; "
-        f"permanent = water on every scene where observed, observed on at least {MIN_OBSERVED}")
+RULE = (f"Sentinel-1 RTC before the event: one pass of one relative orbit in each of {SCENES} equal windows "
+        f"of the {YEAR_DAYS} days ending {MIN_GAP_DAYS} days before it, RTC mapped to GRD dB, the same frozen "
+        f"ensemble on each; permanent = water on every scene where observed, observed on at least {MIN_OBSERVED}")
 
 
 def _parse(value: str) -> datetime:
@@ -40,20 +46,30 @@ def _parse(value: str) -> datetime:
 
 
 def pick_passes(bounds: list[float], event_at: str, relative_orbit: int | None = None) -> list[dict]:
-    """Evenly spaced full-coverage passes of one orbit from the year before the event."""
+    """One full-coverage pass of one orbit per season of the year before the event.
+
+    The catalog is asked window by window: one query for the whole year returns
+    only the latest months, and four summer scenes would call a seasonal river permanent.
+    """
     event = _parse(event_at)
-    period = f"{(event - timedelta(days=YEAR_DAYS)).isoformat()}/{(event - timedelta(days=MIN_GAP_DAYS)).isoformat()}"
-    groups = [group for group in _groups(bounds, period, limit=250) if group["full_bbox"]]
-    if not groups:
+    start = event - timedelta(days=YEAR_DAYS)
+    stop = event - timedelta(days=MIN_GAP_DAYS)
+    step = (stop - start) / SCENES
+    windows = []
+    for number in range(SCENES):
+        low, high = start + step * number, start + step * (number + 1)
+        groups = [group for group in _groups(bounds, f"{low.isoformat()}/{high.isoformat()}", limit=100) if group["full_bbox"]]
+        windows.append((low + step / 2, groups))
+    orbits = Counter(group["features"][0]["properties"].get("sat:relative_orbit") for _, groups in windows for group in groups)
+    if not orbits:
         return []
-    orbits = Counter(group["features"][0]["properties"].get("sat:relative_orbit") for group in groups)
     orbit = relative_orbit if relative_orbit in orbits else orbits.most_common(1)[0][0]
-    same = sorted((group for group in groups if group["features"][0]["properties"].get("sat:relative_orbit") == orbit),
-                  key=lambda group: group["features"][0]["properties"]["datetime"])
-    if len(same) <= SCENES:
-        return same
-    positions = np.unique(np.linspace(0, len(same) - 1, SCENES).round().astype(int))
-    return [same[index] for index in positions]
+    chosen = []
+    for middle, groups in windows:
+        same = [group for group in groups if group["features"][0]["properties"].get("sat:relative_orbit") == orbit]
+        if same:
+            chosen.append(min(same, key=lambda group: abs(_parse(group["features"][0]["properties"]["datetime"]) - middle)))
+    return chosen
 
 
 def _read_pass(group: dict, token: str, bounds: list[float]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -86,6 +102,7 @@ def history_permanent(bounds: list[float], event_at: str, relative_orbit: int | 
     observed = np.zeros((GRID, GRID), dtype=np.int16)
     water = np.zeros((GRID, GRID), dtype=np.int16)
     for vv, vh, valid in reads:
+        vv, vh = harmonize(vv, vh)
         with torch.inference_mode():
             result = run_ensemble(_ensemble(), [np.stack([vv, vh])], calibration)
         wet = valid & (np.asarray(result.prob[0]) >= threshold)
@@ -103,6 +120,39 @@ def history_permanent(bounds: list[float], event_at: str, relative_orbit: int | 
     }
 
 
+GSW_URL = ("https://storage.googleapis.com/global-surface-water/downloads2021/transitions/"
+           "transitions_{lon}_{lat}v1_4_2021.tif")
+# Water in both 1984 and 2021: permanent, seasonal, seasonal to permanent, permanent to seasonal.
+GSW_CLASSES = (1, 4, 7, 8)
+GSW_RULE = ("JRC Global Surface Water v1.4 transitions 1984-2021 (Pekel et al., Nature 2016): water in both "
+            "1984 and 2021, classes 1, 4, 7, 8; the Sen1Floods11 JRCWaterHand rule; observations end 2021, "
+            "before the event")
+
+
+def _label(value: int, positive: str, negative: str) -> str:
+    return f"{abs(value)}{positive if value >= 0 else negative}"
+
+
+def gsw_permanent(bounds: list[float]) -> tuple[np.ndarray, list[str]]:
+    """JRC GSW permanent water on the GRID over bounds; tiles are 10 degree squares named by west and north edges."""
+    transform = from_bounds(*bounds, GRID, GRID)
+    result = np.zeros((GRID, GRID), dtype=bool)
+    urls = []
+    for west in range(floor(bounds[0] / 10) * 10, ceil(bounds[2] / 10) * 10, 10):
+        for north in range(ceil(bounds[3] / 10) * 10, floor(bounds[1] / 10) * 10, -10):
+            url = GSW_URL.format(lon=_label(west, "E", "W"), lat=_label(north, "N", "S"))
+            try:
+                with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="2"):
+                    with rasterio.open("/vsicurl/" + url) as source:
+                        with WarpedVRT(source, crs="EPSG:4326", transform=transform, width=GRID, height=GRID,
+                                       resampling=Resampling.nearest) as warped:
+                            result |= np.isin(warped.read(1), GSW_CLASSES)
+            except Exception as error:
+                raise LiveError(f"Архив постоянной воды JRC сейчас недоступен: {error}") from error
+            urls.append(url)
+    return result, urls
+
+
 def _write(folder, layer: np.ndarray, bounds: list[float]) -> None:
     (folder / "permanent_mask.bin").write_bytes(np.ascontiguousarray(layer).tobytes())
     with rasterio.open(folder / "permanent_water.tif", "w", driver="GTiff", height=GRID, width=GRID, count=1,
@@ -115,28 +165,34 @@ def _write(folder, layer: np.ndarray, bounds: list[float]) -> None:
 
 
 def separate_live(scene_id: str) -> dict:
-    """Run the history rule for a live RTC scene and store it next to the scene."""
+    """Subtract JRC GSW permanent water from a live RTC scene and store it next to the scene."""
     if not scene_id.startswith("live_"):
-        raise LiveError("Постоянную воду по снимкам до события считаем только для выбранной на карте области.")
+        raise LiveError("Постоянную воду из архива JRC добавляем только для выбранной на карте области.")
     info = metadata(scene_id)
-    if info.get("permanent_status") == "s1_history":
-        return {"scene_id": scene_id, "status": "s1_history", "items": info.get("permanent_items", [])}
-    orbit = next((item.get("relative_orbit") for item in info.get("source_manifest", []) if item.get("relative_orbit")), None)
-    result = history_permanent(info["bbox"], info["observed_at"], orbit)
+    if info.get("permanent_status") == "jrc_gsw":
+        return {"scene_id": scene_id, "status": "jrc_gsw", "sources": info.get("permanent_sources", [])}
     folder = scene_dir(scene_id)
     if folder.parent != LIVE_DIR:
         raise LiveError("Сцена не найдена среди выбранных областей.")
-    _write(folder, result["mask"], info["bbox"])
-    permanent = result["mask"] == 1
-    model = np.frombuffer((folder / "model_mask.bin").read_bytes(), dtype=np.uint8).reshape(GRID, GRID) == 1
+    permanent, urls = gsw_permanent(info["bbox"])
+    model_mask = np.frombuffer((folder / "model_mask.bin").read_bytes(), dtype=np.uint8).reshape(GRID, GRID)
+    valid = model_mask != 255
+    permanent &= valid
+    _write(folder, np.where(valid, permanent, 255).astype(np.uint8), info["bbox"])
     pixel_area = info["area_km2"] / (GRID * GRID)
     assets = [{**asset, "permanent_water_at_point": bool(permanent[asset["row"], asset["col"]])} for asset in info["assets"]]
-    updated = {**info, "assets": assets, "permanent_status": "s1_history", "permanent_rule": RULE,
-               "permanent_items": result["items"],
+    water = model_mask == 1
+    references = [{"name": url.rsplit("/", 1)[1], "url": url, "role": "permanent_water_reference",
+                   "version": "JRC GSW v1.4 (1984-2021)", "license": "CC-BY-4.0", "observed_at": "1984/2021"}
+                  for url in urls]
+    updated = {**info, "assets": assets, "permanent_status": "jrc_gsw", "permanent_rule": GSW_RULE,
+               "permanent_sources": urls,
+               "source_manifest": [item for item in info["source_manifest"]
+                                   if item.get("role") != "permanent_water_reference"] + references,
                "permanent_water_pixels": int(permanent.sum()),
                "permanent_water_area_km2": round(int(permanent.sum()) * pixel_area, 3),
-               "flood_water_area_km2": round(int((model & ~permanent).sum()) * pixel_area, 3)}
+               "flood_water_area_km2": round(int((water & ~permanent).sum()) * pixel_area, 3)}
     (folder / "metadata.json").write_text(json.dumps(updated, ensure_ascii=False, indent=2), encoding="utf-8")
     catalog.refresh()
-    return {"scene_id": scene_id, "status": "s1_history", "items": result["items"],
+    return {"scene_id": scene_id, "status": "jrc_gsw", "sources": urls,
             "permanent_water_area_km2": updated["permanent_water_area_km2"]}

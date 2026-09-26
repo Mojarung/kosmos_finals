@@ -64,7 +64,7 @@ async function loadWater(chip, reveal) {
   const token = ++waterToken
   water.clear()
   try {
-    const permanent = ['jrc_waterhand', 's1_history'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
+    const permanent = ['jrc_waterhand', 'jrc_gsw'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
     const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent)
     if (token !== waterToken) return
     const [w, s, e, n] = chip.bbox
