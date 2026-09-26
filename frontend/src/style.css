@@ -198,6 +198,8 @@ html.map-moving .panel {
   content: ''; display: inline-block; width: 3px; height: 3px; margin-right: 8px;
   border-radius: 50%; background: currentColor; vertical-align: middle;
 }
+/* Идентификатор снимка так же весом, как дата: это то, что жюри сверяет с выгрузкой. */
+.scene-chip { color: var(--foreground); font-weight: 500; }
 /* Смена страны как табло: старое уезжает вверх, новое въезжает снизу. */
 .roll-enter-active { transition: opacity 0.28s var(--ease-standard), transform 0.45s var(--ease-emphasized); }
 .roll-leave-active { transition: opacity 0.14s var(--ease-standard), transform 0.18s var(--ease-standard); }
@@ -347,6 +349,19 @@ html.map-moving .panel {
 .block { padding: 11px 0; }
 .block + .block, .rows + .block, .block + .rows { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
 .caption { display: block; font-size: 12px; color: var(--muted-foreground); }
+/* Подпись числа и его правило в одну строку: «Паводок по модели … маска: p ≥ 0,41». */
+.caption-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.caption-note { font-size: 11px; white-space: nowrap; }
+/* Плашка «калибровка на этом снимке не проверена»: оговорка стоит рядом с числами, к которым относится. */
+.calib-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--warn) 14%, transparent); color: color-mix(in srgb, var(--warn) 80%, var(--foreground));
+  font-size: 12px; font-weight: 500; line-height: 1.3; cursor: help;
+}
+.calib-badge svg { flex: none; }
+.rows .badge-line { padding: 8px 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+.calib-line { margin-top: 8px; }
+.source-line.calib-note { display: block; margin: 6px 0 4px; line-height: 1.45; cursor: default; }
 .hero { display: flex; align-items: baseline; gap: 6px; margin-top: 3px; }
 .hero .display { font-size: 36px; }
 .hero.small .display { font-size: 26px; }
@@ -446,7 +461,10 @@ html.map-moving .panel {
 .asset-meta { display: flex; align-items: center; gap: 8px; }
 .asset-meta small { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
 .asset-meta small.warn { color: var(--warn); }
-.asset-meta small.doubt { color: var(--uncertain); }
+/* Полоса ущерба уступает место числам: вероятность и шанс ошибки важнее её длины. */
+.asset-meta .meter { min-width: 22px; }
+.asset-meta small.asset-error { cursor: help; }
+.asset-meta small.asset-error.doubtful { color: color-mix(in srgb, var(--uncertain) 82%, var(--foreground)); font-weight: 600; }
 .meter { position: relative; flex: 1; max-width: 120px; height: 4px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
 .meter span { position: absolute; inset: 0; border-radius: inherit; background: var(--risk); transform-origin: left; transition: transform 0.7s var(--ease-spring); }
 .meter.coverage span { background: var(--reference); }
@@ -514,11 +532,32 @@ html.map-moving .panel {
 .gain { margin-top: 10px; text-align: center; font-size: 13px; font-weight: 600; color: var(--reference); }
 
 /* ---------- Низ экрана и карта ---------- */
-.bottom-row { display: flex; justify-content: center; }
+/* Три колонки, как в шапке: слева атрибуция подложки, по центру пульт карты, справа место кнопок масштаба. */
+.bottom-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 12px; }
+.bottom-row > .map-console { grid-column: 2; grid-row: 1; }
+.map-credits {
+  grid-column: 1; grid-row: 1; justify-self: start; max-width: 400px; padding: 4px 10px 5px; border-radius: 12px;
+  pointer-events: auto; font-size: 11px; line-height: 1.4;
+  color: color-mix(in srgb, var(--foreground) 78%, var(--surface-1));
+  background: color-mix(in srgb, var(--surface-1) 86%, transparent);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.map-credits a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 2px; }
+.map-credits a:hover { color: var(--foreground); }
 .map-console {
-  display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 5px 6px 5px 15px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-height: 44px; padding: 5px 6px 5px 15px;
   border-radius: 19px; font-size: 12px;
 }
+/* На узком десктопе слева от пульта остаётся меньше 150 px: атрибуция встаёт под него. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .bottom-row { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 6px; }
+  .bottom-row > .map-console { grid-column: 1; grid-row: 1; }
+  .map-credits { grid-column: 1; grid-row: 2; justify-self: center; max-width: 760px; text-align: center; }
+}
+/* Пояснение к спутнику: отдельная строка пульта. contain: ширину пульта задаёт первая строка, а не этот текст. */
+.basemap-note { flex-basis: 100%; contain: inline-size; padding: 0 0 3px; font-size: 11px; line-height: 1.35; color: var(--muted-foreground); }
+.legend-note { color: var(--muted-foreground); }
 .map-console-layer, .map-console-tools { display: flex; align-items: center; gap: 11px; }
 .map-console-tools { padding-left: 12px; border-left: 1px solid var(--border); }
 .basemap-switch { display: flex; gap: 2px; padding: 3px; border-radius: 11px; background: var(--surface-2); }
@@ -552,6 +591,8 @@ html.map-moving .panel {
 .legend-water.baseline { background: var(--risk); }
 .legend-water.reference { background: var(--reference); }
 .legend-water.none { background: transparent; border: 1.5px dashed var(--muted-foreground); }
+/* Тот же серый, что у слоя «нет сигнала» на карте (lib/water.js, noDataImage). */
+.legend-water.nodata { background: rgb(118 128 133 / 0.85); }
 .legend-asset { width: 12px; height: 12px; border-radius: 50%; background: var(--risk); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.6), 0 0 0 0.5px rgb(8 28 36 / 0.25); }
 .legend-zone { width: 14px; height: 10px; border: 2px dashed var(--risk); border-right-color: var(--uncertain); border-bottom-color: var(--uncertain); border-radius: 3px; }
 
@@ -632,6 +673,7 @@ html.map-moving .panel {
 .pixel-card .hero .unit { font-size: 13px; }
 .pixel-message { margin-top: 6px; font-size: 13px; color: var(--muted-foreground); }
 .pixel-coords { margin-top: 4px; font-size: 12px; color: var(--muted-foreground); }
+.pixel-calib { margin-top: 6px; }
 .rise-enter-active { transition: opacity 0.25s, transform 0.45s var(--ease-spring); }
 .rise-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .rise-enter-from, .rise-leave-to { opacity: 0; transform: translate(-50%, 12px) scale(0.96); }
@@ -642,8 +684,6 @@ html.map-moving .panel {
 .maplibregl-ctrl-group { border-radius: 18px !important; overflow: hidden; background: var(--surface-1) !important; box-shadow: var(--shadow-float) !important; border: 1px solid var(--border); }
 .maplibregl-ctrl-group button + button { border-top-color: var(--border) !important; }
 :root[data-theme='dark'] .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(0.9); }
-.maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--surface-1) 75%, transparent) !important; color: var(--muted-foreground); border-radius: 12px; font-size: 11px; }
-.maplibregl-ctrl-attrib a { color: var(--muted-foreground) !important; }
 
 /* ---------- Заставка ---------- */
 .splash {
@@ -708,9 +748,14 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   /* Панели стопкой: свёрнутые капсулы сверху, развёрнутая — во всю ширину. */
   .panels { flex-direction: column; justify-content: flex-start; }
   .observe-panel:not(.pill), .decision-panel:not(.pill) { width: 100%; max-height: 62dvh; }
-  .map-console { flex-direction: column; gap: 5px; padding: 8px 12px; width: min(380px, calc(100vw - 88px)); border-radius: 20px; }
+  .map-console { flex-direction: column; flex-wrap: nowrap; gap: 5px; padding: 8px 12px; width: min(380px, calc(100vw - 88px)); border-radius: 20px; }
   .map-console-layer, .map-console-tools { width: 100%; justify-content: center; }
-  .map-console-layer { min-height: 20px; }
+  .map-console-layer { min-height: 20px; flex-wrap: wrap; row-gap: 2px; }
+  .basemap-note { flex-basis: auto; contain: none; padding: 0; text-align: center; }
+  /* Под пультом, по центру: слева от него на узком экране места нет. */
+  .bottom-row { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 6px; }
+  .bottom-row > .map-console { grid-column: 1; grid-row: 1; }
+  .map-credits { grid-column: 1; grid-row: 2; justify-self: center; max-width: min(380px, calc(100vw - 88px)); padding: 3px 9px 4px; font-size: 10px; text-align: center; }
   .map-console-tools { padding-left: 0; border-left: 0; border-top: 1px solid var(--border); padding-top: 5px; }
   .opacity-control { width: 105px; }
   .maplibregl-ctrl-bottom-right { bottom: 60px; right: 10px; }
@@ -718,10 +763,14 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .pixel-card { bottom: 112px; width: min(280px, calc(100% - 20px)); }
 }
 @media (max-width: 480px) {
-  .scene-source { display: none; }
+  /* На телефоне дата и идентификатор снимка идут двумя строками, без точки-разделителя. */
+  .scene-date { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .scene-source { white-space: normal; }
+  .scene-source::before { display: none; }
   .asset-key, .zone-key { display: none; }
-  .map-console { width: min(320px, calc(100vw - 76px)); }
-  .maplibregl-ctrl-attrib { display: none; }
+  /* Уже, чем раньше: пульт стал выше и иначе заходил на кнопки масштаба справа. */
+  .map-console { width: min(320px, calc(100vw - 96px)); }
+  .map-credits { max-width: min(320px, calc(100vw - 96px)); }
   .hero .display { font-size: 32px; }
 }
 
@@ -777,6 +826,12 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .zone-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .zone-text strong { font-size: 13px; font-weight: 600; }
 .zone-text small { font-size: 12px; line-height: 1.35; color: var(--muted-foreground); }
+/* Цена и срок зоны под причиной отбора: основной цвет, чтобы их находили глазом. */
+.zone-text small.zone-facts { color: color-mix(in srgb, var(--foreground) 82%, var(--muted-foreground)); }
+.zone-text small.zone-facts:nth-of-type(2) { margin-top: 2px; }
+.zone-text small.zone-facts.late { color: color-mix(in srgb, var(--warn) 80%, var(--foreground)); font-weight: 600; }
+.zone-item { align-items: start; }
+.zone-item .zone-swatch { margin-top: 3px; }
 .zone-area { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
 .link-row { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--primary); }
 .link-row:hover { background: var(--surface-2); }
@@ -788,6 +843,9 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .price-details[open] summary::after { transform: rotate(225deg) translateY(-1px); }
 .price-details summary:hover { color: var(--foreground); }
 .formula { margin: 8px 0 4px; font-size: 12px; line-height: 1.5; }
+/* Какой продукт посчитан: оптика 1 м L2 или радар 3 м L1 при сроке 4 ч. */
+.price-product { margin-top: 10px; font-size: 12px; font-weight: 600; }
+.source-line.archive-note { display: block; margin-top: 8px; line-height: 1.45; }
 .price-rows > div { padding: 3px 0; font-size: 12px; }
 .price-rows .total { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); margin-top: 2px; padding-top: 6px; font-size: 13px; }
 .alternate { cursor: default; line-height: 1.45; }

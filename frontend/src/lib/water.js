@@ -77,15 +77,85 @@ function signed(mask, width, height) {
 
 const encode = (value, range) => Math.round((Math.min(Math.max(value, -range), range) + range) / (2 * range) * 255)
 
-export async function waterField(modelUrl, permanentUrl) {
-  const key = modelUrl + '|' + (permanentUrl || '')
+/*
+ * Пиксели без сигнала радара (прозрачные в radar.png) для рисования воды берут
+ * значение соседей: узкий шов на стыке кадров Sentinel-1 иначе окаймлялся пеной
+ * с двух сторон и читался как дорога поверх паводка. Широкие дыры (больше
+ * BRIDGE_PASSES пикселей от края) не заполняются. Сами эти пиксели рисует слой
+ * «нет сигнала» (noDataImage), в площадь и ущерб они не входят: маски на сервере не меняются.
+ */
+const BRIDGE_PASSES = 4
+function bridge(mask, valid, width, height) {
+  const out = mask.slice()
+  const known = valid.slice()
+  let pending = []
+  for (let i = 0; i < known.length; i++) if (!known[i]) pending.push(i)
+  for (let pass = 0; pass < BRIDGE_PASSES && pending.length; pass++) {
+    const filled = []
+    const rest = []
+    for (const i of pending) {
+      const x = i % width
+      const y = (i - x) / width
+      let seen = 0
+      let wet = 0
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx
+          const ny = y + dy
+          if ((dx || dy) && nx >= 0 && ny >= 0 && nx < width && ny < height && known[ny * width + nx]) {
+            seen++
+            wet += out[ny * width + nx]
+          }
+        }
+      }
+      if (seen) filled.push([i, wet * 2 >= seen ? 1 : 0])
+      else rest.push(i)
+    }
+    for (const [i, value] of filled) { out[i] = value; known[i] = 1 }
+    pending = rest
+  }
+  return out
+}
+
+/** Картинка слоя «нет сигнала радара»: серые пиксели там, где у снимка нет данных. null, если таких нет. */
+function noDataImage(valid, width, height) {
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  const image = context.createImageData(width, height)
+  let count = 0
+  const pixels = image.data
+  for (let i = 0; i < valid.length; i++) {
+    if (valid[i]) continue
+    count++
+    const o = i * 4
+    pixels[o] = 118
+    pixels[o + 1] = 128
+    pixels[o + 2] = 133
+    pixels[o + 3] = 215
+  }
+  if (!count) return { url: null, count }
+  context.putImageData(image, 0, 0)
+  return { url: canvas.toDataURL('image/png'), count }
+}
+
+export async function waterField(modelUrl, permanentUrl, radarUrl) {
+  const key = modelUrl + '|' + (permanentUrl || '') + '|' + (radarUrl || '')
   if (cache.has(key)) return cache.get(key)
   const water = await readAlpha(modelUrl)
   let permanent = null
   if (permanentUrl) {
     try { permanent = await readAlpha(permanentUrl) } catch { permanent = null }
   }
-  const { mask, width, height } = water
+  let radar = null
+  if (radarUrl) {
+    try { radar = await readAlpha(radarUrl) } catch { radar = null }
+  }
+  const { width, height } = water
+  const sameGrid = radar && radar.width === width && radar.height === height
+  const mask = sameGrid ? bridge(water.mask, radar.mask, width, height) : water.mask
+  const noData = sameGrid ? noDataImage(radar.mask, width, height) : { url: null, count: 0 }
   const shore = signed(mask, width, height)
   const river = permanent && permanent.width === width ? signed(permanent.mask, width, height) : null
   const data = new Uint8Array(width * height * 4)
@@ -96,7 +166,7 @@ export async function waterField(modelUrl, permanentUrl) {
     data[o + 2] = Math.round(Math.min(shore.inside[i] - 0.5, DEEP) / DEEP * 255 * mask[i])
     data[o + 3] = mask[i] ? 255 : 0
   }
-  const field = { data, width, height, hasPermanent: Boolean(river) }
+  const field = { data, width, height, hasPermanent: Boolean(river), noData }
   cache.set(key, field)
   if (cache.size > MAX_CACHED) cache.delete(cache.keys().next().value)
   return field

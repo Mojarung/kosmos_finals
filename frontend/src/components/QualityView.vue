@@ -1,24 +1,37 @@
 <script setup>
 import { computed } from 'vue'
 import { ArrowRight, Info, Satellite } from '@lucide/vue'
+import CalibrationBadge from './CalibrationBadge.vue'
 import RingGauge from './RingGauge.vue'
-import { chooseScene, ingest, ingestRunning, isLive, runChip, state, testQuality } from '../store'
+import { calibrationChecked, chooseScene, doubtThreshold, ingest, ingestRunning, isLive, runChip, state, testQuality } from '../store'
 import { compactRub, number, percent } from '../lib/format'
 
 const region = computed(() => state.analysis.region)
 const quality = computed(() => state.analysis.quality)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
 const flood = computed(() => quality.value.flood_only?.test_core)
-// Проверка границы сомнений на независимом test_core; сама граница подобрана на validation.
-const doubtCheck = computed(() => {
-  const part = quality.value.parts?.test_core
-  return part?.doubtful_error_rate == null ? null : {
-    doubtful_share: part.doubtful_share, error_rate_doubtful: part.doubtful_error_rate,
-    error_rate: part.error_rate, errors_in_doubtful: part.errors_inside_doubtful_share }
-})
 const proxy = computed(() => state.analysis.asset_proxy_check)
 // Как модель переносится на Sentinel-1 RTC: те же снимки test_core с разметкой, но из каталога RTC.
 const transfer = computed(() => quality.value.rtc_transfer)
+/*
+ * Вариант перевода яркости RTC выбран кросс-валидацией по событиям train (leave-one-event-out),
+ * test_core его только проверяет. Запасные числа на случай старого API: 0,585 и 0,319 из
+ * ml/artifacts/rtc/harmonization.json (cv_scores.leave_one_event_out).
+ */
+const transferChoice = computed(() => {
+  const cv = transfer.value?.cv_scores?.leave_one_event_out ?? { quantile: 0.5846, median: 0.3188 }
+  const chosen = transfer.value?.mapping === 'median' ? 'median' : 'quantile'
+  const other = chosen === 'median' ? 'quantile' : 'median'
+  const name = { quantile: 'квантильный', median: 'медианный' }
+  return `Вариант перевода (${name[chosen]}) выбран кросс-валидацией по событиям train: IoU ${number(cv[chosen], 3)} против ${number(cv[other], 3)} у ${other === 'median' ? 'медианного' : 'квантильного'}; test_core только проверяет`
+})
+// Порог сомнений выбран на validation; test_core о нём только сообщает.
+const doubtHint = computed(() => {
+  const q = testQuality.value
+  const threshold = doubtThreshold.value
+  return `Порог сомнений выбран на validation (шанс ошибки ≥ ${threshold == null ? 'н/д' : number(threshold, 4)}). `
+    + `На независимом test_core сомнительны ${percent(q.doubtful_share, 1)} пикселей, из них ошибается ${percent(q.doubtful_error_rate, 1)}, в среднем ${percent(q.error_rate, 1)}`
+})
 const METRICS = [
   ['f1', 'F1', 'Среднее точности и полноты: одна цифра на оба вида ошибок'],
   ['recall', 'Полнота', 'Какую долю настоящей воды нашёл метод'],
@@ -60,7 +73,7 @@ function openWeak() {
     <span class="caption">{{ isLive ? 'В этой области нет ручной разметки' : 'На этом снимке' }}</span>
     <p v-if="isLive" class="source-line">Точность на новом снимке не измерена. Цифры выше относятся к независимой проверке Sen1Floods11, а не к этой территории.</p>
     <div v-if="isLive && transfer" class="mini-rows"
-      v-tip="`Те же снимки test_core, но в виде Sentinel‑1 RTC, как у выбранной рамки. Перевод яркости RTC в шкалу обучения подобран на ${transfer.fit_chips} снимках train. Вес снимка — число пикселей воды`">
+      v-tip="`Те же снимки test_core, но в виде Sentinel‑1 RTC, как у выбранной рамки. Перевод яркости RTC в шкалу обучения подобран на ${transfer.fit_chips} снимках train. ${transferChoice}. Вес снимка: число пикселей воды`">
       <div><span>Модель на тех же снимках, GRD</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou.grd_model, 1) }}</b></div>
       <div><span>На RTC без перевода</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou.rtc_model_raw, 1) }}</b></div>
       <div><span>На RTC после перевода</span><b class="tabular">IoU {{ percent(transfer.water_weighted_iou[transfer.mapping === 'median' ? 'rtc_model_median' : 'rtc_model_quantile'], 1) }}</b></div>
@@ -75,10 +88,14 @@ function openWeak() {
 
   <section class="block">
     <span class="caption">Можно ли верить вероятностям</span>
+    <template v-if="!calibrationChecked">
+      <p class="calib-line"><CalibrationBadge /></p>
+      <p class="source-line calib-note">Цифры ниже измерены на снимках Sen1Floods11 GRD (test_core). К этому кадру RTC они не относятся.</p>
+    </template>
     <div class="mini-rows">
       <div v-tip="'Ошибка калибровки ECE: насколько вероятность совпадает с реальной частотой воды. Чем меньше, тем лучше'"><span>Ошибка калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
-      <div v-tip="'Как хорошо шанс ошибки карты отличает ошибочные пиксели от верных. 0,5 значит наугад, 1 значит без промахов. По этой мере строятся сомнительные участки'"><span>Сомнения находят ошибки</span><b class="tabular">AUROC {{ number(testQuality.doubt_error_auroc ?? testQuality.uncertainty_error_auroc, 3) }}</b></div>
-      <div v-if="doubtCheck" v-tip="`Сомнительный пиксель: шанс ошибки от 8%, граница подобрана на validation. На независимой проверке такие пиксели занимают ${percent(doubtCheck.doubtful_share, 1)} снимков, в них ошибается ${percent(doubtCheck.error_rate_doubtful, 1)} против ${percent(doubtCheck.error_rate, 1)} в среднем, и сюда попадает ${percent(doubtCheck.errors_in_doubtful, 0)} всех ошибок`"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(doubtCheck.error_rate_doubtful, 1) }}</b></div>
+      <div v-tip="'Как хорошо шанс ошибки карты отличает ошибочные пиксели от верных. 0,5 значит наугад, 1 значит без промахов. По этой мере строятся сомнительные участки. Мера и порог выбраны на validation, здесь проверка на test_core'"><span>Сомнения находят ошибки</span><b class="tabular">AUROC {{ number(testQuality.doubt_error_auroc ?? testQuality.uncertainty_error_auroc, 3) }}</b></div>
+      <div v-if="testQuality.doubtful_error_rate != null" v-tip="doubtHint"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(testQuality.doubtful_error_rate, 1) }}</b></div>
       <div v-tip="'Паводок в Боливии, которого не было в обучении'"><span>Новое событие, Боливия</span><b class="tabular">IoU {{ percent(quality.parts.bolivia.model.iou, 1) }}</b></div>
     </div>
   </section>

@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import { ArrowRight, Check, ChevronRight, Pin } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
-import { permanentSeparated, selectedAsset, state, toggleGuarantee } from '../store'
-import { compactRub, number, percent, plural } from '../lib/format'
+import CalibrationBadge from './CalibrationBadge.vue'
+import { calibrationChecked, doubtThreshold, permanentSeparated, selectedAsset, state, toggleGuarantee } from '../store'
+import { NA, compactRub, number, percent, plural } from '../lib/format'
 
 const emit = defineEmits(['asset'])
 const analysis = computed(() => state.analysis)
@@ -22,13 +23,26 @@ function sensitivity(id) {
   })
 }
 function rankRange({ low, high }) {
-  if (!low || !high) return '—'
+  if (!low || !high) return NA
   return low.rank === high.rank ? `место ${low.rank}` : `место ${low.rank} → ${high.rank}`
 }
 function status(asset) {
+  if (asset.loss_status === 'permanent_water') return 'на реке'
   if (asset.p_flood == null) return 'нет данных'
-  return (asset.permanent_water_at_point ? 'река, ' : 'вода ') + percent(asset.p_flood) + (asset.map_doubtful ? ' · карта сомневается' : '')
+  return 'вода ' + percent(asset.p_flood)
 }
+/*
+ * Неопределённость рядом с вероятностью: шанс, что карта окрасила точку объекта
+ * неправильно (1 − p над порогом маски, p под ним). От порога сомнений и выше
+ * он фиолетовый, как сомнительные пиксели на карте.
+ */
+const errorText = value => value < 0.01 ? 'ошибка <1%' : 'ошибка ' + percent(value)
+const doubtful = value => doubtThreshold.value != null && value >= doubtThreshold.value
+const errorHint = computed(() => {
+  const edge = doubtThreshold.value == null ? '' : ` От ${percent(doubtThreshold.value)} (порог ${number(doubtThreshold.value, 4)} с validation) точка сомнительная.`
+  return 'Шанс ошибки карты в точке объекта: 1 − p, если карта показывает воду, и p, если сушу.' + edge
+    + (calibrationChecked.value ? '' : ' Калибровка на этом снимке не проверена.')
+})
 
 function select(asset) {
   if (state.selectedAssetId === asset.id) { state.selectedAssetId = null; return }
@@ -39,6 +53,7 @@ function select(asset) {
 <template>
   <section class="block" v-tip="'Сумма по объектам: вероятность воды × стоимость × уязвимость. Вероятность из модели, стоимость и уязвимость учебные'">
     <p v-if="analysis.chip.portfolio_status" class="source-line portfolio-note">10 учебных объектов: места и стоимости сценарные</p>
+    <p v-if="!calibrationChecked" class="portfolio-note"><CalibrationBadge /></p>
     <p v-if="analysis.region.data_status === 'partial_coverage'" class="source-line portfolio-note">Снимок покрывает {{ percent(analysis.region.observed_area_km2 / analysis.region.area_km2, 1) }} рамки. В остальных точках ущерб не оценить.</p>
     <span class="caption">{{ permanentSeparated ? 'Ожидаемый ущерб от паводка' : 'Ожидаемый ущерб' }}</span>
     <div class="hero">
@@ -61,8 +76,9 @@ function select(asset) {
           <strong>{{ asset.name }}</strong>
           <span class="asset-meta">
             <span class="meter"><span :style="{ transform: `scaleX(${(asset.expected_loss_rub || 0) / maxLoss})` }"></span></span>
-            <small class="tabular" :class="{ muted: asset.loss_status !== 'ok', doubt: asset.map_doubtful }"
-              v-tip="asset.map_doubtful ? `Шанс ошибки карты в точке ${percent(asset.map_error_probability)}: объект стоит проверить, даже если ущерб небольшой` : null">{{ status(asset) }}</small>
+            <small class="tabular" :class="{ muted: asset.loss_status !== 'ok' }">{{ status(asset) }}</small>
+            <small v-if="asset.map_error_probability != null" v-tip="errorHint" class="tabular asset-error"
+              :class="{ doubtful: doubtful(asset.map_error_probability) }">{{ errorText(asset.map_error_probability) }}</small>
           </span>
         </span>
         <strong class="tabular">{{ compactRub(asset.expected_loss_rub) }}</strong>
@@ -71,10 +87,10 @@ function select(asset) {
 
       <Transition name="expand">
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
-          <p v-if="asset.permanent_water_at_point" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка, поэтому ущерб от паводка 0. В asset_loss.csv по правилу кейса записан EL = p × V × q.</p>
+          <p v-if="asset.loss_status === 'permanent_water'" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка, ущерб от паводка не считается.</p>
           <div class="mini-rows">
             <div v-tip="'Вероятность воды в пикселе, где стоит объект'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
-            <div v-tip="'Вероятность, что карта окрасила точку объекта неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>
+            <div v-tip="errorHint"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>
             <div v-tip="'Насколько расходятся пять моделей в этой точке, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
             <div v-tip="'V × q: сколько объект теряет, если окажется в воде'"><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ number(asset.vulnerability, 2) }}</b></div>
           </div>
