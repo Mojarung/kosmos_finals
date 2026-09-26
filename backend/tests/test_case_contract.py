@@ -162,3 +162,29 @@ def test_code_commit_falls_back_to_the_build_variable(monkeypatch):
     assert exporter.code_commit() == "0123abc"
     monkeypatch.delenv("FLOODVALUE_COMMIT")
     assert exporter.code_commit() is None
+
+
+def test_source_manifest_records_a_checked_license_for_every_source():
+    manifest = json.loads(export(TestClient(app))["source_manifest.json"])
+    by_layer = {entry.get("layer"): entry for entry in manifest}
+    assert {"S1Hand", "LabelHand", "JRCWaterHand"} <= set(by_layer)
+    for entry in manifest:
+        assert entry["license"] and entry["license"] != "not_confirmed_by_dataset_publisher", entry["name"]
+        assert entry["license_checked_at"] == "2026-09-26"
+        if entry["license"] == "not_declared_by_publisher":
+            assert entry["license_note"] and entry["license_checked_urls"]
+    s1 = by_layer["S1Hand"]["underlying_data_license"]
+    assert "free, full and open" in s1["quote"] and s1["url"].startswith("https://sentinels.copernicus.eu/")
+    jrc = by_layer["JRCWaterHand"]["underlying_data_license"]
+    assert "without restriction of use" in jrc["quote"] and jrc["url"].startswith("https://global-surface-water")
+    assert "diagnostic" in by_layer["LabelHand"]["label_origin"]
+
+
+def test_live_gsw_reference_gets_the_checked_jrc_terms():
+    stale = {"name": "transitions_0E_10Nv1_4_2021.tif", "role": "permanent_water_reference",
+             "url": "https://storage.googleapis.com/global-surface-water/downloads2021/transitions/"
+                    "transitions_0E_10Nv1_4_2021.tif",
+             "version": "JRC GSW v1.4 (1984-2021)", "license": "CC-BY-4.0", "observed_at": "1984/2021"}
+    entry = exporter.manifest_entry(stale, {"observed_at": "2026-09-20"}, live=True)
+    assert entry["license"] != "CC-BY-4.0" and "without restriction of use" in entry["license_quote"]
+    assert entry["license_url"] == "https://global-surface-water.appspot.com/download"

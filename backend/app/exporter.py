@@ -54,6 +54,55 @@ PARAMETERS = [
     {"name": "budget_rub", "value": None, "source": "operator input",
      "basis": "default 6500 RUB, about one sixth of a broad purchase of the chip; the frontier shows other budgets"},
 ]
+# License facts read on the publishers' own pages; nothing here is inferred from third-party mirrors.
+LICENSE_CHECKED_AT = "2026-09-26"
+SEN1FLOODS11_TERMS = {
+    "license": "not_declared_by_publisher",
+    "license_note": (
+        "Checked 2026-09-26: the publisher's repository github.com/cloudtostreet/Sen1Floods11 has no LICENSE file "
+        "(GitHub API /repos/cloudtostreet/Sen1Floods11/license answers 404, repository license null); its README "
+        "asks to cite Bonafilia et al. 2020 and states no license; the v1.1 STAC collections in the publisher's "
+        "bucket (sen1floods11_hand_labeled_source, sen1floods11_hand_labeled_label) set \"license\": \"proprietary\" "
+        "without a license link or text. Used as the dataset the case prescribes, with the citation the authors ask for."),
+    "license_checked_urls": [
+        "https://github.com/cloudtostreet/Sen1Floods11",
+        "https://api.github.com/repos/cloudtostreet/Sen1Floods11/license",
+        "https://storage.googleapis.com/sen1floods11/v1.1/catalog/sen1floods11_hand_labeled_source/collection.json",
+        "https://storage.googleapis.com/sen1floods11/v1.1/catalog/sen1floods11_hand_labeled_label/collection.json",
+    ],
+    "license_checked_at": LICENSE_CHECKED_AT,
+    "citation": ("Bonafilia, D., Tellman, B., Anderson, T., Issenberg, E. 2020. Sen1Floods11: a georeferenced dataset "
+                 "to train and test deep learning flood algorithms for Sentinel-1. CVPR Workshops 2020, pp. 210-211"),
+}
+COPERNICUS_SENTINEL_TERMS = {
+    "name": "Legal notice on the use of Copernicus Sentinel Data and Service Information (European Commission)",
+    "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+    "status": "free, full and open access",
+    "quote": ("the law provides that users shall have a free, full and open access to Copernicus Sentinel Data and "
+              "Service Information without any express or implied warranty, including as regards quality and "
+              "suitability for any purpose"),
+    "legal_basis": "Regulation (EU) No 377/2014 and Commission Delegated Regulation (EU) No 1159/2013",
+    "required_notice": "Contains modified Copernicus Sentinel data [Year]",
+    "checked_at": LICENSE_CHECKED_AT,
+}
+JRC_GSW_TERMS = {
+    "name": "JRC Global Surface Water (Pekel et al., Nature 540, 418-422, 2016)",
+    "url": "https://global-surface-water.appspot.com/download",
+    "status": "Copernicus Programme data, free of charge, without restriction of use",
+    "quote": ("All data here is produced under the Copernicus Programme and is provided free of charge, "
+              "without restriction of use."),
+    "required_acknowledgement": ("Publications, models and data products that make use of these datasets must include "
+                                 "proper acknowledgement, including citing datasets and the journal article: Pekel, J.-F., "
+                                 "Cottam, A., Gorelick, N., Belward, A. S. High-resolution mapping of global surface water "
+                                 "and its long-term changes. Nature 540, 418-422 (2016), doi:10.1038/nature20584"),
+    "checked_at": LICENSE_CHECKED_AT,
+}
+PLANETARY_COMPUTER_RTC_TERMS = {
+    "license": "CC-BY-4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "license_checked_urls": ["https://planetarycomputer.microsoft.com/api/stac/v1/collections/sentinel-1-rtc"],
+    "license_checked_at": LICENSE_CHECKED_AT,
+}
+SEN1FLOODS11_LAYERS = ("S1Hand", "LabelHand", "JRCWaterHand")
 
 
 def _git_head() -> str | None:
@@ -68,6 +117,51 @@ def _git_head() -> str | None:
 def code_commit() -> str | None:
     """Commit of the running code: git in the repository, else FLOODVALUE_COMMIT (images carry no .git)."""
     return _git_head() or os.environ.get("FLOODVALUE_COMMIT") or None
+
+
+def _sentinel_terms(observed_at: object) -> dict:
+    year = str(observed_at or "")[:4]
+    if not year.isdigit():
+        return dict(COPERNICUS_SENTINEL_TERMS)
+    return {**COPERNICUS_SENTINEL_TERMS, "required_notice": f"Contains modified Copernicus Sentinel data {year}"}
+
+
+def manifest_entry(item: dict, info: dict, live: bool) -> dict:
+    """One source_manifest.json row: the scene passport of the source plus the license facts checked above.
+
+    Checked facts override a license stored in older scene metadata.
+    """
+    entry = {
+        "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
+        "observed_at": info["observed_at"], "published_at": None, "available_at": None,
+        "role": "model_input" if live or "S1Hand" in item["name"] else "diagnostic_label_only",
+        "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
+        **item,
+    }
+    url = str(item.get("url") or "")
+    layer = item.get("layer") or next((name for name in SEN1FLOODS11_LAYERS if name in item["name"]), None)
+    if item.get("collection") == "sentinel-1-rtc":
+        entry.update(PLANETARY_COMPUTER_RTC_TERMS, underlying_data_license=_sentinel_terms(entry["observed_at"]))
+    elif "global-surface-water" in url:
+        entry.update(license=JRC_GSW_TERMS["status"], license_url=JRC_GSW_TERMS["url"],
+                     license_quote=JRC_GSW_TERMS["quote"],
+                     license_acknowledgement=JRC_GSW_TERMS["required_acknowledgement"],
+                     license_checked_at=LICENSE_CHECKED_AT)
+    elif layer in SEN1FLOODS11_LAYERS or "sen1floods11" in url:
+        entry.update(SEN1FLOODS11_TERMS)
+        if layer == "S1Hand":
+            entry["underlying_data_license"] = _sentinel_terms(entry["observed_at"])
+        elif layer == "LabelHand":
+            entry["label_origin"] = ("hand-labeled ground truth (Water / NoWater / NoData) made by the dataset authors, "
+                                     "Cloud to Street; used only for diagnostic metrics, never as a model input")
+        elif layer == "JRCWaterHand":
+            entry["derived_from"] = ("JRC Global Surface Water; the Sen1Floods11 docs README describes the layer as "
+                                     "'JRC Permement Water overlapping labeled data'")
+            entry["underlying_data_license"] = dict(JRC_GSW_TERMS)
+    else:
+        entry.update(license="not_verified", license_checked_urls=[url] if url else [],
+                     license_checked_at=LICENSE_CHECKED_AT)
+    return entry
 
 
 def _number(value: float) -> object:
@@ -150,14 +244,7 @@ def package(result: dict) -> io.BytesIO:
             archive.writestr(name, json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False))
 
         json_file("analysis.json", result)
-        json_file("source_manifest.json", [{
-            "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
-            "observed_at": info["observed_at"], "published_at": None, "available_at": None,
-            "license": "CC-BY-4.0" if live else "not_confirmed_by_dataset_publisher",
-            "role": "model_input" if live or "S1Hand" in item["name"] else "diagnostic_label_only",
-            "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
-            **item,
-        } for item in info["source_manifest"]])
+        json_file("source_manifest.json", [manifest_entry(item, info, live) for item in info["source_manifest"]])
         json_file("selected_region.geojson", {"type": "FeatureCollection", "features": [{
             "type": "Feature", "geometry": as_polygon(result["region"]["bounds"]),
             "properties": {"area_km2": result["region"]["area_km2"],
