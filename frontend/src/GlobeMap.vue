@@ -126,8 +126,7 @@ function styleUrl() { return 'https://tiles.openfreemap.org/styles/liberty' }
 /*
  * Палитра подложки поверх liberty, днём по Google Картам: тёплая светлая земля, мятная зелень,
  * бирюзовая вода; синий паводок и янтарные объекты на ней остаются главными.
- * Первое совпадение по типу и id слоя выигрывает; пустой набор оставляет слой как есть
- * (щиты с номерами дорог).
+ * Первое совпадение по типу и id слоя выигрывает.
  */
 const PALETTE = {
   // Оттенки сняты с Google Карт в той же точке (Нигерия, река Кадуна): земля, зелень, вода,
@@ -151,7 +150,6 @@ const PALETTE = {
     [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#93abc6' }],
     [/secondary_tertiary$/, 'line', { 'line-color': '#ffffff' }],
     [/./, 'line', { 'line-color': '#ced8e0' }],
-    [/shield/, 'symbol', {}],
     [/^water/, 'symbol', { 'text-color': '#2a7d96', 'text-halo-color': '#d9f2f9' }],
     [/./, 'symbol', { 'text-color': '#2b2c30', 'text-halo-color': '#fcfcf8', 'text-halo-width': 1.4 }],
   ],
@@ -174,7 +172,6 @@ const PALETTE = {
     [/(motorway|trunk_primary)$/, 'line', { 'line-color': '#b08a45' }],
     [/(secondary_tertiary|_link)$/, 'line', { 'line-color': '#6b7682' }],
     [/./, 'line', { 'line-color': '#434f5b' }],
-    [/shield/, 'symbol', {}],
     [/^water/, 'symbol', { 'text-color': '#7fb2de', 'text-halo-color': '#0f2d48' }],
     [/./, 'symbol', { 'text-color': '#d3dbe3', 'text-halo-color': '#12181e', 'text-halo-width': 1.4 }],
   ],
@@ -215,13 +212,15 @@ function reliefPaint() {
 // Подписи по-русски: русское имя из OSM, иначе местное, если оно кириллицей (посёлки России и соседей
 // часто без name:ru), и только потом латиница. По умолчанию стиль пишет латиницу и местное письмо в две строки.
 // Кириллица узнаётся сравнением строк: всё, что начинается с U+0400–U+04FF, лежит между 'Ѐ' и 'Ԁ'.
-// Номера дорог (ref) не трогаем.
+// Щиты с номерами дорог (A124 и т. п.) прячем: для паводка они ничего не говорят и только шумят поверх снимка.
 const LOCAL = ['to-string', ['get', 'name']]
 const LABEL = ['coalesce', ['get', 'name:ru'],
   ['case', ['all', ['>=', LOCAL, 'Ѐ'], ['<', LOCAL, 'Ԁ']], LOCAL, ['coalesce', ['get', 'name:latin'], ['get', 'name']]]]
 function localizeLabels() {
   for (const layer of map.getStyle().layers) {
-    const field = layer.type === 'symbol' && layer.layout?.['text-field']
+    if (layer.type !== 'symbol') continue
+    if (/shield/.test(layer.id)) { map.setLayoutProperty(layer.id, 'visibility', 'none'); continue }
+    const field = layer.layout?.['text-field']
     if (field && JSON.stringify(field).includes('"name')) map.setLayoutProperty(layer.id, 'text-field', LABEL)
   }
 }
