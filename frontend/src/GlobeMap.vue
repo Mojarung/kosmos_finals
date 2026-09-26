@@ -10,7 +10,6 @@ import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
 import { WaterLayer } from './lib/waterLayer'
 import { bindTip } from './lib/tip'
-import MorphLoader from './components/MorphLoader.vue'
 import { preloadGlobe, preloadJourney, preloadScene, preloadTilt } from './lib/prefetch'
 
 maplibregl.setWorkerUrl(workerUrl)
@@ -22,9 +21,7 @@ const mapError = ref(false)
 const mapUnavailable = ref(false)
 const probe = ref(null)
 const probeLoading = ref(false)
-const veiled = ref(false)
 const snapshotHost = ref(null)
-const veilLoader = ref(false)
 const journey = ref(null)
 let map
 let ready = false
@@ -497,16 +494,16 @@ function fitChip(duration) {
 }
 function focusChip() {
   if (!map || !state.analysis) return
-  // С глобуса камера пролетела бы 12 зумов, и тайлы каждого проступали бы кусками: только через шторку.
-  if (state.globeView) return veiledMove(() => fitChip(0))
+  // С глобуса камера пролетела бы 12 зумов, и тайлы каждого проступали бы кусками: только растворением.
+  if (state.globeView) return fadeMove(() => fitChip(0))
   fitChip(reducedMotion() ? 0 : 1050)
 }
 function showGlobe() {
   if (!map || state.globeView) return
   state.tilted = false
-  veiledMove(() => {
+  fadeMove(() => {
     map.jumpTo({ center: [13, 11], zoom: 1.8, pitch: 0, bearing: 0 })
-  }, { from: 'far', limit: 1500 })
+  }, { limit: 1500 })
 }
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -516,12 +513,22 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
  * без дыр» хватает загруженных тайлов. Потолок — чтобы медленная сеть не
  * держала экран закрытым.
  */
-async function tilesReady(limit) {
+async function tilesReady(limit, loaded = () => map.areTilesLoaded()) {
   const deadline = performance.now() + limit
   // Кадр после прыжка: MapLibre должен успеть запросить тайлы нового вида.
   await wait(32)
-  while (!map.areTilesLoaded() && performance.now() < deadline) await wait(50)
-  return map.areTilesLoaded()
+  while (!loaded() && performance.now() < deadline) await wait(50)
+  return loaded()
+}
+/*
+ * Поверхность кадра для растворения. На спутнике это его лёгкие тайлы; векторные
+ * границы и подписи на мелких масштабах весят по мегабайту, при первом показе
+ * глобуса их распаковка держала переход дольше, а проявиться они могут и после.
+ * На схеме вектор и есть поверхность, ждём всё.
+ */
+function surfaceLoaded() {
+  if (state.basemap !== 'satellite') return map.areTilesLoaded()
+  return ['satellite', 'satellite-low'].every(id => map.getSource(id) && map.isSourceLoaded(id))
 }
 function analysisFor(id) {
   if (state.analysis?.chip.chip_id === id) return Promise.resolve(true)
@@ -591,6 +598,7 @@ function showSnapshot(frame) {
 function clearSnapshot() {
   snapshot?.remove()
   snapshot = null
+  container.value?.classList.remove('scene-moving')
 }
 function animateSnapshot(keyframes, options) {
   if (!snapshot) return Promise.resolve()
@@ -631,51 +639,28 @@ async function sceneFrameReady(token, limit = 8000) {
 }
 
 /*
- * Большие переходы камеры — шторка, а не перелёт. Анимация через 10+ зумов
- * всегда упирается в загрузку тайлов: MapLibre запрашивает их для каждого
- * промежуточного масштаба на всю ширину экрана, и на лету видны пустые
- * прямоугольники. Поэтому карта закрывается вуалью, под ней камера мгновенно
- * встаёт на место, и вуаль уходит только после загрузки тайлов. Движение
- * даёт CSS-масштаб готового кадра.
- *
- * whenCovered — что дождаться под вуалью до прыжка (расчёт для новой сцены).
- * from: 'near' — кадр «наезжает» (к снимку), 'far' — «отъезжает» (к глобусу).
+ * Большие переходы камеры (глобус и снимок, поиск места) — растворение, а не перелёт:
+ * анимация через 10+ масштабов упирается в загрузку тайлов, и на лету видны дыры.
+ * Копия текущего кадра лежит поверх, камера под ней мгновенно встаёт на место,
+ * и копия растворяется, когда тайлы нового вида загружены или вышел срок limit.
+ * Маркеры объектов не попадают в копию, поэтому на время перехода они спрятаны.
  */
-async function veiledMove(move, { whenCovered, from = 'near', limit = 3000, layersChange = false } = {}) {
+async function fadeMove(move, { limit = 3000 } = {}) {
   if (!map || !ready) return
   const token = ++flight
-  clearSnapshot()
-  const quick = reducedMotion()
-  veiled.value = true
-  // Капля появляется, только если ожидание затянулось: на быстрой сети её не видно.
-  const loaderTimer = setTimeout(() => { if (token === flight) veilLoader.value = true }, 450)
-  const aborted = () => { if (token !== flight) { clearTimeout(loaderTimer); return true } return false }
-  await wait(quick ? 0 : 200)
-  if (aborted()) return
-  if (whenCovered) await whenCovered()
-  if (aborted()) return
+  const frame = reducedMotion() ? null : await captureFrame()
+  if (token !== flight) return
+  if (frame) showSnapshot(frame)
+  container.value?.classList.add('scene-moving')
   map.stop()
   move()
-  await tilesReady(limit)
-  if (aborted()) return
-  // Слои проявляются ещё под вуалью, чтобы кадр открылся уже целым. Ждать их
-  // есть смысл только при смене сцены: у глобуса снимки не меняются.
+  await tilesReady(limit, surfaceLoaded)
+  if (token !== flight) return
   phase = null
   syncMap()
-  await wait(quick || !layersChange ? 0 : 260)
-  if (aborted()) return
-  clearTimeout(loaderTimer)
-  veilLoader.value = false
-  veiled.value = false
-  // Вода разливается, когда шторка уже поднялась, а не под ней.
-  if (layersChange) water.playReveal()
-  if (!quick) {
-    const scale = from === 'far' ? 0.955 : 1.045
-    container.value?.animate(
-      [{ transform: `scale(${scale})`, filter: 'blur(3px)' }, { transform: 'scale(1)', filter: 'blur(0)' }],
-      { duration: 700, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
-    )
-  }
+  await animateSnapshot([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease-in-out' })
+  if (token !== flight) return
+  clearSnapshot()
 }
 
 async function revealScene(token) {
@@ -684,8 +669,6 @@ async function revealScene(token) {
   syncMap()
   await wait(reducedMotion() ? 0 : 260)
   if (token !== flight) return
-  veiled.value = false
-  veilLoader.value = false
   journey.value = null
   setData('journey', empty)
   water.playReveal()
@@ -742,7 +725,7 @@ async function flyToScene(id) {
   map.jumpTo({ center: from, zoom, pitch: 0, bearing: 0 })
   if (departure) {
     // Кадр глобуса ещё не нарисован: растворяем, когда под снимком уже есть глобус.
-    await tilesReady(600)
+    await tilesReady(600, surfaceLoaded)
     if (token !== flight) return
     await animateSnapshot([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease-in-out' })
     if (token !== flight) return
@@ -813,11 +796,11 @@ function focusAsset(asset) {
   if (!map) return
   const camera = { center: [asset.longitude, asset.latitude], zoom: 13.3, pitch: 20 }
   if (state.globeView) {
-    return veiledMove(() => map.jumpTo({ ...camera, bearing: 0 }))
+    return fadeMove(() => map.jumpTo({ ...camera, bearing: 0 }))
   }
   map.flyTo({ ...camera, duration: 750, essential: false })
 }
-// Поиск страны или города: страна вписывается в экран, город открывается крупно; с глобуса далеко — через шторку.
+// Поиск страны или города: страна вписывается в экран, город открывается крупно; с глобуса далеко — растворением.
 function focusPlace(place) {
   if (!map || !place) return
   state.tilted = false
@@ -827,14 +810,14 @@ function focusPlace(place) {
     : { center: place.center, zoom: 10.5 }
   if (!camera) return
   const target = { center: camera.center, zoom: camera.zoom, pitch: 0, bearing: 0 }
-  if (state.globeView && target.zoom - map.getZoom() > 5) return veiledMove(() => map.jumpTo(target), { from: 'far' })
+  if (state.globeView && target.zoom - map.getZoom() > 5) return fadeMove(() => map.jumpTo(target))
   map.flyTo({ ...target, duration: reducedMotion() ? 0 : 1400, essential: false })
 }
 function focusZone(zone) {
   if (!map || !zone) return
   const [w, s, e, n] = zone.bounds
   const options = { padding: padding(), maxZoom: 14.6, duration: reducedMotion() ? 0 : 650, easing: t => 1 - Math.pow(1 - t, 3), essential: false }
-  if (state.globeView) return veiledMove(() => map.fitBounds([[w, s], [e, n]], { ...options, duration: 0 }))
+  if (state.globeView) return fadeMove(() => map.fitBounds([[w, s], [e, n]], { ...options, duration: 0 }))
   map.fitBounds([[w, s], [e, n]], options)
 }
 function toggleTilt() {
@@ -994,7 +977,6 @@ watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy
   state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
-watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.
 watch(() => state.sceneId, id => flyToScene(id))
 watch(() => state.theme, () => {
@@ -1024,9 +1006,6 @@ watch(() => state.drawing, value => {
 <template>
   <div ref="container" class="globe-map" aria-label="Карта Sentinel‑1 и объектов"></div>
   <div ref="snapshotHost" class="map-snapshot" aria-hidden="true"></div>
-  <div class="map-veil" :class="{ on: veiled }" aria-hidden="true">
-    <Transition name="veil-loader"><MorphLoader v-if="veilLoader" :size="44" /></Transition>
-  </div>
   <Transition name="rise">
     <div v-if="journey" class="journey-card panel" role="status" aria-live="polite">
       <span class="journey-place">{{ journey.from }}</span>
