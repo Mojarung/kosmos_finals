@@ -79,3 +79,4 @@ def test_unknown_provider_and_scene_are_refused(client):
         "scene_id": "Nigeria_812045", "provider_id": "nobody"}).status_code == 422
     assert client.post("/api/procurement/deliveries", json={
         "scene_id": "missing", "provider_id": "sovzond"}).status_code == 404
+

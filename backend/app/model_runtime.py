@@ -32,8 +32,16 @@ def identity() -> dict:
 CONTEXT_RECIPE = Path(os.environ.get("CONTEXT_RECIPE", ROOT / "ml/artifacts/context_model/recipe.json"))
 
 
+def context_weights_present() -> bool:
+    """Every fold file of the recipe is on disk as real weights, not a missing file or an LFS pointer."""
+    recipe = json.loads(CONTEXT_RECIPE.read_text())
+    files = [CONTEXT_RECIPE.parent / w["path"] for member in recipe["members"].values() for w in member["weights"]]
+    return all(path.is_file() and path.stat().st_size > 1_000_000 for path in files)
+
+
 def context_enabled() -> bool:
-    return os.environ.get("FLOODVALUE_LIVE_MODEL", "context") == "context" and CONTEXT_RECIPE.is_file()
+    return (os.environ.get("FLOODVALUE_LIVE_MODEL", "context") == "context" and CONTEXT_RECIPE.is_file()
+            and context_weights_present())
 
 
 def context_identity(info: dict) -> dict:
