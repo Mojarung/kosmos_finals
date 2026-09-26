@@ -132,3 +132,37 @@ def test_an_image_keeps_the_revision_its_build_proved(monkeypatch):
     assert exporter.gitverse_status() == "verified_in_gitverse_remote"
     monkeypatch.setenv("FLOODVALUE_GITVERSE_STATUS", "anything else")
     assert exporter.gitverse_status() == "declared_access_unverified"
+
+
+def test_every_priced_line_names_its_rate_source_and_rounding():
+    files = export(client)
+    catalog = {feature["properties"]["candidate_id"]: feature["properties"]
+               for feature in json.loads(files["candidate_orders.geojson"])["features"]}
+    lines = table(files, "procurement_plan.csv")
+    assert lines
+    for line in lines:
+        assert line["base_rate_source"] == catalog[line["candidate_id"]]["base_rate_source"] != ""
+        assert "ROUND_HALF_UP" in line["rounding"] and "discount_coef" in line["rounding"]
+
+
+def test_scene_catalog_offers_only_layers_that_exist(tmp_path, monkeypatch):
+    import shutil
+
+    from app import catalog
+    demo = tmp_path / "demo"
+    demo.mkdir()
+    for name in ("scenes.json", "quality.json"):
+        shutil.copyfile(catalog.DATA_DIR / name, demo / name)
+    shutil.copytree(catalog.DATA_DIR / "Nigeria_812045", demo / "Nigeria_812045")
+    (demo / "Nigeria_812045" / "permanent.png").unlink()
+    monkeypatch.setattr(catalog, "DATA_DIR", demo)
+    catalog.refresh()
+    try:
+        layers = next(scene["layers"] for scene in catalog.scene_catalog()["scenes"]
+                      if scene["chip_id"] == "Nigeria_812045")
+        assert "permanent" not in layers and {"model", "radar", "probability", "doubt"} <= set(layers)
+    finally:
+        monkeypatch.undo()
+        catalog.refresh()
+    assert "permanent" in next(scene["layers"] for scene in catalog.scene_catalog()["scenes"]
+                               if scene["chip_id"] == "Nigeria_812045")

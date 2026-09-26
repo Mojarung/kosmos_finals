@@ -65,14 +65,23 @@ function zoneTitle(zone) {
 function assetNames(ids) {
   return ids.map(id => analysis.value.assets.find(item => item.id === id)?.name).filter(Boolean).join(', ')
 }
+// Сверх бюджета — всегда контрфактический вариант (правило кейса), даже если ещё и опаздывает.
 function status(key) {
   const plan = analysis.value.strategies[key]
+  if (!plan.budget_feasible) return 'дороже бюджета'
   if (!plan.timely) return 'не успеет к сроку'
   if (key === 'C' && plan.constraints_feasible === false) return 'условие не выполнить'
-  if (!plan.budget_feasible) return 'дороже бюджета'
-  return key === 'A' ? 'бесплатно' : 'в бюджете'
+  return key === 'A' ? 'без покупки' : 'в бюджете'
 }
-const warn = key => !['в бюджете', 'бесплатно'].includes(status(key))
+const warn = key => !['в бюджете', 'без покупки'].includes(status(key))
+function statusTip(key) {
+  const plan = analysis.value.strategies[key]
+  const parts = []
+  if (!plan.budget_feasible) parts.push('Контрфактический вариант: в бюджет не входит и показан только для сравнения цены и охвата')
+  if (!plan.timely) parts.push(`Снимки придут позже срока решения (${deadlineHours.value} ч), поэтому в охват не идут`)
+  if (key === 'A') parts.push('Платных снимков нет. Остаётся работа аналитика: она в строке «Решение целиком»')
+  return parts.length ? parts.join('. ') : null
+}
 
 const decisions = computed(() => {
   const zones = new Map(analysis.value.zones.map(zone => [zone.id, zone]))
@@ -242,6 +251,16 @@ function pick(key) {
   state.strategy = key
   state.showZones = true
 }
+// Радиогруппа A/B/C по WAI-ARIA: в порядке Tab только выбранный вариант, стрелки переключают.
+function strategyKeydown(event, key) {
+  const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[event.key]
+  if (!step) return
+  event.preventDefault()
+  const keys = ['A', 'B', 'C']
+  const next = keys[(keys.indexOf(key) + step + keys.length) % keys.length]
+  pick(next)
+  event.currentTarget.parentElement?.querySelector(`[data-key="${next}"]`)?.focus()
+}
 function hover(id) { state.hoverZoneId = id }
 </script>
 
@@ -284,8 +303,9 @@ function hover(id) { state.hoverZoneId = id }
   </section>
 
   <div class="rows strategy-rows" role="radiogroup" aria-label="Вариант закупки">
-    <button v-for="key in ['A', 'B', 'C']" :key="key" class="row strategy-row"
-      role="radio" :aria-checked="state.strategy === key" :class="{ selected: state.strategy === key }" @click="pick(key)">
+    <button v-for="key in ['A', 'B', 'C']" :key="key" class="row strategy-row" :data-key="key"
+      role="radio" :aria-checked="state.strategy === key" :tabindex="state.strategy === key ? 0 : -1"
+      :class="{ selected: state.strategy === key }" @click="pick(key)" @keydown="strategyKeydown($event, key)">
       <span class="strategy-key">{{ key }}</span>
       <span class="asset-main">
         <strong>{{ STRATEGIES[key].name }}</strong>
@@ -297,7 +317,7 @@ function hover(id) { state.hoverZoneId = id }
       </span>
       <span class="strategy-cost">
         <strong class="tabular">{{ compactRub(analysis.strategies[key].data_cost_rub) }}</strong>
-        <small :class="{ warn: warn(key) }" v-tip="!analysis.strategies[key].budget_feasible ? 'Контрфактический вариант: в бюджет не входит и показан только для сравнения цены и охвата' : null">{{ status(key) }}</small>
+        <small :class="{ warn: warn(key) }" v-tip="statusTip(key)">{{ status(key) }}</small>
       </span>
     </button>
   </div>

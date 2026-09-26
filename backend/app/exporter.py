@@ -17,8 +17,8 @@ from .catalog import ROOT, metadata, scene_dir
 from .costs import RULE as COST_RULE
 from .costs import decision_costs
 from .layers import overlay_png
-from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, SAR_DELIVERY_HOURS, SUITABILITY_RULE,
-                       as_polygon, contains, enrich_assets)
+from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, ROUNDING, SAR_DELIVERY_HOURS,
+                       SUITABILITY_RULE, as_polygon, contains, enrich_assets)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
 from .temporal import scene_timing
@@ -37,10 +37,13 @@ REASONS = {
 }
 PLAN_COLUMNS = ["strategy", "candidate_id", "footprint_id", "sensor_type", "resolution_m", "acquisition_type",
                 "data_role", "observation_at", "age_days", "area_km2", "base_rate_rub_km2", "base_rate_status",
-                "processing_level", "usage_type", "guaranteed_purchase", "processing_coef", "usage_coef",
-                "freshness_coef", "discount_coef", "discount_group_id", "previous_group_area_km2",
+                "base_rate_source", "processing_level", "usage_type", "guaranteed_purchase", "processing_coef",
+                "usage_coef", "freshness_coef", "discount_coef", "discount_group_id", "previous_group_area_km2",
                 "basket_group_area_km2", "group_area_km2", "discount_formula", "unit_price_rub_km2", "cost_rub",
-                "formula", "legal_edition"]
+                "formula", "legal_edition", "rounding"]
+# Every priced line states how its numbers were rounded, next to the formula (case: "скидка и округление").
+LINE_ROUNDING = "; ".join(f"{key}: {ROUNDING[key]}" for key in ("area_km2", "discount_coef", "unit_price_rub_km2",
+                                                                   "cost_rub"))
 DECISION_COLUMNS = ["candidate_id", "footprint_id", "kind", "sensor_type", "resolution_m", "acquisition_type",
                     "data_role", "delivery_hours", "timely", "counts_for_coverage", "area_km2", "selected_in_c",
                     "selected_in_b", "reason", "reason_text", "price_alone_rub", "unit_price_rub_km2", "cost_rub",
@@ -364,7 +367,8 @@ def _bool(value: object) -> str:
 def plan_row(strategy: str, line: dict, product: dict) -> list:
     """One procurement_plan.csv row: the priced line next to the catalog conditions that explain it."""
     values = {**line, "strategy": strategy, "footprint_id": product["footprint_id"],
-              "data_role": product["data_role"], "guaranteed_purchase": _flag(line["guaranteed_purchase"])}
+              "data_role": product["data_role"], "guaranteed_purchase": _flag(line["guaranteed_purchase"]),
+              "base_rate_source": product["base_rate_source"], "rounding": LINE_ROUNDING}
     return [_blank(values[column]) for column in PLAN_COLUMNS]
 
 

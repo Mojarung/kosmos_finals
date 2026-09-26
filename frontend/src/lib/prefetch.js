@@ -153,7 +153,9 @@ export function preloadTilt(map, [lon, lat], zoom) {
 export function preloadScene(map, scene, zoom) {
   const [w, s, e, n] = scene.bbox
   const center = [(w + e) / 2, (s + n) / 2]
-  const images = ['model', 'permanent', 'radar', 'probability', 'baseline', 'reference', 'doubt']
+  // Только слои, которые у сцены есть: у старой или живой сцены может не быть постоянной воды.
+  const images = (scene.layers || ['model', 'radar', 'probability', 'baseline', 'doubt'])
+    .filter(name => name !== 'uncertainty')
     .map(name => `/api/demo/${scene.chip_id}/${name}.png`)
   return download([...images, ...urls(map, (offset, size) => {
     const z = Math.floor(zoom) + offset
