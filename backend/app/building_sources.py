@@ -21,6 +21,7 @@ from xml.etree import ElementTree as ET
 import numpy as np
 from pyproj import Geod
 from shapely import get_coordinates, STRtree
+from shapely.errors import GEOSException
 from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
 from shapely.geometry.polygon import orient
 from shapely.ops import polygonize, unary_union
@@ -45,6 +46,11 @@ _DOWNLOAD_LIMIT = BoundedSemaphore(2)
 
 
 class OSMUnavailable(ValueError):
+    pass
+
+
+class OSMDataError(ValueError):
+    """A local validation failure must never be disguised as source downtime."""
     pass
 
 
@@ -114,7 +120,7 @@ def parse_osm(content: bytes, source: dict) -> dict:
         raise ValueError("Сервер OSM не завершил выборку зданий")
     nodes = {n.attrib["id"]: (float(n.attrib["lon"]), float(n.attrib["lat"])) for n in root.findall("node")}
     ways = {w.attrib["id"]: w for w in root.findall("way")}
-    features, consumed = [], set()
+    features, consumed, rejected = [], set(), {}
 
     def tags(element):
         return {tag.attrib["k"]: tag.attrib["v"] for tag in element.findall("tag")}
@@ -123,12 +129,26 @@ def parse_osm(content: bytes, source: dict) -> dict:
         refs = [n.attrib["ref"] for n in way.findall("nd")]
         return [nodes[r] for r in refs] if all(r in nodes for r in refs) else []
 
+    def reject(element, kind, reason):
+        identifier = f"{kind}/{element.attrib['id']}"
+        rejected[identifier] = {"id": identifier, "reason": reason}
+
     def add(element, kind, geometry, values):
-        if not geometry.is_empty and geometry.is_valid and geometry.geom_type in {"Polygon", "MultiPolygon"}:
-            identifier = element.attrib["id"]
-            features.append({"type": "Feature", "id": f"{kind}/{identifier}", "geometry": mapping(geometry),
-                             "properties": {"tags": values, "source_url": f"https://www.openstreetmap.org/{kind}/{identifier}",
-                                            "osm_updated_at": element.attrib.get("timestamp", "")}})
+        coordinates = get_coordinates(geometry)
+        if geometry.is_empty or not geometry.is_valid or geometry.geom_type not in {"Polygon", "MultiPolygon"}:
+            reject(element, kind, "invalid_geometry")
+            return
+        if len(coordinates) > 10000 or not np.isfinite(coordinates).all():
+            reject(element, kind, "unsupported_coordinates")
+            return
+        area = area_m2(geometry)
+        if not 1 <= area <= 2_000_000:
+            reject(element, kind, "area_out_of_range")
+            return
+        identifier = element.attrib["id"]
+        features.append({"type": "Feature", "id": f"{kind}/{identifier}", "geometry": mapping(geometry),
+                         "properties": {"tags": values, "source_url": f"https://www.openstreetmap.org/{kind}/{identifier}",
+                                        "osm_updated_at": element.attrib.get("timestamp", "")}})
 
     for relation in root.findall("relation"):
         values = tags(relation)
@@ -136,6 +156,7 @@ def parse_osm(content: bytes, source: dict) -> dict:
             continue
         members = [m for m in relation.findall("member") if m.attrib.get("type") == "way"]
         if not members or any(m.attrib["ref"] not in ways for m in members):
+            reject(relation, "relation", "incomplete_relation")
             continue
         rings = {"outer": [], "inner": []}
         for member in members:
@@ -145,7 +166,11 @@ def parse_osm(content: bytes, source: dict) -> dict:
                 rings[role].append(LineString(pts))
         outer = list(polygonize(rings["outer"]))
         if outer:
-            geometry = unary_union(outer).difference(unary_union(list(polygonize(rings["inner"]))))
+            try:
+                geometry = unary_union(outer).difference(unary_union(list(polygonize(rings["inner"]))))
+            except GEOSException:
+                reject(relation, "relation", "invalid_geometry")
+                continue
             before = len(features)
             add(relation, "relation", geometry, values)
             if len(features) > before:
@@ -157,6 +182,8 @@ def parse_osm(content: bytes, source: dict) -> dict:
         pts = points(way)
         if len(pts) >= 4 and pts[0] == pts[-1]:
             add(way, "way", Polygon(pts), values)
+        else:
+            reject(way, "way", "incomplete_geometry")
     # A tagged POI inside a footprint can establish use when building=yes says nothing.
     # Conflicting POI categories remain unknown; neighbouring POIs are never borrowed.
     pois = []
@@ -173,9 +200,12 @@ def parse_osm(content: bytes, source: dict) -> dict:
         region = box(*source["bounds"])
         features = [f for f in features if shape(f["geometry"]).intersects(region)]
     # Members may reappear as standalone ways in a neighbouring tile.
-    source = {**source, "relation_member_way_ids": sorted(consumed)}
-    return normalize({"type": "FeatureCollection", "features": features, "source": source},
-                     max_buildings=MAX_OSM_BUILDINGS, max_vertices=MAX_OSM_VERTICES)
+    source = {**source, "relation_member_way_ids": sorted(consumed), "excluded_features": list(rejected.values()), "excluded_count": len(rejected)}
+    try:
+        return normalize({"type": "FeatureCollection", "features": features, "source": source},
+                         max_buildings=MAX_OSM_BUILDINGS, max_vertices=MAX_OSM_VERTICES)
+    except ValueError as error:
+        raise OSMDataError(f"Не удалось обработать данные зданий: {error}") from error
 
 
 def save(data: dict) -> str:
@@ -275,7 +305,7 @@ def _fetch_tile(bounds, deadline, can_split):
             content = _download(request, 8 if index == 0 else 25, deadline)
             data = parse_osm(content, osm_source(request.full_url, bounds, "map" if index == 0 else "overpass"))
             return cache_extract(data, bounds)
-        except OSMUnavailable:
+        except (OSMUnavailable, OSMDataError):
             raise
         except (HTTPError, URLError, OSError, ValueError) as error:
             logging.getLogger(__name__).warning("Building tile %s from %s failed: %s", bounds, request.full_url.split('?')[0], error)
@@ -287,8 +317,9 @@ def _fetch_tile(bounds, deadline, can_split):
 
 
 def _merge_tiles(parts, bounds):
-    members, by_id = set(), {}
+    members, by_id, rejected = set(), {}, {}
     for part in parts:
+        rejected.update({row["id"]: row for row in part["source"].get("excluded_features", [])})
         members.update(part["source"].get("relation_member_way_ids", []))
         for feature in part["features"]:
             identifier = feature["id"]
@@ -303,7 +334,8 @@ def _merge_tiles(parts, bounds):
             by_id[identifier] = feature
     features = [by_id[key] for key in sorted(by_id) if not (key.startswith("way/") and key[4:] in members)]
     source = osm_source("https://www.openstreetmap.org", bounds, "tiled")
-    source.update(relation_member_way_ids=sorted(members),
+    rejected = {key: value for key, value in rejected.items() if key not in by_id}
+    source.update(relation_member_way_ids=sorted(members), excluded_features=list(rejected.values()), excluded_count=len(rejected),
                   parts=[part["source"] for part in parts],
                   scope="Область загружена по частям; полные контуры объединены по ID, дубли и части OSM relations учтены один раз.")
     data = normalize({"type": "FeatureCollection", "features": features, "source": source},
@@ -324,7 +356,7 @@ def _load_tile(bounds, deadline, depth=0, progress=None):
         if progress:
             progress(bounds, len(data["features"]))
         return data
-    except (OSMSplitRequired, OSMUnavailable):
+    except OSMSplitRequired:
         if not can_split:
             raise
         _remaining(deadline)
@@ -336,7 +368,7 @@ def validate_area(bounds):
         raise ValueError("Область больше 300 км² — такой же предел, как для анализа снимка")
 
 
-def load_osm(bounds: list[float], progress=None) -> dict:
+def load_osm(bounds: list[float], progress=None, deadline=None) -> dict:
     validate_area(bounds)
     cached = _cached(bounds)
     if cached is not None:
@@ -353,7 +385,7 @@ def load_osm(bounds: list[float], progress=None) -> dict:
             if progress:
                 progress(bounds, len(cached["features"]))
             return cached
-        deadline = time.monotonic() + OSM_LOAD_SECONDS
+        deadline = deadline or time.monotonic() + OSM_LOAD_SECONDS
         tiles = _initial_tiles(bounds)
         if len(tiles) == 1:
             return _load_tile(bounds, deadline, progress=progress)

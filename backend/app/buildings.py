@@ -62,7 +62,7 @@ class ImportRequest(BaseModel):
     rate_overrides: dict[str, Rate] = Field(default_factory=dict, max_length=30)
 
 
-def raster_stats(geometry, info: dict, probability, model, permanent) -> dict:
+def raster_stats(geometry, info: dict, probability, model, permanent, uncertainty=None) -> dict:
     west, south, east, north = info["bbox"]
     width, height = info["width"], info["height"]
     sx, sy = width / (east - west), height / (north - south)
@@ -85,6 +85,8 @@ def raster_stats(geometry, info: dict, probability, model, permanent) -> dict:
         p[fixed], water[fixed] = 0, False
     return {
         "radar_coverage": coverage,
+        "map_error_proxy": float(np.dot(weights[valid], np.where(water[valid], 1-p[valid], p[valid])) / observed) if observed else None,
+        "uncertainty": float(np.dot(weights[valid], uncertainty[indexes][valid]) / observed) if observed and uncertainty is not None else None,
         "water_probability_proxy": float(np.dot(weights[valid], p[valid]) / observed) if observed else None,
         "water_fraction": float(weights[valid & water].sum() / observed) if observed else None,
         "water_area_m2": sources.area_m2(geometry) * float(weights[valid & water].sum()) / total,
@@ -105,6 +107,7 @@ def evaluate(request: Evaluation) -> dict:
     if set(request.type_overrides) - ids or any(t not in {*rates, "unknown"} for t in request.type_overrides.values()):
         raise ValueError("Неизвестное здание или тип в ручных уточнениях")
     probability = np.asarray(catalog.float_map(request.scene_id, "probability"), dtype=float)
+    uncertainty = np.asarray(catalog.float_map(request.scene_id, "uncertainty"), dtype=float)
     model = np.frombuffer(catalog.mask(request.scene_id, "model"), dtype=np.uint8)
     permanent_raw = catalog.permanent_mask(request.scene_id)
     permanent = np.frombuffer(permanent_raw, dtype=np.uint8) if permanent_raw is not None else None
@@ -123,7 +126,7 @@ def evaluate(request: Evaluation) -> dict:
         if feature["id"] in request.type_overrides:
             kind, type_source = request.type_overrides[feature["id"]], "Уточнено пользователем"
         area = sources.area_m2(geometry)
-        stats = raster_stats(geometry, info, probability, model, permanent)
+        stats = raster_stats(geometry, info, probability, model, permanent, uncertainty)
         status = "ok"
         if stats["radar_coverage"] < 0.99999:
             status = "no_radar" if stats["radar_coverage"] <= 1e-8 else "partial_radar"
@@ -154,6 +157,24 @@ def evaluate(request: Evaluation) -> dict:
     ranks = {f["id"]: i + 1 for i, f in enumerate(ranked)}
     for feature in rows:
         feature["properties"]["risk_rank"] = ranks.get(feature["id"])
+    # Single-input sensitivity: clamp p/q to their valid range; all other homes stay fixed.
+    loss_order = sorted((f for f in rows if f['properties']['expected_loss_rub'] is not None),
+                        key=lambda f: (-f['properties']['expected_loss_rub'], f['id']))
+    base_losses = np.array(sorted(f['properties']['expected_loss_rub'] for f in loss_order))
+    for feature in rows:
+        p = feature['properties']
+        p['sensitivity'] = []
+        if p['expected_loss_rub'] is None:
+            continue
+        for key in ('p', 'V', 'q'):
+            for factor in (.8, 1.2):
+                signal = min(1, p['water_probability_proxy'] * factor) if key == 'p' else p['water_probability_proxy']
+                value = p['exposure_rub'] * factor if key == 'V' else p['exposure_rub']
+                damage = min(1, p['damage_ratio'] * factor) if key == 'q' else p['damage_ratio']
+                loss = signal * value * damage
+                higher = len(base_losses) - int(np.searchsorted(base_losses, loss, side='right'))
+                higher -= int(p['expected_loss_rub'] > loss)
+                p['sensitivity'].append({'input': key, 'factor': factor, 'expected_loss_rub': loss, 'rank': higher + 1})
     estimated = [f["properties"]["expected_loss_rub"] for f in rows if f["properties"]["expected_loss_rub"] is not None]
     total = sum(estimated) if estimated else None
     return {"type": "FeatureCollection", "features": rows, "scene_id": request.scene_id, "catalog_id": request.catalog_id,
@@ -195,12 +216,12 @@ def demo():
     return json.loads(path.read_text()) if path.exists() else {"scene_id": None}
 
 
-def load_source(scene_id, source, progress=None):
+def load_source(scene_id, source, progress=None, deadline=None):
     info = catalog.metadata(scene_id)
     if source == "paiporta" or source == "auto" and scene_id == "Paiporta_20241101":
         return sources.normalize(json.loads((sources.ROOT / "data/buildings/paiporta.geojson").read_text()))
     if source in {"auto", "osm"}:
-        return sources.load_osm(info["bbox"], progress=progress)
+        return sources.load_osm(info["bbox"], progress=progress, deadline=deadline)
     raise ValueError("Неизвестный источник контуров")
 
 
@@ -240,7 +261,7 @@ def evaluate_buildings(request: Evaluation):
 
 def package(result: dict) -> bytes:
     target, table = io.BytesIO(), io.StringIO()
-    columns = ["id", "name", "building_type", "type_source", "risk_rank", "height_m", "height_source", "area_m2", "radar_coverage", "water_probability_proxy", "water_fraction",
+    columns = ["id", "name", "building_type", "type_source", "risk_rank", "height_m", "height_source", "area_m2", "radar_coverage", "water_probability_proxy", "map_error_proxy", "uncertainty", "water_fraction",
                "cost_rub_m2", "base_cost_rub_m2", "cost_factor", "synthetic_cost", "cost_source", "damage_ratio", "damage_source", "exposure_rub", "conditional_damage_rub", "expected_loss_rub", "status", "source_url"]
     writer = csv.DictWriter(table, fieldnames=columns, extrasaction="ignore")
     writer.writeheader()

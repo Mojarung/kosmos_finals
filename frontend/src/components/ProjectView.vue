@@ -72,7 +72,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
   <section class="project-intro">
     <span class="caption">Рабочее пространство</span>
     <h3>Ваши объекты и решения</h3>
-    <p>Учебные 10 точек остаются в сравнении A/B/C. Здесь можно оценить свой список на том же снимке.</p>
+    <p>Реестры точек и сохранённые планы зданий для текущего снимка.</p>
   </section>
 
   <div v-if="workspace.error" class="error-note" role="alert">{{ workspace.error }}</div>
@@ -90,7 +90,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
       <span class="caption">Сохранённые проекты</span>
       <button v-for="project in mine" :key="project.id" class="row project-list-row" @click="run(() => openProject(project.id))">
         <strong>{{ project.name }}</strong>
-        <small>{{ plural(project.asset_count, ['объект', 'объекта', 'объектов']) }} · {{ plural(project.decision_count, ['решение', 'решения', 'решений']) }}</small>
+        <small>{{ project.building_plan_count ? project.building_plan_count + ' планов зданий · ' : '' }}{{ plural(project.asset_count, ['объект', 'объекта', 'объектов']) }} · {{ plural(project.decision_count, ['решение', 'решения', 'решений']) }}</small>
       </button>
     </section>
   </template>
@@ -99,7 +99,7 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
     <section class="block project-active">
       <button class="project-back" @click="workspace.active = null"><ArrowLeft :size="15" /> Все проекты</button>
       <h3>{{ workspace.active.name }}</h3>
-      <p class="source-line">{{ plural(workspace.active.assets.length, ['объект', 'объекта', 'объектов']) }} · {{ plural(workspace.active.decisions.length, ['решение', 'решения', 'решений']) }}</p>
+      <p class="source-line">Точек: {{ workspace.active.assets.length }} · Планы зданий: {{ workspace.active.building_plans?.length || 0 }} · Решения по точкам: {{ workspace.active.decisions.length }}</p>
       <label class="tonal-button project-upload" :class="{ disabled: busy }">
         <FileUp :size="16" /> Импорт CSV или GeoJSON
         <input type="file" accept=".csv,.geojson,.json,text/csv,application/geo+json" :disabled="busy" @change="upload" />
@@ -107,6 +107,11 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
       <p class="project-help">CSV: name, longitude, latitude, value_rub, vulnerability, value_source. Для GeoJSON: Point и те же свойства. Источник цены обязателен.</p>
     </section>
 
+    <section v-if="workspace.active.building_plans?.length" class="block">
+      <span class="caption">Сохранённые планы зданий</span>
+      <div v-for="plan in workspace.active.building_plans" :key="plan.id" class="project-decision"><strong>{{ new Date(plan.created_at).toLocaleString('ru-RU') }} · {{ plan.count }} зданий</strong><small>{{ plan.strategy }} · {{ compactRub(plan.data_cost_rub) }} · охват {{ plan.covered_count }} зданий · срок {{ plan.deadline_hours }} ч</small><a :href="`/api/building-plans/projects/${workspace.active.id}/${plan.id}/export`" download><Download :size="13" /> Скачать план и контуры</a></div>
+      <p class="project-help">Сохранены исходные контуры, ставки и расчёт на момент решения. Изменение текущих ставок не меняет историю.</p>
+    </section>
     <section v-if="workspace.active.assets.length" class="block">
       <span class="caption">Реальные активы · {{ workspace.active.assets.filter(a => a.p_water != null).length }} оценено</span>
       <div v-for="asset in workspace.active.assets" :key="asset.id" class="project-asset">
@@ -166,8 +171,8 @@ const planRows = computed(() => operatorPlan.value ? ['A', 'B', 'C'].map(key => 
     </section>
 
     <section class="block">
-      <span class="caption">История решений</span>
-      <button class="primary-button wide" :disabled="busy" @click="run(saveProjectDecision)"><Save :size="16" /> Сохранить текущие A/B/C</button>
+      <span class="caption">История решений по точкам</span>
+      <button class="primary-button wide" :disabled="busy" @click="run(saveProjectDecision)"><Save :size="16" /> Сохранить A/B/C по точкам</button>
       <div v-for="decision in workspace.active.decisions" :key="decision.id" class="project-decision">
         <strong>{{ new Date(decision.created_at).toLocaleString('ru-RU') }}</strong>
         <small>Бюджет {{ compactRub(decision.inputs.budget_rub) }} · C {{ compactRub(decision.strategies.C.data_cost_rub) }}</small>

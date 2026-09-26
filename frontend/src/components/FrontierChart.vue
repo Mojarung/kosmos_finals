@@ -9,6 +9,7 @@ import { compactRub, percent } from '../lib/format'
  * а где начинается масштабная закупка.
  */
 const props = defineProps({
+  description: { type: String, default: 'Доля сомнительной площади, которую закрывает лучший набор зон при каждой сумме заказа' },
   frontier: { type: Array, required: true },
   points: { type: Array, required: true },
   budget: { type: Number, required: true },
@@ -37,7 +38,7 @@ const leftLabel = point => point.cost > maxCost.value * 0.85 || (x(point.cost) <
 
 <template>
   <svg class="frontier" :viewBox="`0 0 ${W} ${H}`" role="img"
-    :aria-label="'Доля сомнительной площади, которую закрывает лучший набор зон при каждой сумме заказа'">
+    :aria-label="description">
     <line v-for="share in [0, 0.5, 1]" :key="share" class="grid" :x1="PAD.left" :x2="W - PAD.right" :y1="y(share)" :y2="y(share)" />
     <text v-for="share in [0, 0.5, 1]" :key="'t' + share" class="axis" :x="PAD.left - 5" :y="y(share) + 3" text-anchor="end">{{ percent(share) }}</text>
     <text class="axis" :x="PAD.left" :y="H - 6">0 ₽</text>

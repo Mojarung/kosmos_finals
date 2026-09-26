@@ -2,6 +2,8 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import uuid
+import logging
+import time
 
 from fastapi import HTTPException
 from shapely.geometry import box
@@ -51,15 +53,28 @@ def _work(job_id, info):
         nonlocal covered
         with _LOCK:
             covered += sources.area_m2(box(*bounds))
-            _JOBS[job_id]['progress'] = min(99, round(covered / area * 100))
+            _JOBS[job_id]['progress'] = max(_JOBS[job_id]['progress'], min(99, round(covered / area * 100)))
     with _LOCK:
         _JOBS[job_id]['status'] = 'loading'
         job = dict(_JOBS[job_id])
     try:
-        data = load_source(job['scene_id'], job['source'], progress=progress)
+        deadline = time.monotonic() + sources.OSM_LOAD_SECONDS
+        for attempt in range(1, 4):
+            covered = 0.0
+            with _LOCK:
+                _JOBS[job_id]['attempt'] = attempt
+            try:
+                data = load_source(job['scene_id'], job['source'], progress=progress, deadline=deadline)
+                break
+            except sources.OSMUnavailable:
+                if attempt == 3 or time.monotonic() >= deadline:
+                    raise
+                logging.getLogger(__name__).warning("Building job %s: retrying unfinished tiles, attempt %s", job_id, attempt + 1)
+                time.sleep(attempt * 2)
         identifier = sources.save(data)
         with _LOCK:
             _JOBS[job_id].update(status='ready', progress=100, catalog_id=identifier, count=len(data['features']))
     except Exception as error:
+        logging.getLogger(__name__).exception("Building job %s for scene %s failed", job_id, job["scene_id"])
         with _LOCK:
             _JOBS[job_id].update(status='error', error=str(error) if isinstance(error, ValueError) else 'Не удалось загрузить здания. Повторите загрузку — полученные части сохранены.')

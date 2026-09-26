@@ -198,3 +198,54 @@ def test_rank_does_not_hide_unknown_high_water_building(scene):
     assert .85 <= props['unknown-water']['cost_factor'] <= 1.15
     assert props['unknown-water']['risk_rank'] == 1
     assert props['outside']['risk_rank'] is None
+
+
+def test_building_guarantee_frontier_sensitivity_and_saved_project(scene, monkeypatch, tmp_path):
+    from app import building_plans, projects
+    monkeypatch.setattr(catalog, 'float_map', lambda *_: array('f', [.4, .6]))
+    dataset, evaluation = evaluate([feature()])
+    sensitivity = dataset['features'][0]['properties']['sensitivity']
+    assert len(sensitivity) == 6
+    baseline = dataset['features'][0]['properties']['expected_loss_rub']
+    assert next(r for r in sensitivity if r['input']=='V' and r['factor']==.8)['expected_loss_rub'] == pytest.approx(baseline * .8)
+    assert dataset['features'][0]['properties']['map_error_proxy'] == pytest.approx(.4)
+    scope = building_plans.Scope(**evaluation.model_dump())
+    request = building_plans.PlanRequest(buildings=scope, must_cover='one', budget_rub=0)
+    result = building_plans.calculate(request)
+    assert result['strategies']['C']['mandatory_satisfied'] is False
+    assert result['strategies']['C']['reason']
+    assert all(r['cost_rub'] > 0 for r in result['frontier'])
+    funded = request.model_copy(update={'budget_rub':10000, 'priority':'information'})
+    result = building_plans.calculate(funded)
+    assert result['strategies']['C']['covered_building_ids'] == ['one']
+    assert result['strategies']['C']['mandatory_satisfied']
+    assert result['strategies']['C']['covered_doubt_share'] == pytest.approx(1)
+    monkeypatch.setattr(projects, 'DB', tmp_path / 'projects.sqlite3')
+    monkeypatch.setattr(projects, 'known_scene_ids', lambda: {'fixture'})
+    project = projects.create('Building plan test', 'fixture')
+    saved = projects.save_building_plan(project['id'], funded)
+    assert projects.get(project['id'])['building_plans'][0]['count'] == 1
+    assert projects.list_projects()[0]['building_plan_count'] == 1
+    bundle = projects.building_plan_archive(project['id'], saved['id'])
+    with zipfile.ZipFile(io.BytesIO(bundle)) as archive:
+        plan = json.loads(archive.read('plan.json'))
+        assert plan['inputs']['must_cover'] == 'one'
+        assert len(json.loads(archive.read('buildings/buildings.geojson'))['features']) == 1
+    with pytest.raises(KeyError):
+        projects.building_plan_archive('wrong-project', saved['id'])
+    # Archive is immutable even after a new rate is applied.
+    funded.buildings.rate_overrides = {'house': buildings.Rate(cost_rub_m2=1234, damage_ratio=.5)}
+    assert projects.building_plan_archive(project['id'], saved['id']) == bundle
+    with pytest.raises(ValueError, match='Обязательное'):
+        building_plans.calculate(request.model_copy(update={'must_cover':'missing'}))
+
+
+def test_building_tariff_changes_do_not_mutate_cached_default(scene):
+    from app import building_plans
+    building_plans.prepared.cache_clear()
+    _, evaluation = evaluate([feature()])
+    request = building_plans.PlanRequest(buildings=building_plans.Scope(**evaluation.model_dump()), budget_rub=100000, must_cover='one')
+    base = building_plans.calculate(request)
+    changed = building_plans.calculate(request.model_copy(update={'base_rate_rub_km2':1577.28, 'processing_level':'L2', 'usage_type':'unrestricted'}))
+    assert changed['strategies']['C']['data_cost_rub'] > base['strategies']['C']['data_cost_rub']
+    assert building_plans.calculate(request)['strategies'] == base['strategies']

@@ -88,7 +88,7 @@ def test_background_job_reuses_work_and_reports_progress(tmp_path, monkeypatch):
     monkeypatch.setattr(source, 'CACHE', tmp_path)
     monkeypatch.setattr(building_jobs, '_JOBS', {})
     monkeypatch.setattr(building_jobs.catalog, 'metadata', lambda _: {'bbox':[0,0,.01,.01]})
-    def load(scene, kind, progress=None):
+    def load(scene, kind, progress=None, deadline=None):
         progress([0,0,.01,.01], 1)
         return source.normalize({'type':'FeatureCollection','features':[building('one',[0,0,.001,.001])], 'source':{'name':'fixture'}})
     monkeypatch.setattr(buildings, 'load_source', load)
@@ -113,3 +113,62 @@ def test_building_and_point_area_limits_use_identical_measurement():
             with pytest.raises(ValueError, match='300'):
                 source.validate_area(bounds)
     assert live.MAX_REGION_AREA_KM2 == planning.MAX_REGION_AREA_KM2
+
+
+def test_tiny_osm_building_does_not_discard_region_or_retry_providers(tmp_path, monkeypatch):
+    # One normal house plus a 0.1 m² outline reproduces the Italy load failure.
+    xml = b'''<osm>
+      <node id="1" lon="0" lat="0"/><node id="2" lon="0.0001" lat="0"/>
+      <node id="3" lon="0.0001" lat="0.0001"/><node id="4" lon="0" lat="0.0001"/>
+      <node id="5" lon="0.0002" lat="0"/><node id="6" lon="0.000201" lat="0"/>
+      <node id="7" lon="0.000201" lat="0.000001"/><node id="8" lon="0.0002" lat="0.000001"/>
+      <way id="1"><nd ref="1"/><nd ref="2"/><nd ref="3"/><nd ref="4"/><nd ref="1"/><tag k="building" v="house"/></way>
+      <way id="1511991550"><nd ref="5"/><nd ref="6"/><nd ref="7"/><nd ref="8"/><nd ref="5"/><tag k="building" v="yes"/></way>
+    </osm>'''
+    monkeypatch.setattr(source, 'CACHE', tmp_path)
+    calls = []
+    def download(*args):
+        calls.append(args)
+        return xml
+    monkeypatch.setattr(source, '_download', download)
+    result = source.load_osm([0, 0, .001, .001])
+    assert len(calls) == 1
+    assert [f['id'] for f in result['features']] == ['way/1']
+    assert result['source']['excluded_features'] == [{'id':'way/1511991550', 'reason':'area_out_of_range'}]
+    merged = source._merge_tiles([result, result], [0,0,.001,.001])
+    assert merged['source']['excluded_count'] == 1
+    # User uploads still validate strictly.
+    with pytest.raises(ValueError, match='площадь'):
+        source.normalize({'type':'FeatureCollection','features':[building('tiny',[0,0,.000001,.000001])]})
+
+
+def test_network_outage_does_not_expand_into_recursive_requests(tmp_path, monkeypatch):
+    monkeypatch.setattr(source, 'CACHE', tmp_path)
+    calls = []
+    def unavailable(*args):
+        calls.append(args)
+        raise source.OSMUnavailable('offline')
+    monkeypatch.setattr(source, '_fetch_tile', unavailable)
+    with pytest.raises(source.OSMUnavailable, match='offline'):
+        source.load_osm([0,0,.016,.016])
+    assert len(calls) == 1
+
+
+def test_job_automatically_retries_transient_failure_with_same_deadline(tmp_path, monkeypatch):
+    from app import buildings
+    monkeypatch.setattr(source, 'CACHE', tmp_path)
+    monkeypatch.setattr(building_jobs, '_JOBS', {'retry': {'scene_id':'fixture','source':'osm','status':'queued','progress':0}})
+    monkeypatch.setattr(building_jobs.time, 'sleep', lambda _: None)
+    deadlines = []
+    def load(scene, kind, progress=None, deadline=None):
+        deadlines.append(deadline)
+        if len(deadlines) == 1:
+            progress([0,0,.005,.01], 0)
+            raise source.OSMUnavailable('temporary provider failure')
+        progress([0,0,.01,.01], 1)
+        return source.normalize({'type':'FeatureCollection', 'features':[building('one',[0,0,.001,.001])]})
+    monkeypatch.setattr(buildings, 'load_source', load)
+    building_jobs._work('retry', {'bbox':[0,0,.01,.01]})
+    result = building_jobs.status('retry')
+    assert result['status'] == 'ready' and result['attempt'] == 2 and result['progress'] == 100
+    assert len(deadlines) == 2 and deadlines[0] == deadlines[1]

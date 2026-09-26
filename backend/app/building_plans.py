@@ -34,6 +34,11 @@ class PlanRequest(BaseModel):
     method: Literal["budget", "value"] = "budget"
     visit_cost_rub: float = Field(default=10000, ge=0, le=10000000, allow_inf_nan=False)
     strategy: Literal["A", "B", "C"] = "C"
+    priority: Literal["risk", "information"] = "risk"
+    base_rate_rub_km2: float = Field(default=float(planning.BASE_RATE), ge=0, le=1_000_000, allow_inf_nan=False)
+    processing_level: Literal["default", "L0", "L1", "L2"] = "default"
+    usage_type: Literal["internal", "limited", "unrestricted"] = "internal"
+    must_cover: str | None = Field(default=None, max_length=150)
 
 
 class ImageryRequest(project_imagery.Input):
@@ -81,7 +86,7 @@ def prepared(scope_json: str, on: str, permanent_sha: str):
                        "geometry": feature["geometry"], "footprint_bounds": bounds,
                        "longitude": (bounds[0] + bounds[2]) / 2, "latitude": (bounds[1] + bounds[3]) / 2,
                        "p_flood": p["water_probability_proxy"] if p["status"] == "ok" else None,
-                       "value_rub": p["exposure_rub"], "exposure_rub": p["conditional_damage_rub"],
+                       "doubt_weight": p["area_m2"] * p["radar_coverage"] * (p["map_error_proxy"] or 0), "value_rub": p["exposure_rub"], "exposure_rub": p["conditional_damage_rub"],
                        "expected_loss_rub": p["expected_loss_rub"], "synthetic_cost": p["synthetic_cost"]})
     # Seed spatial groups with high-loss buildings, then uncertainty. All buildings
     # covered by each rectangle participate; the shortlist is not restricted to the top ten.
@@ -108,34 +113,51 @@ catalog.on_refresh(prepared.cache_clear)
 
 def calculate(request: PlanRequest):
     dataset, features, assets, space = inventory(request.buildings)
+    if request.must_cover and request.must_cover not in {a['id'] for a in assets}:
+        raise ValueError("Обязательное здание должно входить в выбранную подборку")
+    if request.must_cover:
+        mandatory = next(a for a in assets if a['id'] == request.must_cover)
+        if not any(planning.contains(z['bounds'], mandatory) for z in space.zones[:-1]):
+            extra = zone('BGMUST', 'Обязательное здание', padded_bounds(mandatory['footprint_bounds']), dataset['observed_at'])
+            space = planning.BasketSpace([*space.zones[:-1], extra, space.zones[-1]], assets, compact=True)
+    if request.processing_level != 'default' or request.usage_type != 'internal':
+        priced_zones = [{**z, 'products': [{**p, 'processing_level': p['processing_level'] if request.processing_level == 'default' else request.processing_level,
+                                          'usage_type': request.usage_type} for p in z['products']]} for z in space.zones]
+        space = planning.BasketSpace(priced_zones, assets, compact=True)
+    tariff = request.base_rate_rub_km2 / float(planning.BASE_RATE)
+    doubt = space.losses_for(np.array([a['doubt_weight'] for a in assets]))
+    total_doubt = sum(a['doubt_weight'] for a in assets)
     values = [asset_information_value(a["p_flood"], a["exposure_rub"], request.visit_cost_rub) for a in assets]
     benefit = space.losses_for(np.array([v["voi_rub"] or 0 for v in values]))
-    prices = space.prices(1, request.deadline_hours)
-    eligible = space.feasible(request.budget_rub, request.deadline_hours, None, 1)
+    prices = space.prices(tariff, request.deadline_hours)
+    eligible = space.feasible(request.budget_rub, request.deadline_hours, request.must_cover, tariff)
     indexes = np.flatnonzero(eligible)
     losses = space.losses_for(None)
-    score = losses if request.method == "budget" else benefit - prices
-    if request.method == "value":
+    score = (losses if request.priority == "risk" else doubt) if request.method == "budget" else benefit - prices
+    if request.method == "value" and not request.must_cover:
         indexes = indexes[score[indexes] > .005]
     order = np.lexsort((space.count[indexes], prices[indexes], -score[indexes]))
     chosen = 0
     for position in order:
         candidate = int(indexes[position])
-        exact = planning.quote(space.orders(candidate, request.deadline_hours))["total_rub"]
-        if exact <= request.budget_rub and (request.method == "budget" or benefit[candidate] > exact):
+        exact = planning.quote(space.orders(candidate, request.deadline_hours), tariff)["total_rub"]
+        if exact <= request.budget_rub and (request.method == "budget" or request.must_cover or benefit[candidate] > exact):
             chosen = candidate
             break
     total_loss = sum(a["expected_loss_rub"] or 0 for a in assets)
     before = sum(v["before_rub"] or 0 for v in values)
 
     def summary(index, strategy):
-        quoted = planning.quote(space.orders(index, request.deadline_hours), strategy=strategy)
+        quoted = planning.quote(space.orders(index, request.deadline_hours), tariff, strategy=strategy)
         timely = (index & space.late(request.deadline_hours)) == 0
         effective = index if timely else 0
         ids = [a["id"] for a, covered in zip(assets, space.covered_assets(effective)) if covered]
         return {"zone_ids": [z["id"] for z in space.selected(index)], "covered_building_ids": ids,
                 "data_cost_rub": quoted["total_rub"], "quote": quoted, "timely": timely,
                 "budget_feasible": quoted["total_rub"] <= request.budget_rub,
+                "mandatory_satisfied": not request.must_cover or request.must_cover in ids,
+                "reason": "Обязательное здание не покрыто: увеличьте бюджет или срок." if strategy == 'C' and request.must_cover and request.must_cover not in ids else None,
+                "covered_doubt_share": min(1.0, float(doubt[effective]) / total_doubt) if total_doubt else 0,
                 "covered_expected_loss_rub": round(float(losses[effective]), 2),
                 "coverage_share": min(1.0, float(losses[effective]) / total_loss) if total_loss else 0,
                 "voi_rub": round(float(benefit[effective]), 2),
@@ -151,15 +173,23 @@ def calculate(request: PlanRequest):
         zones.append({**{key: value for key, value in z.items() if key != "products"},
                       "building_ids": ids, "building_count": len(ids), "product": product,
                       "expected_loss_rub": round(float(losses[1 << k]), 2),
-                      "price_alone_rub": planning.quote([product])["total_rub"]})
-    return {"scene_id": request.buildings.scene_id, "inputs": request.model_dump(), "strategies": strategies, "zones": zones,
+                      "price_alone_rub": planning.quote([product], tariff)["total_rub"]})
+    # Pareto frontier of covered loss for the same candidates, deadline and constraint.
+    frontier, best_loss = [], -1.0
+    eligible_all = np.flatnonzero(space.feasible(1e15, request.deadline_hours, request.must_cover, tariff))
+    for index in sorted(eligible_all, key=lambda i: (prices[i], -losses[i])):
+        if losses[index] > best_loss + .005:
+            cost = planning.quote(space.orders(int(index), request.deadline_hours), tariff)["total_rub"]
+            frontier.append({"cost_rub": cost, "doubt_share": float(losses[index]) / total_loss if total_loss else 0})
+            best_loss = float(losses[index])
+    return {"frontier": frontier, "scene_id": request.buildings.scene_id, "inputs": request.model_dump(), "strategies": strategies, "zones": zones,
             "scope": {"count": len(assets), "estimated": sum(a["p_flood"] is not None for a in assets),
                       "synthetic_cost": sum(a["synthetic_cost"] for a in assets), "total_expected_loss_rub": round(total_loss, 2),
                       "building_ids": [a["id"] for a in assets], "bbox": space.zones[-1]["bounds"]},
             "catalog_id": dataset["catalog_id"], "raster_sha256": dataset["raster_sha256"],
             "source_sha256": dataset["source_sha256"], "rates": dataset["rates"], "source": dataset["source"],
-            "method": {"coverage": "Полный контур внутри хотя бы одной зоны; каждое здание учитывается один раз.",
-                       "search": "Точный перебор корзин из не более 10 пространственных групп зданий и одной общей зоны; не глобальный поиск всех возможных контуров съёмки.",
+            "method": {"uncertainty": "Сомнения: сумма наблюдаемой площади контуров × среднего сигнала ошибки карты. Это прокси по зданиям, не проверенная вероятность ошибки дома.", "coverage": "Полный контур внутри хотя бы одной зоны; каждое здание учитывается один раз.",
+                       "search": "Точный перебор корзин из не более 10 пространственных групп, зоны обязательного здания при необходимости и одной общей зоны; не глобальный поиск всех возможных контуров съёмки.",
                        "price": "Сценарный тариф в RUB, минимум 1 км² на зону. Это не предложение поставщика.",
                        "value": "Сценарная экономия на выездах и пропусках при идеальном новом снимке; p — сигнал модели, не проверенная вероятность затопления дома.",
                        "damage": "Охваченный ущерб — приоритет проверки, не предотвращённые потери. Стоимость обработки показывается отдельно."}}
@@ -217,3 +247,16 @@ def imagery_plan(request: ImageryRequest):
 @router.post("/imagery/export")
 def imagery_export(request: ImageryRequest):
     return buildings.checked(lambda: export_bundle(request.buildings, imagery(request), "skyfi"))
+
+
+@router.post('/projects/{project_id}', status_code=201)
+def save_project_plan(project_id: str, request: PlanRequest):
+    from . import projects
+    return buildings.checked(lambda: projects.save_building_plan(project_id, request))
+
+
+@router.get('/projects/{project_id}/{plan_id}/export')
+def saved_project_export(project_id: str, plan_id: str):
+    from . import projects
+    content = buildings.checked(lambda: projects.building_plan_archive(project_id, plan_id))
+    return Response(content, media_type='application/zip', headers={'Content-Disposition': 'attachment; filename="saved-building-plan.zip"'})

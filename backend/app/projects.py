@@ -41,6 +41,9 @@ def _connect() -> sqlite3.Connection:
         CREATE TABLE IF NOT EXISTS operator_plans (
           id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           created_at TEXT NOT NULL, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS building_plans (
+          id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          created_at TEXT NOT NULL, payload TEXT NOT NULL, archive BLOB NOT NULL);
         CREATE TABLE IF NOT EXISTS imagery_requests (
           id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
           created_at TEXT NOT NULL, payload TEXT NOT NULL);
@@ -75,6 +78,7 @@ def list_projects() -> list[dict]:
           (SELECT count(*) FROM decisions d WHERE d.project_id=p.id) decision_count,
           (SELECT count(*) FROM operator_plans op WHERE op.project_id=p.id) operator_plan_count,
           (SELECT count(*) FROM imagery_requests ir WHERE ir.project_id=p.id) imagery_request_count
+          , (SELECT count(*) FROM building_plans bp WHERE bp.project_id=p.id) building_plan_count
           FROM projects p ORDER BY p.updated_at DESC""")]
 
 
@@ -89,6 +93,8 @@ def get(project_id: str) -> dict:
         operator_plans = [{"id": row["id"], "created_at": row["created_at"], **json.loads(row["payload"])}
                           for row in db.execute("SELECT * FROM operator_plans WHERE project_id=? "
                                                 "ORDER BY created_at DESC LIMIT 50", (project_id,))]
+        building_plans = [{"id": row["id"], "created_at": row["created_at"], **json.loads(row["payload"])}
+                          for row in db.execute("SELECT id, created_at, payload FROM building_plans WHERE project_id=? ORDER BY created_at DESC LIMIT 50", (project_id,))]
         imagery_requests = []
         for row in db.execute("SELECT * FROM imagery_requests WHERE project_id=? ORDER BY created_at DESC LIMIT 50", (project_id,)):
             payload = json.loads(row["payload"])
@@ -98,7 +104,7 @@ def get(project_id: str) -> dict:
                                          "covered_expected_loss_rub", "covered_asset_count", "covered_el_percent",
                                          "selected_ids", "blockers")}})
     return {**project, "assets": assets, "decisions": decisions, "operator_plans": operator_plans,
-            "imagery_requests": imagery_requests}
+            "imagery_requests": imagery_requests, "building_plans": building_plans}
 
 
 def _rows(content: str, fmt: str) -> list[dict]:
@@ -249,3 +255,33 @@ def save_operator_plan(project_id: str, budget_rub: float, deadline_hours: int) 
                    (record["id"], project_id, record["created_at"], json.dumps(plan, ensure_ascii=False)))
         db.execute("UPDATE projects SET updated_at=? WHERE id=?", (_now(), project_id))
     return record
+
+
+def save_building_plan(project_id, request):
+    from . import building_plans
+    with _connect() as db:
+        project = _project(db, project_id)
+        if project['scene_id'] != request.buildings.scene_id:
+            raise ValueError("Проект относится к другому снимку")
+    result = building_plans.calculate(request)
+    archive = building_plans.export_bundle(request.buildings, result, 'scenario').body
+    record = {'id': uuid.uuid4().hex[:12], 'created_at': _now()}
+    payload = {'count': result['scope']['count'], 'expected_loss_rub': result['scope']['total_expected_loss_rub'],
+               'budget_rub': request.budget_rub, 'deadline_hours': request.deadline_hours,
+               'data_cost_rub': result['strategies'][request.strategy]['data_cost_rub'], 'strategy': request.strategy,
+               'covered_count': len(result['strategies'][request.strategy]['covered_building_ids'])}
+    with _connect() as db:
+        _project(db, project_id)
+        db.execute('INSERT INTO building_plans VALUES (?,?,?,?,?)',
+                   (record['id'], project_id, record['created_at'], json.dumps(payload, ensure_ascii=False), archive))
+        db.execute('UPDATE projects SET updated_at=? WHERE id=?', (_now(), project_id))
+    return {**record, **payload}
+
+
+def building_plan_archive(project_id, plan_id):
+    with _connect() as db:
+        _project(db, project_id)
+        row = db.execute('SELECT archive FROM building_plans WHERE id=? AND project_id=?', (plan_id, project_id)).fetchone()
+        if row is None:
+            raise KeyError('Building plan not found')
+        return row['archive']

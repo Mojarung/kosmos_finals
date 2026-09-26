@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, toRaw, watch } from 'vue'
 import { Building2, Download, Upload, MapPin } from '@lucide/vue'
 import { buildings, selectedBuilding, topBuildings, loadBuildings, openBuildingDemo, importBuildings, updateRates, updateBuildingType, exportBuildings, buildingStatus } from '../lib/buildings'
-import { planBuilding } from '../lib/buildingPlans'
+import { buildingPlan, planBuilding, requireBuilding } from '../lib/buildingPlans'
 
 const emit = defineEmits(['building'])
 const fileInput = ref(null)
@@ -88,7 +88,9 @@ async function resetRates() {
     <p v-if="buildings.busy" role="status" class="building-note">{{ buildings.progress === 100 ? 'Считаем стоимость и ущерб…' : buildings.progress == null ? 'Подключаем загрузку зданий…' : `Загружено ${buildings.progress}% области. Собираем контуры зданий…` }}</p>
     <div v-if="buildings.error" role="alert" class="error-note">{{ buildings.error }}<div class="building-actions"><button class="ghost-button" :disabled="buildings.busy" @click="loadBuildings()">Повторить загрузку</button><button class="ghost-button" @click="openBuildingDemo">Пример: Пайпорта</button></div></div>
     <p v-if="data && !data.features.length" class="building-note" role="status">В OSM для этой области не найдено контуров зданий. Можно загрузить свой GeoJSON или перейти к точкам.</p>
+    <p v-if="buildings.busy && buildings.attempt > 1" class="building-note">Повторно запрашиваем недостающие части автоматически. Полученные здания сохранены.</p>
     <template v-if="data">
+      <p v-if="data.source.excluded_count" class="building-note">Загружено {{ data.summary.count }} зданий. Контуров с ошибками или неподходящим размером: {{ data.source.excluded_count }} — исключены из расчёта. Причины доступны в данных и выгрузке.</p>
       <template v-if="!selected">
         <div class="building-title"><Building2 :size="19" /><h2>Здания</h2><span class="building-count">{{ data.summary.count }}</span></div>
         <div class="building-summary" data-testid="building-summary">
@@ -125,7 +127,7 @@ async function resetRates() {
           <div><span>Первый этаж · стоимость</span><strong>{{ money(selected.exposure_rub) }}</strong><small>{{ selected.synthetic_cost ? 'Условная цена' : 'Ставка по типу' }}</small></div>
           <div class="building-value-loss"><span>{{ selected.expected_loss_rub == null ? 'Потери при затоплении' : 'Сценарный ущерб' }}</span><strong>{{ money(amount(selected)) }}</strong><small>{{ selected.expected_loss_rub == null ? 'Без оценки воды по снимку' : 'С учётом сигнала воды' }}</small></div>
         </div>
-        <div class="building-actions"><button class="tonal-button" @click="planBuilding(selected.id)">В план съёмки</button><button class="ghost-button" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button></div>
+        <div class="building-actions"><button class="tonal-button" @click="requireBuilding(selected.id)">{{ buildingPlan.mustCover === selected.id ? 'Убрать обязательное доснятие' : 'Обязательно доснять' }}</button><button class="tonal-button" @click="planBuilding(selected.id)">В план съёмки</button><button class="ghost-button" @click="emit('building', selectedBuilding, true)"><MapPin :size="14" /> Показать на карте</button></div>
         <details class="building-details">
           <summary>Тип и стоимость</summary>
           <label>Назначение здания<select :value="selected.building_type" :disabled="buildings.busy" aria-label="Тип выбранного здания" @change="updateBuildingType(selected.id, $event.target.value)"><option v-for="(rate, key) in data.rates" :key="key" :value="key">{{ rate.label }}</option></select></label>
@@ -154,6 +156,12 @@ async function resetRates() {
           <p v-if="selected.water_fraction === 0 && selected.expected_loss_rub > 0" class="building-note">Маска воды не пересекает здание. Сумма рассчитана по сигналу модели ниже порога маски.</p>
         </details>
         <details class="building-details">
+          <summary>Сомнения и чувствительность ±20%</summary>
+          <p class="building-note">Средний сигнал ошибки карты: {{ percent(selected.map_error_proxy) }}. Расхождение моделей: {{ percent(selected.uncertainty) }}. Это показатели пикселей внутри контура, не проверенная вероятность ошибки для дома.</p>
+          <dl class="building-facts"><div v-for="key in ['p', 'V', 'q']" :key="key"><dt>{{ {p:'Сигнал воды', V:'Стоимость', q:'Повреждение'}[key] }}</dt><dd>{{ money(selected.sensitivity?.find(r => r.input === key && r.factor === .8)?.expected_loss_rub) }} … {{ money(selected.sensitivity?.find(r => r.input === key && r.factor === 1.2)?.expected_loss_rub) }}</dd></div></dl>
+          <p class="building-note">Меняем один вход на −20% и +20%, остальные фиксированы. Без покрытия радаром чувствительность ущерба не оценивается.</p>
+        </details>
+        <details class="building-details">
           <summary>Данные здания</summary>
           <dl class="building-facts">
             <div><dt>ID</dt><dd>{{ selected.id }}</dd></div>
@@ -170,6 +178,7 @@ async function resetRates() {
       <details class="building-details building-settings">
         <summary>Данные и настройки</summary>
         <div class="building-actions"><button class="ghost-button" :disabled="buildings.busy" @click="loadBuildings()">Обновить здания</button><button class="ghost-button" @click="openBuildingDemo">Пример: Пайпорта</button><button class="ghost-button" :disabled="buildings.busy" @click="fileInput.click()"><Upload :size="13" /> GeoJSON</button></div>
+        <details v-if="data.source.excluded_count" class="building-details"><summary>Исключённые контуры · {{ data.source.excluded_count }}</summary><p v-for="row in data.source.excluded_features" :key="row.id" class="building-note">{{ row.id }}: {{ {area_out_of_range:'площадь вне диапазона 1–2 000 000 м²',invalid_geometry:'некорректная геометрия',unsupported_coordinates:'неподдерживаемые координаты',incomplete_relation:'неполный состав контура',incomplete_geometry:'незамкнутый или неполный контур'}[row.reason] || row.reason }}</p></details>
         <p class="building-note">{{ data.source.name }} · {{ (data.source.retrieved_at || data.source.retrieved_date || '').slice(0, 10) }}. Снимок: {{ data.observed_at.slice(0, 10) }}.</p>
         <p class="building-note">{{ data.summary.estimated }} зданий в сумме по снимку; {{ data.summary.unestimated }} исключено из неё из-за покрытия радаром или пересечения контуров. Условные цены: {{ data.summary.synthetic_cost || 0 }}.</p>
         <p v-if="!data.permanent_separated" class="building-note">Постоянная вода не отделена от паводковой.</p>
