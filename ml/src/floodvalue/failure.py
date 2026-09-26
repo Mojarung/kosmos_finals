@@ -25,6 +25,12 @@ SHORE_PX = 3
 EIGHT = np.ones((3, 3), dtype=bool)
 SHIFT_MAX_PX = 16
 SHIFT_STEP_PX = 2
+# Median and range over the reference chips with water, for the numbers the report compares.
+REFERENCE_SPREAD = {"doubt": ("doubtful_share_of_valid_s1", "missed_water_doubtful_share"),
+                    "fragments": ("share_within_3px_of_land",),
+                    "texture": ("water_local_std_median", "dry_darker_than_-26_share"),
+                    "separability": ("auc_vh", "auc_p"),
+                    "missed": ("member_std_mean", "p_median")}
 
 
 def _ratio(numerator: float, denominator: float) -> float | None:
@@ -278,7 +284,7 @@ def run_failure(chip_name: str, reference_part: str, out_dir: Path) -> dict:
         "target": results[chip_name],
         "reference_chips": reference_names,
         "reference_recall_by_vh": pooled_recall_by_vh(reference),
-        "reference_doubt": spread_of(reference, "doubt", ("doubtful_share_of_valid_s1", "missed_water_doubtful_share")),
+        "reference_spread": {block: spread_of(reference, block, keys) for block, keys in REFERENCE_SPREAD.items()},
         "reference_per_chip": {name: {key: results[name][key] for key in (
             "water_pixels", "vh_water_median", "vv_minus_vh_water_median", "fragments", "missed", "found", "texture",
             "separability", "doubt")}

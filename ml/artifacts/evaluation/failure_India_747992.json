@@ -870,18 +870,70 @@
       "baseline_recall": 0.0
     }
   ],
-  "reference_doubt": {
-    "doubtful_share_of_valid_s1": {
-      "chips": 30,
-      "median": 0.043,
-      "min": 0.001,
-      "max": 0.406
+  "reference_spread": {
+    "doubt": {
+      "doubtful_share_of_valid_s1": {
+        "chips": 30,
+        "median": 0.043,
+        "min": 0.001,
+        "max": 0.406
+      },
+      "missed_water_doubtful_share": {
+        "chips": 30,
+        "median": 0.622,
+        "min": 0.081,
+        "max": 0.964
+      }
     },
-    "missed_water_doubtful_share": {
-      "chips": 30,
-      "median": 0.622,
-      "min": 0.081,
-      "max": 0.964
+    "fragments": {
+      "share_within_3px_of_land": {
+        "chips": 30,
+        "median": 0.649,
+        "min": 0.123,
+        "max": 0.998
+      }
+    },
+    "texture": {
+      "water_local_std_median": {
+        "chips": 30,
+        "median": 2.98,
+        "min": 2.05,
+        "max": 4.93
+      },
+      "dry_darker_than_-26_share": {
+        "chips": 30,
+        "median": 0.002,
+        "min": 0.0,
+        "max": 0.078
+      }
+    },
+    "separability": {
+      "auc_vh": {
+        "chips": 30,
+        "median": 0.899,
+        "min": 0.532,
+        "max": 0.993
+      },
+      "auc_p": {
+        "chips": 30,
+        "median": 0.974,
+        "min": 0.728,
+        "max": 1.0
+      }
+    },
+    "missed": {
+      "member_std_mean": {
+        "chips": 30,
+        "median": 0.095,
+        "min": 0.018,
+        "max": 0.249
+      },
+      "p_median": {
+        "chips": 30,
+        "median": 0.139,
+        "min": 0.007,
+        "max": 0.304
+      }
     }
   },
   "reference_per_chip": {
