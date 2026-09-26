@@ -60,7 +60,9 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
 
     inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
-    assert abs(broad["area_km2"] - inside["region"]["area_km2"]) < 0.001
+    # B is the declared broad rule of the fixed-chip experiment: the whole chip, whatever the region.
+    assert abs(broad["area_km2"] - inside["chip"]["area_km2"]) < 0.001
+    assert inside["region"]["area_km2"] < inside["chip"]["area_km2"]
 
 
 def test_frozen_model_metrics_and_case_export():
