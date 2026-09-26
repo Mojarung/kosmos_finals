@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 
 from .analysis import context
 from .catalog import metadata, scene_dir
-from .planning import BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, USAGE_COEF, as_polygon, enrich_assets
+from .planning import (BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, SUITABILITY_RULE, USAGE_COEF,
+                       as_polygon)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
 from .zoning import DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE
@@ -126,13 +127,13 @@ def package(result: dict) -> io.BytesIO:
         archive.writestr("asset_loss.csv", _csv(
             ["asset_id", "chip_id", "p_flood", "expected_loss_rub", "uncertainty", "rank", "in_region", "status",
              "p_window3", "permanent_water_at_point", "flood_expected_loss_rub", "ensemble_spread",
-             "exposure_rub"],
+             "exposure_rub", "map_doubtful"],
             [[asset["id"], scene_id, _blank(asset["p_flood"]), _blank(asset["expected_loss_rub"]),
               _blank(asset["map_error_probability"]), region_rank.get(asset["id"], ""),
               str(asset["id"] in region_ids).lower(), asset["loss_status"], _blank(asset.get("p_window3")),
               _blank(asset.get("permanent_water_at_point")), _blank(asset["flood_expected_loss_rub"]),
               _blank(asset["uncertainty"]),
-              asset["exposure_rub"]]
+              asset["exposure_rub"], _blank(asset["map_doubtful"])]
              for asset in all_assets]))
         asset_rows = result["sensitivity"]["asset"]
         replans = asset_plan_sensitivity(ctx.space, asset_rows, inputs["budget_rub"], inputs["priority"],
@@ -276,6 +277,9 @@ def package(result: dict) -> io.BytesIO:
             "residual_uncertainty_rule": ("A: mean map error chance over valid pixels of the analysed region (share 0-1, "
                                           "status baseline); B and C: empty with status not_estimated, because no new "
                                           "image has been received"),
+            "priority_rule": ("rank by expected_loss_rub; map_doubtful=true flags assets whose map error chance at the "
+                              "point is >= doubt_threshold, they need a look whatever their rank; no_data assets are "
+                              "listed with their exposure as unestimated risk"),
             "counterfactual_rule": "B above the budget has strategy_status=counterfactual_over_budget and is shown for comparison only",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
             "uncertainty_rule": ("asset_loss.uncertainty is the map error chance at the asset pixel: 1 - p where "
@@ -294,7 +298,8 @@ def package(result: dict) -> io.BytesIO:
                         "discount_group_id": strategies["C"]["quote"]["discount_group_id"],
                         "discount_group_rule": strategies["C"]["quote"]["discount_group_rule"],
                         "previous_group_area_km2": 0,
-                        "availability_status": "scenario_6_hours"},
+                        "availability_status": "scenario_6_hours",
+                        "suitability_rule": SUITABILITY_RULE},
             "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else row
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],

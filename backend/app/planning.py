@@ -9,6 +9,8 @@ from math import cos, log, pi
 import numpy as np
 from pyproj import Transformer
 
+from .zoning import DOUBT_THRESHOLD
+
 
 BASE_RATE = Decimal("788.64")  # Scenario from the case materials, not an official quote.
 # PP RF 840 coefficients of the scenario product: L2 processing, internal use, new acquisition.
@@ -66,6 +68,15 @@ def discount_group_id(year: int | None = None) -> str:
     return f"optical_{RESOLUTION_M}m_{year or datetime.now(timezone.utc).year}"
 
 
+# Optical 1 m sees water only through a clear sky, and a flood usually comes with cloud.
+# The service cannot see the cloud forecast for the tasking window, so every zone is
+# assumed usable by the deadline; this is a scenario, like the 6 h delivery.
+SUITABILITY_RULE = ("optical 1 m needs a cloud-free pass; cloud cover over the zone at the tasking time is not "
+                    "checked, so every zone is assumed usable by the deadline (suitability_status=scenario_usable) "
+                    "and covered EL is an upper bound; before a real order check the cloud forecast, and use radar "
+                    "(P_sar discount of PP 840) where the sky is closed")
+
+
 def _zone(zone_id: str, name: str, kind: str, bounds: list[float], **extra) -> dict:
     return {
         "id": zone_id, "name": name, "kind": kind, "bounds": bounds, "geometry": as_polygon(bounds),
@@ -75,7 +86,8 @@ def _zone(zone_id: str, name: str, kind: str, bounds: list[float], **extra) -> d
         "processing_level": "L2", "usage_type": "internal", "guaranteed_purchase": True,
         "base_rate_status": "scenario", "base_rate_source": "case_materials_control_example",
         "base_rate_rub_km2": float(BASE_RATE), "observation_at": None,
-        "available_at": None, "legal_edition": LEGAL_EDITION, **extra,
+        "available_at": None, "legal_edition": LEGAL_EDITION,
+        "suitability_status": "scenario_usable", "cloud_check": "not_checked", **extra,
     }
 
 
@@ -152,6 +164,8 @@ def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
             "expected_loss_rub": loss, "flood_expected_loss_rub": flood_loss, "loss_status": status,
             "exposure_rub": round(asset["value_rub"] * asset["vulnerability"], 2),
             "map_error_probability": map_error_probability(p, threshold),
+            # Rank follows EL; a doubtful point needs a look whatever its rank.
+            "map_doubtful": None if p is None else map_error_probability(p, threshold) >= DOUBT_THRESHOLD,
             "probability_status": "frozen_ensemble",
         })
     return sorted(result, key=lambda asset: (-(asset["expected_loss_rub"] or 0), asset["id"]))
@@ -308,12 +322,13 @@ class BasketSpace:
                 row.update(selected=False, price_with_rub=round(float(prices[grown]), 2),
                            gain_loss_rub=gain_loss,
                            gain_doubt_share=round(gain_doubt / self.doubt_total, 4) if self.doubt_total else None)
+                # A zone that adds nothing to the goal is out for that reason, whatever it costs.
                 if index is None:
                     row["reason"] = "plan_infeasible"
-                elif prices[grown] > budget + 0.005:
-                    row["reason"] = "over_budget"
                 elif gain <= 1e-9:
                     row["reason"] = "nothing_new"
+                elif prices[grown] > budget + 0.005:
+                    row["reason"] = "over_budget"
                 else:
                     row["reason"] = "cheaper_equal"
             rows.append(row)

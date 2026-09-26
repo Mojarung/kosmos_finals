@@ -446,6 +446,7 @@ html.map-moving .panel {
 .asset-meta { display: flex; align-items: center; gap: 8px; }
 .asset-meta small { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
 .asset-meta small.warn { color: var(--warn); }
+.asset-meta small.doubt { color: var(--uncertain); }
 .meter { position: relative; flex: 1; max-width: 120px; height: 4px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
 .meter span { position: absolute; inset: 0; border-radius: inherit; background: var(--risk); transform-origin: left; transition: transform 0.7s var(--ease-spring); }
 .meter.coverage span { background: var(--reference); }

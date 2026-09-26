@@ -53,6 +53,7 @@ def test_plan_is_exact_best_basket_and_explains_every_zone():
             assert row["price_with_rub"] > 6500
         if row["reason"] == "nothing_new":
             assert row["gain_loss_rub"] == 0
+    assert all(zone["suitability_status"] == "scenario_usable" for zone in result["zones"])
 
 
 def test_uncertainty_zones_are_orderable_and_cover_doubt_cheaper_than_broad():

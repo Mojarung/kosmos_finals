@@ -27,7 +27,7 @@ function rankRange({ low, high }) {
 }
 function status(asset) {
   if (asset.p_flood == null) return 'нет данных'
-  return (asset.permanent_water_at_point ? 'река, ' : 'вода ') + percent(asset.p_flood)
+  return (asset.permanent_water_at_point ? 'река, ' : 'вода ') + percent(asset.p_flood) + (asset.map_doubtful ? ' · карта сомневается' : '')
 }
 
 function select(asset) {
@@ -61,7 +61,8 @@ function select(asset) {
           <strong>{{ asset.name }}</strong>
           <span class="asset-meta">
             <span class="meter"><span :style="{ transform: `scaleX(${(asset.expected_loss_rub || 0) / maxLoss})` }"></span></span>
-            <small class="tabular" :class="{ muted: asset.loss_status !== 'ok' }">{{ status(asset) }}</small>
+            <small class="tabular" :class="{ muted: asset.loss_status !== 'ok', doubt: asset.map_doubtful }"
+              v-tip="asset.map_doubtful ? `Шанс ошибки карты в точке ${percent(asset.map_error_probability)}: объект стоит проверить, даже если ущерб небольшой` : null">{{ status(asset) }}</small>
           </span>
         </span>
         <strong class="tabular">{{ compactRub(asset.expected_loss_rub) }}</strong>
