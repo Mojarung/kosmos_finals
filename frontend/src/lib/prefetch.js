@@ -5,6 +5,7 @@
  * только трафик, поэтому окна маленькие, а при экономии трафика не качаем.
  */
 const fetched = new Set()
+const inFlight = new Map()
 const BATCH = 6
 
 function lonLatToTile(lon, lat, z) {
@@ -43,7 +44,7 @@ function urls(map, tilesFor) {
     for (const [z, x, y] of tilesFor(source.offset, source.tileSize)) {
       if (z < source.minzoom || z > source.maxzoom) continue
       const url = source.template.replace('{z}', z).replace('{x}', x).replace('{y}', y)
-      if (!fetched.has(url)) out.push(url)
+      if (!fetched.has(url) || inFlight.has(url)) out.push(url)
     }
   }
   return out
@@ -58,12 +59,16 @@ async function download(list) {
   for (let i = 0; i < list.length; i += BATCH) {
     await idle()
     await Promise.all(list.slice(i, i + BATCH).map(url => {
+      if (inFlight.has(url)) return inFlight.get(url)
+      if (fetched.has(url)) return
       fetched.add(url)
       // Тело читаем до конца: недочитанный крупный ответ браузер может не сохранить в кэш.
-      return fetch(url, { priority: 'low' }).then(response => {
+      const request = fetch(url, { priority: 'low' }).then(response => {
         if (!response.ok) throw new Error(`Tile ${response.status}`)
         return response.arrayBuffer()
-      }).catch(() => fetched.delete(url))
+      }).catch(() => fetched.delete(url)).finally(() => inFlight.delete(url))
+      inFlight.set(url, request)
+      return request
     }))
   }
 }
@@ -98,7 +103,7 @@ function glyphUrls(map) {
   for (const stack of stacks) {
     for (const range of ['0-255', '256-511', '1024-1279']) {
       const url = style.glyphs.replace('{fontstack}', encodeURIComponent(stack)).replace('{range}', range)
-      if (!fetched.has(url)) out.push(url)
+      if (!fetched.has(url) || inFlight.has(url)) out.push(url)
     }
   }
   return out

@@ -146,8 +146,6 @@ function buildOverlays() {
     paint: { 'circle-radius': 14, 'circle-color': c.chip, 'circle-opacity': 0.22 } }, before)
   map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
     paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
-  map.addLayer({ id: 'journey-line', type: 'line', source: 'journey', filter: ['==', ['geometry-type'], 'LineString'],
-    paint: { 'line-color': c.chip, 'line-width': 2.5, 'line-opacity': 0.85, 'line-dasharray': [2, 1.5] } }, before)
   map.addLayer({ id: 'journey-points', type: 'circle', source: 'journey', filter: ['==', ['geometry-type'], 'Point'],
     paint: { 'circle-radius': ['case', ['==', ['get', 'end'], 1], 8, 5], 'circle-color': c.chip,
       'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } }, before)
@@ -330,30 +328,34 @@ function sceneCenter(scene) {
   const [w, s, e, n] = scene.bbox
   return [(w + e) / 2, (s + n) / 2]
 }
-function travelZoom(from, to) {
-  const longitude = Math.abs(from[0] - to[0])
-  return Math.min(longitude, 360 - longitude) < 16 && Math.abs(from[1] - to[1]) < 12 ? 4.1 : 1.8
-}
 function journeyFeatures(from, to) {
-  const points = []
-  for (let i = 0; i <= 32; i++) {
-    const t = i / 32
-    points.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t])
-  }
   return collection([
-    { type: 'Feature', geometry: { type: 'LineString', coordinates: points }, properties: {} },
     { type: 'Feature', geometry: { type: 'Point', coordinates: from }, properties: { end: 0 } },
     { type: 'Feature', geometry: { type: 'Point', coordinates: to }, properties: { end: 1 } },
   ])
 }
-async function moveCamera(center, zoom, duration) {
+async function moveCamera(center, zoom, duration, easing = t => t) {
   if (reducedMotion()) { map.jumpTo({ center, zoom, pitch: 0, bearing: 0 }); return }
   await new Promise(resolve => {
     const timer = setTimeout(done, duration + 300)
     function done() { clearTimeout(timer); map.off('moveend', done); resolve() }
     map.once('moveend', done)
-    map.easeTo({ center, zoom, pitch: 0, bearing: 0, duration, essential: false })
+    map.easeTo({ center, zoom, pitch: 0, bearing: 0, duration, easing, essential: false })
   })
+}
+async function orbitGlobe(from, to, zoom, token) {
+  if (reducedMotion()) return moveCamera(to, zoom, 0)
+  // MapLibre выбирает кратчайшую дугу между центрами. Промежуточные точки
+  // меньше 90° заставляют глобус пройти через дальнюю сторону даже для
+  // соседних стран, сохраняя непрерывное направление вращения.
+  const shortArc = ((to[0] - from[0] + 540) % 360) - 180
+  const longArc = shortArc >= 0 ? shortArc - 360 : shortArc + 360
+  const steps = Math.ceil(Math.abs(longArc) / 65)
+  for (let step = 1; step <= steps && token === flight; step++) {
+    const progress = step / steps
+    const center = [from[0] + longArc * progress, from[1] + (to[1] - from[1]) * progress]
+    await moveCamera(center, zoom, 2300 / steps, step === steps ? t => t * (2 - t) : t => t)
+  }
 }
 async function sceneFrameReady(token, limit = 8000) {
   const deadline = performance.now() + limit
@@ -459,12 +461,13 @@ async function flyToScene(id) {
   const origin = state.analysis.scenes.find(scene => scene.chip_id === originId) || state.analysis.chip
   const from = sceneCenter(origin)
   const to = sceneCenter(target)
-  const zoom = travelZoom(from, to)
+  const zoom = 1.8
   const [w, s, e, n] = target.bbox
   const camera = map.cameraForBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2 })
   const analysisReady = analysisFor(id)
   preloadScene(map, target, camera?.zoom ?? 13).catch(error => console.warn('Scene preload:', error))
-  preloadJourney(map, from, to, zoom).catch(error => console.warn('Journey preload:', error))
+  const globeReady = preloadJourney(map, from, to, zoom)
+    .catch(error => console.warn('Journey preload:', error))
 
   phase = 'out'
   journey.value = { from: origin.event, to: target.event, stage: 'depart' }
@@ -475,11 +478,16 @@ async function flyToScene(id) {
   map.stop()
   setData('journey', journeyFeatures(from, to))
   map.jumpTo({ center: from, zoom, pitch: 0, bearing: 0 })
-  const routeReady = await tilesReady(1800)
+  await globeReady
+  // Прогреты тайлы всего глобуса; остальные источники могут ещё догружать
+  // старый снимок и не должны скрывать сам облёт.
+  await tilesReady(1800)
   if (token !== flight) return
   journey.value.stage = 'travel'
-  if (routeReady) veiled.value = false
-  await moveCamera(to, zoom, 900)
+  veiled.value = false
+  if (!reducedMotion()) await wait(200)
+  if (token !== flight) return
+  await orbitGlobe(from, to, zoom, token)
   if (token !== flight) return
   journey.value.stage = 'arrive'
   if (!await analysisReady) {
