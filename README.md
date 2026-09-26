@@ -6,7 +6,7 @@
 
 Репозиторий сдачи: [GitVerse](https://gitverse.ru/hackrus.experts/kosmo-moskva_misis_zhomarung_cr7mentality_21), ветка `master`, веса в Git LFS там же. Рабочая копия команды: [GitHub](https://github.com/Mojarung/kosmos_finals), ветка `main`. Какая версия кода собрана, видно в каждой выгрузке: `run_metadata.json/code_commit`; `gitverse_commit` там заполняется, только если удалённая ветка GitVerse содержит этот commit.
 
-**[Путеводитель для жюри](docs/00-jury-guide.md)**: по каждому из 20 критериев что сделано и где это проверить (файл, команда, экран). [Путь оператора по пункту 19](docs/19-operator-flow.md) описывает импорт, SkyFi и черновик заявки. [Путь по ролям](docs/20-user-roles.md) показывает, как одним экраном пользуются дежурный МЧС, заказчик съёмки, страховщик, региональный штаб и эксперт ДЗЗ. [Карта документов](docs/README.md) ведёт к постановке, подробному разбору и рабочим обзорам команды, [план пилота](docs/11-pilot.md) описывает проверку на реальном операторе.
+**[Путеводитель для жюри](docs/00-jury-guide.md)**: по каждому из 20 критериев что сделано и где это проверить (файл, команда, экран). [Путь оператора по пункту 19](docs/19-operator-flow.md) описывает импорт, SkyFi и черновик заявки. [Путь по ролям](docs/20-user-roles.md) показывает, как одним экраном пользуются дежурный аналитик оператора или МЧС, заказчик съёмки, страховщик, оператор ДЗЗ, региональный штаб и эксперт по качеству. [Карта документов](docs/README.md) ведёт к постановке, подробному разбору и рабочим обзорам команды, [план пилота](docs/11-pilot.md) описывает проверку на реальном операторе.
 
 ## Запуск
 
@@ -20,6 +20,8 @@
 uv run scripts/fetch_context_weights.py
 # если архив уже скачан: uv run scripts/fetch_context_weights.py --zip context_model_weights.zip
 ```
+
+Если Git LFS недоступен, пакет next_optical (234 МБ, те же файлы, что в `ml/artifacts/next_optical`) тоже лежит одним архивом на [Google Drive](https://drive.google.com/file/d/1vb37LBhdCjupBtDoaJFoI3Y7osDJ-UnL/view): `uv run scripts/fetch_context_weights.py --next-optical` сверяет каждый файл с его `SHA256SUMS.txt` и ставит пакет, только если рецепт совпадает с рецептом репозитория. Видео и другие материалы команды: [папка на Google Drive](https://drive.google.com/drive/folders/14OCZ3PZCMQ6m2yPuagXR_riF9-x_--R8?usp=drive_link).
 
 Скрипт сверяет sha256 каждого файла с `ml/artifacts/context_model/recipe.json` и кладёт веса в `ml/artifacts/context_model`; в копии GitVerse этот путь в `.gitignore`, так что checkout остаётся чистым. Без весов сервис тоже запускается, только рамка на карте считается S1 fallback.
 

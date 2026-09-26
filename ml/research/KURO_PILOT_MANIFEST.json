@@ -1,0 +1,4175 @@
+{
+  "revision": "e8e61b7b1254b04bfa2b5e26d43db90cb86b5004",
+  "license": "CC-BY-4.0",
+  "selection": "fixed 0, 1/3, 2/3 offsets, 8 MiB each, all five train GRD shards",
+  "admission_rule": "flood date >=2020-01-01 and no overlap with any Sen1Floods11 chip buffered by 0.02 degrees",
+  "interpretation": "retrospective transfer training pool, not historically available training data for the earlier target events",
+  "trained": false,
+  "sampled": 60,
+  "admitted": 20,
+  "admitted_events": {
+    "470": 4,
+    "555": 4,
+    "1111009": 12
+  },
+  "download_bytes": 125829120,
+  "range_sha256": {
+    "shard-00000_0.bin": "8ff18a0ab985da820560ebf4261601261f4e5e810aeb4904b5accb9da28ca867",
+    "shard-00000_3635526656.bin": "30f8463b9552051915b07ae77e4ddd035d5afc6c3d2084112d0eb4e88ffb93be",
+    "shard-00000_7271053824.bin": "50ab631254fb55ad3db58001d70d9e565dcc51fc5ab6a69b50e9e3086eaf9cf9",
+    "shard-00001_0.bin": "3bc8dfbe552dcd89668f0a448a6770d4ffdda53c6d86a6e0e901810b5b0825f1",
+    "shard-00001_3635516416.bin": "d22362a093e8fb6664c55f6948a5d6b0405fbed146b573318f4b874f98b76750",
+    "shard-00001_7271033344.bin": "e26887e8f33321b11f1f93105a5b644611341ac80e300bd37c4af5f017ba4727",
+    "shard-00002_0.bin": "cafc32c64d56e0aa9d6413b8b1f0782b5aaf8d5a135d869b26f99c01d48f6ddc",
+    "shard-00002_3635503104.bin": "42fb189a5606a3561da425460e2f6e2f14408dbd1a23c8d20d127a7830ef9f89",
+    "shard-00002_7271006208.bin": "488d1ce421488253af9b2464bf5e27706c02cf35f04e5b14c87ee5cbe680ef65",
+    "shard-00003_0.bin": "c84ab3eb3b1c22b4f8b5e0a69de854ab9ee2c9e5dedb44eb32704b95ee110d7e",
+    "shard-00003_3635503104.bin": "3de418ae0e55b760ec4ce6671b633a2f767950af1a25037f6e40596202d0a6dc",
+    "shard-00003_7271006208.bin": "7b195560bc64c7f3bd408c191188f78a4bd508363fd92d91c8456836efc7eaf9",
+    "shard-00004_0.bin": "d909fb9070ce0a4287a96fb13c936376bc2aa119b0355fbebd453dbf516e3592",
+    "shard-00004_1032296960.bin": "9fc88be03d465b4fdba273134a0a2b67873838e22f7e74c98ee08cefb6222e0b",
+    "shard-00004_2064593920.bin": "581f9747af35f0602270dfb8659f2d31f97def28a6171fdf706cc317445ccf94"
+  },
+  "rows": [
+    {
+      "id": "97c1b960-51af-56e0-942a-a7abc9d7ecec",
+      "event": 470,
+      "flood_date": "2020-10-05 18:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 0,
+      "sample_key": "000000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.2911888993473428,
+              9.724000469095628
+            ],
+            [
+              0.2911888993473428,
+              9.743833042363521
+            ],
+            [
+              0.31131116171162015,
+              9.743833042363521
+            ],
+            [
+              0.31131116171162015,
+              9.724000469095628
+            ],
+            [
+              0.2911888993473428,
+              9.724000469095628
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2020-05-11",
+          "s1_ids": [
+            "d2c08caf-d00e-5dd7-b57a-cedfd8c46084"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2020-04-29",
+          "s1_ids": [
+            "906c4af3-4688-53ee-a8f3-d35315fc0a54"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2020-10-14",
+          "s1_ids": [
+            "11d72c4d-489c-5236-b7e8-b69241204904"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 879
+    },
+    {
+      "id": "9a4a7264-0018-5e9c-ad40-8d209119e8c0",
+      "event": 470,
+      "flood_date": "2020-10-05 18:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 0,
+      "sample_key": "000001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.7741231960899976,
+              10.654819895087774
+            ],
+            [
+              0.7741231960899976,
+              10.674594585028004
+            ],
+            [
+              0.7942454584542749,
+              10.674594585028004
+            ],
+            [
+              0.7942454584542749,
+              10.654819895087774
+            ],
+            [
+              0.7741231960899976,
+              10.654819895087774
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2020-05-11",
+          "s1_ids": [
+            "e89e4d6d-6ce9-54cb-a47e-df6e768dad37"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2020-04-29",
+          "s1_ids": [
+            "a8936916-1b4b-5132-9e2d-08acd2ceeb20"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2020-10-14",
+          "s1_ids": [
+            "e1898ab0-36c9-5e25-8252-0d85946d350c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 21870
+    },
+    {
+      "id": "9a5038c2-07f9-50f7-8774-133bbffa23e2",
+      "event": 470,
+      "flood_date": "2020-10-05 18:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 0,
+      "sample_key": "000002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.3515556864401747,
+              9.664495699689
+            ],
+            [
+              0.3515556864401747,
+              9.684331795450998
+            ],
+            [
+              0.371677948804452,
+              9.684331795450998
+            ],
+            [
+              0.371677948804452,
+              9.664495699689
+            ],
+            [
+              0.3515556864401747,
+              9.664495699689
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2020-05-11",
+          "s1_ids": [
+            "d2c08caf-d00e-5dd7-b57a-cedfd8c46084"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2020-04-29",
+          "s1_ids": [
+            "906c4af3-4688-53ee-a8f3-d35315fc0a54"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2020-10-14",
+          "s1_ids": [
+            "11d72c4d-489c-5236-b7e8-b69241204904"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 22194
+    },
+    {
+      "id": "9be9ab66-a7fd-5153-96af-0bc0a3bac929",
+      "event": 470,
+      "flood_date": "2020-10-05 18:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 0,
+      "sample_key": "000003",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0.4722892606258383,
+              10.39763290171644
+            ],
+            [
+              0.4722892606258383,
+              10.41742410733608
+            ],
+            [
+              0.49241152299011565,
+              10.41742410733608
+            ],
+            [
+              0.49241152299011565,
+              10.39763290171644
+            ],
+            [
+              0.4722892606258383,
+              10.39763290171644
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2020-05-11",
+          "s1_ids": [
+            "e89e4d6d-6ce9-54cb-a47e-df6e768dad37"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2020-04-29",
+          "s1_ids": [
+            "a8936916-1b4b-5132-9e2d-08acd2ceeb20"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2020-10-14",
+          "s1_ids": [
+            "e1898ab0-36c9-5e25-8252-0d85946d350c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 58
+    },
+    {
+      "id": "4ae0a677-c54f-5834-abb2-2bb21960ff4f",
+      "event": 555,
+      "flood_date": "2021-12-10 11:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 3635526656,
+      "sample_key": "001999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.8306318017429666,
+              42.69957287807126
+            ],
+            [
+              -1.8306318017429666,
+              42.71435936303256
+            ],
+            [
+              -1.8105095393786892,
+              42.71435936303256
+            ],
+            [
+              -1.8105095393786892,
+              42.69957287807126
+            ],
+            [
+              -1.8306318017429666,
+              42.69957287807126
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2021-08-30",
+          "s1_ids": [
+            "edf1d819-3e7d-5422-a7a0-aff342272378"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2021-08-18",
+          "s1_ids": [
+            "4617a7ff-d74a-514b-bd0d-3eb3b4df0b8c"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2021-12-10",
+          "s1_ids": [
+            "7616e81b-4545-5d38-a4fb-cb091d059b7d"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 302
+    },
+    {
+      "id": "4b2e88c2-c242-5a69-aa55-3440e7cd6e00",
+      "event": 555,
+      "flood_date": "2021-12-10 11:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 3635526656,
+      "sample_key": "002000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.0117321630214624,
+              42.343640964827046
+            ],
+            [
+              -2.0117321630214624,
+              42.35851193722718
+            ],
+            [
+              -1.991609900657185,
+              42.35851193722718
+            ],
+            [
+              -1.991609900657185,
+              42.343640964827046
+            ],
+            [
+              -2.0117321630214624,
+              42.343640964827046
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2021-08-30",
+          "s1_ids": [
+            "edf1d819-3e7d-5422-a7a0-aff342272378"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2021-08-18",
+          "s1_ids": [
+            "4617a7ff-d74a-514b-bd0d-3eb3b4df0b8c"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2021-12-10",
+          "s1_ids": [
+            "7616e81b-4545-5d38-a4fb-cb091d059b7d"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 1717
+    },
+    {
+      "id": "4b922f8c-fd27-5779-a9f4-d0a320384ba1",
+      "event": 555,
+      "flood_date": "2021-12-10 11:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 3635526656,
+      "sample_key": "002001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -1.5489201286430847,
+              42.35851193722718
+            ],
+            [
+              -1.5489201286430847,
+              42.37337939117063
+            ],
+            [
+              -1.5287978662788075,
+              42.37337939117063
+            ],
+            [
+              -1.5287978662788075,
+              42.35851193722718
+            ],
+            [
+              -1.5489201286430847,
+              42.35851193722718
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2021-08-30",
+          "s1_ids": [
+            "edf1d819-3e7d-5422-a7a0-aff342272378"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2021-08-18",
+          "s1_ids": [
+            "4617a7ff-d74a-514b-bd0d-3eb3b4df0b8c"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2021-12-10",
+          "s1_ids": [
+            "7616e81b-4545-5d38-a4fb-cb091d059b7d"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 2368
+    },
+    {
+      "id": "4b941b87-f2dc-5682-91d0-6cb534019ea5",
+      "event": 555,
+      "flood_date": "2021-12-10 11:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 3635526656,
+      "sample_key": "002002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -2.1525879995714035,
+              42.64039171889357
+            ],
+            [
+              -2.1525879995714035,
+              42.65519229129232
+            ],
+            [
+              -2.132465737207126,
+              42.65519229129232
+            ],
+            [
+              -2.132465737207126,
+              42.64039171889357
+            ],
+            [
+              -2.1525879995714035,
+              42.64039171889357
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2021-08-30",
+          "s1_ids": [
+            "edf1d819-3e7d-5422-a7a0-aff342272378"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2021-08-18",
+          "s1_ids": [
+            "4617a7ff-d74a-514b-bd0d-3eb3b4df0b8c"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2021-12-10",
+          "s1_ids": [
+            "7616e81b-4545-5d38-a4fb-cb091d059b7d"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 3482
+    },
+    {
+      "id": "4de98375-fd83-5082-b270-eba9c486ded9",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 7271053824,
+      "sample_key": "003997",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -95.73898446761473,
+              29.383084114511952
+            ],
+            [
+              -95.73898446761473,
+              29.40061631217168
+            ],
+            [
+              -95.71886220525046,
+              29.40061631217168
+            ],
+            [
+              -95.71886220525046,
+              29.383084114511952
+            ],
+            [
+              -95.73898446761473,
+              29.383084114511952
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 8951
+    },
+    {
+      "id": "4df32a91-35f3-5fe4-8607-e44abe4cf70c",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 7271053824,
+      "sample_key": "003998",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -97.02680925892847,
+              28.979011969265336
+            ],
+            [
+              -97.02680925892847,
+              28.99661337104732
+            ],
+            [
+              -97.0066869965642,
+              28.99661337104732
+            ],
+            [
+              -97.0066869965642,
+              28.979011969265336
+            ],
+            [
+              -97.02680925892847,
+              28.979011969265336
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 234
+    },
+    {
+      "id": "4e0253f8-0828-5572-976f-999a414b8924",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 7271053824,
+      "sample_key": "003999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.54387496218581,
+              29.119739222032596
+            ],
+            [
+              -96.54387496218581,
+              29.13731662106679
+            ],
+            [
+              -96.52375269982154,
+              29.13731662106679
+            ],
+            [
+              -96.52375269982154,
+              29.119739222032596
+            ],
+            [
+              -96.54387496218581,
+              29.119739222032596
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 12541
+    },
+    {
+      "id": "4e02b25b-acfc-5d9b-9e40-ca7851197f20",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00000.tar",
+      "range_start": 7271053824,
+      "sample_key": "004000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.3024078138145,
+              29.31292512190469
+            ],
+            [
+              -96.3024078138145,
+              29.330469398104995
+            ],
+            [
+              -96.28228555145022,
+              29.330469398104995
+            ],
+            [
+              -96.28228555145022,
+              29.31292512190469
+            ],
+            [
+              -96.3024078138145,
+              29.31292512190469
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 3519
+    },
+    {
+      "id": "cb21c74d-c611-573d-ba6e-ec993cd29a30",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 0,
+      "sample_key": "000000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -95.81947351707184,
+              29.69820032964213
+            ],
+            [
+              -95.81947351707184,
+              29.715677953188514
+            ],
+            [
+              -95.79935125470756,
+              29.715677953188514
+            ],
+            [
+              -95.79935125470756,
+              29.69820032964213
+            ],
+            [
+              -95.81947351707184,
+              29.69820032964213
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 1757
+    },
+    {
+      "id": "cb32561e-4709-5784-a0be-8ba2c6368a1e",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 0,
+      "sample_key": "000001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.78534211055715,
+              29.277827520161278
+            ],
+            [
+              -96.78534211055715,
+              29.295377828880998
+            ],
+            [
+              -96.76521984819287,
+              29.295377828880998
+            ],
+            [
+              -96.76521984819287,
+              29.277827520161278
+            ],
+            [
+              -96.78534211055715,
+              29.277827520161278
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 104
+    },
+    {
+      "id": "cb3bb979-57dd-566f-ac21-73d03f95f7e4",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 0,
+      "sample_key": "000002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.42314138800016,
+              29.172462401525394
+            ],
+            [
+              -96.42314138800016,
+              29.19003078067256
+            ],
+            [
+              -96.40301912563588,
+              29.19003078067256
+            ],
+            [
+              -96.40301912563588,
+              29.172462401525394
+            ],
+            [
+              -96.42314138800016,
+              29.172462401525394
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 6402
+    },
+    {
+      "id": "cb470f75-429d-5225-bd69-951b54dae3d3",
+      "event": 1111004,
+      "flood_date": "2017-08-28 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 0,
+      "sample_key": "000003",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -96.08106292780745,
+              29.348010656355893
+            ],
+            [
+              -96.08106292780745,
+              29.36554889553266
+            ],
+            [
+              -96.06094066544317,
+              29.36554889553266
+            ],
+            [
+              -96.06094066544317,
+              29.348010656355893
+            ],
+            [
+              -96.08106292780745,
+              29.348010656355893
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-08-05",
+          "s1_ids": [
+            "655ad9e6-d84d-5424-8306-2b24e4217515"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-07-24",
+          "s1_ids": [
+            "f8fb2572-b412-5057-a67e-bec74b05eb3b"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-08-29",
+          "s1_ids": [
+            "ce735975-54b9-5fa4-b8b3-597c4b841404"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 7027
+    },
+    {
+      "id": "19cea807-6345-5b6d-bf9c-de30e9af8bee",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 3635516416,
+      "sample_key": "001999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              86.0709560538068,
+              25.776494006918004
+            ],
+            [
+              86.0709560538068,
+              25.794612664977592
+            ],
+            [
+              86.09107831617106,
+              25.794612664977592
+            ],
+            [
+              86.09107831617106,
+              25.776494006918004
+            ],
+            [
+              86.0709560538068,
+              25.776494006918004
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 318
+    },
+    {
+      "id": "19d7b5d2-d2ef-563c-ba56-d97351e4e3e9",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 3635516416,
+      "sample_key": "002000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.72887759361409,
+              25.794612664977592
+            ],
+            [
+              85.72887759361409,
+              25.81272855429545
+            ],
+            [
+              85.74899985597835,
+              25.81272855429545
+            ],
+            [
+              85.74899985597835,
+              25.794612664977592
+            ],
+            [
+              85.72887759361409,
+              25.794612664977592
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 72
+    },
+    {
+      "id": "19fc7193-179c-53d3-a609-3b11a418c858",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 3635516416,
+      "sample_key": "002001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              84.98435388613582,
+              25.740248390131
+            ],
+            [
+              84.98435388613582,
+              25.7583725815057
+            ],
+            [
+              85.00447614850009,
+              25.7583725815057
+            ],
+            [
+              85.00447614850009,
+              25.740248390131
+            ],
+            [
+              84.98435388613582,
+              25.740248390131
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 981
+    },
+    {
+      "id": "1a08e698-8241-5333-80f6-2a169ce1045c",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 3635516416,
+      "sample_key": "002002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.82948890543547,
+              25.395365079941758
+            ],
+            [
+              85.82948890543547,
+              25.413541558685665
+            ],
+            [
+              85.84961116779975,
+              25.413541558685665
+            ],
+            [
+              85.84961116779975,
+              25.395365079941758
+            ],
+            [
+              85.82948890543547,
+              25.395365079941758
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 18
+    },
+    {
+      "id": "f60618a6-9e91-50ab-a761-3e726b69a7f5",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 7271033344,
+      "sample_key": "003997",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.00447614850009,
+              25.993734862040245
+            ],
+            [
+              85.00447614850009,
+              26.01182020390188
+            ],
+            [
+              85.02459841086437,
+              26.01182020390188
+            ],
+            [
+              85.02459841086437,
+              25.993734862040245
+            ],
+            [
+              85.00447614850009,
+              25.993734862040245
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 97.06433354591837,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 97.06433354591837,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 97.06433354591837,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 48703,
+      "water_pixels": 21707
+    },
+    {
+      "id": "f62518af-e90f-5b57-b5e5-963c98b02020",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 7271033344,
+      "sample_key": "003998",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              86.3325454645424,
+              25.92136566900798
+            ],
+            [
+              86.3325454645424,
+              25.939462138352283
+            ],
+            [
+              86.35266772690667,
+              25.939462138352283
+            ],
+            [
+              86.35266772690667,
+              25.92136566900798
+            ],
+            [
+              86.3325454645424,
+              25.92136566900798
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 11386
+    },
+    {
+      "id": "f6312347-a5fc-550d-9792-1a1fbd9aa9ca",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 7271033344,
+      "sample_key": "003999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              85.30631008396425,
+              25.504382834682623
+            ],
+            [
+              85.30631008396425,
+              25.522542856448382
+            ],
+            [
+              85.32643234632853,
+              25.522542856448382
+            ],
+            [
+              85.32643234632853,
+              25.504382834682623
+            ],
+            [
+              85.30631008396425,
+              25.504382834682623
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 30384
+    },
+    {
+      "id": "f6322e96-6061-5da5-aa3c-7d9be9507916",
+      "event": 1111007,
+      "flood_date": "2019-09-17 08:00:00",
+      "shard": "train_GRD/shard-00001.tar",
+      "range_start": 7271033344,
+      "sample_key": "004000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              86.31242320217811,
+              25.504382834682623
+            ],
+            [
+              86.31242320217811,
+              25.522542856448382
+            ],
+            [
+              86.3325454645424,
+              25.522542856448382
+            ],
+            [
+              86.3325454645424,
+              25.504382834682623
+            ],
+            [
+              86.31242320217811,
+              25.504382834682623
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2019-08-01",
+          "s1_ids": [
+            "4849a0e4-b5bb-58cf-9d2f-5247049ab3c8"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2019-07-20",
+          "s1_ids": [
+            "c1384c14-24fd-5fe9-9841-88d5159eef8a"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2019-09-18",
+          "s1_ids": [
+            "2de9cd33-e907-5b9a-a7c3-d341b3b47776"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 16910
+    },
+    {
+      "id": "3e0d0ca7-ee6d-508f-b214-dde5d2b76cbd",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 0,
+      "sample_key": "000000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.2077769660333,
+              27.160312545524974
+            ],
+            [
+              68.2077769660333,
+              27.178214546657774
+            ],
+            [
+              68.22789922839756,
+              27.178214546657774
+            ],
+            [
+              68.22789922839756,
+              27.160312545524974
+            ],
+            [
+              68.2077769660333,
+              27.160312545524974
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "ca04a9bc-e383-5af9-a964-0675cc2c1e34"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "1d0c9469-f691-582a-96a4-1616826ad8c3"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "c8e8b458-1eaf-57ae-bc17-732f336ce34c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 260
+    },
+    {
+      "id": "3e17db09-96fe-523d-b744-52a8b5a4d302",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 0,
+      "sample_key": "000001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.81144483696161,
+              28.282480303328693
+            ],
+            [
+              68.81144483696161,
+              28.300198941277767
+            ],
+            [
+              68.83156709932588,
+              28.300198941277767
+            ],
+            [
+              68.83156709932588,
+              28.282480303328693
+            ],
+            [
+              68.81144483696161,
+              28.282480303328693
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 25492
+    },
+    {
+      "id": "3e1c779f-bb89-5293-b4c3-0946029b234b",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 0,
+      "sample_key": "000002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              67.7449649316549,
+              26.279624042760936
+            ],
+            [
+              67.7449649316549,
+              26.29766514442878
+            ],
+            [
+              67.76508719401919,
+              26.29766514442878
+            ],
+            [
+              67.76508719401919,
+              26.279624042760936
+            ],
+            [
+              67.7449649316549,
+              26.279624042760936
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "68d4369c-a935-5e5d-9022-4a965d7a77da"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "9bfb5f8a-da5d-51a5-9044-b41e171257ac"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "a6a7afbc-6326-5785-bbc0-c5445c039c89"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 310
+    },
+    {
+      "id": "3e39ace9-a29d-5bd9-87d3-f522d2c9d051",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 0,
+      "sample_key": "000003",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              69.07303424769721,
+              27.83855917429764
+            ],
+            [
+              69.07303424769721,
+              27.856351165634532
+            ],
+            [
+              69.09315651006149,
+              27.856351165634532
+            ],
+            [
+              69.09315651006149,
+              27.83855917429764
+            ],
+            [
+              69.07303424769721,
+              27.83855917429764
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 429
+    },
+    {
+      "id": "8061956f-0fc2-5839-b830-46323ef059c5",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 3635503104,
+      "sample_key": "001999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              67.90594303056912,
+              27.321327073894956
+            ],
+            [
+              67.90594303056912,
+              27.339203185351806
+            ],
+            [
+              67.92606529293342,
+              27.339203185351806
+            ],
+            [
+              67.92606529293342,
+              27.321327073894956
+            ],
+            [
+              67.90594303056912,
+              27.321327073894956
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "ca04a9bc-e383-5af9-a964-0675cc2c1e34"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "1d0c9469-f691-582a-96a4-1616826ad8c3"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "c8e8b458-1eaf-57ae-bc17-732f336ce34c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 46544
+    },
+    {
+      "id": "80645842-9925-5c4c-98b8-33f67bdd8c9f",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 3635503104,
+      "sample_key": "002000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.69071126277593,
+              28.176106594799894
+            ],
+            [
+              68.69071126277593,
+              28.193842906949456
+            ],
+            [
+              68.71083352514023,
+              28.193842906949456
+            ],
+            [
+              68.71083352514023,
+              28.176106594799894
+            ],
+            [
+              68.69071126277593,
+              28.176106594799894
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 8998
+    },
+    {
+      "id": "80669c2e-7d04-57e2-927f-de77cc46b3f3",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 3635503104,
+      "sample_key": "002001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.83156709932588,
+              27.83855917429764
+            ],
+            [
+              68.83156709932588,
+              27.856351165634532
+            ],
+            [
+              68.85168936169016,
+              27.856351165634532
+            ],
+            [
+              68.85168936169016,
+              27.83855917429764
+            ],
+            [
+              68.83156709932588,
+              27.83855917429764
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 16507
+    },
+    {
+      "id": "8066ce06-41c1-570f-b1ee-ee5899e320af",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 3635503104,
+      "sample_key": "002002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.46936637676889,
+              28.477222877210636
+            ],
+            [
+              68.46936637676889,
+              28.494909000129823
+            ],
+            [
+              68.48948863913316,
+              28.494909000129823
+            ],
+            [
+              68.48948863913316,
+              28.477222877210636
+            ],
+            [
+              68.46936637676889,
+              28.477222877210636
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 39764
+    },
+    {
+      "id": "c4998b79-bf7f-54f8-897e-be71af82a054",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 7271006208,
+      "sample_key": "003997",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              67.90594303056912,
+              28.176106594799894
+            ],
+            [
+              67.90594303056912,
+              28.193842906949456
+            ],
+            [
+              67.92606529293342,
+              28.193842906949456
+            ],
+            [
+              67.92606529293342,
+              28.176106594799894
+            ],
+            [
+              67.90594303056912,
+              28.176106594799894
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "8e01cdb4-8d5c-5b7d-9ea4-c1807fbacb6e"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "8afd742f-e234-5cae-9089-bc096b8dab14"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "d316d446-bda2-5d5f-9219-d9ef9df7c2c8"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 4851
+    },
+    {
+      "id": "c49d45e8-9830-5ff1-be1d-a0bc151e6506",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 7271006208,
+      "sample_key": "003998",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.08704339184762,
+              27.142407674180248
+            ],
+            [
+              68.08704339184762,
+              27.160312545524974
+            ],
+            [
+              68.1071656542119,
+              27.160312545524974
+            ],
+            [
+              68.1071656542119,
+              27.142407674180248
+            ],
+            [
+              68.08704339184762,
+              27.142407674180248
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "ca04a9bc-e383-5af9-a964-0675cc2c1e34"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "1d0c9469-f691-582a-96a4-1616826ad8c3"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "c8e8b458-1eaf-57ae-bc17-732f336ce34c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 36258
+    },
+    {
+      "id": "c4ac9a14-9947-5bc4-acc1-bcb90618e9b1",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 7271006208,
+      "sample_key": "003999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              67.92606529293342,
+              26.53194355121729
+            ],
+            [
+              67.92606529293342,
+              26.549945234358958
+            ],
+            [
+              67.94618755529768,
+              26.549945234358958
+            ],
+            [
+              67.94618755529768,
+              26.53194355121729
+            ],
+            [
+              67.92606529293342,
+              26.53194355121729
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "ca04a9bc-e383-5af9-a964-0675cc2c1e34"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "1d0c9469-f691-582a-96a4-1616826ad8c3"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "c8e8b458-1eaf-57ae-bc17-732f336ce34c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 46054
+    },
+    {
+      "id": "c4afe34d-bfa1-537e-a5c1-7718737b3dc2",
+      "event": 1111009,
+      "flood_date": "2022-09-10 08:00:00",
+      "shard": "train_GRD/shard-00002.tar",
+      "range_start": 7271006208,
+      "sample_key": "004000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              68.18765470366901,
+              27.571329816602354
+            ],
+            [
+              68.18765470366901,
+              27.58916545025732
+            ],
+            [
+              68.2077769660333,
+              27.58916545025732
+            ],
+            [
+              68.2077769660333,
+              27.571329816602354
+            ],
+            [
+              68.18765470366901,
+              27.571329816602354
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2022-06-19",
+          "s1_ids": [
+            "ca04a9bc-e383-5af9-a964-0675cc2c1e34"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2022-06-07",
+          "s1_ids": [
+            "1d0c9469-f691-582a-96a4-1616826ad8c3"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2022-09-11",
+          "s1_ids": [
+            "c8e8b458-1eaf-57ae-bc17-732f336ce34c"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": true,
+      "admitted_to_training_pool": true,
+      "valid_pixels": 50176,
+      "water_pixels": 5075
+    },
+    {
+      "id": "c49cf4b2-2992-5977-81d9-cd942e48aa21",
+      "event": 1111010,
+      "flood_date": "2017-03-10 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 0,
+      "sample_key": "000000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.82452529996355,
+              -5.4606130976588405
+            ],
+            [
+              -80.82452529996355,
+              -5.440581818809414
+            ],
+            [
+              -80.80440303759927,
+              -5.440581818809414
+            ],
+            [
+              -80.80440303759927,
+              -5.4606130976588405
+            ],
+            [
+              -80.82452529996355,
+              -5.4606130976588405
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2016-11-23",
+          "s1_ids": [
+            "9cb67a4a-4197-5eed-9311-b0a021afeb41"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2016-10-30",
+          "s1_ids": [
+            "6faf1be1-497b-5904-9f58-a3f200221976"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-03-11",
+          "s1_ids": [
+            "ea165a69-ec7f-5a5e-bf49-5c33c3eb45be"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 366
+    },
+    {
+      "id": "c6f7bda9-49e7-52cc-86e5-279a55b0d3a5",
+      "event": 1111010,
+      "flood_date": "2017-03-10 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 0,
+      "sample_key": "000001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.66354720104934,
+              -5.700935533473785
+            ],
+            [
+              -80.66354720104934,
+              -5.6809124480022035
+            ],
+            [
+              -80.64342493868506,
+              -5.6809124480022035
+            ],
+            [
+              -80.64342493868506,
+              -5.700935533473785
+            ],
+            [
+              -80.66354720104934,
+              -5.700935533473785
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2016-11-23",
+          "s1_ids": [
+            "9cb67a4a-4197-5eed-9311-b0a021afeb41"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2016-10-30",
+          "s1_ids": [
+            "6faf1be1-497b-5904-9f58-a3f200221976"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-03-11",
+          "s1_ids": [
+            "ea165a69-ec7f-5a5e-bf49-5c33c3eb45be"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 49133
+    },
+    {
+      "id": "c8076fb4-dc58-530a-b5fc-edf1b4736a33",
+      "event": 1111010,
+      "flood_date": "2017-03-10 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 0,
+      "sample_key": "000002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.88489208705639,
+              -5.540731494324011
+            ],
+            [
+              -80.88489208705639,
+              -5.520702907818142
+            ],
+            [
+              -80.8647698246921,
+              -5.520702907818142
+            ],
+            [
+              -80.8647698246921,
+              -5.540731494324011
+            ],
+            [
+              -80.88489208705639,
+              -5.540731494324011
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2016-11-23",
+          "s1_ids": [
+            "9cb67a4a-4197-5eed-9311-b0a021afeb41"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2016-10-30",
+          "s1_ids": [
+            "6faf1be1-497b-5904-9f58-a3f200221976"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-03-11",
+          "s1_ids": [
+            "ea165a69-ec7f-5a5e-bf49-5c33c3eb45be"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 1152
+    },
+    {
+      "id": "c86c737f-6739-52ea-9940-91dcd8a2dcba",
+      "event": 1111010,
+      "flood_date": "2017-03-10 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 0,
+      "sample_key": "000003",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -80.62330267632078,
+              -5.480643707060474
+            ],
+            [
+              -80.62330267632078,
+              -5.4606130976588405
+            ],
+            [
+              -80.6031804139565,
+              -5.4606130976588405
+            ],
+            [
+              -80.6031804139565,
+              -5.480643707060474
+            ],
+            [
+              -80.62330267632078,
+              -5.480643707060474
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2016-11-23",
+          "s1_ids": [
+            "9cb67a4a-4197-5eed-9311-b0a021afeb41"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2016-10-30",
+          "s1_ids": [
+            "6faf1be1-497b-5904-9f58-a3f200221976"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-03-11",
+          "s1_ids": [
+            "ea165a69-ec7f-5a5e-bf49-5c33c3eb45be"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 3055
+    },
+    {
+      "id": "0d0a890c-906a-5de9-af4a-d9bcf6225a07",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 3635503104,
+      "sample_key": "001999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.44566165594046,
+              39.00204845199756
+            ],
+            [
+              -90.44566165594046,
+              39.01768420595737
+            ],
+            [
+              -90.42553939357617,
+              39.01768420595737
+            ],
+            [
+              -90.42553939357617,
+              39.00204845199756
+            ],
+            [
+              -90.44566165594046,
+              39.00204845199756
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 1692
+    },
+    {
+      "id": "0d34b8a9-c3f2-57f0-9a2c-b227af7925b0",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 3635503104,
+      "sample_key": "002000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.66089342373364,
+              38.97076657556656
+            ],
+            [
+              -89.66089342373364,
+              38.98640924173348
+            ],
+            [
+              -89.64077116136936,
+              38.98640924173348
+            ],
+            [
+              -89.64077116136936,
+              38.97076657556656
+            ],
+            [
+              -89.66089342373364,
+              38.97076657556656
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 2167
+    },
+    {
+      "id": "0d3af2f6-00f4-5e0d-9a9f-eca7edd9c714",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 3635503104,
+      "sample_key": "002001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.3389372259052,
+              38.3580113958363
+            ],
+            [
+              -89.3389372259052,
+              38.37378851711203
+            ],
+            [
+              -89.31881496354092,
+              38.37378851711203
+            ],
+            [
+              -89.31881496354092,
+              38.3580113958363
+            ],
+            [
+              -89.3389372259052,
+              38.3580113958363
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 454
+    },
+    {
+      "id": "0d4818e9-c798-53d7-90cc-78d5b4abec59",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 3635503104,
+      "sample_key": "002002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.41942627536231,
+              38.231670662190446
+            ],
+            [
+              -89.41942627536231,
+              38.24747528224178
+            ],
+            [
+              -89.39930401299803,
+              38.24747528224178
+            ],
+            [
+              -89.39930401299803,
+              38.231670662190446
+            ],
+            [
+              -89.41942627536231,
+              38.231670662190446
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 767
+    },
+    {
+      "id": "63050e12-b6cf-5cfb-a461-df77284cb76e",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 7271006208,
+      "sample_key": "003997",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.848106903226,
+              38.531370491461615
+            ],
+            [
+              -90.848106903226,
+              38.54710975536797
+            ],
+            [
+              -90.82798464086173,
+              38.54710975536797
+            ],
+            [
+              -90.82798464086173,
+              38.531370491461615
+            ],
+            [
+              -90.848106903226,
+              38.531370491461615
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 2915
+    },
+    {
+      "id": "630956ba-4b02-587a-b14d-b5df85839bff",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 7271006208,
+      "sample_key": "003998",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.26456129466196,
+              38.51562778378298
+            ],
+            [
+              -90.26456129466196,
+              38.531370491461615
+            ],
+            [
+              -90.24443903229768,
+              38.531370491461615
+            ],
+            [
+              -90.24443903229768,
+              38.51562778378298
+            ],
+            [
+              -90.26456129466196,
+              38.51562778378298
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 28550
+    },
+    {
+      "id": "6314edc4-ef0e-5c63-82ff-a1e23d513d72",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 7271006208,
+      "sample_key": "003999",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.84199378501214,
+              38.57857795012853
+            ],
+            [
+              -89.84199378501214,
+              38.59430688011792
+            ],
+            [
+              -89.82187152264785,
+              38.59430688011792
+            ],
+            [
+              -89.82187152264785,
+              38.57857795012853
+            ],
+            [
+              -89.84199378501214,
+              38.57857795012853
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 7284
+    },
+    {
+      "id": "6314ee95-7d78-54c7-aa68-3ddffd42c70b",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00003.tar",
+      "range_start": 7271006208,
+      "sample_key": "004000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.28468355702623,
+              38.87683802722675
+            ],
+            [
+              -90.28468355702623,
+              38.892501420317906
+            ],
+            [
+              -90.26456129466196,
+              38.892501420317906
+            ],
+            [
+              -90.26456129466196,
+              38.87683802722675
+            ],
+            [
+              -90.28468355702623,
+              38.87683802722675
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 22989
+    },
+    {
+      "id": "b6dab5f4-3ae9-55e3-9c21-b2abe1659ca4",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 0,
+      "sample_key": "000000",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.56028211191226,
+              38.531370491461615
+            ],
+            [
+              -89.56028211191226,
+              38.54710975536797
+            ],
+            [
+              -89.54015984954798,
+              38.54710975536797
+            ],
+            [
+              -89.54015984954798,
+              38.531370491461615
+            ],
+            [
+              -89.56028211191226,
+              38.531370491461615
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 9515
+    },
+    {
+      "id": "b7050c9a-249d-5c3c-bdac-6423ab2f3fc5",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 0,
+      "sample_key": "000001",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.37918175063376,
+              37.75593673232885
+            ],
+            [
+              -89.37918175063376,
+              37.77184420820291
+            ],
+            [
+              -89.35905948826948,
+              37.77184420820291
+            ],
+            [
+              -89.35905948826948,
+              37.75593673232885
+            ],
+            [
+              -89.37918175063376,
+              37.75593673232885
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 1055
+    },
+    {
+      "id": "b70ae6c1-1b7b-5125-b877-3760c2fa4d08",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 0,
+      "sample_key": "000002",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.00297188392635,
+              38.34223083563846
+            ],
+            [
+              -90.00297188392635,
+              38.3580113958363
+            ],
+            [
+              -89.98284962156207,
+              38.3580113958363
+            ],
+            [
+              -89.98284962156207,
+              38.34223083563846
+            ],
+            [
+              -90.00297188392635,
+              38.34223083563846
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 98
+    },
+    {
+      "id": "b719e863-71b7-5656-928a-7de4f9c698b4",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 0,
+      "sample_key": "000003",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.52615070539757,
+              38.70431289201342
+            ],
+            [
+              -90.52615070539757,
+              38.72001424602287
+            ],
+            [
+              -90.50602844303327,
+              38.72001424602287
+            ],
+            [
+              -90.50602844303327,
+              38.70431289201342
+            ],
+            [
+              -90.52615070539757,
+              38.70431289201342
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 12256
+    },
+    {
+      "id": "cf33dd69-7e26-5ce5-946e-91f7f377a4e8",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 1032296960,
+      "sample_key": "000568",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.485906180669,
+              38.26327646652931
+            ],
+            [
+              -90.485906180669,
+              38.279074214598424
+            ],
+            [
+              -90.46578391830472,
+              38.279074214598424
+            ],
+            [
+              -90.46578391830472,
+              38.26327646652931
+            ],
+            [
+              -90.485906180669,
+              38.26327646652931
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 238
+    },
+    {
+      "id": "cf4ee490-1e15-57d3-849b-4a0e65dd94d4",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 1032296960,
+      "sample_key": "000569",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.86211604737642,
+              37.81954610432457
+            ],
+            [
+              -89.86211604737642,
+              37.83543989090491
+            ],
+            [
+              -89.84199378501214,
+              37.83543989090491
+            ],
+            [
+              -89.84199378501214,
+              37.81954610432457
+            ],
+            [
+              -89.86211604737642,
+              37.81954610432457
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 2158
+    },
+    {
+      "id": "cf543503-ebb3-5fb8-a30b-0ebba780463f",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 1032296960,
+      "sample_key": "000570",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.18407224520485,
+              38.59430688011792
+            ],
+            [
+              -90.18407224520485,
+              38.610032364605416
+            ],
+            [
+              -90.16394998284058,
+              38.610032364605416
+            ],
+            [
+              -90.16394998284058,
+              38.59430688011792
+            ],
+            [
+              -90.18407224520485,
+              38.59430688011792
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 217
+    },
+    {
+      "id": "cf56236d-9ade-5b6f-90c2-a7c56f248409",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 1032296960,
+      "sample_key": "000571",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.90236057210497,
+              38.215862606831074
+            ],
+            [
+              -89.90236057210497,
+              38.231670662190446
+            ],
+            [
+              -89.88223830974069,
+              38.231670662190446
+            ],
+            [
+              -89.88223830974069,
+              38.215862606831074
+            ],
+            [
+              -89.90236057210497,
+              38.215862606831074
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 8701
+    },
+    {
+      "id": "e69f49ed-85d2-5f63-83ff-c52ba42d765a",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 2064593920,
+      "sample_key": "001135",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -89.64077116136936,
+              38.56284557506794
+            ],
+            [
+              -89.64077116136936,
+              38.57857795012853
+            ],
+            [
+              -89.62064889900508,
+              38.57857795012853
+            ],
+            [
+              -89.62064889900508,
+              38.56284557506794
+            ],
+            [
+              -89.64077116136936,
+              38.56284557506794
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 2225
+    },
+    {
+      "id": "e6a49f2b-ef9a-56d8-83b7-a4eed245e524",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 2064593920,
+      "sample_key": "001136",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.16394998284058,
+              38.326446836966284
+            ],
+            [
+              -90.16394998284058,
+              38.34223083563846
+            ],
+            [
+              -90.1438277204763,
+              38.34223083563846
+            ],
+            [
+              -90.1438277204763,
+              38.326446836966284
+            ],
+            [
+              -90.16394998284058,
+              38.326446836966284
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 100
+    },
+    {
+      "id": "e6b42b91-4137-5de3-8985-7a9023c19ff0",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 2064593920,
+      "sample_key": "001137",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.12370545811201,
+              38.861171181074155
+            ],
+            [
+              -90.12370545811201,
+              38.87683802722675
+            ],
+            [
+              -90.10358319574773,
+              38.87683802722675
+            ],
+            [
+              -90.10358319574773,
+              38.861171181074155
+            ],
+            [
+              -90.12370545811201,
+              38.861171181074155
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 1071
+    },
+    {
+      "id": "e6ba52ea-0d61-5163-b3ee-104e0942e894",
+      "event": 1111013,
+      "flood_date": "2017-05-03 08:00:00",
+      "shard": "train_GRD/shard-00004.tar",
+      "range_start": 2064593920,
+      "sample_key": "001138",
+      "geometry_4326": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -90.78774011613316,
+              38.67289983896181
+            ],
+            [
+              -90.78774011613316,
+              38.6886080895188
+            ],
+            [
+              -90.76761785376888,
+              38.6886080895188
+            ],
+            [
+              -90.76761785376888,
+              38.67289983896181
+            ],
+            [
+              -90.78774011613316,
+              38.67289983896181
+            ]
+          ]
+        ]
+      },
+      "sources": {
+        "SL1": {
+          "source_date": "2017-04-22",
+          "s1_ids": [
+            "5e846443-2dfe-54c4-9acb-1b69a21bf1e0"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 1
+        },
+        "SL2": {
+          "source_date": "2017-04-10",
+          "s1_ids": [
+            "18e1e69b-0d5a-5885-bfba-512f62920850"
+          ],
+          "master": false,
+          "coverage": 100.0,
+          "crank": 2
+        },
+        "MS1": {
+          "source_date": "2017-05-04",
+          "s1_ids": [
+            "5eebb08c-5ddc-5164-a02e-4a6afdccf395"
+          ],
+          "master": true,
+          "coverage": 100.0,
+          "crank": 1
+        }
+      },
+      "overlaps": [],
+      "after_2019": false,
+      "admitted_to_training_pool": false,
+      "valid_pixels": 50176,
+      "water_pixels": 686
+    }
+  ]
+}

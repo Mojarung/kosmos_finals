@@ -1,0 +1,6230 @@
+{
+  "dataset": "isp-uv-es/WorldFloodsv2",
+  "revision": "1f3faa2989e69930ac31d5c0a79fd224461123f8",
+  "license": "CC-BY-NC-4.0",
+  "training_admission": false,
+  "protected_chips": 446,
+  "rule": "Any footprint intersecting any Sen1Floods11 chip with 0.02 degree buffer is excluded regardless of date. Screen-pass still needs event deduplication, image/label date checks and compatible task encoding.",
+  "counts": {
+    "geography_screen_pass": 470,
+    "overlap_exclude": 5
+  },
+  "rows": [
+    {
+      "file": "train/meta/01042016_Choctawhatchee_River_near_Bellwood_AL.json",
+      "status": "geography_screen_pass",
+      "event_id": "01042016_Choctawhatchee_River_near_Bellwood_AL",
+      "ems_code": "GLOFIMR01042016",
+      "s2_date": "2016-01-11T16:37:13.424000+00:00",
+      "shape": [
+        10107,
+        7599
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/01042016_Holmes_Creek_at_Vernon_FL.json",
+      "status": "geography_screen_pass",
+      "event_id": "01042016_Holmes_Creek_at_Vernon_FL",
+      "ems_code": "GLOFIMR01042016",
+      "s2_date": "2016-01-11T16:37:13.424000+00:00",
+      "shape": [
+        2000,
+        2469
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/01042016_Pea_River_near_Samson_AL.json",
+      "status": "geography_screen_pass",
+      "event_id": "01042016_Pea_River_near_Samson_AL",
+      "ems_code": "GLOFIMR01042016",
+      "s2_date": "2016-01-11T16:37:13.424000+00:00",
+      "shape": [
+        4104,
+        2990
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/08162016_Mississippi_River_at_Baton_Rouge_LA.json",
+      "status": "geography_screen_pass",
+      "event_id": "08162016_Mississippi_River_at_Baton_Rouge_LA",
+      "ems_code": "GLOFIMR08162016",
+      "s2_date": "2016-08-24T16:54:53.459000+00:00",
+      "shape": [
+        9695,
+        5508
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/10132016_Ashley_River_near_North_Charleston_SC.json",
+      "status": "geography_screen_pass",
+      "event_id": "10132016_Ashley_River_near_North_Charleston_SC",
+      "ems_code": "GLOFIMR10132016",
+      "s2_date": "2016-10-21T16:13:27.491000+00:00",
+      "shape": [
+        8928,
+        4909
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/10132016_Cooper_River_at_Monks_Corner_SC.json",
+      "status": "geography_screen_pass",
+      "event_id": "10132016_Cooper_River_at_Monks_Corner_SC",
+      "ems_code": "GLOFIMR10132016",
+      "s2_date": "2016-10-21T16:13:27.491000+00:00",
+      "shape": [
+        7195,
+        5831
+      ],
+      "geographic_overlap": [],
+      "source": "glofimr"
+    },
+    {
+      "file": "train/meta/EMSR249_03GALWAY_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR249_03GALWAY_DEL_v2",
+      "ems_code": "EMSR249",
+      "s2_date": "2017-10-21T11:54:57.180000+00:00",
+      "shape": [
+        1400,
+        1711
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR249_07KILRUSHTARBERT_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR249_07KILRUSHTARBERT_DEL_v2",
+      "ems_code": "EMSR249",
+      "s2_date": "2017-10-26T11:53:46.460000+00:00",
+      "shape": [
+        1409,
+        1716
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR249_14WATERVILLE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR249_14WATERVILLE_DEL_v2",
+      "ems_code": "EMSR249",
+      "s2_date": "2017-10-16T11:53:46.458000+00:00",
+      "shape": [
+        1141,
+        1385
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR249_15LAHINCH_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR249_15LAHINCH_DEL_v1",
+      "ems_code": "EMSR249",
+      "s2_date": "2017-10-26T11:53:46.460000+00:00",
+      "shape": [
+        844,
+        1029
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR251_03KRAGERO_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR251_03KRAGERO_DEL_MONIT01_v1",
+      "ems_code": "EMSR251",
+      "s2_date": "2017-10-28T10:51:28.460000+00:00",
+      "shape": [
+        5601,
+        6873
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR255_03SCHONECK_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR255_03SCHONECK_DEL_v1",
+      "ems_code": "EMSR255",
+      "s2_date": "2018-01-12T10:26:30.600000+00:00",
+      "shape": [
+        929,
+        1141
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_01DIVJAKE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_01DIVJAKE_DEL_v2",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1920,
+        2769
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_03KOLONJE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_03KOLONJE_DEL_v2",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1779,
+        2019
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_05PATOS_DEL_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_05PATOS_DEL_v3",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1745,
+        2096
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_06VLORE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_06VLORE_DEL_v2",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1778,
+        2006
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_07ARMEN_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_07ARMEN_DEL_v2",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1766,
+        1850
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_08BELSH_DEL_MONIT01_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_08BELSH_DEL_MONIT01_v3",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1785,
+        1567
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_09GRAMSCH_DEL_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_09GRAMSCH_DEL_v3",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        2195,
+        1912
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_10URAVAJGURORE_DEL_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_10URAVAJGURORE_DEL_v3",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1691,
+        2380
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_12SEVASTER_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_12SEVASTER_DEL_v2",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        1285,
+        2134
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR258_13TEPELENE_DEL_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR258_13TEPELENE_DEL_v3",
+      "ems_code": "EMSR258",
+      "s2_date": "2017-12-08T09:33:54.460000+00:00",
+      "shape": [
+        2702,
+        3002
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_01CICOGNARA_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_01CICOGNARA_DEL_MONIT01_v2",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-18T10:28:02.530000+00:00",
+      "shape": [
+        856,
+        1040
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_01CICOGNARA_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_01CICOGNARA_DEL_v2",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-13T10:26:56.990000+00:00",
+      "shape": [
+        856,
+        1040
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_01CICOGNARA_GRA_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_01CICOGNARA_GRA_v3",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-18T10:28:02.530000+00:00",
+      "shape": [
+        856,
+        1040
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_02VIADANA_MANUAL_LABEL.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_02VIADANA_MANUAL_LABEL",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-13T10:26:56.990000+00:00",
+      "shape": [
+        859,
+        1042
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_03SORBOLO_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_03SORBOLO_DEL_v2",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-13T10:26:56.990000+00:00",
+      "shape": [
+        857,
+        1040
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_09RUBIERA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_09RUBIERA_DEL_MONIT01_v1",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-13T10:26:56.990000+00:00",
+      "shape": [
+        969,
+        1222
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR260_09RUBIERA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR260_09RUBIERA_DEL_v1",
+      "ems_code": "EMSR260",
+      "s2_date": "2017-12-13T10:26:56.990000+00:00",
+      "shape": [
+        969,
+        1222
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_04ESBLY_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_04ESBLY_DEL_MONIT01_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-26T10:53:16.460000+00:00",
+      "shape": [
+        1191,
+        1611
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_04ESBLY_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_04ESBLY_DEL_MONIT02_v2",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-26T10:53:16.460000+00:00",
+      "shape": [
+        1191,
+        1611
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_04ESBLY_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_04ESBLY_DEL_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-26T10:53:16.460000+00:00",
+      "shape": [
+        1191,
+        1611
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_07DAMMARIELESLYS_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_07DAMMARIELESLYS_DEL_MONIT01_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-26T10:53:16.460000+00:00",
+      "shape": [
+        2001,
+        2442
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_07DAMMARIELESLYS_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_07DAMMARIELESLYS_DEL_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-26T10:53:16.460000+00:00",
+      "shape": [
+        2001,
+        2442
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_08FONTAINEBLEAU_DEL_MONIT04_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_08FONTAINEBLEAU_DEL_MONIT04_v2",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-02-10T10:51:58.460000+00:00",
+      "shape": [
+        2041,
+        2494
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_09VOULX_DEL_MONIT04_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_09VOULX_DEL_MONIT04_v2",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-02-10T10:51:58.460000+00:00",
+      "shape": [
+        1957,
+        2396
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_13AUXERRE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_13AUXERRE_DEL_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-01-23T10:47:17.360000+00:00",
+      "shape": [
+        1831,
+        2231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_22LESMUREAUX_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_22LESMUREAUX_DEL_MONIT03_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-02-08T11:02:11.460000+00:00",
+      "shape": [
+        2746,
+        3269
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_22LESMUREAUX_DEL_MONIT04_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_22LESMUREAUX_DEL_MONIT04_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-02-08T11:02:11.460000+00:00",
+      "shape": [
+        2746,
+        3269
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR265_24HONFLEUR_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR265_24HONFLEUR_DEL_MONIT01_v1",
+      "ems_code": "EMSR265",
+      "s2_date": "2018-02-01T11:12:55.460000+00:00",
+      "shape": [
+        4078,
+        4916
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR267_01RUSNE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR267_01RUSNE_DEL_v1",
+      "ems_code": "EMSR267",
+      "s2_date": "2018-02-02T09:54:32.950000+00:00",
+      "shape": [
+        2734,
+        3331
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR269_02FAHEFA_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR269_02FAHEFA_GRA_v1",
+      "ems_code": "EMSR269",
+      "s2_date": "2018-02-17T21:59:06.460000+00:00",
+      "shape": [
+        666,
+        619
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR269_06VEITONGO_GRA_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR269_06VEITONGO_GRA_MONIT01_v1",
+      "ems_code": "EMSR269",
+      "s2_date": "2018-02-17T21:59:06.460000+00:00",
+      "shape": [
+        537,
+        655
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR269_06VEITONGO_GRA_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR269_06VEITONGO_GRA_v2",
+      "ems_code": "EMSR269",
+      "s2_date": "2018-02-17T21:59:06.460000+00:00",
+      "shape": [
+        537,
+        655
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR271_04STEFANOVIKIO_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR271_04STEFANOVIKIO_DEL_v1",
+      "ems_code": "EMSR271",
+      "s2_date": "2018-02-28T09:25:36.940000+00:00",
+      "shape": [
+        1867,
+        2267
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR271_05THESSALYOVERVIEW_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR271_05THESSALYOVERVIEW_DEL_MONIT01_v2",
+      "ems_code": "EMSR271",
+      "s2_date": "2018-02-28T09:25:36.940000+00:00",
+      "shape": [
+        9108,
+        11096
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR271_05THESSALYOVERVIEW_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR271_05THESSALYOVERVIEW_DEL_MONIT02_v2",
+      "ems_code": "EMSR271",
+      "s2_date": "2018-03-10T09:21:38.830000+00:00",
+      "shape": [
+        9108,
+        11096
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR271_05THESSALYOVERVIEW_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR271_05THESSALYOVERVIEW_DEL_v2",
+      "ems_code": "EMSR271",
+      "s2_date": "2018-02-28T09:25:36.940000+00:00",
+      "shape": [
+        9108,
+        11096
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_01AMBILOBE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_01AMBILOBE_DEL_v2",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-22T07:02:20.460000+00:00",
+      "shape": [
+        3218,
+        3934
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_02AMBANJA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_02AMBANJA_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-20T07:12:04.460000+00:00",
+      "shape": [
+        3054,
+        3727
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_03BEFOTAKA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_03BEFOTAKA_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-08-17T07:12:07.460000+00:00",
+      "shape": [
+        2107,
+        2571
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_08MAHANORO_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_08MAHANORO_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-22T07:02:20.460000+00:00",
+      "shape": [
+        2194,
+        2675
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_09NOSYVARIKA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_09NOSYVARIKA_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-22T07:02:20.460000+00:00",
+      "shape": [
+        639,
+        779
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_10MANANJARY_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_10MANANJARY_DEL_v2",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-22T07:02:20.460000+00:00",
+      "shape": [
+        1421,
+        1729
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_12ANTALAHA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_12ANTALAHA_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-22T07:02:20.460000+00:00",
+      "shape": [
+        847,
+        787
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_15FENERIVE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_15FENERIVE_DEL_v1",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-27T07:03:37.610000+00:00",
+      "shape": [
+        563,
+        687
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_16MANANARA_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_16MANANARA_DEL_v2",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-27T07:03:37.610000+00:00",
+      "shape": [
+        673,
+        823
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_17SOANIERANAIVONGO_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_17SOANIERANAIVONGO_DEL_v2",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-04-06T07:02:26.460000+00:00",
+      "shape": [
+        842,
+        1029
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR274_21NOSYBE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR274_21NOSYBE_DEL_v2",
+      "ems_code": "EMSR274",
+      "s2_date": "2018-03-30T07:12:06.460000+00:00",
+      "shape": [
+        2538,
+        3098
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR275_01LIJEVIDOBROVCAK_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR275_01LIJEVIDOBROVCAK_DEL_MONIT01_v1",
+      "ems_code": "EMSR275",
+      "s2_date": "2018-03-24T09:55:37.730000+00:00",
+      "shape": [
+        3135,
+        3810
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR275_01LIJEVIDOBROVCAK_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR275_01LIJEVIDOBROVCAK_DEL_v1",
+      "ems_code": "EMSR275",
+      "s2_date": "2018-03-24T09:55:37.730000+00:00",
+      "shape": [
+        3135,
+        3810
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR275_02KUTINA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR275_02KUTINA_DEL_MONIT01_v1",
+      "ems_code": "EMSR275",
+      "s2_date": "2018-03-24T09:55:37.730000+00:00",
+      "shape": [
+        3147,
+        3817
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_04TUDELA_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_04TUDELA_DEL_MONIT01_v2",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-19T11:01:27.730000+00:00",
+      "shape": [
+        4566,
+        5542
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_04TUDELA_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_04TUDELA_DEL_MONIT02_v1",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-19T11:01:27.730000+00:00",
+      "shape": [
+        4566,
+        5542
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_04TUDELA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_04TUDELA_DEL_v1",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-14T11:07:09.380000+00:00",
+      "shape": [
+        4566,
+        5542
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_05ZARAGOZA_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_05ZARAGOZA_DEL_MONIT01_v2",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-16T10:56:19.020000+00:00",
+      "shape": [
+        4598,
+        5569
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_05ZARAGOZA_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_05ZARAGOZA_DEL_MONIT02_v1",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-16T10:56:19.020000+00:00",
+      "shape": [
+        4598,
+        5569
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_06CASPE_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_06CASPE_DEL_MONIT01_v2",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-21T10:56:29.230000+00:00",
+      "shape": [
+        4627,
+        5590
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_06CASPE_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_06CASPE_DEL_MONIT02_v2",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-21T10:56:29.230000+00:00",
+      "shape": [
+        4627,
+        5590
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_06CASPE_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_06CASPE_DEL_v2",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-21T10:56:29.230000+00:00",
+      "shape": [
+        4627,
+        5590
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_07ALFARO_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_07ALFARO_GRA_v1",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-19T11:01:27.730000+00:00",
+      "shape": [
+        706,
+        859
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR279_08ALCALADEEBRO_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR279_08ALCALADEEBRO_GRA_v1",
+      "ems_code": "EMSR279",
+      "s2_date": "2018-04-19T11:01:27.730000+00:00",
+      "shape": [
+        710,
+        861
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_01MALUNG_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_01MALUNG_DEL_MONIT02_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-28T10:40:24.460000+00:00",
+      "shape": [
+        3089,
+        2866
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_01MALUNG_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_01MALUNG_DEL_MONIT03_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-28T10:40:24.460000+00:00",
+      "shape": [
+        3089,
+        2866
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_01MALUNG_DEL_MONIT04_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_01MALUNG_DEL_MONIT04_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-10T10:30:20.460000+00:00",
+      "shape": [
+        3089,
+        2866
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_01MALUNG_DEL_MONIT05_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_01MALUNG_DEL_MONIT05_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        3089,
+        2866
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_02VANSBRO_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_02VANSBRO_DEL_MONIT02_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-28T10:40:24.460000+00:00",
+      "shape": [
+        4301,
+        5231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_02VANSBRO_DEL_MONIT04_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_02VANSBRO_DEL_MONIT04_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-10T10:30:20.460000+00:00",
+      "shape": [
+        4301,
+        5231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_02VANSBRO_DEL_MONIT05_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_02VANSBRO_DEL_MONIT05_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        4301,
+        5231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_02VANSBRO_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_02VANSBRO_DEL_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-22T10:21:15.970000+00:00",
+      "shape": [
+        4301,
+        5231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_03FALUN_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_03FALUN_DEL_MONIT01_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-27T10:20:22.460000+00:00",
+      "shape": [
+        3980,
+        4832
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_03FALUN_DEL_MONIT03_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_03FALUN_DEL_MONIT03_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-30T10:33:25.460000+00:00",
+      "shape": [
+        3980,
+        4832
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_03FALUN_DEL_MONIT05_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_03FALUN_DEL_MONIT05_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        3980,
+        4832
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT01_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-25T10:30:24.460000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT02_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-27T10:20:22.460000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT03_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-30T10:33:25.460000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT04_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT04_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-10T10:30:20.460000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT05_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT05_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_MONIT06_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_MONIT06_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-17T10:22:09.690000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_04ENVIKEN_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_04ENVIKEN_DEL_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-22T10:21:15.970000+00:00",
+      "shape": [
+        4268,
+        5181
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_05MORA_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_05MORA_DEL_MONIT02_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-27T10:20:22.460000+00:00",
+      "shape": [
+        3683,
+        4478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_05MORA_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_05MORA_DEL_MONIT03_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-02T10:20:25.460000+00:00",
+      "shape": [
+        3683,
+        4478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_05MORA_DEL_MONIT04_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_05MORA_DEL_MONIT04_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-10T10:30:20.460000+00:00",
+      "shape": [
+        3683,
+        4478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_05MORA_DEL_MONIT05_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_05MORA_DEL_MONIT05_v1",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        3683,
+        4478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR280_05MORA_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR280_05MORA_DEL_v2",
+      "ems_code": "EMSR280",
+      "s2_date": "2018-04-22T10:21:15.970000+00:00",
+      "shape": [
+        3683,
+        4478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_01JORDET_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_01JORDET_DEL_MONIT01_v2",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1472,
+        1767
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_01JORDET_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_01JORDET_DEL_MONIT02_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1472,
+        1767
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_01JORDET_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_01JORDET_DEL_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1472,
+        1767
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_02TRYSIL_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_02TRYSIL_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1471,
+        1766
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_02TRYSIL_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_02TRYSIL_DEL_MONIT02_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1471,
+        1766
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_02TRYSIL_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_02TRYSIL_DEL_v2",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1471,
+        1766
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_03ELVERUM_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_03ELVERUM_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1820,
+        2187
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_03ELVERUM_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_03ELVERUM_DEL_MONIT02_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-16T10:52:08.280000+00:00",
+      "shape": [
+        1820,
+        2187
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_04BRASKEREIDFOSS_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_04BRASKEREIDFOSS_DEL_MONIT02_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1822,
+        2189
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_05FLISA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_05FLISA_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1884,
+        1760
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_06GRINDER_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_06GRINDER_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1894,
+        1760
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_07KONGSVINGER_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_07KONGSVINGER_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1893,
+        1764
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_07KONGSVINGER_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_07KONGSVINGER_DEL_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1893,
+        1764
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_08SKARNES_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_08SKARNES_DEL_MONIT01_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1932,
+        1571
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_08SKARNES_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_08SKARNES_DEL_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-15T10:30:24.460000+00:00",
+      "shape": [
+        1932,
+        1571
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_09LILLESTROM_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_09LILLESTROM_DEL_MONIT01_v2",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1623,
+        1507
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_09LILLESTROM_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_09LILLESTROM_DEL_MONIT02_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-16T10:53:51.100000+00:00",
+      "shape": [
+        1623,
+        1507
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_09LILLESTROM_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_09LILLESTROM_DEL_v1",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-13T10:40:20.460000+00:00",
+      "shape": [
+        1623,
+        1507
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_10OTTA_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_10OTTA_DEL_MONIT01_v2",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-14T10:58:14.300000+00:00",
+      "shape": [
+        1710,
+        1584
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR283_10OTTA_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR283_10OTTA_DEL_MONIT02_v2",
+      "ems_code": "EMSR283",
+      "s2_date": "2018-05-14T10:58:14.300000+00:00",
+      "shape": [
+        1710,
+        1584
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR292_01CHRISOUPOLI_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR292_01CHRISOUPOLI_DEL_v1",
+      "ems_code": "EMSR292",
+      "s2_date": "2018-06-30T09:06:52.190000+00:00",
+      "shape": [
+        3008,
+        3642
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR292_01CHRISOUPOLI_GRA_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR292_01CHRISOUPOLI_GRA_v2",
+      "ems_code": "EMSR292",
+      "s2_date": "2018-06-30T09:06:52.190000+00:00",
+      "shape": [
+        3008,
+        3642
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR293_01BOTOSANI_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR293_01BOTOSANI_DEL_MONIT01_v1",
+      "ems_code": "EMSR293",
+      "s2_date": "2018-07-03T09:22:24.900000+00:00",
+      "shape": [
+        2423,
+        3131
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR293_01BOTOSANI_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR293_01BOTOSANI_DEL_v1",
+      "ems_code": "EMSR293",
+      "s2_date": "2018-07-03T09:22:24.900000+00:00",
+      "shape": [
+        2423,
+        3131
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR293_01BOTOSANI_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR293_01BOTOSANI_GRA_v1",
+      "ems_code": "EMSR293",
+      "s2_date": "2018-07-05T09:15:39.945000+00:00",
+      "shape": [
+        2423,
+        3131
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR293_03OZUN_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR293_03OZUN_DEL_MONIT01_v1",
+      "ems_code": "EMSR293",
+      "s2_date": "2018-07-03T09:22:24.900000+00:00",
+      "shape": [
+        2918,
+        3689
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR293_03OZUN_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR293_03OZUN_DEL_v1",
+      "ems_code": "EMSR293",
+      "s2_date": "2018-07-03T09:22:24.900000+00:00",
+      "shape": [
+        2918,
+        3689
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR294_01MANDRAMAGOULA_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR294_01MANDRAMAGOULA_GRA_v1",
+      "ems_code": "EMSR294",
+      "s2_date": "2018-06-30T09:19:15.390000+00:00",
+      "shape": [
+        578,
+        699
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR311_04WILMINGTON_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR311_04WILMINGTON_DEL_MONIT01_v1",
+      "ems_code": "EMSR311",
+      "s2_date": "2018-09-23T15:52:23.200000+00:00",
+      "shape": [
+        6734,
+        8413
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR311_05JACKSONVILLE_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR311_05JACKSONVILLE_DEL_MONIT03_v1",
+      "ems_code": "EMSR311",
+      "s2_date": "2018-09-23T15:52:23.200000+00:00",
+      "shape": [
+        4861,
+        6094
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_02CALAYAN_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_02CALAYAN_GRA_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-20T02:21:16.550000+00:00",
+      "shape": [
+        218,
+        266
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_05TUGUEGARAO_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_05TUGUEGARAO_DEL_MONIT01_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-20T02:21:16.550000+00:00",
+      "shape": [
+        3544,
+        3294
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_05TUGUEGARAO_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_05TUGUEGARAO_DEL_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-20T02:21:16.550000+00:00",
+      "shape": [
+        3544,
+        3294
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_06ILAGAN_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_06ILAGAN_DEL_MONIT01_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-20T02:21:16.550000+00:00",
+      "shape": [
+        3443,
+        3228
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_06ILAGAN_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_06ILAGAN_DEL_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-20T02:21:16.550000+00:00",
+      "shape": [
+        3443,
+        3228
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_07VIGAN_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_07VIGAN_DEL_MONIT01_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-18T02:31:20.980000+00:00",
+      "shape": [
+        2331,
+        2843
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_07VIGAN_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_07VIGAN_DEL_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-18T02:31:20.980000+00:00",
+      "shape": [
+        2331,
+        2843
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR312_08CANDON_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR312_08CANDON_DEL_v1",
+      "ems_code": "EMSR312",
+      "s2_date": "2018-09-18T02:31:20.980000+00:00",
+      "shape": [
+        2434,
+        2969
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR314_01PATEGI_DEL_v1.json",
+      "status": "overlap_exclude",
+      "event_id": "EMSR314_01PATEGI_DEL_v1",
+      "ems_code": "EMSR314",
+      "s2_date": "2018-09-20T10:05:58.870000+00:00",
+      "shape": [
+        2692,
+        3291
+      ],
+      "geographic_overlap": [
+        "Nigeria_1095404",
+        "Nigeria_598959",
+        "Nigeria_81933",
+        "Nigeria_984831"
+      ],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR314_02LOKOJA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR314_02LOKOJA_DEL_v1",
+      "ems_code": "EMSR314",
+      "s2_date": "2018-09-20T10:05:58.870000+00:00",
+      "shape": [
+        2798,
+        3425
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR314_03ENUGUOTU_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR314_03ENUGUOTU_DEL_v1",
+      "ems_code": "EMSR314",
+      "s2_date": "2018-09-25T10:08:07.750000+00:00",
+      "shape": [
+        2177,
+        2024
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR314_04OTUOCHAAGULERI_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR314_04OTUOCHAAGULERI_DEL_v1",
+      "ems_code": "EMSR314",
+      "s2_date": "2018-09-30T10:04:54.940000+00:00",
+      "shape": [
+        1936,
+        1800
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR314_05ONITSHA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR314_05ONITSHA_DEL_v1",
+      "ems_code": "EMSR314",
+      "s2_date": "2018-09-25T10:08:07.750000+00:00",
+      "shape": [
+        2795,
+        3422
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR319_01TAKLISAH_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR319_01TAKLISAH_DEL_v2",
+      "ems_code": "EMSR319",
+      "s2_date": "2018-10-08T10:08:22.290000+00:00",
+      "shape": [
+        2164,
+        2630
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR319_03KORBA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR319_03KORBA_DEL_v1",
+      "ems_code": "EMSR319",
+      "s2_date": "2018-10-08T10:08:22.290000+00:00",
+      "shape": [
+        2155,
+        2642
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR319_05SOMAA_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR319_05SOMAA_DEL_v2",
+      "ems_code": "EMSR319",
+      "s2_date": "2018-10-08T10:08:22.290000+00:00",
+      "shape": [
+        1644,
+        2013
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR321_02CHOLUTECA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR321_02CHOLUTECA_DEL_MONIT01_v1",
+      "ems_code": "EMSR321",
+      "s2_date": "2018-10-14T16:23:13.860000+00:00",
+      "shape": [
+        2264,
+        2775
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR322_17MARIANNA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR322_17MARIANNA_DEL_v1",
+      "ems_code": "EMSR322",
+      "s2_date": "2018-10-12T16:31:44.490000+00:00",
+      "shape": [
+        6853,
+        5780
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR323_08MANACOR_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR323_08MANACOR_GRA_v1",
+      "ems_code": "EMSR323",
+      "s2_date": "2018-10-12T10:37:03.530000+00:00",
+      "shape": [
+        980,
+        1198
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR323_09CALAMILLOR_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR323_09CALAMILLOR_GRA_v1",
+      "ems_code": "EMSR323",
+      "s2_date": "2018-10-15T10:45:06.280000+00:00",
+      "shape": [
+        764,
+        807
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_03MOUSSAN_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_03MOUSSAN_DEL_MONIT01_v1",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-20T10:40:44.460000+00:00",
+      "shape": [
+        1993,
+        2017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_03MOUSSAN_DEL_MONIT02_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_03MOUSSAN_DEL_MONIT02_v1",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-20T10:40:44.460000+00:00",
+      "shape": [
+        1993,
+        2017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_03MOUSSAN_DEL_MONIT03_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_03MOUSSAN_DEL_MONIT03_v1",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-20T10:40:44.460000+00:00",
+      "shape": [
+        1993,
+        2017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_04LESPIGNAN_MANUAL_LABEL.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_04LESPIGNAN_MANUAL_LABEL",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-20T10:40:44.460000+00:00",
+      "shape": [
+        1996,
+        2020
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_06TREBES_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_06TREBES_GRA_v1",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-23T10:51:07.460000+00:00",
+      "shape": [
+        585,
+        710
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR324_08COURSAN_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR324_08COURSAN_GRA_v1",
+      "ems_code": "EMSR324",
+      "s2_date": "2018-10-20T10:40:44.460000+00:00",
+      "shape": [
+        592,
+        737
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR326_02ANTEQUERA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR326_02ANTEQUERA_DEL_MONIT01_v1",
+      "ems_code": "EMSR326",
+      "s2_date": "2018-10-24T11:18:39+00:00",
+      "shape": [
+        5142,
+        6156
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR326_02ANTEQUERA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR326_02ANTEQUERA_DEL_v1",
+      "ems_code": "EMSR326",
+      "s2_date": "2018-10-24T11:18:39+00:00",
+      "shape": [
+        5142,
+        6156
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR326_03RONDA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR326_03RONDA_DEL_MONIT01_v1",
+      "ems_code": "EMSR326",
+      "s2_date": "2018-10-24T11:18:39+00:00",
+      "shape": [
+        5257,
+        6220
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR326_03RONDA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR326_03RONDA_DEL_v1",
+      "ems_code": "EMSR326",
+      "s2_date": "2018-10-24T11:18:39+00:00",
+      "shape": [
+        5257,
+        6220
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR329_02MACCHIAREDDU_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR329_02MACCHIAREDDU_GRA_v1",
+      "ems_code": "EMSR329",
+      "s2_date": "2018-10-16T10:18:17.680000+00:00",
+      "shape": [
+        877,
+        1072
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR329_03CAPOTERRA_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR329_03CAPOTERRA_GRA_v1",
+      "ems_code": "EMSR329",
+      "s2_date": "2018-10-16T10:18:17.680000+00:00",
+      "shape": [
+        906,
+        1077
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR329_04SANVITO_GRA_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR329_04SANVITO_GRA_v2",
+      "ems_code": "EMSR329",
+      "s2_date": "2018-10-26T10:19:40.760000+00:00",
+      "shape": [
+        883,
+        1078
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR330_03LENTINI_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR330_03LENTINI_DEL_MONIT01_v1",
+      "ems_code": "EMSR330",
+      "s2_date": "2018-10-27T09:43:37.590000+00:00",
+      "shape": [
+        2326,
+        2618
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR330_05LENTINIDETAIL_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR330_05LENTINIDETAIL_GRA_v1",
+      "ems_code": "EMSR330",
+      "s2_date": "2018-10-27T09:43:37.590000+00:00",
+      "shape": [
+        649,
+        800
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR339_01QUELIMANE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR339_01QUELIMANE_DEL_v1",
+      "ems_code": "EMSR339",
+      "s2_date": "2019-01-26T07:54:48.500000+00:00",
+      "shape": [
+        708,
+        972
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR339_03BEIRANW_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR339_03BEIRANW_DEL_v1",
+      "ems_code": "EMSR339",
+      "s2_date": "2019-01-26T07:55:25+00:00",
+      "shape": [
+        861,
+        876
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR339_04BEIRANE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR339_04BEIRANE_DEL_v1",
+      "ems_code": "EMSR339",
+      "s2_date": "2019-01-26T07:55:23.500000+00:00",
+      "shape": [
+        861,
+        875
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR339_05BEIRASE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR339_05BEIRASE_DEL_v1",
+      "ems_code": "EMSR339",
+      "s2_date": "2019-01-26T07:55:23.500000+00:00",
+      "shape": [
+        860,
+        875
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR339_06BEIRASW_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR339_06BEIRASW_DEL_v1",
+      "ems_code": "EMSR339",
+      "s2_date": "2019-01-26T07:55:25+00:00",
+      "shape": [
+        860,
+        876
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR346_03BEIRA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR346_03BEIRA_DEL_v1",
+      "ems_code": "EMSR346",
+      "s2_date": "2019-03-12T07:55:24+00:00",
+      "shape": [
+        3044,
+        2831
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_02CHINDE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_02CHINDE_DEL_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:06.500000+00:00",
+      "shape": [
+        1360,
+        1657
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_03BEIRA_DEL_MONIT01_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_03BEIRA_DEL_MONIT01_v2",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:26.500000+00:00",
+      "shape": [
+        3044,
+        2831
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_03BEIRA_DEL_MONIT02_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_03BEIRA_DEL_MONIT02_v2",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:26.500000+00:00",
+      "shape": [
+        3044,
+        2831
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_03BEIRA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_03BEIRA_DEL_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:26.500000+00:00",
+      "shape": [
+        3044,
+        2831
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_05MAFAMBISSE_DEL_MONIT02_v4.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_05MAFAMBISSE_DEL_MONIT02_v4",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:28+00:00",
+      "shape": [
+        2418,
+        2953
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_05MAFAMBISSE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_05MAFAMBISSE_DEL_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:28+00:00",
+      "shape": [
+        2418,
+        2953
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_06LAMEGO_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_06LAMEGO_DEL_MONIT01_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-25T08:05:24+00:00",
+      "shape": [
+        2615,
+        3196
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_08TICA_DEL_MONIT02_v3.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_08TICA_DEL_MONIT02_v3",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:28+00:00",
+      "shape": [
+        2403,
+        3338
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_08TICA_DEL_MONIT03_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_08TICA_DEL_MONIT03_v2",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:28+00:00",
+      "shape": [
+        2403,
+        3338
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_12MACORREIA_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_12MACORREIA_DEL_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:13+00:00",
+      "shape": [
+        2812,
+        3436
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_13NHANTAZE_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_13NHANTAZE_DEL_MONIT01_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:20.500000+00:00",
+      "shape": [
+        2812,
+        3436
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_13NHANTAZE_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_13NHANTAZE_DEL_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:20.500000+00:00",
+      "shape": [
+        2812,
+        3436
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR348_14MAVUNA_DEL_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR348_14MAVUNA_DEL_MONIT01_v1",
+      "ems_code": "EMSR348",
+      "s2_date": "2019-03-22T07:55:20.500000+00:00",
+      "shape": [
+        2812,
+        3435
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_01MURAMBINDANW_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_01MURAMBINDANW_GRA_v1",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-28T08:15:30+00:00",
+      "shape": [
+        1271,
+        1159
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_02MURAMBINDANE_GRA_MONIT01_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_02MURAMBINDANE_GRA_MONIT01_v1",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-28T08:15:30+00:00",
+      "shape": [
+        1270,
+        1475
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_02MURAMBINDANE_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_02MURAMBINDANE_GRA_v1",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-28T08:15:30+00:00",
+      "shape": [
+        1270,
+        1475
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_03MURAMBINDASW_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_03MURAMBINDASW_GRA_v1",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-28T08:15:30+00:00",
+      "shape": [
+        1340,
+        1295
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_07RUSITUVALLEYSE_GRA_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_07RUSITUVALLEYSE_GRA_v1",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-25T08:05:38.500000+00:00",
+      "shape": [
+        1345,
+        1298
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR349_09CHIMANIMANI_GRA_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR349_09CHIMANIMANI_GRA_v2",
+      "ems_code": "EMSR349",
+      "s2_date": "2019-03-25T08:05:36.500000+00:00",
+      "shape": [
+        2505,
+        2854
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR350_02PORTHEDLAND_DEL_v2.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR350_02PORTHEDLAND_DEL_v2",
+      "ems_code": "EMSR350",
+      "s2_date": "2019-03-28T02:23:20+00:00",
+      "shape": [
+        4941,
+        6037
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR350_05LONGREACH_DEL_v1.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR350_05LONGREACH_DEL_v1",
+      "ems_code": "EMSR350",
+      "s2_date": "2019-03-30T00:33:33+00:00",
+      "shape": [
+        3008,
+        3658
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-11T07:40:57+00:00",
+      "shape": [
+        843,
+        928
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-11T07:40:54.500000+00:00",
+      "shape": [
+        737,
+        813
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-21T07:41:07+00:00",
+      "shape": [
+        506,
+        684
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI06_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-08T07:31:14+00:00",
+      "shape": [
+        614,
+        749
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-11T07:41:07.500000+00:00",
+      "shape": [
+        1308,
+        1800
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-11T07:41:11+00:00",
+      "shape": [
+        1893,
+        2642
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI09_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI09_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-21T07:41:28.500000+00:00",
+      "shape": [
+        2464,
+        2856
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI11_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI11_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-11T07:40:50.500000+00:00",
+      "shape": [
+        2211,
+        1674
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR352_AOI13_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR352_AOI13_GRA_PRODUCT",
+      "ems_code": "EMSR352",
+      "s2_date": "2019-04-16T07:40:56+00:00",
+      "shape": [
+        1179,
+        1269
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR354_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR354_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR354",
+      "s2_date": "2019-05-03T07:43:34+00:00",
+      "shape": [
+        1738,
+        1311
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR354_AOI06_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR354_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR354",
+      "s2_date": "2019-05-08T07:43:24+00:00",
+      "shape": [
+        809,
+        522
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR354_AOI19_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR354_AOI19_DEL_PRODUCT",
+      "ems_code": "EMSR354",
+      "s2_date": "2019-05-03T07:43:34+00:00",
+      "shape": [
+        1176,
+        2461
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR354_AOI22_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR354_AOI22_DEL_PRODUCT",
+      "ems_code": "EMSR354",
+      "s2_date": "2019-05-03T07:43:05+00:00",
+      "shape": [
+        1671,
+        2478
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR357_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR357_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR357",
+      "s2_date": "2019-05-08T05:03:07+00:00",
+      "shape": [
+        3557,
+        2450
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR357_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR357_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR357",
+      "s2_date": "2019-05-08T05:03:26+00:00",
+      "shape": [
+        882,
+        698
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR357_AOI06_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR357_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR357",
+      "s2_date": "2019-05-08T05:03:25+00:00",
+      "shape": [
+        445,
+        440
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR357_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR357_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR357",
+      "s2_date": "2019-05-08T05:03:14+00:00",
+      "shape": [
+        858,
+        1131
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR358_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR358_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR358",
+      "s2_date": "2019-05-18T09:58:14.500000+00:00",
+      "shape": [
+        5074,
+        5044
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR358_AOI04_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR358_AOI04_DEL_MONIT01",
+      "ems_code": "EMSR358",
+      "s2_date": "2019-05-18T09:58:11+00:00",
+      "shape": [
+        1951,
+        2017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR358_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR358_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR358",
+      "s2_date": "2019-05-18T09:58:11+00:00",
+      "shape": [
+        1951,
+        2017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR358_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR358_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR358",
+      "s2_date": "2019-05-18T09:58:05+00:00",
+      "shape": [
+        2298,
+        4844
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR359_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR359_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR359",
+      "s2_date": "2019-05-14T10:18:32+00:00",
+      "shape": [
+        1488,
+        1970
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:56:01.973500+00:00",
+      "shape": [
+        12290,
+        6991
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:55:57.430000+00:00",
+      "shape": [
+        3869,
+        12538
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:55:55.897000+00:00",
+      "shape": [
+        849,
+        1198
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:55:55.897000+00:00",
+      "shape": [
+        548,
+        323
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI09_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI09_GRA_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:55:55.897000+00:00",
+      "shape": [
+        727,
+        1726
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI12_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI12_GRA_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-05T15:55:58.963000+00:00",
+      "shape": [
+        601,
+        1506
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR385_AOI15_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR385_AOI15_GRA_PRODUCT",
+      "ems_code": "EMSR385",
+      "s2_date": "2019-09-20T15:55:55.090000+00:00",
+      "shape": [
+        486,
+        845
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR388_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR388_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR388",
+      "s2_date": "2019-09-18T11:00:22.270000+00:00",
+      "shape": [
+        4677,
+        8545
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR388_AOI02_DEL_MONIT02.json",
+      "status": "overlap_exclude",
+      "event_id": "EMSR388_AOI02_DEL_MONIT02",
+      "ems_code": "EMSR388",
+      "s2_date": "2019-09-28T11:00:33.087000+00:00",
+      "shape": [
+        4437,
+        8443
+      ],
+      "geographic_overlap": [
+        "Spain_1167260",
+        "Spain_1199913",
+        "Spain_3285448",
+        "Spain_4282030",
+        "Spain_4915752",
+        "Spain_5923267",
+        "Spain_6095801",
+        "Spain_7370579",
+        "Spain_7387658",
+        "Spain_7604243",
+        "Spain_8372658",
+        "Spain_8565131"
+      ],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR388_AOI06_GRA_PRODUCT.json",
+      "status": "overlap_exclude",
+      "event_id": "EMSR388_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR388",
+      "s2_date": "2019-09-18T11:00:31.899000+00:00",
+      "shape": [
+        734,
+        845
+      ],
+      "geographic_overlap": [
+        "Spain_2523247",
+        "Spain_337094",
+        "Spain_5678382",
+        "Spain_7558720",
+        "Spain_8104659",
+        "Spain_8154154"
+      ],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR388_AOI07_GRA_PRODUCT.json",
+      "status": "overlap_exclude",
+      "event_id": "EMSR388_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR388",
+      "s2_date": "2019-09-18T11:00:30.243000+00:00",
+      "shape": [
+        905,
+        1065
+      ],
+      "geographic_overlap": [
+        "Spain_1167260",
+        "Spain_1199913",
+        "Spain_2594119",
+        "Spain_3285448",
+        "Spain_4282030",
+        "Spain_6095801",
+        "Spain_7370579",
+        "Spain_7387658",
+        "Spain_7558720",
+        "Spain_7604243",
+        "Spain_7786924",
+        "Spain_8372658",
+        "Spain_8565131"
+      ],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR392_AOI01_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR392_AOI01_DEL_MONIT03",
+      "ems_code": "EMSR392",
+      "s2_date": "2019-10-13T03:35:16.669000+00:00",
+      "shape": [
+        967,
+        677
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR395_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR395_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR395",
+      "s2_date": "2019-10-09T13:01:10.486000+00:00",
+      "shape": [
+        404,
+        439
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR395_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR395_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR395",
+      "s2_date": "2019-10-09T13:01:10.486000+00:00",
+      "shape": [
+        362,
+        430
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR399_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR399_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR399",
+      "s2_date": "2019-11-07T03:35:18.215000+00:00",
+      "shape": [
+        1468,
+        1491
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR405_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR405_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR405",
+      "s2_date": "2019-11-14T03:23:59.160500+00:00",
+      "shape": [
+        1589,
+        1164
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR405_AOI02_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR405_AOI02_DEL_MONIT01",
+      "ems_code": "EMSR405",
+      "s2_date": "2019-11-14T03:24:11.002500+00:00",
+      "shape": [
+        1618,
+        1780
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR405_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR405_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR405",
+      "s2_date": "2019-11-14T03:24:25.439500+00:00",
+      "shape": [
+        2846,
+        3434
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR410_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR410_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR410",
+      "s2_date": "2019-12-02T07:46:42.170000+00:00",
+      "shape": [
+        1020,
+        1387
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR410_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR410_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR410",
+      "s2_date": "2019-12-02T07:46:42.170000+00:00",
+      "shape": [
+        1020,
+        1387
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR410_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR410_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR410",
+      "s2_date": "2019-12-02T07:46:29.593000+00:00",
+      "shape": [
+        314,
+        590
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR411_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR411_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR411",
+      "s2_date": "2019-11-28T10:28:48.760500+00:00",
+      "shape": [
+        2040,
+        2063
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR413_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR413_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR413",
+      "s2_date": "2019-11-25T09:29:50.758000+00:00",
+      "shape": [
+        1323,
+        2895
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR413_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR413_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR413",
+      "s2_date": "2019-11-27T09:19:48.728000+00:00",
+      "shape": [
+        601,
+        875
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR416_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR416_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR416",
+      "s2_date": "2019-12-15T11:08:56.936000+00:00",
+      "shape": [
+        3131,
+        4085
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR421_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR421_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR421",
+      "s2_date": "2020-01-28T10:49:03.350000+00:00",
+      "shape": [
+        2047,
+        2078
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI02_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI02_DEL_MONIT02",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-02-10T07:04:27.739000+00:00",
+      "shape": [
+        7755,
+        6754
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-01-31T07:04:25.453000+00:00",
+      "shape": [
+        7755,
+        6754
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI02_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI02_FEP_PRODUCT",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-01-31T07:04:25.453000+00:00",
+      "shape": [
+        7755,
+        6754
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-02-08T07:14:10.045000+00:00",
+      "shape": [
+        7112,
+        5867
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-02-08T07:14:12.001000+00:00",
+      "shape": [
+        2579,
+        1982
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR424_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR424_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR424",
+      "s2_date": "2020-02-08T07:13:55.724000+00:00",
+      "shape": [
+        3592,
+        1820
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI03_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI03_DEL_MONIT01",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-21T10:24:31.127500+00:00",
+      "shape": [
+        10089,
+        8632
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI03_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI03_DEL_MONIT03",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-03-02T10:24:32.231500+00:00",
+      "shape": [
+        10089,
+        8632
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-19T10:34:29.629000+00:00",
+      "shape": [
+        10089,
+        8632
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI04_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI04_DEL_MONIT03",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-03-05T10:34:46.986000+00:00",
+      "shape": [
+        11673,
+        6209
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI05_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI05_DEL_MONIT01",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-24T10:34:56.180500+00:00",
+      "shape": [
+        10327,
+        8944
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI05_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI05_DEL_MONIT02",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-03-05T10:34:57.151500+00:00",
+      "shape": [
+        10327,
+        8944
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-21T10:24:58.658000+00:00",
+      "shape": [
+        10327,
+        8944
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-23T10:14:59.181500+00:00",
+      "shape": [
+        11040,
+        7271
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-02-28T10:15:13.678500+00:00",
+      "shape": [
+        10148,
+        5177
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR427_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR427_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR427",
+      "s2_date": "2020-03-02T10:24:25.161500+00:00",
+      "shape": [
+        14133,
+        11809
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-02-25T11:46:43.112000+00:00",
+      "shape": [
+        1824,
+        1106
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI01_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI01_DEL_MONIT02",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:45.620500+00:00",
+      "shape": [
+        1824,
+        1106
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-02-25T11:46:43.112000+00:00",
+      "shape": [
+        1824,
+        1106
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:25.124500+00:00",
+      "shape": [
+        5181,
+        5800
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:23.981000+00:00",
+      "shape": [
+        3788,
+        3341
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:21.999500+00:00",
+      "shape": [
+        3546,
+        7669
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:38.213500+00:00",
+      "shape": [
+        11329,
+        9578
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-01T11:46:34.389500+00:00",
+      "shape": [
+        9562,
+        8022
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-04T11:56:28.391500+00:00",
+      "shape": [
+        2963,
+        2234
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI09_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI09_DEL_MONIT01",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-04T11:56:25.877000+00:00",
+      "shape": [
+        471,
+        461
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR429_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR429_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR429",
+      "s2_date": "2020-03-04T11:56:25.877000+00:00",
+      "shape": [
+        471,
+        461
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:27.583000+00:00",
+      "shape": [
+        2167,
+        4350
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI04_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI04_FEP_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:20.463500+00:00",
+      "shape": [
+        1023,
+        958
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI05_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI05_FEP_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:27.583000+00:00",
+      "shape": [
+        3020,
+        3166
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI06_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:20.463500+00:00",
+      "shape": [
+        1080,
+        1130
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:27.583000+00:00",
+      "shape": [
+        339,
+        345
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR431_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR431_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR431",
+      "s2_date": "2020-03-01T07:40:35.893000+00:00",
+      "shape": [
+        1265,
+        1468
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR434_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR434_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR434",
+      "s2_date": "2020-04-18T23:10:53.016000+00:00",
+      "shape": [
+        1626,
+        1420
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI02_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI02_DEL_MONIT03",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-08T10:31:42.321500+00:00",
+      "shape": [
+        1013,
+        1018
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI02_DEL_MONIT04.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI02_DEL_MONIT04",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-10T10:21:49.140000+00:00",
+      "shape": [
+        1013,
+        1018
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI05_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI05_DEL_MONIT01",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-09T10:02:00.351000+00:00",
+      "shape": [
+        1161,
+        1188
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-02T10:11:58.152000+00:00",
+      "shape": [
+        1161,
+        1188
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-02T10:12:06.577500+00:00",
+      "shape": [
+        1049,
+        1193
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI07_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI07_DEL_MONIT01",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-04T10:02:18.937000+00:00",
+      "shape": [
+        1064,
+        1143
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-02T10:12:14.332000+00:00",
+      "shape": [
+        1064,
+        1143
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI08_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI08_DEL_MONIT01",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-09T10:01:23.232000+00:00",
+      "shape": [
+        481,
+        459
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-09T10:01:23.232000+00:00",
+      "shape": [
+        481,
+        459
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR441_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR441_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR441",
+      "s2_date": "2020-06-08T10:31:52.395000+00:00",
+      "shape": [
+        637,
+        651
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR442_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR442_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR442",
+      "s2_date": "2020-06-10T10:21:17.346000+00:00",
+      "shape": [
+        1633,
+        679
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR442_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR442_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR442",
+      "s2_date": "2020-06-10T10:21:02.453000+00:00",
+      "shape": [
+        5523,
+        2974
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR444_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR444_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR444",
+      "s2_date": "2020-06-27T09:27:07.833000+00:00",
+      "shape": [
+        3818,
+        8513
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR444_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR444_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR444",
+      "s2_date": "2020-06-27T09:27:13.174000+00:00",
+      "shape": [
+        3574,
+        3449
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR444_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR444_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR444",
+      "s2_date": "2020-06-25T09:37:13.572000+00:00",
+      "shape": [
+        3574,
+        3449
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR444_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR444_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR444",
+      "s2_date": "2020-06-30T09:36:50.804500+00:00",
+      "shape": [
+        2421,
+        3941
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR445_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR445_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR445",
+      "s2_date": "2020-06-27T09:27:01.135500+00:00",
+      "shape": [
+        3825,
+        8329
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR445_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR445_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR445",
+      "s2_date": "2020-06-27T09:28:02.769500+00:00",
+      "shape": [
+        7854,
+        6350
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI01_DEL_MONIT04.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI01_DEL_MONIT04",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-08-17T08:19:49.410000+00:00",
+      "shape": [
+        6641,
+        11277
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI01_DEL_MONIT05.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI01_DEL_MONIT05",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-08-22T08:19:47.144000+00:00",
+      "shape": [
+        6641,
+        11277
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI01_DEL_MONIT06.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI01_DEL_MONIT06",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-08-27T08:19:48.826000+00:00",
+      "shape": [
+        6641,
+        11277
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI01_DEL_MONIT07.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI01_DEL_MONIT07",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-09-01T08:19:46.780000+00:00",
+      "shape": [
+        6641,
+        11277
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-07-13T08:19:45.118000+00:00",
+      "shape": [
+        6641,
+        11277
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR446_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR446_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR446",
+      "s2_date": "2020-06-01T08:30:20.362500+00:00",
+      "shape": [
+        5824,
+        5395
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR456_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR456_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR456",
+      "s2_date": "2020-08-11T16:19:20.357000+00:00",
+      "shape": [
+        685,
+        1088
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR456_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR456_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR456",
+      "s2_date": "2020-08-23T16:09:36.416000+00:00",
+      "shape": [
+        1011,
+        880
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR456_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR456_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR456",
+      "s2_date": "2020-08-11T16:19:38.259000+00:00",
+      "shape": [
+        899,
+        992
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR456_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR456_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR456",
+      "s2_date": "2020-08-13T16:09:36.209000+00:00",
+      "shape": [
+        1002,
+        879
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR464_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR464_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR464",
+      "s2_date": "2020-09-22T03:33:09.489000+00:00",
+      "shape": [
+        798,
+        939
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR464_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR464_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR464",
+      "s2_date": "2020-09-22T03:33:32.359000+00:00",
+      "shape": [
+        1535,
+        1730
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR464_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR464_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR464",
+      "s2_date": "2020-09-24T03:23:44.427000+00:00",
+      "shape": [
+        2991,
+        3309
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR465_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR465_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR465",
+      "s2_date": "2020-09-20T09:29:41.142000+00:00",
+      "shape": [
+        5275,
+        7466
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR465_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR465_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR465",
+      "s2_date": "2020-09-25T09:29:40.603500+00:00",
+      "shape": [
+        1327,
+        1651
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR465_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR465_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR465",
+      "s2_date": "2020-09-25T09:29:42.342000+00:00",
+      "shape": [
+        962,
+        1166
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR465_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR465_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR465",
+      "s2_date": "2020-09-25T09:29:40.603500+00:00",
+      "shape": [
+        857,
+        1146
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR465_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR465_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR465",
+      "s2_date": "2020-09-25T09:29:42.342000+00:00",
+      "shape": [
+        524,
+        415
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR467_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR467_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR467",
+      "s2_date": "2020-10-08T10:28:56.531000+00:00",
+      "shape": [
+        2967,
+        1649
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR467_AOI02_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR467_AOI02_FEP_PRODUCT",
+      "ems_code": "EMSR467",
+      "s2_date": "2020-10-03T10:28:54.110000+00:00",
+      "shape": [
+        2967,
+        1649
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR467_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR467_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR467",
+      "s2_date": "2020-10-08T10:28:56.531000+00:00",
+      "shape": [
+        4492,
+        2642
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR467_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR467_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR467",
+      "s2_date": "2020-10-08T10:28:56.531000+00:00",
+      "shape": [
+        555,
+        489
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR467_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR467_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR467",
+      "s2_date": "2020-10-08T10:28:56.531000+00:00",
+      "shape": [
+        480,
+        484
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR468_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR468_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR468",
+      "s2_date": "2020-10-03T10:28:28.552500+00:00",
+      "shape": [
+        7929,
+        3718
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR468_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR468_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR468",
+      "s2_date": "2020-10-03T10:28:44.784500+00:00",
+      "shape": [
+        5557,
+        3635
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR468_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR468_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR468",
+      "s2_date": "2020-08-12T10:38:20.034000+00:00",
+      "shape": [
+        546,
+        470
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR468_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR468_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR468",
+      "s2_date": "2020-10-08T10:28:30.974500+00:00",
+      "shape": [
+        3869,
+        2412
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR468_AOI06_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR468_AOI06_GRA_PRODUCT",
+      "ems_code": "EMSR468",
+      "s2_date": "2020-10-13T10:28:36.171000+00:00",
+      "shape": [
+        441,
+        356
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR470_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR470_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR470",
+      "s2_date": "2020-10-23T10:38:12.590500+00:00",
+      "shape": [
+        15740,
+        8747
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR470_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR470_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR470",
+      "s2_date": "2020-10-18T10:38:14.704000+00:00",
+      "shape": [
+        15740,
+        8747
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR470_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR470_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR470",
+      "s2_date": "2020-10-18T10:38:14.704000+00:00",
+      "shape": [
+        448,
+        317
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR472_AOI03_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR472_AOI03_DEL_MONIT01",
+      "ems_code": "EMSR472",
+      "s2_date": "2020-10-27T03:33:34.952000+00:00",
+      "shape": [
+        6432,
+        10807
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR472_AOI03_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR472_AOI03_DEL_MONIT02",
+      "ems_code": "EMSR472",
+      "s2_date": "2020-10-27T03:33:34.952000+00:00",
+      "shape": [
+        6432,
+        10807
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR472_AOI04_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR472_AOI04_DEL_MONIT01",
+      "ems_code": "EMSR472",
+      "s2_date": "2020-10-24T03:23:53.137000+00:00",
+      "shape": [
+        7601,
+        7885
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-11-09T03:43:01.312000+00:00",
+      "shape": [
+        1369,
+        1677
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-11-01T03:33:09.469000+00:00",
+      "shape": [
+        798,
+        939
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-11-01T03:33:32.351000+00:00",
+      "shape": [
+        3143,
+        3606
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI06_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI06_DEL_MONIT01",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-11-03T03:23:37.907000+00:00",
+      "shape": [
+        3155,
+        3692
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-10-29T03:23:40.611000+00:00",
+      "shape": [
+        3155,
+        3692
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI07_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI07_DEL_MONIT01",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-11-03T03:23:45.150500+00:00",
+      "shape": [
+        2359,
+        3089
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-10-29T03:23:47.854500+00:00",
+      "shape": [
+        2359,
+        3089
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-10-29T03:23:47.854500+00:00",
+      "shape": [
+        1351,
+        1508
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR475_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR475_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR475",
+      "s2_date": "2020-10-29T03:24:02.341000+00:00",
+      "shape": [
+        1264,
+        1635
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR478_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR478_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR478",
+      "s2_date": "2020-11-15T02:23:44.158000+00:00",
+      "shape": [
+        252,
+        324
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR478_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR478_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR478",
+      "s2_date": "2020-11-15T02:23:54.789000+00:00",
+      "shape": [
+        396,
+        352
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR479_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR479_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR479",
+      "s2_date": "2020-11-11T16:58:39.134000+00:00",
+      "shape": [
+        5324,
+        11062
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR480_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR480_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR480",
+      "s2_date": "2020-11-13T09:10:37.020000+00:00",
+      "shape": [
+        879,
+        3160
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR480_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR480_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR480",
+      "s2_date": "2020-11-13T09:10:40.308000+00:00",
+      "shape": [
+        418,
+        917
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR480_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR480_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR480",
+      "s2_date": "2020-11-13T09:10:40.308000+00:00",
+      "shape": [
+        478,
+        539
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR481_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR481_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR481",
+      "s2_date": "2020-11-12T16:29:20.964500+00:00",
+      "shape": [
+        8360,
+        6283
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR481_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR481_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR481",
+      "s2_date": "2020-11-12T16:29:55.546000+00:00",
+      "shape": [
+        2741,
+        2838
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:45.144000+00:00",
+      "shape": [
+        2310,
+        2925
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-27T16:29:17.014000+00:00",
+      "shape": [
+        8360,
+        6283
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI03_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI03_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-27T16:29:17.014000+00:00",
+      "shape": [
+        8360,
+        6283
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI04_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI04_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-22T16:29:53.673000+00:00",
+      "shape": [
+        3872,
+        4175
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:08.240000+00:00",
+      "shape": [
+        4862,
+        8000
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI05_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI05_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:08.240000+00:00",
+      "shape": [
+        4862,
+        8000
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-25T16:39:17.058500+00:00",
+      "shape": [
+        9849,
+        15964
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI06_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI06_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-25T16:39:17.058500+00:00",
+      "shape": [
+        9849,
+        15964
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-25T16:39:13.241000+00:00",
+      "shape": [
+        6776,
+        13171
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI07_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI07_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-25T16:39:13.241000+00:00",
+      "shape": [
+        6776,
+        13171
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:29.184000+00:00",
+      "shape": [
+        5878,
+        6384
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI08_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI08_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:29.184000+00:00",
+      "shape": [
+        5878,
+        6384
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-12-01T16:09:17.636000+00:00",
+      "shape": [
+        3236,
+        6834
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI09_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI09_FEP_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-12-01T16:09:17.636000+00:00",
+      "shape": [
+        3236,
+        6834
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR482_AOI12_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR482_AOI12_DEL_PRODUCT",
+      "ems_code": "EMSR482",
+      "s2_date": "2020-11-24T16:19:39.716000+00:00",
+      "shape": [
+        3933,
+        8152
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR483_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR483_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR483",
+      "s2_date": "2020-12-05T09:49:46.023000+00:00",
+      "shape": [
+        3963,
+        3068
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR485_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR485_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR485",
+      "s2_date": "2020-12-11T16:58:42.498000+00:00",
+      "shape": [
+        504,
+        539
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR485_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR485_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR485",
+      "s2_date": "2020-11-28T16:48:49.394500+00:00",
+      "shape": [
+        321,
+        365
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR486_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR486_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR486",
+      "s2_date": "2020-12-09T10:19:34.766500+00:00",
+      "shape": [
+        3487,
+        4197
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR495_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR495_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR495",
+      "s2_date": "2021-01-26T08:16:00.143000+00:00",
+      "shape": [
+        6725,
+        12231
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT02",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT03",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT04.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT04",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT05.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT05",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_MONIT06.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_MONIT06",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR497_AOI01_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR497_AOI01_FEP_PRODUCT",
+      "ems_code": "EMSR497",
+      "s2_date": "2021-02-11T10:46:38.986000+00:00",
+      "shape": [
+        9993,
+        7284
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR501_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR501_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR501",
+      "s2_date": "2021-02-15T09:38:58.363000+00:00",
+      "shape": [
+        2996,
+        4597
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR501_AOI01_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR501_AOI01_DEL_MONIT02",
+      "ems_code": "EMSR501",
+      "s2_date": "2021-02-15T09:38:58.363000+00:00",
+      "shape": [
+        2996,
+        4597
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR501_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR501_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR501",
+      "s2_date": "2021-02-15T09:38:58.363000+00:00",
+      "shape": [
+        2996,
+        4597
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR502_AOI04_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR502_AOI04_DEL_MONIT01",
+      "ems_code": "EMSR502",
+      "s2_date": "2021-02-27T11:57:00.238000+00:00",
+      "shape": [
+        999,
+        2187
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR502_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR502_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR502",
+      "s2_date": "2021-02-27T11:57:00.238000+00:00",
+      "shape": [
+        999,
+        2187
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI01_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI01_DEL_MONIT02",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-26T23:55:24.215000+00:00",
+      "shape": [
+        838,
+        1221
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-26T23:55:24.215000+00:00",
+      "shape": [
+        838,
+        1221
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-26T23:55:24.215000+00:00",
+      "shape": [
+        838,
+        1221
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-26T23:55:24.215000+00:00",
+      "shape": [
+        2313,
+        2915
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI04_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI04_DEL_MONIT01",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:33.917000+00:00",
+      "shape": [
+        1074,
+        1320
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:33.917000+00:00",
+      "shape": [
+        1074,
+        1320
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:33.917000+00:00",
+      "shape": [
+        1074,
+        1320
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI05_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI05_DEL_MONIT01",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:52.032000+00:00",
+      "shape": [
+        1700,
+        3099
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI05_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI05_DEL_MONIT02",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:52.032000+00:00",
+      "shape": [
+        1700,
+        3099
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI05_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI05_DEL_MONIT03",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:52.032000+00:00",
+      "shape": [
+        1700,
+        3099
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI06_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI06_DEL_MONIT01",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:06:00.974500+00:00",
+      "shape": [
+        4571,
+        3514
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI06_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI06_DEL_MONIT02",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:06:00.974500+00:00",
+      "shape": [
+        4571,
+        3514
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:06:00.974500+00:00",
+      "shape": [
+        4571,
+        3514
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-26T23:55:31.429000+00:00",
+      "shape": [
+        837,
+        1481
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:05:24.663000+00:00",
+      "shape": [
+        3178,
+        2237
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-25T00:04:50.257000+00:00",
+      "shape": [
+        1913,
+        1554
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR504_AOI12_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR504_AOI12_GRA_PRODUCT",
+      "ems_code": "EMSR504",
+      "s2_date": "2021-03-30T00:06:01.074000+00:00",
+      "shape": [
+        1824,
+        2575
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR507_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR507_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR507",
+      "s2_date": "2021-04-10T01:59:53.022000+00:00",
+      "shape": [
+        450,
+        819
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR507_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR507_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR507",
+      "s2_date": "2021-04-10T01:59:49.652000+00:00",
+      "shape": [
+        1663,
+        2457
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR507_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR507_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR507",
+      "s2_date": "2021-04-10T02:00:00.210500+00:00",
+      "shape": [
+        3409,
+        2512
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR507_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR507_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR507",
+      "s2_date": "2021-04-08T02:10:07.668000+00:00",
+      "shape": [
+        2209,
+        4422
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR507_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR507_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR507",
+      "s2_date": "2021-04-10T01:59:53.022000+00:00",
+      "shape": [
+        508,
+        280
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR511_AOI03_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR511_AOI03_DEL_MONIT01",
+      "ems_code": "EMSR511",
+      "s2_date": "2021-05-25T10:02:20.026000+00:00",
+      "shape": [
+        2828,
+        1215
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR511_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR511_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR511",
+      "s2_date": "2021-05-25T10:02:20.026000+00:00",
+      "shape": [
+        2828,
+        1215
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR514_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR514_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR514",
+      "s2_date": "2021-06-14T14:30:39.277500+00:00",
+      "shape": [
+        7728,
+        4969
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR514_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR514_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR514",
+      "s2_date": "2021-06-14T14:30:39.277500+00:00",
+      "shape": [
+        7728,
+        4969
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR514_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR514_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR514",
+      "s2_date": "2021-06-14T14:30:54.125000+00:00",
+      "shape": [
+        2424,
+        4042
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR514_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR514_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR514",
+      "s2_date": "2021-06-12T14:41:05.889000+00:00",
+      "shape": [
+        5344,
+        4106
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:37:18.271000+00:00",
+      "shape": [
+        9497,
+        9161
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:37:18.271000+00:00",
+      "shape": [
+        9497,
+        9161
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI05_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI05_DEL_MONIT01",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:36:56.400500+00:00",
+      "shape": [
+        6161,
+        7676
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:36:56.400500+00:00",
+      "shape": [
+        6161,
+        7676
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI06_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI06_DEL_MONIT01",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:36:47.646000+00:00",
+      "shape": [
+        4100,
+        7720
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:36:47.646000+00:00",
+      "shape": [
+        4100,
+        7720
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI11_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI11_GRA_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:36:56.400500+00:00",
+      "shape": [
+        1003,
+        777
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI14_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI14_GRA_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-26T10:46:51.876000+00:00",
+      "shape": [
+        1576,
+        935
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR517_AOI15_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR517_AOI15_GRA_PRODUCT",
+      "ems_code": "EMSR517",
+      "s2_date": "2021-07-18T10:37:03.767500+00:00",
+      "shape": [
+        2182,
+        1653
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR518_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR518_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR518",
+      "s2_date": "2021-07-19T10:56:53.615000+00:00",
+      "shape": [
+        7918,
+        4742
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR518_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR518_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR518",
+      "s2_date": "2021-07-19T10:56:53.615000+00:00",
+      "shape": [
+        7918,
+        4742
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR520_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR520_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR520",
+      "s2_date": "2021-07-19T10:56:43.831000+00:00",
+      "shape": [
+        3834,
+        2739
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-11-03T10:00:21.939500+00:00",
+      "shape": [
+        4710,
+        3402
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI02_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI02_DEL_MONIT01",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-11-03T10:00:29.062500+00:00",
+      "shape": [
+        2784,
+        2795
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI02_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI02_DEL_MONIT02",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-11-03T10:00:29.062500+00:00",
+      "shape": [
+        2784,
+        2795
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI02_DEL_MONIT04.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI02_DEL_MONIT04",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-11-03T10:00:29.062500+00:00",
+      "shape": [
+        2784,
+        2795
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI02_DEL_MONIT05.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI02_DEL_MONIT05",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-11-03T10:00:29.062500+00:00",
+      "shape": [
+        2784,
+        2795
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR548_AOI02_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR548_AOI02_FEP_PRODUCT",
+      "ems_code": "EMSR548",
+      "s2_date": "2021-10-26T09:50:30.712500+00:00",
+      "shape": [
+        2784,
+        2795
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR550_AOI11_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR550_AOI11_DEL_MONIT01",
+      "ems_code": "EMSR550",
+      "s2_date": "2021-11-18T00:16:03.985500+00:00",
+      "shape": [
+        993,
+        765
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR554_AOI02_DEL_MONIT03.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR554_AOI02_DEL_MONIT03",
+      "ems_code": "EMSR554",
+      "s2_date": "2021-12-05T00:04:39.429000+00:00",
+      "shape": [
+        3269,
+        6891
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR554_AOI03_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR554_AOI03_DEL_MONIT01",
+      "ems_code": "EMSR554",
+      "s2_date": "2021-12-08T00:15:06.522000+00:00",
+      "shape": [
+        2222,
+        3077
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR559_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR559_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR559",
+      "s2_date": "2022-02-02T07:14:12.224000+00:00",
+      "shape": [
+        12568,
+        7081
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR561_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR561_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR561",
+      "s2_date": "2022-01-30T07:54:41.968000+00:00",
+      "shape": [
+        2891,
+        2560
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR561_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR561_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR561",
+      "s2_date": "2022-01-30T07:54:41.968000+00:00",
+      "shape": [
+        2891,
+        2560
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR561_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR561_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR561",
+      "s2_date": "2022-01-30T07:54:41.968000+00:00",
+      "shape": [
+        2734,
+        1764
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR561_AOI03_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR561_AOI03_GRA_PRODUCT",
+      "ems_code": "EMSR561",
+      "s2_date": "2022-01-30T07:54:41.968000+00:00",
+      "shape": [
+        2734,
+        1764
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR564_AOI07_GRA_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR564_AOI07_GRA_MONIT01",
+      "ems_code": "EMSR564",
+      "s2_date": "2022-02-19T07:05:25.323000+00:00",
+      "shape": [
+        1155,
+        576
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR564_AOI08_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR564_AOI08_GRA_PRODUCT",
+      "ems_code": "EMSR564",
+      "s2_date": "2022-02-09T07:05:42.120000+00:00",
+      "shape": [
+        740,
+        470
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-02-24T07:05:41.121500+00:00",
+      "shape": [
+        1452,
+        1386
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI04_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI04_DEL_MONIT01",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-03-01T07:05:44.365500+00:00",
+      "shape": [
+        2446,
+        2550
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-02-24T07:05:50.369500+00:00",
+      "shape": [
+        2446,
+        2550
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-03-01T07:05:53.557500+00:00",
+      "shape": [
+        2088,
+        2205
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI06_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI06_DEL_MONIT01",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-03-01T07:06:00.847000+00:00",
+      "shape": [
+        1312,
+        2207
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR565_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR565_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR565",
+      "s2_date": "2022-02-24T07:06:06.861000+00:00",
+      "shape": [
+        1312,
+        2207
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-02-28T00:04:04.540000+00:00",
+      "shape": [
+        1010,
+        1010
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-02-28T00:04:26.371000+00:00",
+      "shape": [
+        1015,
+        1017
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI05_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI05_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-02-28T00:04:26.371000+00:00",
+      "shape": [
+        1010,
+        1014
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI07_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI07_DEL_MONIT01",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-01T23:54:35.071000+00:00",
+      "shape": [
+        1003,
+        1003
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI07_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI07_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-01T23:54:35.071000+00:00",
+      "shape": [
+        1003,
+        1003
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-01T23:54:51.369500+00:00",
+      "shape": [
+        2907,
+        2767
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI09_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI09_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-06T23:54:42.353000+00:00",
+      "shape": [
+        1045,
+        1045
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI12_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI12_DEL_MONIT01",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-10T00:06:14.030500+00:00",
+      "shape": [
+        1811,
+        2821
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI13_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI13_DEL_MONIT01",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-10T00:06:06.681000+00:00",
+      "shape": [
+        6918,
+        4781
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR567_AOI13_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR567_AOI13_DEL_PRODUCT",
+      "ems_code": "EMSR567",
+      "s2_date": "2022-03-10T00:06:06.681000+00:00",
+      "shape": [
+        6918,
+        4781
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR568_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR568_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR568",
+      "s2_date": "2022-03-18T07:44:06.810000+00:00",
+      "shape": [
+        14049,
+        11293
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI01_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI01_DEL_MONIT01",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:42.176500+00:00",
+      "shape": [
+        2221,
+        2037
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI01_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI01_DEL_MONIT02",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:42.176500+00:00",
+      "shape": [
+        2221,
+        2037
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI01_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI01_DEL_PRODUCT",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:42.176500+00:00",
+      "shape": [
+        2221,
+        2037
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI02_DEL_MONIT01.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI02_DEL_MONIT01",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:34.835000+00:00",
+      "shape": [
+        2060,
+        2572
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI02_DEL_MONIT02.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI02_DEL_MONIT02",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:34.835000+00:00",
+      "shape": [
+        2060,
+        2572
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR570_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR570_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR570",
+      "s2_date": "2022-03-31T23:54:34.835000+00:00",
+      "shape": [
+        2060,
+        2572
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR586_AOI02_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR586_AOI02_DEL_PRODUCT",
+      "ems_code": "EMSR586",
+      "s2_date": "2022-07-08T00:06:23.002500+00:00",
+      "shape": [
+        3592,
+        4057
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR631_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR631_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR631",
+      "s2_date": "2022-09-15T06:12:06.209000+00:00",
+      "shape": [
+        501,
+        502
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR631_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR631_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR631",
+      "s2_date": "2022-09-25T06:12:01.314000+00:00",
+      "shape": [
+        958,
+        1409
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR636_AOI05_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR636_AOI05_GRA_PRODUCT",
+      "ems_code": "EMSR636",
+      "s2_date": "2022-10-09T02:33:28.067500+00:00",
+      "shape": [
+        426,
+        523
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR636_AOI07_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR636_AOI07_GRA_PRODUCT",
+      "ems_code": "EMSR636",
+      "s2_date": "2022-10-04T02:33:30.007000+00:00",
+      "shape": [
+        623,
+        655
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR636_AOI09_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR636_AOI09_GRA_PRODUCT",
+      "ems_code": "EMSR636",
+      "s2_date": "2022-10-09T02:33:32.006000+00:00",
+      "shape": [
+        1549,
+        1575
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR637_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR637_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR637",
+      "s2_date": "2022-10-17T00:27:06.201000+00:00",
+      "shape": [
+        1526,
+        746
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR645_AOI04_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR645_AOI04_DEL_PRODUCT",
+      "ems_code": "EMSR645",
+      "s2_date": "2023-01-31T07:25:11.809000+00:00",
+      "shape": [
+        1684,
+        3743
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR645_AOI04_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR645_AOI04_GRA_PRODUCT",
+      "ems_code": "EMSR645",
+      "s2_date": "2023-01-31T07:25:11.809000+00:00",
+      "shape": [
+        1684,
+        3743
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR645_AOI06_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR645_AOI06_DEL_PRODUCT",
+      "ems_code": "EMSR645",
+      "s2_date": "2023-01-28T07:14:04.076000+00:00",
+      "shape": [
+        3100,
+        3139
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR645_AOI06_FEP_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR645_AOI06_FEP_PRODUCT",
+      "ems_code": "EMSR645",
+      "s2_date": "2023-01-28T07:14:04.076000+00:00",
+      "shape": [
+        3100,
+        3139
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR645_AOI08_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR645_AOI08_DEL_PRODUCT",
+      "ems_code": "EMSR645",
+      "s2_date": "2023-01-30T07:03:51.501500+00:00",
+      "shape": [
+        5124,
+        6503
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR649_AOI01_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR649_AOI01_GRA_PRODUCT",
+      "ems_code": "EMSR649",
+      "s2_date": "2023-02-13T09:50:33.827500+00:00",
+      "shape": [
+        2361,
+        2285
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR649_AOI02_GRA_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR649_AOI02_GRA_PRODUCT",
+      "ems_code": "EMSR649",
+      "s2_date": "2023-02-11T10:00:21.676500+00:00",
+      "shape": [
+        1150,
+        835
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/EMSR650_AOI03_DEL_PRODUCT.json",
+      "status": "geography_screen_pass",
+      "event_id": "EMSR650_AOI03_DEL_PRODUCT",
+      "ems_code": "EMSR650",
+      "s2_date": "2023-02-19T07:57:05.329000+00:00",
+      "shape": [
+        1398,
+        1422
+      ],
+      "geographic_overlap": [],
+      "source": "CopernicusEMS"
+    },
+    {
+      "file": "train/meta/LS20170416_SouthUrmiaLake_SatelliteDetectedWaterExtent.json",
+      "status": "geography_screen_pass",
+      "event_id": "LS20170416_SouthUrmiaLake_SatelliteDetectedWaterExtent",
+      "ems_code": "UNOSATLS20170416",
+      "s2_date": "2017-04-19T07:44:26.730000+00:00",
+      "shape": [
+        1170,
+        1775
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/RS2_20170122_WaterExtent_SaveRiver.json",
+      "status": "geography_screen_pass",
+      "event_id": "RS2_20170122_WaterExtent_SaveRiver",
+      "ems_code": "UNOSATRS220170122",
+      "s2_date": "2017-01-26T07:43:39.581000+00:00",
+      "shape": [
+        9266,
+        8057
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST20180507_WaterExtent_Moibalo_Somali.json",
+      "status": "overlap_exclude",
+      "event_id": "ST20180507_WaterExtent_Moibalo_Somali",
+      "ems_code": "UNOSATST20180507",
+      "s2_date": "2018-05-08T07:32:22.740000+00:00",
+      "shape": [
+        8732,
+        12394
+      ],
+      "geographic_overlap": [
+        "Somalia_989553"
+      ],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST20180522_WaterExtent_Teknaf.json",
+      "status": "geography_screen_pass",
+      "event_id": "ST20180522_WaterExtent_Teknaf",
+      "ems_code": "UNOSATST20180522",
+      "s2_date": "2018-05-24T04:26:05.620000+00:00",
+      "shape": [
+        981,
+        444
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST_20170426_WaterExtent_LesCayes_Cavaillon.json",
+      "status": "geography_screen_pass",
+      "event_id": "ST_20170426_WaterExtent_LesCayes_Cavaillon",
+      "ems_code": "UNOSATST20170426",
+      "s2_date": "2017-04-27T15:36:20.460000+00:00",
+      "shape": [
+        1600,
+        2167
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST_20170811_WaterExtent_Khamkeuth.json",
+      "status": "geography_screen_pass",
+      "event_id": "ST_20170811_WaterExtent_Khamkeuth",
+      "ems_code": "UNOSATST20170811",
+      "s2_date": "2017-08-12T03:34:10.770000+00:00",
+      "shape": [
+        5096,
+        5700
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST_20170823_WaterExtent_AmuruAndAdjumaniDistricts.json",
+      "status": "geography_screen_pass",
+      "event_id": "ST_20170823_WaterExtent_AmuruAndAdjumaniDistricts",
+      "ems_code": "UNOSATST20170823",
+      "s2_date": "2017-08-23T08:09:52.030000+00:00",
+      "shape": [
+        5922,
+        9449
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/ST_20170826_WaterExtent_Niamey.json",
+      "status": "geography_screen_pass",
+      "event_id": "ST_20170826_WaterExtent_Niamey",
+      "ems_code": "UNOSATST20170826",
+      "s2_date": "2017-08-27T10:25:35.830000+00:00",
+      "shape": [
+        5788,
+        7405
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/TSX_20170308_WaterExtent_Maroantsetra.json",
+      "status": "geography_screen_pass",
+      "event_id": "TSX_20170308_WaterExtent_Maroantsetra",
+      "ems_code": "UNOSATTSX20170308",
+      "s2_date": "2017-03-12T07:02:26.459000+00:00",
+      "shape": [
+        4631,
+        5770
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    },
+    {
+      "file": "train/meta/TX_20160811_WaterExtent_WetSoil_Khartoum.json",
+      "status": "geography_screen_pass",
+      "event_id": "TX_20160811_WaterExtent_WetSoil_Khartoum",
+      "ems_code": "UNOSATTX20160811",
+      "s2_date": "2016-08-11T08:25:34.770000+00:00",
+      "shape": [
+        5821,
+        3523
+      ],
+      "geographic_overlap": [],
+      "source": "unosat"
+    }
+  ]
+}

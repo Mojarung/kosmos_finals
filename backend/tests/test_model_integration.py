@@ -47,7 +47,7 @@ def test_future_optical_is_rejected_and_export_reproduces_actual_mode():
             assert meta['model']['recipe_sha256'] == identity()['recipe_sha256']
             threshold = next(p for p in meta['parameters'] if p['name'] == 'model_threshold')
             assert threshold['value'] == .46
-            assert 'legacy' in meta['metrics_scope']
+            assert 'прежняя service_s1' in meta['metrics_scope']
             commands = '\n'.join(meta['commands'])
             assert '--recipe ml/artifacts/next_optical/recipe.json' in commands
             assert ('--s2 data/source/' in commands) == (chip.startswith('Nigeria'))

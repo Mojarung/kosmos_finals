@@ -10,6 +10,10 @@ wrong or damaged download never reaches the service.
 
     uv run scripts/fetch_context_weights.py                    # from the published link
     uv run scripts/fetch_context_weights.py --zip weights.zip  # from a file you already have
+    uv run scripts/fetch_context_weights.py --next-optical     # next_optical package, if Git LFS is unavailable
+
+The next_optical archive carries its own SHA256SUMS.txt; every file is checked against it, and
+its recipe must be byte for byte the recipe of this checkout before anything is written.
 """
 
 from __future__ import annotations
@@ -28,6 +32,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "ml" / "artifacts" / "context_model"
 # Google Drive file id of context_model_weights.zip; the share link is ".../file/d/<id>/view".
 DRIVE_FILE_ID = "1XjEdtb7nVy25i0AnklaBGTjbTFesOQFr"
+# The same next_optical package as ml/artifacts/next_optical (Git LFS), as one zip of 234 MB.
+NEXT_OPTICAL_ID = "1vb37LBhdCjupBtDoaJFoI3Y7osDJ-UnL"
+NEXT_ROOT = "FloodValue_next_optical/"
 
 
 def drive_download(file_id: str, target: Path) -> None:
@@ -68,11 +75,44 @@ def install(archive: Path) -> list[str]:
     return sorted(expected)
 
 
+def install_next_optical(archive: Path) -> list[str]:
+    with zipfile.ZipFile(archive) as bundle:
+        for line in bundle.read(NEXT_ROOT + "SHA256SUMS.txt").decode("utf-8").splitlines():
+            if not line.strip():
+                continue
+            digest, name = line.split(maxsplit=1)
+            name = name.lstrip("*").strip()
+            if hashlib.sha256(bundle.read(NEXT_ROOT + name)).hexdigest() != digest:
+                raise SystemExit(f"sha256 mismatch for {name}: the archive is damaged")
+        recipe = ROOT / "ml" / "artifacts" / "next_optical" / "recipe.json"
+        packed = bundle.read(NEXT_ROOT + "ml/artifacts/next_optical/recipe.json")
+        if hashlib.sha256(packed).digest() != hashlib.sha256(recipe.read_bytes()).digest():
+            raise SystemExit("the archive holds another next_optical recipe than this checkout")
+        prefix = NEXT_ROOT + "ml/artifacts/next_optical/"
+        written = []
+        for name in bundle.namelist():
+            if name.startswith(prefix) and not name.endswith("/"):
+                destination = ROOT / name[len(NEXT_ROOT):]
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(bundle.read(name))
+                written.append(name[len(NEXT_ROOT):])
+    return written
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--zip", type=Path, help="an already downloaded context_model_weights.zip")
     parser.add_argument("--drive", help="Google Drive link or file id; defaults to the published one")
+    parser.add_argument("--next-optical", action="store_true", help="install the next_optical package instead")
     args = parser.parse_args()
+    if args.next_optical:
+        with tempfile.TemporaryDirectory() as folder:
+            archive = args.zip or Path(folder) / "next_optical.zip"
+            if not args.zip:
+                drive_download(file_id(args.drive or NEXT_OPTICAL_ID), archive)
+            written = install_next_optical(archive)
+        print(f"{len(written)} next_optical files checked against SHA256SUMS.txt and placed in ml/artifacts/next_optical")
+        return
     if args.zip:
         installed = install(args.zip)
     else:
