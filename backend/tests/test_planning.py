@@ -50,14 +50,19 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
     result = response.json()
     assert result["region"]["data_status"] == "outside_coverage"
     assert result["region"]["model_water_area_km2"] is None
-    # A/B/C stay a fixed-chip experiment: the ten seeded assets remain, but nothing can be ordered here.
-    assert len(result["assets"]) == 10 and result["zones"] == []
+    # The portfolio is fixed for the chip (one map, one portfolio for A/B/C); outside the
+    # chip nothing of it lies in the region and nothing is ordered.
+    assert len(result["assets"]) == 10
+    assert result["metrics"]["assets_in_region"] == 0
+    assert result["metrics"]["region_expected_loss_rub"] == 0
     assert result["strategies"]["C"]["data_cost_rub"] == 0
+    assert result["strategies"]["B"]["data_cost_rub"] == 0
 
     inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
-    # B is the broad purchase of the whole chip; a region on the map only narrows the statistics.
+    # B is the declared broad rule of the fixed-chip experiment: the whole chip, whatever the region.
     assert abs(broad["area_km2"] - inside["chip"]["area_km2"]) < 0.001
+    assert inside["region"]["area_km2"] < inside["chip"]["area_km2"]
 
 
 def test_frozen_model_metrics_and_case_export():
