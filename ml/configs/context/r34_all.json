@@ -1,0 +1,17 @@
+{
+  "name": "r34_all",
+  "groups": ["s1", "pre", "terrain", "jrc", "worldcover"],
+  "architecture": "unet",
+  "encoder": "resnet34",
+  "encoder_weights": "imagenet",
+  "epochs": 40,
+  "crop": 320,
+  "batch_size": 12,
+  "crops_per_chip": 4,
+  "lr": 0.0005,
+  "weight_decay": 0.0001,
+  "lovasz_weight": 0.5,
+  "group_dropout": 0.0,
+  "seed": 0,
+  "tta": 8
+}

@@ -117,6 +117,13 @@ def _cmd_infer(args: argparse.Namespace) -> None:
     s1_path = Path(args.s1) if args.s1 else layer_path(paths.SEN1FLOODS11_DIR, Chip.from_name(args.chip), "S1Hand")
     if args.recipe:
         recipe = json.loads(Path(args.recipe).read_text())
+        if "tracks" in recipe:
+            from floodvalue.context_infer import infer_chip
+            jrc = Path(args.jrc) if args.jrc else s1_path.with_name(s1_path.name.replace("S1Hand", "JRCWaterHand"))
+            report = infer_chip(s1_path, Path(args.out), Path(args.recipe), jrc_path=jrc, s1_date=args.s1_date,
+                                relative_orbit=args.orbit, optics=not args.no_optical)
+            print(json.dumps(report, indent=2))
+            return
         if "optical_member" in recipe or "fusion_members" in recipe:
             from floodvalue.optical import event_dates, infer_optical
             if bool(args.s1_date) != bool(args.s2_date):
@@ -324,6 +331,8 @@ def build_parser() -> argparse.ArgumentParser:
     optical.add_argument("--no-optical", action="store_true", help="force S1 fallback for an S1+S2 recipe")
     infer.add_argument("--s1-date", help="S1 acquisition date YYYY-MM-DD for custom optical input")
     infer.add_argument("--s2-date", help="S2 acquisition date YYYY-MM-DD for custom optical input")
+    infer.add_argument("--jrc", help="context recipe: JRC permanent water GeoTIFF on the S1 grid")
+    infer.add_argument("--orbit", type=int, help="context recipe: S1 relative orbit when the chip is not official")
     infer.set_defaults(handler=_cmd_infer)
     return parser
 
