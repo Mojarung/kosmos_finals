@@ -65,7 +65,7 @@ function status(key) {
   const plan = analysis.value.strategies[key]
   if (!plan.timely) return 'не успеет к сроку'
   if (key === 'C' && plan.constraints_feasible === false) return 'условие не выполнить'
-  if (!plan.budget_feasible) return 'дороже бюджета, для сравнения'
+  if (!plan.budget_feasible) return 'дороже бюджета'
   return key === 'A' ? 'бесплатно' : 'в бюджете'
 }
 const warn = key => !['в бюджете', 'бесплатно'].includes(status(key))
