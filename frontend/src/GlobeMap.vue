@@ -5,6 +5,7 @@ import { ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { calibrationChecked, state } from './store'
+import { buildings } from './lib/buildings'
 import { compactRub, number, percent } from './lib/format'
 import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
@@ -15,7 +16,7 @@ import { preloadGlobe, preloadJourney, preloadScene, preloadTilt } from './lib/p
 
 maplibregl.setWorkerUrl(workerUrl)
 
-const emit = defineEmits(['region', 'asset', 'draw-complete', 'ready'])
+const emit = defineEmits(['region', 'asset', 'building', 'draw-complete', 'ready'])
 const container = ref(null)
 const dragging = ref(false)
 const mapError = ref(false)
@@ -142,7 +143,7 @@ function buildOverlays() {
   if (!map) return
   const c = COLORS[theme()]
   const before = beforeLabels()
-  for (const id of ['chip', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey']) map.addSource(id, { type: 'geojson', data: empty })
+  for (const id of ['chip', 'region', 'preview', 'zones', 'focused-zone', 'probe', 'journey', 'buildings', 'selected-building']) map.addSource(id, { type: 'geojson', data: empty })
   map.addSource('satellite', {
     type: 'raster', tiles: [satelliteTiles], tileSize: 256,
     attribution: 'Imagery © Esri, Maxar, Earthstar Geographics and the GIS User Community',
@@ -162,6 +163,10 @@ function buildOverlays() {
   }
   water.set({ theme: theme() })
   map.addLayer(water, before)
+  const buildingColor = ['case', ['!=', ['get', 'status'], 'ok'], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
+  map.addLayer({ id: 'building-fill', type: 'fill', source: 'buildings', paint: { 'fill-color': buildingColor, 'fill-opacity': .38 } }, before)
+  map.addLayer({ id: 'building-outline', type: 'line', source: 'buildings', paint: { 'line-color': buildingColor, 'line-width': 1.4 } }, before)
+  map.addLayer({ id: 'building-selected', type: 'line', source: 'selected-building', paint: { 'line-color': '#ffbd5b', 'line-width': 3.5 } }, before)
   map.addSource('nodata', { type: 'image', url: EMPTY_IMAGE, coordinates: imageCoords })
   map.addLayer({ id: 'nodata-layer', type: 'raster', source: 'nodata', layout: { visibility: 'none' },
     paint: { 'raster-resampling': 'nearest', 'raster-fade-duration': 0, 'raster-opacity-transition': { duration: 350 } } }, before)
@@ -215,7 +220,7 @@ function updateMarkers() {
   const coveredIds = state.tab === 'plan' && !state.procurementOpen && state.procurementOverlay !== null
     ? new Set(state.procurementOverlay.filter(zone => zone.properties.active).flatMap(zone => zone.properties.asset_ids || []))
     : new Set(state.analysis.strategies[state.strategy]?.covered_asset_ids || [])
-  for (const asset of state.analysis.assets) {
+  for (const asset of state.tab === 'buildings' ? [] : state.analysis.assets) {
     currentIds.add(asset.id)
     let entry = markers.get(asset.id)
     if (!entry) {
@@ -251,6 +256,7 @@ function updateMarkers() {
 }
 
 function zoneFeatures() {
+  if (state.tab === 'buildings') return []
   if (state.tab === 'plan' && state.procurementOverlay !== null) return state.procurementOverlay
   if (state.tab === 'projects' && state.projectOverlay !== null) return state.projectOverlay
   if (!state.showZones) return []
@@ -265,6 +271,7 @@ function zoneFeatures() {
 
 function syncMap() {
   if (!ready || !state.analysis) return
+  syncBuildings()
   if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
     for (const name of rasterNames) map.setLayoutProperty(name + '-layer', 'visibility', 'none')
     water.set({ visible: false })
@@ -314,6 +321,21 @@ function syncMap() {
   if (!hidden) updateMarkers()
   else for (const entry of markers.values()) entry.element.style.visibility = 'hidden'
   if (!hidden) for (const entry of markers.values()) entry.element.style.visibility = ''
+}
+
+function syncBuildings() {
+  if (!ready) return
+  const visible = state.tab === 'buildings' && buildings.data?.scene_id === state.sceneId && !['searching', 'preparing', 'error'].includes(state.liveStatus)
+  const features = visible ? buildings.data.features : []
+  setData('buildings', collection(features))
+  setData('selected-building', collection(features.filter(f => f.id === buildings.selectedId)))
+}
+function focusBuilding(feature) {
+  if (!map || !feature) return
+  clearProbe()
+  const positions = feature.geometry.coordinates.flat(feature.geometry.type === 'MultiPolygon' ? 2 : 1)
+  const xs = positions.map(p => p[0]), ys = positions.map(p => p[1])
+  map.fitBounds([[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]], { padding: padding(), maxZoom: 18, duration: reducedMotion() ? 0 : 700 })
 }
 
 // Отступы учитывают, открыты ли панели: свёрнутая панель отдаёт место снимку.
@@ -643,7 +665,7 @@ function waterKind(pixel) {
   return pixel.permanent_water ? 'постоянная вода' : 'паводок'
 }
 
-defineExpose({ focusChip, showGlobe, focusAsset, focusZone, toggleTilt, playReveal: () => water.playReveal() })
+defineExpose({ focusChip, showGlobe, focusAsset, focusZone, focusBuilding, toggleTilt, playReveal: () => water.playReveal() })
 
 function previewSelection(start, end) {
   const bounds = [Math.min(start.lng, end.lng), Math.min(start.lat, end.lat),
@@ -719,6 +741,11 @@ onMounted(() => {
     scheduleWarmUp()
   })
   map.on('click', event => {
+    if (!state.drawing && state.tab === 'buildings' && ready && map.getLayer('building-fill')) {
+      const hit = map.queryRenderedFeatures(event.point, { layers: ['building-fill'] })[0]
+      const feature = buildings.data?.features.find(f => f.id === hit?.properties.id)
+      if (feature) { buildings.selectedId = feature.id; clearProbe(); emit('building', feature); return }
+    }
     if (!state.drawing && state.analysis) inspectAt(event.lngLat.lng, event.lngLat.lat)
   })
   map.on('mousemove', event => {
@@ -750,6 +777,7 @@ watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab,
   state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
+watch(() => [buildings.data, buildings.selectedId, state.tab, state.sceneId, state.liveStatus], syncBuildings)
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 watch(veiled, value => container.value?.classList.toggle('scene-moving', value))
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.

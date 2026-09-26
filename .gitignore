@@ -15,3 +15,5 @@ data/runtime/
 frontend/test-results/
 frontend/playwright-report/
 data/projects/
+# Immutable building source snapshots and OSM cache
+data/buildings-cache/

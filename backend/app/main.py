@@ -19,12 +19,14 @@ from . import projects, project_imagery
 from .procurement import router as procurement_router
 from .backtest import router as backtest_router
 from .voi import router as voi_router
+from .buildings import router as buildings_router
 from .economic_scenarios import ScenarioRequest, calculate as economic_scenario, package as economic_package
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 app.include_router(procurement_router)
 app.include_router(backtest_router)
 app.include_router(voi_router)
+app.include_router(buildings_router)
 
 
 def parse_bounds(bbox: str | None) -> list[float] | None:

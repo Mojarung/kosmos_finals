@@ -15,7 +15,7 @@ for (const reduced of [false, true]) {
     page.on('pageerror', error => errors.push(error.message))
     await openPlan(page)
     const panel = page.locator('.decision-panel')
-    await expect(panel.getByRole('tablist', { name: 'Раздел решения' }).getByRole('tab')).toHaveText(['Объекты', 'Съёмка', 'Проекты'])
+    await expect(panel.getByRole('tablist', { name: 'Раздел решения' }).getByRole('tab')).toHaveText(['Объекты', 'Здания', 'Съёмка', 'Проекты'])
     const before = await panel.boundingBox()
     // Dispatch back-to-back input without Playwright waiting for animation stability.
     const resize = panel.locator('.panel-resize')

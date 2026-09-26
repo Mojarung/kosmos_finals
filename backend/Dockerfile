@@ -10,6 +10,7 @@ RUN uv pip install --python /app/backend/.venv/bin/python \
     'pystac-client==0.9.0' 'planetary-computer==1.0.0'
 COPY backend/app ./backend/app
 COPY data/demo ./data/demo
+COPY data/buildings ./data/buildings
 COPY data/catalog ./data/catalog
 COPY data/backtest ./data/backtest
 COPY ml/src/floodvalue ./ml/src/floodvalue

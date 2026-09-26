@@ -54,6 +54,20 @@
       "split_part": "test_core",
       "metrics_independent": false,
       "origin": "demo"
+    },
+    {
+      "chip_id": "Paiporta_20241101",
+      "event": "Пайпорта · реальные здания",
+      "observed_at": "2024-11-01T06:02:19.665430Z",
+      "bbox": [
+        -0.427,
+        39.419,
+        -0.403,
+        39.439
+      ],
+      "model_water_area_km2": 0.005,
+      "origin": "demo",
+      "source_kind": "live_sentinel1_rtc"
     }
   ]
 }
