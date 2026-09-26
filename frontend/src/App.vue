@@ -60,7 +60,11 @@ function chooseAsset(id) {
 }
 function chooseZone(id) {
   const zone = state.analysis?.zones.find(item => item.id === id)
-  if (zone) mapRef.value?.focusZone(zone)
+  if (!zone) return
+  state.selectedZoneId = id
+  state.decisionExpanded = false
+  if (window.innerWidth < 1024) state.decisionOpen = false
+  mapRef.value?.focusZone(zone)
 }
 function finishDrawing() {
   state.drawing = false
@@ -105,9 +109,10 @@ onMounted(() => {
           <MorphLoader :size="25" />
           <span>{{ state.liveStage || 'Загружаем снимок' }}<b v-if="state.liveProgress" class="tabular"> · {{ Math.round(state.liveProgress * 100) }}%</b></span>
         </div>
-        <div v-else-if="state.liveStatus === 'ready' && state.analysis?.chip.source_kind === 'live_sentinel1_rtc'" class="panel capsule live-flow ready" role="status">
+        <div v-else-if="state.liveStatus === 'ready' && ['live_sentinel1_rtc', 'uploaded_sentinel1_geotiff'].includes(state.analysis?.chip.source_kind)" class="panel capsule live-flow ready" role="status">
           <span class="live-flow-dot"></span>
-          <span>Sentinel‑1 RTC · {{ state.analysis.chip.source_item_ids?.length || 1 }} кадр{{ (state.analysis.chip.source_item_ids?.length || 1) > 1 ? 'а' : '' }} · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · объекты учебные</span>
+          <span v-if="state.analysis.chip.source_kind === 'uploaded_sentinel1_geotiff'">Свой GeoTIFF · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · объекты учебные</span>
+          <span v-else>Sentinel‑1 RTC · {{ state.analysis.chip.source_item_ids?.length || 1 }} кадр{{ (state.analysis.chip.source_item_ids?.length || 1) > 1 ? 'а' : '' }} · {{ state.analysis.chip.pixel_size_m_approx }} м на пиксель · объекты учебные</span>
         </div>
       </Transition>
       <div class="panels">

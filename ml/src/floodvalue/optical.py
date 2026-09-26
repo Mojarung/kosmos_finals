@@ -163,6 +163,10 @@ def infer_optical(s1_path, recipe_path, out_dir, s2_path=None, acquisition=None)
         "flood_mask.tif": (np.where(valid, probability[0] >= recipe["threshold"], MASK_NODATA), "uint8", MASK_NODATA),
         "flood_uncertainty.tif": (np.where(valid, spread[0], PROB_NODATA), "float32", PROB_NODATA),
     }
+    from floodvalue.baseline_run import load_baseline
+    from floodvalue import paths
+    baseline, _ = load_baseline(paths.ARTIFACTS_DIR / "baseline/baseline.json").predict(s1)
+    files["baseline_mask.tif"] = (np.where(valid, baseline, MASK_NODATA), "uint8", MASK_NODATA)
     out_dir.mkdir(parents=True, exist_ok=True)
     for name, (array, dtype, nodata) in files.items():
         _write(out_dir/name, profile, array, dtype, nodata)

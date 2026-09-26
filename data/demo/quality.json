@@ -1,4 +1,6 @@
 {
+  "model_id": "service_s1",
+  "scope": "legacy model benchmark; current scene metrics are in metadata.json",
   "threshold": 0.41,
   "calibration": {
     "a": 0.7666532755645349,

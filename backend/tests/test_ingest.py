@@ -44,7 +44,9 @@ def runtime(tmp_path, monkeypatch):
     def fake_model(s1_path, out_dir):
         files = make_chip(source, s1_path.name.removesuffix("_S1Hand.tif"))
         shutil.copytree(files["inference"], out_dir, dirs_exist_ok=True)
+        (out_dir / "inference.json").write_text(json.dumps({"threshold": .41, "recipe_sha256": "fixture"}))
 
+    monkeypatch.setattr(ingest, "identity", lambda: {"recipe_sha256": "fixture"})
     monkeypatch.setattr(ingest, "_fetch", fake_fetch)
     monkeypatch.setattr(ingest, "_run_model", fake_model)
     yield tmp_path
@@ -106,7 +108,9 @@ def test_repeated_request_reuses_running_job(runtime, monkeypatch):
     assert again.status_code == 200 and again.json()["scene_id"] == "Ghana_24858"
 
 
-def test_existing_demo_scene_is_not_recomputed(runtime):
+def test_existing_demo_scene_is_not_recomputed(runtime, monkeypatch):
+    from app.model_runtime import identity
+    monkeypatch.setattr(ingest, "identity", identity)
     response = TestClient(app).post("/api/scenes", json={"chip_id": "Nigeria_812045"})
     assert response.status_code == 200 and response.json()["scene_id"] == "Nigeria_812045"
 

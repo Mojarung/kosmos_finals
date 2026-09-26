@@ -26,6 +26,7 @@ from pathlib import Path
 
 from . import catalog
 from .chips import chip_record
+from .model_runtime import RECIPE, acquisition, identity, optical_allowed
 from .scene_builder import SceneSpec, build_scene, load_source_meta
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,7 +38,7 @@ DOWNLOAD_TIMEOUT_S = 60
 STAGE_MESSAGES = {
     "queued": "В очереди",
     "download": "Скачиваем S1, ручную метку и постоянную воду JRC из Sen1Floods11 v1.1",
-    "inference": "Ансамбль U-Net считает вероятность, маску и разброс",
+    "inference": "Модель S1/S2 ищет воду",
     "prepare": "Размещаем 10 объектов, строим зоны и слои карты",
 }
 FINAL_STAGES = {"done", "error"}
@@ -90,10 +91,21 @@ def _fetch(chip_id: str, layer: str, target: Path) -> Path:
 
 
 def _run_model(s1_path: Path, out_dir: Path) -> None:
-    command = [*infer_command(), "--s1", str(s1_path), "--out", str(out_dir)]
+    command = [*infer_command(), "--s1", str(s1_path), "--out", str(out_dir), "--recipe", str(RECIPE)]
+    chip_id = s1_path.name.removesuffix("_S1Hand.tif")
+    dates = acquisition(chip_id)
+    s2_path = s1_path.with_name(f"{chip_id}_S2Hand.tif")
+    if s2_path.exists() and optical_allowed(dates):
+        command += ["--s2", str(s2_path), "--s1-date", dates["s1_date"], "--s2-date", dates["s2_date"]]
+    else:
+        command += ["--no-optical"]
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "OMP_NUM_THREADS": "2"}
+    if sys.platform == "darwin":
+        torch_lib = ROOT / "ml/.venv/lib/python3.13/site-packages/torch/lib"
+        env["DYLD_LIBRARY_PATH"] = str(torch_lib) + (":" + env["DYLD_LIBRARY_PATH"] if env.get("DYLD_LIBRARY_PATH") else "")
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                            timeout=MODEL_TIMEOUT_S, env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+                            timeout=MODEL_TIMEOUT_S, env=env,
                             creationflags=flags)
     if result.returncode != 0:
         tail = (result.stderr or result.stdout).strip().splitlines()[-3:]
@@ -151,6 +163,11 @@ def _work(job_id: str, record: dict) -> None:
                 jrc_path: Path | None = _fetch(chip_id, "JRCWaterHand", scratch)
             except (OSError, urllib.error.URLError):
                 jrc_path = None
+            if optical_allowed(acquisition(chip_id)):
+                try:
+                    _fetch(chip_id, "S2Hand", scratch)
+                except (OSError, urllib.error.URLError):
+                    (scratch / f"{chip_id}_S2Hand.tif").unlink(missing_ok=True)
             mark = _stage(job_id, "inference", mark)
             inference_dir = scratch / "inference"
             try:
@@ -192,7 +209,8 @@ def start(chip_id: str) -> dict:
     """Queue a live inference job; KeyError if the chip is not an official hand-labeled chip."""
     record = chip_record(chip_id)
     with _lock:
-        if chip_id in catalog.known_scene_ids():
+        if (chip_id in catalog.known_scene_ids() and
+                catalog.metadata(chip_id).get("model", {}).get("recipe_sha256") == identity()["recipe_sha256"]):
             return {"id": None, "chip_id": chip_id, "stage": "done", "scene_id": chip_id,
                     "message": "Сцена уже рассчитана", "timings": {}}
         running = _by_chip.get(chip_id)

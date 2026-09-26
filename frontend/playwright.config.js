@@ -15,7 +15,7 @@ export default defineConfig({
     trace: 'retain-on-failure', screenshot: 'only-on-failure',
     launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] } },
   webServer: [
-    { command: `cd ../backend && FLOODVALUE_PROCUREMENT_DB=/tmp/floodvalue-imagery-e2e-${apiPort}.sqlite3 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port ${apiPort}` + envFile, url: `http://127.0.0.1:${apiPort}/api/health`, reuseExistingServer: false, timeout: 60000 },
+    { command: `cd ../backend && FLOODVALUE_PROCUREMENT_DB=/tmp/floodvalue-imagery-e2e-${apiPort}.sqlite3 FLOODVALUE_PROJECT_DB=/tmp/floodvalue-projects-e2e-${apiPort}.sqlite3 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port ${apiPort}` + envFile, url: `http://127.0.0.1:${apiPort}/api/health`, reuseExistingServer: false, timeout: 60000 },
     { command: `VITE_API_TARGET=http://127.0.0.1:${apiPort} npm run dev -- --host 127.0.0.1 --port ${webPort} --strictPort`, url: `http://127.0.0.1:${webPort}`, reuseExistingServer: false, timeout: 60000 },
   ],
 })

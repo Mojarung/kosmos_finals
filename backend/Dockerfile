@@ -6,12 +6,14 @@ RUN uv sync --project backend --frozen --no-dev --extra demo
 RUN uv pip install --python /app/backend/.venv/bin/python \
     --index https://download.pytorch.org/whl/cpu \
     'torch==2.14.0+cpu' 'torchvision==0.29.0+cpu' \
-    'segmentation-models-pytorch==0.5.0' 'safetensors>=0.6,<1' 'scipy>=1.16,<2'
+    'segmentation-models-pytorch==0.5.0' 'safetensors>=0.6,<1' 'scipy>=1.16,<2' 'scikit-learn==1.9.1' 'lightgbm==4.7.0' 'catboost==1.2.10'
 COPY backend/app ./backend/app
 COPY data/demo ./data/demo
 COPY data/catalog ./data/catalog
+COPY data/backtest ./data/backtest
 COPY ml/src/floodvalue ./ml/src/floodvalue
 COPY ml/artifacts/model ./ml/artifacts/model
+COPY ml/artifacts/next_optical ./ml/artifacts/next_optical
 COPY ml/artifacts/evaluation/calibration.json ./ml/artifacts/evaluation/calibration.json
 COPY ml/artifacts/evaluation/doubt_threshold.json ./ml/artifacts/evaluation/doubt_threshold.json
 COPY ml/artifacts/evaluation/reliability_test_core.json ./ml/artifacts/evaluation/reliability_test_core.json

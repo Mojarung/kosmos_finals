@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import ingest
+from . import ingest, uploads
 from .analysis import analyze, inspect_pixel
 from .catalog import default_scene_id, known_scene_ids, metadata, scene_catalog, scene_dir
 from .chips import official_chips, official_events
@@ -17,9 +17,14 @@ from .layers import doubt_png
 from .permanent import separate_live
 from . import projects, project_imagery
 from .procurement import router as procurement_router
+from .backtest import router as backtest_router
+from .voi import router as voi_router
+from .economic_scenarios import ScenarioRequest, calculate as economic_scenario, package as economic_package
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
 app.include_router(procurement_router)
+app.include_router(backtest_router)
+app.include_router(voi_router)
 
 
 def parse_bounds(bbox: str | None) -> list[float] | None:
@@ -181,6 +186,62 @@ class IngestRequest(BaseModel):
 @app.get("/api/chips")
 def chips() -> dict:
     return {"events": official_events(), "chips": official_chips(), "prepared": sorted(known_scene_ids())}
+
+
+@app.post("/api/uploads", status_code=202)
+async def upload_s1(request: Request, observed_at: str, radiometry: str = "grd_db",
+                    filename: str = "sentinel1.tif") -> dict:
+    """Stream a two-band analysis-ready GeoTIFF to disk before queuing inference."""
+    if radiometry not in uploads.RADIOMETRIES or not filename.lower().endswith((".tif", ".tiff")):
+        raise HTTPException(422, "Загрузите GeoTIFF и выберите шкалу grd_db или rtc_linear.")
+    if request.headers.get("content-type", "").split(";")[0] not in {"image/tiff", "application/octet-stream"}:
+        raise HTTPException(415, "Нужен бинарный GeoTIFF, а не картинка или архив.")
+    try:
+        if int(request.headers.get("content-length", "0")) > uploads.MAX_BYTES:
+            raise HTTPException(413, "Файл больше 100 МБ.")
+    except ValueError as error:
+        raise HTTPException(400, "Некорректная длина файла.") from error
+    path = uploads.incoming_path()
+    size = 0
+    try:
+        with path.open("wb") as output:
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > uploads.MAX_BYTES:
+                    raise HTTPException(413, "Файл больше 100 МБ.")
+                output.write(chunk)
+        if size == 0:
+            raise HTTPException(422, "Файл пуст.")
+        return uploads.start(path, filename, observed_at, radiometry)
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+
+
+@app.get("/api/uploads/{job_id}")
+def upload_status(job_id: str) -> dict:
+    job = uploads.get(job_id)
+    if job is None:
+        raise HTTPException(404, "Загрузка не найдена.")
+    return job
+
+
+@app.post("/api/economics/scenario")
+def calculate_economic_scenario(request: ScenarioRequest) -> dict:
+    try:
+        return economic_scenario(request)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+
+
+@app.post("/api/economics/scenario/export")
+def export_economic_scenario(request: ScenarioRequest) -> StreamingResponse:
+    try:
+        payload = economic_package(economic_scenario(request))
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
+    return StreamingResponse(iter([payload]), media_type="application/zip", headers={
+        "Content-Disposition": 'attachment; filename="floodvalue-economic-scenario.zip"'})
 
 
 @app.post("/api/scenes", status_code=202)

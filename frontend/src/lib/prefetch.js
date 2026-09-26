@@ -19,7 +19,7 @@ function lonLatToTile(lon, lat, z) {
 // Источники с шаблоном тайлов, которые сейчас видны на карте.
 function tileSources(map) {
   const style = map.getStyle()
-  const visible = new Set(style.layers
+  const visible = new Set((style?.layers || [])
     .filter(layer => layer.source && map.getLayoutProperty(layer.id, 'visibility') !== 'none')
     .map(layer => layer.source))
   return [...visible]
@@ -93,7 +93,7 @@ function window2d(z, x, y, cols, rows, shiftY = 0) {
  */
 function glyphUrls(map) {
   const style = map.getStyle()
-  if (!style.glyphs) return []
+  if (!style?.glyphs || !style.layers) return []
   const stacks = new Set()
   for (const layer of style.layers) {
     const font = layer.layout?.['text-font']

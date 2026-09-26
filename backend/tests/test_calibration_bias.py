@@ -55,9 +55,9 @@ def test_container_ships_the_reliability_record():
 def test_analysis_marks_each_asset_and_states_the_limit():
     result = client.get("/api/analysis", params={"scene_id": "Nigeria_812045", "budget": 6500}).json()
     for asset in result["assets"]:
-        assert asset["p_check"] == p_check(asset["p_flood"])
-    assert result["calibration_bias"] == BIAS
-    line = next(line for line in result["limitations"] if line.startswith("Калибровка p:"))
+        assert asset["p_check"] is None
+    assert result["calibration_bias"]["status"] == "not_evaluated_for_current_model"
+    line = next(line for line in result["limitations"] if line.startswith("Новая модель next_optical:"))
     assert ".." not in line
 
 
@@ -68,7 +68,7 @@ def test_export_carries_the_limits_and_the_check_of_each_asset():
         meta = json.loads(archive.read("run_metadata.json"))
         rows = list(csv.DictReader(io.StringIO(archive.read("asset_loss.csv").decode())))
     assert meta["limitations"] == result["limitations"]
-    assert meta["calibration_bias"] == BIAS
+    assert meta["calibration_bias"] == result["calibration_bias"]
     by_id = {asset["id"]: asset for asset in result["assets"]}
     for row in rows:
         check = by_id[row["asset_id"]]["p_check"]

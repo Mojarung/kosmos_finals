@@ -1,15 +1,19 @@
 <script setup>
+import Reveal from './Reveal.vue'
 import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
+import BacktestPanel from './BacktestPanel.vue'
+import EconomicScenario from './EconomicScenario.vue'
+import VoiPanel from './VoiPanel.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
-import RingGauge from './RingGauge.vue'
 import { activePlan, state } from '../store'
 import { compactRub, date, km, number, percent, plural, rub } from '../lib/format'
 
 const emit = defineEmits(['zone'])
+const procurementMethod = computed({ get: () => state.procurementMethod, set: value => { state.procurementMethod = value } })
 const analysis = computed(() => state.analysis)
 const broadCost = computed(() => analysis.value?.strategies.B.data_cost_rub || 0)
 // Слайдер доходит до цены широкой съёмки: дальше бюджет ничего не меняет.
@@ -264,13 +268,19 @@ function hover(id) { state.hoverZoneId = id }
 <template>
   <div class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
-    <button :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
+    <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
       @click="state.procurementOpen = false">Расчёт по ТЗ<span class="mode-currency" aria-hidden="true">₽</span></button>
-    <button :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
+    <button aria-label="Каталог SkyFi" :class="{ active: state.procurementOpen }" v-tip="'Реальные предложения SkyFi в долларах США. Отдельный подбор: в сравнение A/B/C и в основной комплект не входит, у него своя выгрузка'"
       @click="state.procurementOpen = true">Каталог SkyFi<span class="mode-currency" aria-hidden="true">$</span></button>
   </div>
   <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
   <template v-else>
+  <div class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
+    <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>
+    <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'">По ценности информации</button>
+  </div>
+  <VoiPanel v-show="procurementMethod === 'value'" :active="procurementMethod === 'value'" @zone="id => emit('zone', id)" />
+  <template v-if="procurementMethod === 'budget'">
   <section class="block">
     <label class="budget-label" for="budget">
       <span class="caption">Бюджет на снимки</span>
@@ -286,7 +296,7 @@ function hover(id) { state.hoverZoneId = id }
       <span>Что важнее</span>
       <BubbleTabs v-model="state.priority" :options="PRIORITIES" size="sm" label="Цель плана" />
     </div>
-    <p class="goal-line">{{ GOAL_LINE[state.priority] }}</p>
+
     <div v-if="state.mustCover" class="constraint">
       <Pin :size="14" />Обязательно: {{ analysis.assets.find(a => a.id === state.mustCover)?.name || state.mustCover }}
       <button class="ghost-icon tiny" aria-label="Снять условие" @click="state.mustCover = null"><X :size="14" /></button>
@@ -314,38 +324,28 @@ function hover(id) { state.hoverZoneId = id }
   </div>
   <p class="meter-key"><i class="coverage"></i>ущерб в зонах <i class="doubt"></i>сомнения в зонах</p>
 
-  <Transition name="swap" mode="out-in">
-    <section :key="state.strategy" class="block plan-result">
-      <RingGauge :value="plan?.coverage_share" label="ущерба в зонах заказа" color="var(--reference)" />
-      <div class="mini-rows">
-        <div v-tip="'Цена снимков по ПП № 840 со сценарной ставкой. Бюджет ограничивает только её'"><span>Стоимость данных</span><b class="tabular">{{ rub(plan?.data_cost_rub) }}</b></div>
-        <div v-if="plan?.decision_cost_rub != null" v-tip="costTip"><span>Решение целиком<small class="scenario-mark">сценарий</small></span><b class="tabular">{{ rub(plan.decision_cost_rub) }}</b></div>
-        <div><span>Объектов в зонах</span><b class="tabular">{{ plan?.covered_asset_ids?.length || 0 }} из {{ analysis.assets.length }}</b></div>
-        <div v-tip="'Доля площади, где карта может ошибаться, которая попадает в заказанные зоны'"><span>Сомнений в зонах</span><b class="tabular">{{ percent(plan?.covered_doubt_share) }}</b></div>
-        <div><span>Зон в заказе</span><b class="tabular">{{ plan?.zone_ids?.length || 0 }}</b></div>
-        <div v-tip="residual.tip"><span>Остаточная неопределённость<small v-if="plan?.uncertainty_status === 'scenario'" class="scenario-mark">сценарий</small></span><b class="tabular">{{ residual.text }}</b></div>
-      </div>
-    </section>
-  </Transition>
+  <section class="block">
+    <div class="panel-summary"><strong>{{ rub(plan?.data_cost_rub) }}</strong><span>{{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }} · {{ plural(plan?.covered_asset_ids?.length || 0, ['объект', 'объекта', 'объектов']) }}</span></div>
+    <p class="panel-note">В заказе {{ percent(plan?.coverage_share) }} суммы ожидаемого ущерба и {{ percent(plan?.covered_doubt_share) }} сомнительной площади.</p>
+  </section>
   <p v-if="plan?.coverage_share == null" class="warn-note">В области нет объектов с оценённым ущербом, долю считать не от чего.</p>
   <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
 
-  <section v-if="pitch.length" class="block pitch">
-    <p v-for="line in pitch" :key="line">{{ line }}</p>
-  </section>
+  <BacktestPanel :scene-id="state.sceneId" />
 
-  <section v-if="chart" class="block">
+  <EconomicScenario />
+
+  <details v-if="chart" class="disclosure"><summary>Цена и охват зон</summary><div class="disclosure-body">
     <span class="caption" v-tip="'Линия: лучший набор зон для каждой суммы заказа по доле сомнительной площади. Точки: варианты A, B, C и все сомнительные участки вместе'">Сколько сомнений закрывает каждый рубль</span>
     <FrontierChart :frontier="chart.frontier" :points="chart.points" :budget="state.budget" />
-  </section>
+  </div></details>
 
-  <section v-if="state.strategy !== 'A' && decisions.length" class="block">
-    <span class="caption">{{ state.strategy === 'C' ? 'Почему эти зоны' : 'Что входит в заказ' }}</span>
+  <details v-if="state.strategy !== 'A' && decisions.length" class="disclosure"><summary>Состав заказа · {{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }}</summary><div class="disclosure-body">
     <div class="zone-list">
       <button v-for="row in (state.strategy === 'C' ? chosen : decisions.filter(item => plan.zone_ids.includes(item.zone_id)))"
         :key="row.zone_id" class="zone-item chosen" :class="row.kind"
         @pointerenter="hover(row.zone_id)" @pointerleave="hover(null)" @focus="hover(row.zone_id)" @blur="hover(null)"
-        @click="emit('zone', row.zone_id)">
+        :aria-pressed="state.selectedZoneId === row.zone_id" @click="emit('zone', row.zone_id)">
         <i class="zone-swatch"></i>
         <span class="zone-text">
           <strong>{{ zoneTitle(row.zone) }}</strong>
@@ -361,11 +361,11 @@ function hover(id) { state.hoverZoneId = id }
         {{ showRejected ? 'Скрыть зоны, которые не вошли' : 'Показать зоны, которые не вошли' }} ({{ rejected.length }})
         <ChevronDown :size="14" :class="{ up: showRejected }" class="link-caret" />
       </button>
-      <Transition name="expand">
+      <Reveal>
         <div v-if="showRejected" class="zone-list">
           <button v-for="row in rejected" :key="row.zone_id" class="zone-item" :class="row.kind"
             @pointerenter="hover(row.zone_id)" @pointerleave="hover(null)" @focus="hover(row.zone_id)" @blur="hover(null)"
-            @click="emit('zone', row.zone_id)">
+            :aria-pressed="state.selectedZoneId === row.zone_id" @click="emit('zone', row.zone_id)">
             <i class="zone-swatch"></i>
             <span class="zone-text">
               <strong>{{ zoneTitle(row.zone) }}</strong>
@@ -376,15 +376,15 @@ function hover(id) { state.hoverZoneId = id }
             <span class="tabular zone-area">{{ km(row.area_km2) }}</span>
           </button>
         </div>
-      </Transition>
+      </Reveal>
     </template>
     <p v-if="archive" class="source-line archive-note"
       v-tip="'Кадр снят до события, поэтому воду на момент паводка не показывает. Его можно купить для сравнения, но в охват ущерба и сомнений он не идёт'">
       Архивный кадр {{ archive.name }} снят {{ date(archive.taken) }}, до события: {{ archive.from === archive.to ? rub(archive.from) : `${rub(archive.from)} … ${rub(archive.to)}` }} за зону. Только контекст, в охват не входит.
     </p>
-  </section>
+  </div></details>
 
-  <details v-if="pricing?.lines?.length" class="block price-details">
+  <details v-if="pricing?.lines?.length" class="block price-details disclosure">
     <summary>Как посчитана цена</summary>
     <template v-for="group in priceGroups" :key="group.id || 'group'">
       <p class="price-product">{{ group.title }}</p>
@@ -404,12 +404,14 @@ function hover(id) { state.hoverZoneId = id }
       </div>
     </template>
     <div class="mini-rows price-rows">
-      <div class="total"><span>Итого</span><b class="tabular">{{ rub(pricing.total_rub) }}</b></div>
+      <div class="total"><span>Снимки</span><b class="tabular">{{ rub(pricing.total_rub) }}</b></div>
+      <div v-if="plan?.decision_cost_rub != null" v-tip="costTip"><span>С обработкой · сценарий</span><b class="tabular">{{ rub(plan.decision_cost_rub) }}</b></div>
+      <div v-tip="residual.tip"><span>Остаток сомнений · сценарий</span><b class="tabular">{{ residual.text }}</b></div>
     </div>
     <p class="source-line">Формула ПП РФ №840 в редакции от 27.08.2025. Группа скидки {{ priceGroups.map(group => group.id).filter(Boolean).join(', ') || 'н/д' }}.</p>
   </details>
 
-  <section v-if="state.strategy === 'C' && scenarios.length" class="block">
+  <details v-if="state.strategy === 'C' && scenarios.length" class="disclosure"><summary>Если бюджет изменится</summary><div class="disclosure-body">
     <span class="caption" v-tip="'План C пересчитан заново, когда бюджет или тариф меняется на 20%. Остальное на месте'">Если бюджет или тариф другие</span>
     <div class="mini-rows scenario-rows">
       <div class="scenario-head"><span></span><span>заказ</span><span>ущерб в зонах</span></div>
@@ -419,14 +421,12 @@ function hover(id) { state.hoverZoneId = id }
         <b class="tabular" v-tip="'Ожидаемый ущерб в зонах такого заказа'">{{ compactRub(item.covered_expected_loss_rub) }}</b>
       </div>
     </div>
-  </section>
+  </div></details>
 
-  <p v-if="state.strategy === 'C' && evidence?.priority_changes_order" class="source-line alternate">
-    С целью «{{ evidence.alternate_priority === 'risk' ? 'Ущерб' : 'Сомнения' }}» в заказ вошли бы: {{ alternateNames }}.
-  </p>
 
   <p class="source-line" v-tip="`Ставка 788,64 ₽/км² взята из контрольного примера постановки, это не цена поставщика. Сроки поставки (оптика ${deliveryHours.optical} ч, радар ${deliveryHours.sar} ч) тоже допущение, как и то, что над зоной оптики не будет облаков: сквозь них она воду не видит, радар видит. Ущерб в зонах показывает, что проверять первым, а не сколько потерь удалось избежать`">
     <Info :size="14" />Ставка и срок поставки сценарные
   </p>
+  </template>
 </template>
 </template>
