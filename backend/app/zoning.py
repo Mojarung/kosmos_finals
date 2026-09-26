@@ -29,18 +29,18 @@ ENTROPY_TOP_DECILE_BITS = float(_RECORD["entropy_top_decile_bits"])
 DOUBT_THRESHOLD = float(_RECORD["map_error_chance_threshold"])
 _VALID = _RECORD["valid_at_threshold"]
 _TEST = _RECORD["report_only"]["parts"]["test_core"]
-DOUBT_SOURCE = "ml/artifacts/evaluation/doubt_threshold.json (floodvalue doubt-threshold, validation part)"
-DOUBT_BASIS = (f"top decile of binary entropy on validation ({_RECORD['chips']} chips): "
-               f"{_VALID['error_rate_doubtful']:.1%} of those pixels wrong vs {_VALID['error_rate']:.1%} overall; "
-               f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
-               f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall")
+DOUBT_SOURCE = "ml/artifacts/evaluation/doubt_threshold.json (floodvalue doubt-threshold, часть validation)"
+DOUBT_BASIS = (f"верхний дециль бинарной энтропии на validation ({_RECORD['chips']} чипов): "
+               f"среди этих пикселей ошибочны {_VALID['error_rate_doubtful']:.1%} против {_VALID['error_rate']:.1%} в целом; "
+               f"test_core, только для отчёта: сомнительны {_TEST['doubtful_share']:.1%} пикселей, "
+               f"из них ошибочны {_TEST['error_rate_doubtful']:.1%} против {_TEST['error_rate']:.1%} в целом")
 _MEASURES = _RECORD["measure_auroc"]
-DOUBT_EVIDENCE = (f"threshold fixed on validation, where entropy also ranks errors better than ensemble spread "
-                  f"(AUROC {_MEASURES['entropy']:.3f} vs {_MEASURES['member_std']:.3f}); "
-                  f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
-                  f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall, "
-                  f"{_TEST['errors_inside_doubtful_share']:.1%} of all errors inside, AUROC "
-                  f"{_TEST['auroc_entropy']:.3f} vs {_TEST['auroc_member_std']:.3f}")
+DOUBT_EVIDENCE = (f"порог зафиксирован на validation, где энтропия и ранжирует ошибки лучше разброса ансамбля "
+                  f"(AUROC {_MEASURES['entropy']:.3f} против {_MEASURES['member_std']:.3f}); "
+                  f"test_core, только для отчёта: сомнительны {_TEST['doubtful_share']:.1%} пикселей, "
+                  f"из них ошибочны {_TEST['error_rate_doubtful']:.1%} против {_TEST['error_rate']:.1%} в целом, "
+                  f"внутри лежат {_TEST['errors_inside_doubtful_share']:.1%} всех ошибок, AUROC "
+                  f"{_TEST['auroc_entropy']:.3f} против {_TEST['auroc_member_std']:.3f}")
 # Zone sides are the 1.12 km object square (1.25 km², above the 1 km² minimum) and
 # its 1.5× and 2× multiples. Larger rectangles cover a river in one piece but no
 # longer fit a 6–7 thousand rouble budget, so the grouping stops at 2.24 km.
@@ -49,12 +49,14 @@ ZONE_SIDES_KM = (1.12, 1.68, 2.24)
 # zone and at most five uncertainty zones; this is a compute limit, not a tuned value.
 MAX_UNCERTAINTY_ZONES = 5
 STRIDE_KM = 0.14
-DOUBT_RULE = (f"map error chance = 1 - p where flood_mask = 1 and p where flood_mask = 0 (calibrated p); "
-              f"doubtful pixel: chance >= {DOUBT_THRESHOLD} (top entropy decile of the validation part, "
-              f"{ENTROPY_TOP_DECILE_BITS:.3f} bit; test parts only report it); expected error area = sum of chances")
-ZONE_RULE = (f"greedy non-overlapping rectangles with sides {ZONE_SIDES_KM} km on a {STRIDE_KM} km stride "
-             "maximising doubtful area above the analysed area's average density (the density a broad "
-             f"purchase gets); stop after {MAX_UNCERTAINTY_ZONES} zones or when no rectangle beats the average")
+DOUBT_RULE = (f"шанс ошибки карты = 1 - p там, где flood_mask = 1, и p там, где flood_mask = 0 (калиброванная p); "
+              f"сомнительный пиксель: шанс >= {DOUBT_THRESHOLD} (верхний дециль энтропии на части validation, "
+              f"{ENTROPY_TOP_DECILE_BITS:.3f} бит; тестовые части его только отчитывают); ожидаемая площадь ошибок = "
+              "сумма шансов")
+ZONE_RULE = (f"жадный выбор непересекающихся прямоугольников со сторонами {ZONE_SIDES_KM} км с шагом {STRIDE_KM} км, "
+             "максимизирующих сомнительную площадь сверх средней плотности анализируемой области (плотности, "
+             f"которую даёт широкая покупка); остановка после {MAX_UNCERTAINTY_ZONES} зон или когда ни один "
+             "прямоугольник не превышает среднего")
 
 
 @lru_cache(maxsize=16)

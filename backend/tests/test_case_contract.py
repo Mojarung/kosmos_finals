@@ -200,7 +200,7 @@ def test_source_manifest_records_a_checked_license_for_every_source():
     assert "free, full and open" in s1["quote"] and s1["url"].startswith("https://sentinels.copernicus.eu/")
     jrc = by_layer["JRCWaterHand"]["underlying_data_license"]
     assert "without restriction of use" in jrc["quote"] and jrc["url"].startswith("https://global-surface-water")
-    assert "diagnostic" in by_layer["LabelHand"]["label_origin"]
+    assert "диагностических" in by_layer["LabelHand"]["label_origin"]
 
 
 def test_live_gsw_reference_gets_the_checked_jrc_terms():

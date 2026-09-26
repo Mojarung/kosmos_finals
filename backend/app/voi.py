@@ -18,15 +18,15 @@ from .planning import quote, today
 
 router = APIRouter(prefix="/api/voi", tags=["procurement"])
 DEFAULT_VISIT_COST_RUB = 10_000.0
-METHOD = ("At each assessed asset, L=V*q and a visit costs C. Before new imagery choose min(C,p*L); "
-          "after an ideal timely observation pay p*min(C,L). VOI is their difference. Basket benefit is the "
-          "sum of VOI on the union of covered assets, without double counting. Maximise basket VOI minus "
-          "the exact scenario data quote over all timely subsets; buy only for positive net benefit.")
-LIMITATION = ("Scenario only: p comes from the current scene model; probability calibration and decision savings require independent validation; "
-              "V/q and visit cost are assumptions; the "
-              "new image is treated as perfect and timely. No field visits, actual damage reduction, cloud "
-              "availability or supplier price have been measured. Review/processing costs are disclosed "
-              "separately and are not part of this data-only optimisation.")
+METHOD = ("Для каждого оценённого объекта L=V*q, а выезд стоит C. До нового снимка выбираем min(C,p*L); "
+          "после идеального своевременного наблюдения платим p*min(C,L). VOI - их разность. Польза корзины - "
+          "сумма VOI по объединению покрытых объектов без двойного счёта. Максимизируем VOI корзины минус точную "
+          "сценарную цену данных по всем своевременным подмножествам; покупаем только при положительной чистой пользе.")
+LIMITATION = ("Только сценарий: p берётся из модели текущей сцены; калибровка вероятности и экономия на решениях "
+              "требуют независимой проверки; V/q и стоимость выезда являются допущениями; новый снимок считается "
+              "идеальным и своевременным. Выезды на место, фактическое снижение ущерба, облачность и цена "
+              "поставщика не измерялись. Затраты на проверку и обработку показаны отдельно и не входят в эту "
+              "оптимизацию только по данным.")
 
 
 def asset_information_value(p: float | None, exposure_rub: float, visit_cost_rub: float) -> dict:
@@ -130,7 +130,7 @@ def calculate(scene_id: str, bounds: list[float] | None, visit_cost_rub: float,
             "method": METHOD, "limitation": LIMITATION,
             "scenario": {"visit_cost_status": "operator_scenario", "price_status": "scenario_not_supplier_quote",
                          "observation_status": "ideal_timely_scenario", "calculation_date": on.isoformat(),
-                         "scope": "data_price_only; other_cost_rub shown separately"},
+                         "scope": "data_price_only; other_cost_rub показан отдельно"},
             "assets": asset_rows, "zones": zones,
             "plan": {"zone_ids": [zone["id"] for zone in chosen_zones],
                      "candidate_ids": [order["candidate_id"] for order in orders],

@@ -28,17 +28,39 @@ INFERENCE_FILES = ("flood_probability.tif", "flood_mask.tif", "flood_uncertainty
 # not spatially adjacent to training chips. None means the chip is outside the
 # authors' hand-labeled split lists, so it was not used for training either.
 INDEPENDENT_PARTS = {"test_core", "bolivia", None}
-PROBABILITY_RULE = ("flood_probability.tif value in the pixel that contains the asset point; "
-                    "valid 3x3 mean kept as a robustness check (p_window3)")
-PERMANENT_RULE = ("JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global "
-                  "Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water "
-                  "minus this layer; a portfolio point on it keeps the case EL = p * V * q, only the additional "
-                  "flood-only loss (flood_expected_loss_rub) is 0 there")
-PERMANENT_PERIOD_NOTE = ("JRC annual observations end in 2018. For events during 2018 the layer can include "
-                         "later months; for 2016-2017 events it includes later years. The layer is a "
-                         "retrospective reference, not evidence of availability on the historical decision date.")
-PORTFOLIO_RULE = ("numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without "
-                  "replacement, one per case asset type in table order; independent of p, masks and labels")
+PROBABILITY_RULE = ("значение flood_probability.tif в пикселе, где лежит точка объекта; "
+                    "среднее по валидному окну 3x3 сохранено как проверка устойчивости (p_window3)")
+PERMANENT_RULE = ("JRCWaterHand из Sen1Floods11 v1.1: 1 = вода и в 1984, и в 2018 году по JRC Global "
+                  "Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Временный паводок = вода модели "
+                  "минус этот слой; у точки портфеля на нём остаётся EL кейса = p * V * q, нулевым там становится "
+                  "только дополнительный ущерб от паводка (flood_expected_loss_rub)")
+PERMANENT_PERIOD_NOTE = ("Годовые наблюдения JRC заканчиваются 2018 годом. Для событий 2018 года слой может "
+                         "включать более поздние месяцы, для событий 2016–2017 годов более поздние годы. Это "
+                         "ретроспективная опора, а не доказательство доступности слоя на историческую дату решения.")
+PORTFOLIO_RULE = ("numpy default_rng(seed).choice по пикселям с конечными VV и VH, 10 без "
+                  "повторов, по одному на тип объекта кейса в порядке таблицы; не зависит от p, масок и разметки")
+# Scenes prepared before 2026-09-26 store these rules in English in metadata.json; analysis and
+# export show the current wording instead (the meaning is unchanged).
+LEGACY_RULES = {
+    'flood_probability.tif value in the pixel that contains the asset point; valid 3x3 mean kept as a robustness check (p_window3)': 'PROBABILITY_RULE',
+    'JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water minus this layer; a portfolio point on it keeps the case EL = p * V * q, only the additional flood-only loss (flood_expected_loss_rub) is 0 there': 'PERMANENT_RULE',
+    'JRC annual observations end in 2018. For events during 2018 the layer can include later months; for 2016-2017 events it includes later years. The layer is a retrospective reference, not evidence of availability on the historical decision date.': 'PERMANENT_PERIOD_NOTE',
+    'numpy default_rng(seed).choice over pixels with finite VV and VH, 10 without replacement, one per case asset type in table order; independent of p, masks and labels': 'PORTFOLIO_RULE',
+    'numpy default_rng(2026).choice over pixels with valid VV and VH, 10 without replacement, one per case asset type in table order; coordinates at the pixel centre; independent of p, masks and labels': 'LIVE_PORTFOLIO_RULE',
+    'JRC Global Surface Water v1.4 transitions 1984-2021 (Pekel et al., Nature 2016): water in both 1984 and 2021, classes 1, 4, 7, 8; the Sen1Floods11 JRCWaterHand rule; observations end 2021, before the event': 'GSW_RULE',
+}
+
+
+def current_rule(text):
+    """The current wording of a rule stored by an older scene build; any other text is returned as is."""
+    from .live import PORTFOLIO_RULE as LIVE_PORTFOLIO_RULE
+    from .permanent import GSW_RULE
+    current = {"PROBABILITY_RULE": PROBABILITY_RULE, "PERMANENT_RULE": PERMANENT_RULE,
+               "PERMANENT_PERIOD_NOTE": PERMANENT_PERIOD_NOTE, "PORTFOLIO_RULE": PORTFOLIO_RULE,
+               "LIVE_PORTFOLIO_RULE": LIVE_PORTFOLIO_RULE, "GSW_RULE": GSW_RULE}
+    return current[LEGACY_RULES[text]] if text in LEGACY_RULES else text
+
+
 ASSET_TYPES = [
     ("warehouse", "Склад", 10_000_000, 0.25),
     ("substation", "Подстанция", 20_000_000, 0.40),

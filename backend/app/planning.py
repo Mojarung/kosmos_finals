@@ -31,15 +31,15 @@ DISCOUNT_CURVES = {
 }
 REQUIRED_ORDER_FIELDS = ("area_km2", "sensor_type", "resolution_m", "processing_level", "usage_type",
                          "acquisition_type", "guaranteed_purchase")
-GROUP_RULE = ("one discount group per basket, sensor_type, resolution_m and order calendar year (orders are placed "
-              "on the calculation date); S = area of earlier orders of the group (previous_group_area_km2, 0 by "
-              "default) + area of the group in this basket, recomputed for every basket; "
+GROUP_RULE = ("одна группа скидки на корзину, sensor_type, resolution_m и календарный год заказа (заказы "
+              "оформляются в дату расчёта); S = площадь прежних заказов группы (previous_group_area_km2, по "
+              "умолчанию 0) + площадь группы в этой корзине, пересчитывается для каждой корзины; "
               "discount_group_id = <basket>_<sensor_type>_<resolution>m_<year>")
-ROUNDING = {"area_km2": "0.001 ROUND_HALF_UP; 1 km² minimum checked before rounding",
-            "discount_coef": "9 digits ROUND_HALF_UP",
-            "unit_price_rub_km2": "kopecks ROUND_HALF_UP of B*O*P*T*R",
-            "cost_rub": "kopecks ROUND_HALF_UP of unit_price_rub_km2*K",
-            "total_rub": "sum of the rounded lines"}
+ROUNDING = {"area_km2": "0.001 ROUND_HALF_UP; минимум 1 км² проверяется до округления",
+            "discount_coef": "9 знаков ROUND_HALF_UP",
+            "unit_price_rub_km2": "до копеек ROUND_HALF_UP от B*O*P*T*R",
+            "cost_rub": "до копеек ROUND_HALF_UP от unit_price_rub_km2*K",
+            "total_rub": "сумма округлённых строк"}
 MONEY = Decimal("0.01")
 AREA = Decimal("0.001")
 DISCOUNT = Decimal("0.000000001")
@@ -51,25 +51,26 @@ PRIORITIES = {"risk", "information"}
 OPTICAL_DELIVERY_HOURS = 6   # new 1 m optics: tasking and delivery inside the 6-12 h decision window
 SAR_DELIVERY_HOURS = 4       # new 3 m radar: all-weather tasking, faster delivery
 ARCHIVE_LEAD_DAYS = 180      # the last clear dry-season optical frame; any lead above 90 days gives T = 0.6
-CANDIDATE_RULE = ("footprints: 1.12 km square around each asset, uncertainty rectangles from the doubt map and the "
-                  "broad selected-region rectangle, min 1 km²; each footprint is offered as three catalog orders: "
-                  "<id> new optical 1 m L2 (6 h, scenario), <id>-SAR new SAR 3 m L1 all-weather (4 h, scenario), "
-                  f"<id>-ARC archive optical 1 m L2 acquired {ARCHIVE_LEAD_DAYS} days before the event (context)")
-PRODUCT_RULE = ("per footprint: new optical 1 m if it arrives by the decision deadline, otherwise new SAR 3 m if it "
-                "does; the archive frame is context only, never bought as an observation of current water and never "
-                "counted in coverage; late products add no coverage. B takes the broad footprint ZALL under this rule "
-                "(the optical order when nothing arrives in time, shown late); C searches every basket of footprints "
-                "exactly, each footprint with the product the rule takes")
+CANDIDATE_RULE = ("контуры: квадрат 1.12 км вокруг каждого объекта, прямоугольники сомнений с карты сомнений и "
+                  "широкий прямоугольник выбранной области, не меньше 1 км²; каждый контур предлагается тремя "
+                  "заказами каталога: <id> новая оптика 1 м L2 (6 ч, сценарий), <id>-SAR новый радар 3 м L1 в любую "
+                  f"погоду (4 ч, сценарий), <id>-ARC архивная оптика 1 м L2, снятая за {ARCHIVE_LEAD_DAYS} дней до "
+                  "события (контекст)")
+PRODUCT_RULE = ("для каждого контура: новая оптика 1 м, если она приходит к сроку решения, иначе новый радар "
+                "3 м, если к сроку успевает он; архивный кадр только контекст, его никогда не покупают как наблюдение "
+                "текущей воды и не засчитывают в покрытие; опоздавшие продукты покрытия не дают. B берёт широкий "
+                "контур ZALL по этому правилу (оптический заказ, если к сроку не успевает ничего, помечен как "
+                "опоздавший); C точно перебирает все корзины контуров, каждый контур с продуктом по правилу")
 
 
 # New optics sees water only through a clear sky, and a flood usually comes with cloud. The service
 # cannot see the cloud forecast for the tasking window, so a new optical order is assumed usable by
 # the deadline: a scenario, like its delivery time. Radar needs no clear sky.
-SUITABILITY_RULE = ("new optical 1 m needs a cloud-free pass; cloud cover at the tasking time is not checked, so it is "
-                    "assumed usable by the deadline (suitability_status=scenario_usable, cloud_check=not_checked) "
-                    "and its coverage is an upper bound; new SAR 3 m sees water through cloud (all_weather); "
-                    "the archive frame is context only; before a real order check the cloud forecast and switch "
-                    "footprints under closed sky to the -SAR order")
+SUITABILITY_RULE = ("новой оптике 1 м нужен безоблачный пролёт; облачность на время съёмки не проверяется, "
+                    "поэтому снимок считается пригодным к сроку (suitability_status=scenario_usable, "
+                    "cloud_check=not_checked), а его покрытие является верхней оценкой; новый радар 3 м видит воду "
+                    "сквозь облака (all_weather); архивный кадр только контекст; перед реальным заказом проверьте "
+                    "прогноз облачности и переведите контуры под сплошной облачностью на заказ -SAR")
 
 
 def rounded(value: float | Decimal, unit: Decimal) -> Decimal:
@@ -171,13 +172,13 @@ def pricing_rules() -> dict:
         "freshness_coef_T": {"new_guaranteed_purchase": float(FRESHNESS_NEW),
                              f"operational_up_to_{OPERATIONAL_DAYS}_days": float(FRESHNESS_OPERATIONAL),
                              f"archive_older_than_{OPERATIONAL_DAYS}_days": float(FRESHNESS_ARCHIVE)},
-        "freshness_rule": (f"age = calculation_date - observation_at in calendar days; exactly {OPERATIONAL_DAYS} days "
-                           "is operational (T = 1); existing imagery always has guaranteed_purchase = false"),
+        "freshness_rule": (f"возраст = calculation_date - observation_at в календарных днях; ровно {OPERATIONAL_DAYS} "
+                           "дней ещё оперативный снимок (T = 1); у существующих снимков всегда guaranteed_purchase = false"),
         "discount_formulas": {sensor: discount_formula(sensor) for sensor in DISCOUNT_CURVES},
-        "discount_rule": "S in km², r = resolution_m in metres, natural log; non-positive S or r are invalid",
+        "discount_rule": "S в км², r = resolution_m в метрах, натуральный логарифм; S или r не больше нуля недопустимы",
         "discount_group_rule": GROUP_RULE, "previous_group_area_km2": 0,
-        "previous_group_area_rule": "no earlier orders in any group of the order year; the price function takes "
-                                    "them per group key, e.g. optical_1m_2026",
+        "previous_group_area_rule": "прежних заказов в группах года заказа нет; функция цены принимает их по "
+                                    "ключу группы, например optical_1m_2026",
         "rounding": ROUNDING,
     }
 

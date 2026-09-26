@@ -19,21 +19,21 @@ from .costs import decision_costs
 from .layers import overlay_png
 from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, ROUNDING, SAR_DELIVERY_HOURS,
                        SUITABILITY_RULE, as_polygon, contains, enrich_assets)
-from .scene_builder import PROBABILITY_RULE
+from .scene_builder import PROBABILITY_RULE, current_rule
 from .sensitivity import asset_plan_sensitivity
 from .temporal import scene_timing
 from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
 
 REASONS = {
-    "selected": "in basket C",
-    "late": "delivery after the decision deadline",
-    "over_budget": "adding it to basket C exceeds the budget",
-    "nothing_new": "adds nothing to the goal: its assets and doubtful area are already covered",
-    "cheaper_equal": "an equal-value basket is cheaper",
-    "plan_infeasible": "no basket satisfies the constraints",
-    "context_only": ("archive frame: shows the state before the flood, not current water; "
-                     "never bought as an observation and never counted in coverage"),
-    "product_rule": "the optical 1 m order of this footprint arrives by the deadline, so the product rule takes optics",
+    "selected": "в корзине C",
+    "late": "поставка позже срока решения",
+    "over_budget": "добавление в корзину C превышает бюджет",
+    "nothing_new": "ничего не добавляет к цели: её объекты и сомнительная площадь уже покрыты",
+    "cheaper_equal": "корзина той же ценности дешевле",
+    "plan_infeasible": "ни одна корзина не удовлетворяет ограничениям",
+    "context_only": ("архивный кадр: показывает состояние до паводка, а не текущую воду; "
+                     "не покупается как наблюдение и не засчитывается в покрытие"),
+    "product_rule": "оптический заказ 1 м по этому контуру приходит к сроку, поэтому правило продукта берёт оптику",
 }
 PLAN_COLUMNS = ["strategy", "candidate_id", "footprint_id", "sensor_type", "resolution_m", "acquisition_type",
                 "data_role", "observation_at", "age_days", "area_km2", "base_rate_rub_km2", "base_rate_status",
@@ -52,47 +52,47 @@ DECISION_COLUMNS = ["candidate_id", "footprint_id", "kind", "sensor_type", "reso
 # Every number the plan depends on, where it comes from and why this value.
 PARAMETERS = [
     {"name": "model_threshold", "value": 0.41, "source": "ml/REPORT.md §7",
-     "basis": "max IoU on validation; IoU curve is flat between 0.3 and 0.5"},
+     "basis": "максимум IoU на validation; кривая IoU плоская между 0.3 и 0.5"},
     {"name": "baseline_threshold_db", "value": -23.6, "source": "ml/artifacts/baseline/baseline.json",
-     "basis": "VH threshold fitted on train, channel chosen on validation"},
+     "basis": "порог VH подобран на train, канал выбран на validation"},
     {"name": "doubt_threshold", "value": DOUBT_THRESHOLD, "source": DOUBT_SOURCE, "basis": DOUBT_BASIS},
     {"name": "uncertainty_zone_sides_km", "value": "1.12, 1.68, 2.24", "source": "app/zoning.py",
-     "basis": "1.12 km square is the 1.25 km² object zone above the 1 km² minimum; 1.5x and 2x keep zones within a 6-7 thousand RUB budget"},
+     "basis": "квадрат 1.12 км - это зона объекта 1.25 км², больше минимума 1 км²; 1.5x и 2x держат зоны в бюджете 6-7 тысяч рублей"},
     {"name": "max_uncertainty_zones", "value": 5, "source": "app/zoning.py",
-     "basis": "compute limit: exact search over 2^16 baskets with 10 object zones and the broad zone"},
-    {"name": "base_rate_rub_km2", "value": float(BASE_RATE), "source": "case control example",
-     "basis": "scenario rate; no supplier quote; status scenario everywhere"},
-    {"name": "processing_coef_O", "value": "L2 1.2 optics; L1 1 radar", "source": "PP RF 840 table: L0 1, L1 1, L2 1.2",
-     "basis": "optics is bought orthorectified and ready for analysis; the radar order is a calibrated L1 product "
-              "the team processes itself, as it does with Sentinel-1"},
-    {"name": "usage_coef_P", "value": 1, "source": "PP RF 840 table: internal 1, limited 1.2, unrestricted 1.5",
-     "basis": "the imagery stays inside the operator; results are shared, the image is not"},
-    {"name": "freshness_coef_T", "value": "1.8 new; 0.6 archive",
-     "source": "PP RF 840 table: new with guaranteed purchase 1.8, up to 90 days 1, older 0.6",
-     "basis": "the flood is happening now, so observations are new acquisitions; the archive frame is older than "
-              "90 days and serves only as pre-flood context"},
-    {"name": "resolution_m", "value": "1 optics; 3 radar", "source": "team choice",
-     "basis": "1 m optics separates a building from water at its wall; 3 m radar sees water through cloud; "
-              "Sentinel-1 at 10 m cannot resolve a single building"},
-    {"name": "delivery_hours", "value": f"{OPTICAL_DELIVERY_HOURS} optics; {SAR_DELIVERY_HOURS} radar; 0 archive",
+     "basis": "предел вычислений: точный перебор 2^16 корзин с 10 зонами объектов и широкой зоной"},
+    {"name": "base_rate_rub_km2", "value": float(BASE_RATE), "source": "контрольный пример кейса",
+     "basis": "сценарная ставка; котировки поставщика нет; везде статус scenario"},
+    {"name": "processing_coef_O", "value": "L2 1.2 оптика; L1 1 радар", "source": "таблица ПП РФ 840: L0 1, L1 1, L2 1.2",
+     "basis": "оптика покупается ортотрансформированной и готовой к анализу; радарный заказ - калиброванный продукт L1, "
+              "который команда обрабатывает сама, как и Sentinel-1"},
+    {"name": "usage_coef_P", "value": 1, "source": "таблица ПП РФ 840: внутреннее 1, ограниченное 1.2, без ограничений 1.5",
+     "basis": "снимок остаётся внутри оператора; наружу передаются результаты, а не снимок"},
+    {"name": "freshness_coef_T", "value": "1.8 новая съёмка; 0.6 архив",
+     "source": "таблица ПП РФ 840: новая с гарантированной покупкой 1.8, до 90 дней 1, старше 0.6",
+     "basis": "паводок идёт сейчас, поэтому наблюдения - это новая съёмка; архивный кадр старше 90 дней и служит "
+              "только контекстом до паводка"},
+    {"name": "resolution_m", "value": "1 оптика; 3 радар", "source": "выбор команды",
+     "basis": "оптика 1 м отделяет здание от воды у его стены; радар 3 м видит воду сквозь облака; "
+              "Sentinel-1 с 10 м не различает отдельное здание"},
+    {"name": "delivery_hours", "value": f"{OPTICAL_DELIVERY_HOURS} оптика; {SAR_DELIVERY_HOURS} радар; 0 архив",
      "source": "scenario",
-     "basis": "assumed tasking and delivery time inside the 6-12 h decision window of the case; an all-weather "
-              "radar order is faster and does not wait for clear sky"},
+     "basis": "допущение о времени съёмки и поставки внутри окна решения кейса 6-12 ч; радарный заказ в любую "
+              "погоду быстрее и не ждёт ясного неба"},
     {"name": "archive_lead_days", "value": ARCHIVE_LEAD_DAYS, "source": "scenario",
-     "basis": "the last clear dry-season optical frame before the event; any lead above 90 days gives T = 0.6"},
-    {"name": "budget_rub", "value": None, "source": "operator input",
-     "basis": "default 6500 RUB, about one sixth of a broad purchase of the chip; the frontier shows other budgets"},
+     "basis": "последний ясный оптический кадр сухого сезона до события; любой срок больше 90 дней даёт T = 0.6"},
+    {"name": "budget_rub", "value": None, "source": "ввод оператора",
+     "basis": "по умолчанию 6500 рублей, около шестой части широкой покупки чипа; кривая показывает другие бюджеты"},
 ]
 # License facts read on the publishers' own pages; nothing here is inferred from third-party mirrors.
 LICENSE_CHECKED_AT = "2026-09-26"
 SEN1FLOODS11_TERMS = {
     "license": "not_declared_by_publisher",
     "license_note": (
-        "Checked 2026-09-26: the publisher's repository github.com/cloudtostreet/Sen1Floods11 has no LICENSE file "
-        "(GitHub API /repos/cloudtostreet/Sen1Floods11/license answers 404, repository license null); its README "
-        "asks to cite Bonafilia et al. 2020 and states no license; the v1.1 STAC collections in the publisher's "
-        "bucket (sen1floods11_hand_labeled_source, sen1floods11_hand_labeled_label) set \"license\": \"proprietary\" "
-        "without a license link or text. Used as the dataset the case prescribes, with the citation the authors ask for."),
+        "Проверено 2026-09-26: в репозитории издателя github.com/cloudtostreet/Sen1Floods11 нет файла LICENSE "
+        "(GitHub API /repos/cloudtostreet/Sen1Floods11/license отвечает 404, лицензия репозитория null); README "
+        "просит ссылаться на Bonafilia et al. 2020 и лицензию не называет; STAC-коллекции v1.1 в бакете издателя "
+        "(sen1floods11_hand_labeled_source, sen1floods11_hand_labeled_label) указывают \"license\": \"proprietary\" "
+        "без ссылки на лицензию и её текста. Используется как набор данных, который задаёт кейс, со ссылкой, о которой просят авторы."),
     "license_checked_urls": [
         "https://github.com/cloudtostreet/Sen1Floods11",
         "https://api.github.com/repos/cloudtostreet/Sen1Floods11/license",
@@ -209,13 +209,13 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
         "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
         "observed_at": info["observed_at"], "published_at": None, "available_at": None,
         "role": "model_input" if live or "S1Hand" in item["name"] else "diagnostic_label_only",
-        "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
+        "limitation": "Для этой области нет разметки паводка, проверенной на месте" if live else "Исторический чип 512x512; не оперативное наблюдение паводка",
         **item,
     }
     if uploaded:
         return {**entry, "version": "user_supplied_geotiff", "license": "user_supplied_unverified",
-                "limitation": ("Two-band VV/VH GeoTIFF supplied by the operator; acquisition date, "
-                               "processing level and rights were not independently verified.")}
+                "limitation": ("Двухканальный GeoTIFF VV/VH от оператора; дата съёмки, уровень обработки "
+                               "и права независимо не проверены.")}
     if item.get("layer") == "S2Hand":
         entry["observed_at"] = info.get("model", {}).get("dates", {}).get("s2_date")
     url = str(item.get("url") or "")
@@ -232,14 +232,14 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
         if layer == "S1Hand":
             entry["underlying_data_license"] = _sentinel_terms(entry["observed_at"])
         elif layer == "LabelHand":
-            entry["label_origin"] = ("hand-labeled ground truth (Water / NoWater / NoData) made by the dataset authors, "
-                                     "Cloud to Street; used only for diagnostic metrics, never as a model input")
+            entry["label_origin"] = ("ручная эталонная разметка (Water / NoWater / NoData) авторов набора, "
+                                     "Cloud to Street; только для диагностических метрик, никогда не вход модели")
         elif layer == "JRCWaterHand":
-            entry["derived_from"] = ("JRC Global Surface Water; the Sen1Floods11 docs README describes the layer as "
+            entry["derived_from"] = ("JRC Global Surface Water; README документации Sen1Floods11 описывает слой как "
                                      "'JRC Permement Water overlapping labeled data'")
             # The layer is not observed on the event day: it marks water seen in both 1984 and 2018.
             entry["observed_at"] = "1984/2018"
-            entry["observed_at_note"] = "JRC GSW observation period of the layer, not the S1 acquisition date"
+            entry["observed_at_note"] = "период наблюдений JRC GSW для слоя, а не дата съёмки S1"
             entry["underlying_data_license"] = dict(JRC_GSW_TERMS)
     else:
         entry.update(license="not_verified", license_checked_urls=[url] if url else [],
@@ -306,26 +306,26 @@ REPOSITORY = "https://gitverse.ru/hackrus.experts/kosmo-moskva_misis_zhomarung_c
 MIRROR = "https://github.com/Mojarung/kosmos_finals"
 # Sources behind the frozen model rather than behind this chip: its training data and encoder init.
 MODEL_SOURCES = [
-    {"name": "Sen1Floods11 v1.1 hand-labelled chips (train, valid, test_core, test_adjacent, bolivia)",
+    {"name": "Sen1Floods11 v1.1, чипы с ручной разметкой (train, valid, test_core, test_adjacent, bolivia)",
      "version": "Sen1Floods11_v1.1", "url": "https://github.com/cloudtostreet/Sen1Floods11",
      # First and last event s1_date of data/catalog/sen1floods11_handlabeled.json, and the `updated` range
      # of the 1343 v1.1 bucket objects in ml/artifacts/download_manifest.json (a test checks both).
      "observed_at": "2016-08-12/2019-09-17",
      "published_at": "2020-10-01T17:16:58.738Z/2020-10-15T16:16:25.190Z", "available_at": None,
      "role": "training_and_evaluation", "split": "ml/artifacts/split.json",
-     "limitation": "11 historical events; test_core shares events with train, Bolivia is the held-out event",
-     "checksums": "ml/artifacts/download_manifest.json (md5 of 1343 bucket objects, downloaded 2026-09-25)",
+     "limitation": "11 исторических событий; test_core делит события с train, Bolivia - отложенное событие",
+     "checksums": "ml/artifacts/download_manifest.json (md5 1343 объектов бакета, скачано 2026-09-25)",
      **SEN1FLOODS11_TERMS},
-    {"name": "ResNet34 ImageNet encoder weights", "version": "segmentation-models-pytorch 0.5.0",
+    {"name": "Веса энкодера ResNet34 (ImageNet)", "version": "segmentation-models-pytorch 0.5.0",
      "url": "https://huggingface.co/smp-hub/resnet34.imagenet", "role": "pretrained_initialisation",
-     "observed_at": None, "observed_at_note": "not an observation: pretrained image-classification weights",
+     "observed_at": None, "observed_at_note": "не наблюдение: предобученные веса классификации изображений",
      # lastModified of revision fa54a662fb7bb5149049a30c11fac0deb86cf7e7 in the Hugging Face model API.
      "published_at": "2025-01-15T17:51:52Z", "available_at": None,
      "revision": "fa54a662fb7bb5149049a30c11fac0deb86cf7e7",
-     "limitation": "initialisation only; no flood or Sentinel-1 data in these weights",
+     "limitation": "только инициализация; данных о паводках и Sentinel-1 в этих весах нет",
      "license": "other_without_text",
-     "license_note": ("Checked 2026-09-26: the model card of smp-hub/resnet34.imagenet declares license: other and "
-                      "gives no license text. Used only to initialise training; the shipped weights are ours."),
+     "license_note": ("Проверено 2026-09-26: карточка модели smp-hub/resnet34.imagenet указывает license: other и "
+                      "не даёт текста лицензии. Используется только для инициализации обучения; поставляемые веса наши."),
      "license_checked_urls": ["https://huggingface.co/api/models/smp-hub/resnet34.imagenet",
                               "https://huggingface.co/smp-hub/resnet34.imagenet/raw/main/README.md"],
      "license_checked_at": LICENSE_CHECKED_AT},
@@ -355,9 +355,9 @@ def _plan_change(base: list[str], new: list[str]) -> str:
     added = [order for order in new if order not in base]
     dropped = [order for order in base if order not in new]
     if not added and not dropped:
-        return "plan C unchanged"
-    return "plan C " + "; ".join(part for part in (added and "adds " + ", ".join(added),
-                                                   dropped and "drops " + ", ".join(dropped)) if part)
+        return "план C без изменений"
+    return "план C " + "; ".join(part for part in (added and "добавляет " + ", ".join(added),
+                                                   dropped and "убирает " + ", ".join(dropped)) if part)
 
 
 def _blank(value: object) -> object:
@@ -475,11 +475,11 @@ def package(result: dict) -> io.BytesIO:
         for row, selected in zip(asset_rows, replans):
             changed_inputs = {"asset_id": row["asset_id"], "input": row["input"],
                               "factor": row["factor"], "input_value": row["input_value"]}
-            interpretation = (f"EL {row['case_expected_loss_rub']} RUB; rank {row['case_baseline_rank']}→"
-                              f"{row['case_rank']} among the fixed ten assets; "
-                              f"{_plan_change(base_orders, selected['candidate_ids'])}; fixed p-map")
+            interpretation = (f"EL {row['case_expected_loss_rub']} руб.; место {row['case_baseline_rank']}→"
+                              f"{row['case_rank']} среди десяти фиксированных объектов; "
+                              f"{_plan_change(base_orders, selected['candidate_ids'])}; карта p неизменна")
             if row["asset_id"] in flood_loss and flood_loss[row["asset_id"]] != case_loss[row["asset_id"]]:
-                interpretation += "; JRC permanent-water adjustment is displayed separately"
+                interpretation += "; поправка на постоянную воду JRC показана отдельно"
             changed_flood = dict(flood_loss)
             if changed_flood[row["asset_id"]] != 0 or case_loss[row["asset_id"]] == 0:
                 changed_flood[row["asset_id"]] = row["expected_loss_rub"]
@@ -507,7 +507,7 @@ def package(result: dict) -> io.BytesIO:
                 row["other_cost_rub"], case_covered(row["covered_asset_ids"]),
                 "feasible" if row["feasible"] else "infeasible",
                 f"{row['input']} x{row['factor']}: {_plan_change(base_orders, row['candidate_ids'])}; "
-                "covered EL is not avoided loss",
+                "покрытый EL не равен предотвращённому ущербу",
                 _blank(row["residual_uncertainty"]), row["uncertainty_status"],
                 "", "", "|".join(row["candidate_ids"]), _blank(row["covered_doubt_share"]),
                 round(sum(flood_loss[item] for item in row["covered_asset_ids"]), 2),
@@ -590,12 +590,13 @@ def package(result: dict) -> io.BytesIO:
             "s1_source_files": [item["name"] for item in info["source_manifest"]
                                 if live or item.get("layer") == "S1Hand" or "S1Hand" in item["name"]],
             "portfolio_seed": info["portfolio_seed"],
-            "portfolio_rule": info.get("portfolio_rule", "one of each case asset type; seeded coordinates independent of p and label"),
+            "portfolio_rule": current_rule(info.get("portfolio_rule", "по одному объекту каждого типа кейса; координаты из seed не зависят от p и разметки")),
             "model_threshold": info["model_threshold"],
             "baseline_threshold_db": info["baseline_threshold_db"],
-            "probability_rule": info.get("probability_rule", PROBABILITY_RULE),
+            "probability_rule": current_rule(info.get("probability_rule", PROBABILITY_RULE)),
             "permanent_water": {"status": result["region"]["permanent_status"],
-                                "rule": info.get("permanent_rule"), "period_note": info.get("permanent_period_note"),
+                                "rule": current_rule(info.get("permanent_rule")),
+                                "period_note": current_rule(info.get("permanent_period_note")),
                                 "file": "permanent_water.tif" if info.get("permanent_rule") else None},
             "source_timing": scene_timing(info),
             "doubt_rule": DOUBT_RULE, "uncertainty_zone_rule": ZONE_RULE,
@@ -604,28 +605,28 @@ def package(result: dict) -> io.BytesIO:
                                "recipe": "ml/artifacts/next_optical/recipe.json",
                                "recipe_sha256": info["model"]["recipe_sha256"]} if info.get("model") else
                               {"card": "ml/artifacts/model/model_card.json", "sha256": model_weights()}),
-            "metrics_scope": "test_core/bolivia rows: legacy service_s1; selected_region: current model",
-            "baseline": ("VH < -23.6 dB: threshold fitted on train, channel chosen on validation "
+            "metrics_scope": "строки test_core/bolivia: прежняя service_s1; selected_region: текущая модель",
+            "baseline": ("VH < -23.6 dB: порог подобран на train, канал выбран на validation "
                          "(ml/artifacts/baseline/baseline.json)"),
             "repository": REPOSITORY, "mirror": MIRROR,
             "metrics_files": ["metrics.csv", "ml/artifacts/evaluation/metrics.csv",
                               "ml/artifacts/evaluation/evaluation.json", "ml/artifacts/evaluation/doubt_threshold.json",
                               "ml/artifacts/evaluation/summary.md"],
             "code_commit": code_commit(),
-            "code_commit_rule": ("git rev-parse HEAD in the repository at export time; the FLOODVALUE_COMMIT build "
-                                 "variable in images without .git; null when neither is available"),
+            "code_commit_rule": ("git rev-parse HEAD в репозитории в момент экспорта; в образах без .git переменная "
+                                 "сборки FLOODVALUE_COMMIT; null, если нет ни того, ни другого"),
             "gitverse_commit": gitverse_commit(),
             "gitverse_status": gitverse_status(),
-            "gitverse_rule": ("verified_in_gitverse_remote: a remote-tracking branch of the GitVerse repository "
-                              "contains the source commit (a clone from GitVerse, or scripts/compose.sh proved it "
-                              "before the image build); a GitHub commit alone never fills gitverse_commit"),
-            "counterfactual_rule": ("B above the budget has strategy_status=counterfactual_over_budget, for comparison "
-                                    "only, also when it is late; delivered_by_deadline tells lateness apart"),
-            "priority_rule": ("rank by expected_loss_rub; map_doubtful=true flags assets whose map error chance at the "
-                              "point is >= doubt_threshold, they need a look whatever their rank; no_data assets are "
-                              "listed with their exposure as unestimated risk"),
+            "gitverse_rule": ("verified_in_gitverse_remote: ветка отслеживания репозитория GitVerse содержит "
+                              "исходный commit (клон из GitVerse или проверка scripts/compose.sh до сборки образа); "
+                              "одного commit на GitHub для заполнения gitverse_commit недостаточно"),
+            "counterfactual_rule": ("B сверх бюджета получает strategy_status=counterfactual_over_budget и служит только "
+                                    "для сравнения, в том числе при опоздании; опоздание отличает delivered_by_deadline"),
+            "priority_rule": ("ранг по expected_loss_rub; map_doubtful=true помечает объекты, где шанс ошибки карты в "
+                              "точке >= doubt_threshold, их стоит проверить при любом ранге; объекты no_data "
+                              "перечислены с их экспозицией как неоценённый риск"),
             "suitability_rule": SUITABILITY_RULE,
-            "split": "ml/artifacts/split.json: authors' v1.1 lists; test chips touching train chips moved to test_adjacent",
+            "split": "ml/artifacts/split.json: списки авторов v1.1; test-чипы, касающиеся train-чипов, вынесены в test_adjacent",
             "split_part": info.get("split_part", "test_core"),
             "metrics_independent": info.get("metrics_independent", True),
             "scene_origin": info.get("origin", "demo"),
@@ -633,24 +634,24 @@ def package(result: dict) -> io.BytesIO:
             "deadline_hours": inputs["deadline_hours"],
             "priority": inputs["priority"],
             "expected_loss_model": "p_flood * asset_value_rub * vulnerability_coef",
-            "expected_loss_scope": ("all ten fixed chip assets with p_flood, including points on permanent water; status ok, "
-                                    "partial or no_data; p_flood, expected_loss_rub and rank stay empty when not estimated"),
-            "expected_loss_units": "RUB; scenario asset values and vulnerabilities",
-            "flood_loss_model": ("additional model, not the case EL: flood_expected_loss_rub = 0 when "
-                                 "permanent_water_at_point is true (JRC permanent water), otherwise expected_loss_rub"),
-            "decision_loss_rule": ("The basket search, screen, A/B/C and case CSV columns use mandatory "
-                                   "EL=p*V*q for the same ten chip assets, including points on permanent water. "
-                                   "flood_* columns display the separate JRC-adjusted interpretation."),
-            "covered_loss_rule": ("sum of unique expected_loss_rub (p*V*q) of all ten chip assets inside "
-                                  "selected event_observation orders delivered by the deadline; archive and late "
-                                  "orders add no coverage; the ROI changes pixel summaries, not the portfolio"),
-            "coverage_share_rule": "covered / estimated EL of the same ten chip assets; empty with coverage_status when the denominator is 0",
-            "covered_doubt_rule": "doubtful area inside the union of selected zones / doubtful area of the analysed region",
+            "expected_loss_scope": ("все десять фиксированных объектов чипа с p_flood, включая точки на постоянной воде; "
+                                    "статус ok, partial или no_data; p_flood, expected_loss_rub и rank пусты, если не оценены"),
+            "expected_loss_units": "RUB; сценарные стоимости и уязвимости объектов",
+            "flood_loss_model": ("дополнительная модель, не EL кейса: flood_expected_loss_rub = 0, если "
+                                 "permanent_water_at_point истинно (постоянная вода JRC), иначе expected_loss_rub"),
+            "decision_loss_rule": ("Перебор корзин, экран, A/B/C и CSV-колонки кейса используют обязательный "
+                                   "EL=p*V*q для тех же десяти объектов чипа, включая точки на постоянной воде. "
+                                   "Колонки flood_* показывают отдельную интерпретацию с поправкой JRC."),
+            "covered_loss_rule": ("сумма уникальных expected_loss_rub (p*V*q) всех десяти объектов чипа внутри "
+                                  "выбранных заказов event_observation, поставленных к сроку; архивные и опоздавшие "
+                                  "заказы покрытия не дают; ROI меняет сводки по пикселям, а не портфель"),
+            "coverage_share_rule": "покрытый / оценённый EL тех же десяти объектов чипа; пусто с coverage_status, если знаменатель 0",
+            "covered_doubt_rule": "сомнительная площадь внутри объединения выбранных зон / сомнительная площадь анализируемой области",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
-            "uncertainty_rule": ("asset_loss.uncertainty is the map error chance at the asset pixel: 1 - p where "
-                                 "flood_mask = 1, p where flood_mask = 0 (calibrated p, share 0-1); "
-                                 "ensemble_spread and flood_uncertainty.tif keep the std of the five members "
-                                 "as a diagnostic"),
+            "uncertainty_rule": ("asset_loss.uncertainty - шанс ошибки карты в пикселе объекта: 1 - p там, где "
+                                 "flood_mask = 1, p там, где flood_mask = 0 (калиброванная p, доля 0-1); "
+                                 "ensemble_spread и flood_uncertainty.tif хранят std пяти моделей "
+                                 "для диагностики"),
             "candidate_rule": pricing["candidate_rule"],
             "product_rule": pricing["product_rule"],
             "zone_area_crs": "EPSG:6933",
@@ -659,37 +660,37 @@ def package(result: dict) -> io.BytesIO:
                         "base_rate_rub_km2": float(BASE_RATE),
                         "legal_checked_at": "2026-09-25",
                         "legal_source_url": "https://government.ru/docs/all/160697/",
-                        "legal_scope": "case_edition_verified; current procurement requires edition and provider check",
-                        "calculation_date_rule": ("orders are priced on calculation_date (UTC day of the analysis): it "
-                                                  "sets the order calendar year of every discount group and the age "
-                                                  "of existing imagery"),
+                        "legal_scope": "case_edition_verified; для реальной закупки нужно сверить редакцию и поставщика",
+                        "calculation_date_rule": ("заказы оцениваются на calculation_date (день анализа по UTC): она "
+                                                  "задаёт календарный год заказа каждой группы скидки и возраст "
+                                                  "существующих снимков"),
                         "discount_group_id": strategies["C"]["quote"]["discount_group_id"],
                         "discount_groups": {key: [group["discount_group_id"] for group in strategies[key]["quote"]["groups"]]
                                             for key in ("B", "C")},
                         "groups": {key: strategies[key]["quote"]["groups"] for key in ("B", "C")},
-                        "availability_status": (f"scenario: new optics {OPTICAL_DELIVERY_HOURS} h and new radar "
-                                                f"{SAR_DELIVERY_HOURS} h after the order; the archive frame is "
-                                                "available at once")},
+                        "availability_status": (f"сценарий: новая оптика через {OPTICAL_DELIVERY_HOURS} ч и новый радар "
+                                                f"через {SAR_DELIVERY_HOURS} ч после заказа; архивный кадр "
+                                                "доступен сразу")},
             "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else
                            {**row, "value": info["model_threshold"], "source": info.get("model", {}).get("source", row["source"])}
                            if row["name"] == "model_threshold" else row
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],
-            "sensitivity_rule": ("every row re-plans C on the fixed p-map and portfolio; decision_cost_rub = data_cost_rub "
-                                 "+ other_cost_rub by decision_cost_rule; residual_uncertainty and uncertainty_status "
-                                 "follow the A/B/C rule of strategy_comparison.csv"),
+            "sensitivity_rule": ("каждая строка заново планирует C на фиксированной карте p и портфеле; decision_cost_rub "
+                                 "= data_cost_rub + other_cost_rub по decision_cost_rule; residual_uncertainty и "
+                                 "uncertainty_status следуют правилу A/B/C из strategy_comparison.csv"),
             "decision_evidence": result["decision_evidence"],
             "decision_cost_rule": COST_RULE,
             "calibration_bias": result["calibration_bias"],
             "limitations": result["limitations"],
-            "interpretation": "Covered expected loss is observation priority, not avoided physical loss.",
+            "interpretation": "Покрытый ожидаемый ущерб - это приоритет наблюдения, а не предотвращённый физический ущерб.",
             "commands": _commands(scene_id, info, inputs, live),
-            "commands_note": ("Run from the repository root on Linux or macOS (Windows: pass FLOODVALUE_COMMIT=HEAD "
-                              "to docker compose). <CHIP> is any official "
-                              "Sen1Floods11 hand-labeled chip, e.g. Bolivia_103757; floodvalue download fetches "
-                              "the official v1.1 files with md5 checks. docker compose works the same as podman "
-                              "compose; use scripts/compose.sh to embed code_commit in an image without .git. "
-                              "A GitVerse mirror commit is recorded only when supplied separately."),
+            "commands_note": ("Запускать из корня репозитория в Linux или macOS (Windows: передайте FLOODVALUE_COMMIT=HEAD "
+                              "в docker compose). <CHIP> - любой официальный чип Sen1Floods11 с ручной разметкой, "
+                              "например Bolivia_103757; floodvalue download скачивает официальные файлы v1.1 с проверкой "
+                              "md5. docker compose работает так же, как podman compose; scripts/compose.sh записывает "
+                              "code_commit в образ без .git. Commit зеркала GitVerse записывается, только если он "
+                              "передан отдельно."),
             "inference_manifest": info.get("inference_manifest", {"stac_item_id": info.get("source_item_id"),
                                                                   "processed_at": info.get("processed_at")}),
         })

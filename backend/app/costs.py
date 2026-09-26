@@ -22,18 +22,18 @@ CPU_SECONDS_PER_SCENE = Decimal("20")         # measured 25.09.2026: frozen ense
 CPU_RATE_RUB_H = Decimal("10")                # scenario: one cloud CPU hour
 COMPUTE_RUB = (CPU_SECONDS_PER_SCENE / Decimal(3600) * CPU_RATE_RUB_H).quantize(MONEY, rounding=ROUND_HALF_UP)
 
-BASIS = ("scenario: compute = measured 20 s CPU per scene x 10 RUB/h; review = (1 h map review + per order line "
-         "max(0.25 h, 0.2 h/km2)) x 1500 RUB/h; processing = per L0/L1 radar line max(0.25 h, 0.1 h/km2) x 1500 RUB/h; "
-         "field visits and wrong-action costs not estimated")
+BASIS = ("сценарий: расчёт = измеренные 20 с CPU на сцену x 10 руб./ч; проверка = (1 ч проверки карты + на строку "
+         "заказа max(0.25 ч, 0.2 ч/км2)) x 1500 руб./ч; обработка = на строку радара L0/L1 max(0.25 ч, 0.1 ч/км2) x "
+         "1500 руб./ч; выезды на место и цена ошибочных действий не оценены")
 RULE = {
-    "formula": "decision_cost_rub = data_cost_rub + other_cost_rub; other = compute + review + processing",
-    "status": "scenario", "budget_limits": "data_cost_rub only",
+    "formula": "decision_cost_rub = data_cost_rub + other_cost_rub; other = расчёт + проверка + обработка",
+    "status": "scenario", "budget_limits": "только data_cost_rub",
     "analyst_rate_rub_h": float(ANALYST_RATE_RUB_H), "map_review_h": float(MAP_REVIEW_H),
     "image_review_h_per_km2": float(IMAGE_REVIEW_H_PER_KM2), "image_review_min_h": float(IMAGE_REVIEW_MIN_H),
     "sar_processing_h_per_km2": float(SAR_PROCESSING_H_PER_KM2), "sar_processing_min_h": float(SAR_PROCESSING_MIN_H),
-    "cpu_seconds_per_scene": float(CPU_SECONDS_PER_SCENE), "cpu_seconds_status": "measured 2026-09-25, laptop CPU",
+    "cpu_seconds_per_scene": float(CPU_SECONDS_PER_SCENE), "cpu_seconds_status": "измерено 2026-09-25, CPU ноутбука",
     "cpu_rate_rub_h": float(CPU_RATE_RUB_H),
-    "not_estimated": ["field visits", "cost of wrong actions"],
+    "not_estimated": ["выезды на место", "цена ошибочных действий"],
 }
 
 

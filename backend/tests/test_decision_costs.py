@@ -48,7 +48,7 @@ def test_residual_uncertainty_of_b_and_c_is_a_labelled_scenario():
     for key in "BC":
         item = strategies[key]
         assert item["uncertainty_status"] == "scenario"
-        assert "chance mass inside" in item["uncertainty_basis"]
+        assert "сумма шансов внутри" in item["uncertainty_basis"]
         assert 0 <= item["residual_uncertainty"] < baseline
         assert item["residual_uncertainty"] == round(baseline * (1 - item["covered_chance_share"]), 5)
 

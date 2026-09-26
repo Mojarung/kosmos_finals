@@ -14,6 +14,7 @@ from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candi
                        enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2, today)
 from .reliability import BIAS
 from .reliability import LIMITATION as CALIBRATION_LIMITATION
+from .scene_builder import current_rule
 from .sensitivity import asset_sensitivity, plan_sensitivity
 from .temporal import scene_timing
 from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
@@ -261,9 +262,9 @@ def _zone_view(zone: dict, deadline_hours: int) -> dict:
             "timely": product["delivery_hours"] <= deadline_hours}
 
 
-RESIDUAL_BASIS = ("scenario: mean map error chance of the region after a timely new observation resolves the map "
-                  "inside the ordered zones = A x (1 - chance mass inside ordered zones / chance mass of the region); "
-                  "not measured, no new observation exists")
+RESIDUAL_BASIS = ("сценарий: средний шанс ошибки карты в области после того, как своевременное новое наблюдение "
+                  "уточнит карту внутри заказанных зон = A x (1 - сумма шансов внутри заказанных зон / сумма шансов "
+                  "области); не измерено, нового наблюдения нет")
 
 
 def _residual(ctx: Context, baseline: float | None, footprint_ids: list[str]) -> dict:
@@ -372,6 +373,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                                             "source_filename", "source_sha256", "source_radiometry", "pixel_size_m_approx",
                                             "portfolio_status", "portfolio_rule", "processed_at", "split_part",
                                             "metrics_independent", "permanent_rule", "model", "evaluation_role") if key in info}
+            | {key: current_rule(info[key]) for key in ("portfolio_rule", "permanent_rule") if key in info}
             | {"permanent_status": region["permanent_status"], "timing": scene_timing(info)},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets,
@@ -417,8 +419,8 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             "alternate_covered_expected_loss_rub": alternate["covered_expected_loss_rub"],
             "alternate_covered_doubt_share": alternate["covered_doubt_share"],
             "alternate_cost_rub": alternate["quote"]["total_rub"],
-            "meaning": "Doubt is the calibrated chance that the map is wrong; covering it is where a new image "
-                       "is most likely to change the map. Its effect on loss is not measured.",
+            "meaning": "Сомнение - это калиброванный шанс, что карта ошибается; там новый снимок вероятнее всего "
+                       "изменит карту. Как это влияет на ущерб, не измерено.",
         },
         "doubt": {"rule": DOUBT_RULE, "zone_rule": ZONE_RULE, "threshold": DOUBT_THRESHOLD,
                   "doubtful_area_km2": round(space.doubt_total * pixel_area, 3) if space.doubt_total else None,
