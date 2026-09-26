@@ -1,0 +1,72 @@
+{
+  "status": "passed",
+  "recipe_sha256": "7527a498b586c396661f51d0b373e1b36e7b11ae483161af47efd69f3de1c9e0",
+  "input_manifest_sha256": "931eca8496fdec77eaacb903651080a307daa712ca62e531ca33f3977eb9a562",
+  "input_files": 316,
+  "fallback_check_chip": "India_900498",
+  "usage": [
+    {
+      "optical_used_pixels": 262144,
+      "dates": {
+        "s1_date": "2016/08/12",
+        "s2_date": "2016/08/12"
+      },
+      "mode": "S1+S2"
+    },
+    {
+      "optical_used_pixels": 0,
+      "dates": {
+        "s1_date": "2016/08/12",
+        "s2_date": "2016/08/12"
+      },
+      "mode": "S1 fallback"
+    },
+    {
+      "optical_used_pixels": 0,
+      "dates": {
+        "s1_date": "2016/08/12",
+        "s2_date": "2016-08-13"
+      },
+      "mode": "S1 fallback"
+    },
+    {
+      "optical_used_pixels": 258048,
+      "dates": {
+        "s1_date": "2016/08/12",
+        "s2_date": "2016/08/12"
+      },
+      "mode": "S1+S2"
+    }
+  ],
+  "future_optical_equals_missing": true,
+  "partial_missing_equals_radar_at_missing_pixels": true,
+  "batch_audit_vs_packaged_predictor_mean_abs_error": 0.0,
+  "cpu_cli_chip": "Ghana_313799",
+  "cpu_cli_seconds_including_imports_and_loading": 11.439393709006254,
+  "cpu_vs_mps_mean_absolute_probability_error": 2.840153001670842e-09,
+  "cpu_vs_mps_max_absolute_probability_error": 0.00030449777841567993,
+  "cpu_vs_mps_mask_disagreement_fraction": 0.0,
+  "geotiff_grid_dtype_nodata_range_threshold": "passed",
+  "optical_training_lists": {
+    "old": {
+      "train_chips": 203,
+      "valid_chips": 89,
+      "test_overlap": 0
+    },
+    "lightgbm": {
+      "train_chips": 203,
+      "valid_chips": 89,
+      "test_overlap": 0
+    },
+    "hgb_large": {
+      "train_chips": 203,
+      "valid_chips": 89,
+      "test_overlap": 0
+    },
+    "catboost": {
+      "train_chips": 203,
+      "valid_chips": 89,
+      "test_overlap": 0
+    }
+  }
+}

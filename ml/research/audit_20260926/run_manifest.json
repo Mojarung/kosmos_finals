@@ -1,0 +1,32 @@
+{
+  "completed_at": "2026-09-26T08:45:11.194654+00:00",
+  "candidate": "next_optical",
+  "evaluation_status": "reproduced_known_holdout_not_new_blind_test",
+  "runtime_changed": false,
+  "fresh_inference_chips": 105,
+  "shared_valid_pixels": 23268393,
+  "unit_tests_passed": 29,
+  "empty_chip_reporting_check": "passed",
+  "per_chip_to_aggregate_confusion_check": "passed",
+  "source_sha256": {
+    "scripts/audit_contracts.py": "214c9c50e5b6700606ad31b56ad9f2d4f1513d7c46bfec33c33b5a558c6efde5",
+    "scripts/audit_diagnostics.py": "037e62c35b7b0ffc38705f5b52009a0315c89219d84200337d87e289eeb1a013",
+    "scripts/audit_download.py": "3daba67fb9442c0663b52613b39342a271c3089e4748928d0802fafab1d4ac36",
+    "scripts/audit_models.py": "b87e9e39695d9103c42070bc47e1d72a9f4540bdfb78c1148cf1ed387853fcc7",
+    "scripts/audit_report.py": "c73d8e0ba8bfa1b9dcab79a98fc4bbb5320e29af536ab5ee44a5b665a815ecbf",
+    "scripts/audit_spatial.py": "2256817eeb4565ac7d7148222f37da347b7f932e5c7ac5a7a69097e7fd3a7ad0"
+  },
+  "evidence_sha256": {
+    "README.md": "db2a472b61b6af57c1b34804c78f92a013ee09da2e04f9e6430c6392b9307bda",
+    "comparison.pdf": "3c070d6eec469d4c1ca7340aaba333aef512b129c5656b766ecfa660a72a7b9e",
+    "comparison.png": "5a83334d0225411ac334ca0306f2132ef87fc266410e13aadde94f9a25a09f58",
+    "contracts.json": "f21163855b241cf3c648a934a4fa09f856981164a04e7f72b952cd9d9b2eff19",
+    "diagnostics.json": "4c6efdcd6242f8815a3c4ed91c3ab6cd20601c1c3527c2850c31c464f4aacac8",
+    "inference_inputs.json": "84c49a9cff48394a26e345539ab9a4d1802e3a8812b3154b88835c1a1d526109",
+    "input_manifest.json": "931eca8496fdec77eaacb903651080a307daa712ca62e531ca33f3977eb9a562",
+    "metrics.json": "3cb5d3621b7213d9c787be141aa7caa3b0debd575ee1eb2715ce54c39e4140d9",
+    "per_chip_metrics.csv": "f890a1086f08bb17ed0277b573118ec1e336a4657cdacc5edcca10bc4755df00",
+    "protocol.json": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+    "spatial_provenance.json": "52e5957c08eb9e7bc03168f31d94bb5bc146bd26bfd9c00a8f4802ef7829f3b6"
+  }
+}

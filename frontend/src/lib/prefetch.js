@@ -5,6 +5,7 @@
  * только трафик, поэтому окна маленькие, а при экономии трафика не качаем.
  */
 const fetched = new Set()
+const inFlight = new Map()
 const BATCH = 6
 
 function lonLatToTile(lon, lat, z) {
@@ -26,6 +27,7 @@ function tileSources(map) {
     .filter(source => ['vector', 'raster'].includes(source?.type) && source.tiles?.length)
     .map(source => ({
       template: source.tiles[0], minzoom: source.minzoom ?? 0, maxzoom: source.maxzoom ?? 22,
+      tileSize: source.tileSize ?? 512,
       // Тайл 256 px рисуется на зум глубже, чем 512 px: при зуме карты 1,8 спутник берёт z2, вектор — z1.
       offset: (source.tileSize ?? 512) <= 256 ? 1 : 0,
     }))
@@ -39,10 +41,10 @@ function tileSources(map) {
 function urls(map, tilesFor) {
   const out = []
   for (const source of tileSources(map)) {
-    for (const [z, x, y] of tilesFor(source.offset)) {
+    for (const [z, x, y] of tilesFor(source.offset, source.tileSize)) {
       if (z < source.minzoom || z > source.maxzoom) continue
       const url = source.template.replace('{z}', z).replace('{x}', x).replace('{y}', y)
-      if (!fetched.has(url)) out.push(url)
+      if (!fetched.has(url) || inFlight.has(url)) out.push(url)
     }
   }
   return out
@@ -57,9 +59,16 @@ async function download(list) {
   for (let i = 0; i < list.length; i += BATCH) {
     await idle()
     await Promise.all(list.slice(i, i + BATCH).map(url => {
+      if (inFlight.has(url)) return inFlight.get(url)
+      if (fetched.has(url)) return
       fetched.add(url)
       // Тело читаем до конца: недочитанный крупный ответ браузер может не сохранить в кэш.
-      return fetch(url, { priority: 'low' }).then(response => response.arrayBuffer()).catch(() => fetched.delete(url))
+      const request = fetch(url, { priority: 'low' }).then(response => {
+        if (!response.ok) throw new Error(`Tile ${response.status}`)
+        return response.arrayBuffer()
+      }).catch(() => fetched.delete(url)).finally(() => inFlight.delete(url))
+      inFlight.set(url, request)
+      return request
     }))
   }
 }
@@ -94,7 +103,7 @@ function glyphUrls(map) {
   for (const stack of stacks) {
     for (const range of ['0-255', '256-511', '1024-1279']) {
       const url = style.glyphs.replace('{fontstack}', encodeURIComponent(stack)).replace('{range}', range)
-      if (!fetched.has(url)) out.push(url)
+      if (!fetched.has(url) || inFlight.has(url)) out.push(url)
     }
   }
   return out
@@ -133,6 +142,38 @@ export function preloadTilt(map, [lon, lat], zoom) {
       if (z < 0) break
       const [x, y] = lonLatToTile(lon, lat, z)
       tiles.push(...window2d(z, x, y, 2, 1, -2))
+    }
+    return tiles
+  }))
+}
+
+// Готовая сцена известна до клика: греем её PNG и тайлы конечного кадра,
+// включая поля под боковыми панелями. Это лишь HTTP-кэш; готовность кадра
+// после смены камеры всё равно проверяет сама карта.
+export function preloadScene(map, scene, zoom) {
+  const [w, s, e, n] = scene.bbox
+  const center = [(w + e) / 2, (s + n) / 2]
+  const images = ['model', 'permanent', 'radar', 'probability', 'baseline', 'reference', 'doubt']
+    .map(name => `/api/demo/${scene.chip_id}/${name}.png`)
+  return download([...images, ...urls(map, (offset, size) => {
+    const z = Math.floor(zoom) + offset
+    const [x, y] = lonLatToTile(...center, z)
+    const cols = Math.min(6, Math.ceil(map.getCanvas().clientWidth / size / 2) + 1)
+    const rows = Math.min(5, Math.ceil(map.getCanvas().clientHeight / size / 2) + 2)
+    return window2d(z, x, y, cols, rows)
+  })])
+}
+
+export function preloadJourney(map, from, to, zoom) {
+  if (zoom < 3) return preloadGlobe(map, to, zoom)
+  return download(urls(map, offset => {
+    const z = Math.floor(zoom) + offset
+    const tiles = []
+    for (let i = 0; i <= 4; i++) {
+      const t = i / 4
+      const [x, y] = lonLatToTile(from[0] + (to[0] - from[0]) * t,
+        from[1] + (to[1] - from[1]) * t, z)
+      tiles.push(...window2d(z, x, y, 1, 1))
     }
     return tiles
   }))

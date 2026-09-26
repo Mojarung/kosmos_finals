@@ -1,14 +1,28 @@
-"""Fit and check the Sentinel-1 RTC → Sen1Floods11 GRD radiometric mapping.
+"""Fit, choose and check the Sentinel-1 RTC -> Sen1Floods11 GRD radiometric mapping.
 
 Usage (needs torch and network, e.g. inside the backend container):
-    python scripts/fit_rtc_harmonization.py OUT_DIR
+    python scripts/fit_rtc_harmonization.py [OUT_DIR] [CACHE_DIR]
+
+Without OUT_DIR the shipped files are rewritten: ml/artifacts/rtc/harmonization.json
+and ml/artifacts/evaluation/rtc_transfer.json. CACHE_DIR (default ml/outputs/rtc_cache)
+keeps the fetched GRD, label and RTC arrays per chip so a rerun needs no network.
 
 The frozen model was trained on Sen1Floods11 GRD (GEE sigma0 dB). Planetary
 Computer RTC of the same pass shows water about 4 dB brighter in VH, so the
-model misses it. For each band the mapping is the median GRD dB per 0.5 dB bin
-of RTC dB over pixel pairs of the same acquisition, made monotonic. It is fitted
-on train chips only and checked on independent test_core chips against the
-manual label, with and without the mapping.
+model misses it. Two per-band mappings are fitted on pixel pairs of the same
+acquisition (pass chosen by VH correlation, not by labels):
+- median: median GRD dB per 0.5 dB bin of RTC dB, made monotonic;
+- quantile: RTC dB quantiles 0.5..99.5% mapped onto GRD dB quantiles of the same pixels.
+
+The shipped one is chosen on train chips only, before any test chip is read:
+leave-one-event-out over the train chips (both mappings fitted on the other
+events' pairs, the frozen ensemble on the held-out chip's mapped RTC, IoU against
+the manual label pooled with water-pixel weights, the metric of the test check).
+The higher score ships; a tie keeps median. Leave-one-chip-out is reported beside
+it. The chosen mapping is refitted on all train pairs.
+
+Only then are independent test_core chips read and scored once with the shipped
+mapping, raw RTC and the GRD chip itself (report only).
 """
 
 from __future__ import annotations
@@ -18,6 +32,7 @@ import json
 import sys
 import urllib.request
 from collections import defaultdict
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -38,6 +53,16 @@ WORKERS = 4
 PAIRS_PER_CHIP = 30000
 MIN_BIN = 100
 MIN_CORR = 0.6
+MAPPINGS = ("median", "quantile")  # order breaks ties: the first one stays
+REPORT_ROLE = "report_only_not_used_for_selection"
+SELECTION_RULE = ("leave-one-event-out over train chips: both mappings fitted on the other events' pixel pairs, "
+                  "frozen ensemble on the held-out chip's mapped RTC, IoU against the manual label pooled with "
+                  "water-pixel weights; the higher score ships, a tie keeps median; fixed before any test chip is read")
+# The version before this rule scored both mappings on test_core and shipped the better one.
+PREVIOUS_SELECTION = {"selection_status": "post_hoc_on_test_core", "shipped_mapping": "quantile",
+                      "test_core_water_weighted_iou": {"rtc_model_median": 0.5808, "rtc_model_quantile": 0.6374},
+                      "note": "kept for the audit trail; replaced by the train cross-validation below"}
+QUANTILES = np.linspace(0.005, 0.995, 100)
 
 
 def read_tif(layer: str, chip: str) -> tuple[np.ndarray, list[float]]:
@@ -78,7 +103,28 @@ def same_pass(chip: dict, grd: np.ndarray, bounds: list[float], token: str):
     return best[0], best[1]["features"][0]["id"], vv, vh, both
 
 
-QUANTILES = np.linspace(0.005, 0.995, 100)
+def load_chip(chip: dict, token: Callable[[], str], cache: Path) -> dict | None:
+    """GRD, manual label and the same-pass RTC of one chip; None when no pass matches."""
+    path = cache / f"{chip['chip_id']}.npz"
+    if not path.exists():
+        grd, bounds = read_tif("S1Hand", chip["chip_id"])
+        label, _ = read_tif("LabelHand", chip["chip_id"])
+        match = same_pass(chip, grd, bounds, token())
+        if match is None:
+            np.savez_compressed(path, matched=False)
+        else:
+            corr, item_id, vv, vh, both = match
+            np.savez_compressed(path, matched=True, grd=grd, label=label[0].astype(np.int8), vv=vv, vh=vh,
+                                both=both, corr=corr, item_id=item_id)
+    with np.load(path) as data:
+        if not bool(data["matched"]):
+            return None
+        label = data["label"]
+        truth, valid = label == 1, data["both"] & (label >= 0)
+        return {"chip_id": chip["chip_id"], "event": chip["event_key"], "rtc_item": str(data["item_id"]),
+                "vh_corr": round(float(data["corr"]), 3), "grd": data["grd"], "vv": data["vv"], "vh": data["vh"],
+                "both": data["both"], "truth": truth, "valid": valid, "water_pixels": int((truth & valid).sum()),
+                "valid_pixels": int(valid.sum())}
 
 
 def fit_quantiles(pairs: dict) -> dict:
@@ -108,6 +154,11 @@ def fit(pairs: dict) -> dict:
     return mapping
 
 
+FITTERS = {"median": fit, "quantile": fit_quantiles}
+RULES = {"median": "median GRD dB per 0.5 dB bin of same-pass RTC dB, monotonic; train chips only",
+         "quantile": "RTC dB quantiles 0.5..99.5% mapped onto GRD dB quantiles of the same pixels; train chips only"}
+
+
 def harmonize(vv: np.ndarray, vh: np.ndarray, mapping: dict) -> tuple[np.ndarray, np.ndarray]:
     out = []
     for band, values in (("vv", vv), ("vh", vh)):
@@ -123,42 +174,57 @@ def iou(prediction: np.ndarray, truth: np.ndarray, valid: np.ndarray) -> float |
     return round(int((p & t).sum()) / union, 4) if union else None
 
 
-def main() -> None:
-    out = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
-    catalog = json.loads((ROOT / "data" / "catalog" / "sen1floods11_handlabeled.json").read_text(encoding="utf-8"))
-    by_part = defaultdict(lambda: defaultdict(list))
+def pooled(rows: Sequence[Mapping], key: str) -> float | None:
+    """IoU of the rows averaged with water-pixel weights; rows without an IoU are left out."""
+    values = [(row[key], row["water_pixels"]) for row in rows if row[key] is not None]
+    weight = sum(w for _, w in values)
+    return round(sum(v * w for v, w in values) / weight, 4) if weight else None
+
+
+def cross_validate(chips: Sequence[Mapping], fitters: Mapping[str, Callable[[dict], dict]],
+                   score: Callable[[dict, Mapping], float | None], group: str = "event") -> dict:
+    """Hold out each group of chips, fit every mapping on the pairs of the rest, score the held-out chips."""
+    groups = list(dict.fromkeys(chip[group] for chip in chips))
+    rows = []
+    for held in groups:
+        rest = [chip for chip in chips if chip[group] != held]
+        pairs = {band: [chip["pairs"][band] for chip in rest] for band in ("vv", "vh")}
+        mappings = {name: fitter(pairs) for name, fitter in fitters.items()}
+        for chip in (chip for chip in chips if chip[group] == held):
+            rows.append({"chip_id": chip["chip_id"], "held_out": held, "water_pixels": chip["water_pixels"],
+                         **{name: score(mapping, chip) for name, mapping in mappings.items()}})
+    return {"folds": len(groups), "water_weighted_iou": {name: pooled(rows, name) for name in fitters},
+            "chips": rows}
+
+
+def select_mapping(scores: Mapping[str, float | None], order: Sequence[str] = MAPPINGS) -> str | None:
+    """The mapping with the higher CV score; on a tie the earlier one in ``order`` stays."""
+    best = None
+    for name in order:
+        if scores.get(name) is not None and (best is None or scores[name] > scores[best]):
+            best = name
+    return best
+
+
+def _chips(catalog: dict, part: str) -> list[dict]:
+    by_event = defaultdict(list)
     for chip in catalog["chips"]:
-        by_part[chip["split_part"]][chip["event_key"]].append(chip)
-    token = _json(SAS)["token"]
-    pairs = {"vv": [], "vh": []}
-    fitted = []
-    rng = np.random.default_rng(0)
+        if chip["split_part"] == part:
+            by_event[chip["event_key"]].append(chip)
+    return [chip for _, chips in sorted(by_event.items()) for chip in chips[:PER_EVENT]]
 
-    def load(chip):
-        grd, bounds = read_tif("S1Hand", chip["chip_id"])
-        return chip, grd, same_pass(chip, grd, bounds, token)
 
-    train = [chip for _, chips in sorted(by_part["train"].items()) for chip in chips[:PER_EVENT]]
-    with ThreadPoolExecutor(WORKERS) as pool:
-        loaded = list(pool.map(load, train))
-    for chip, grd, match in loaded:
-            event = chip["event_key"]
-            if not match:
-                print("skip", chip["chip_id"], flush=True)
-                continue
-            corr, item_id, vv, vh, both = match
-            rows, cols = np.nonzero(both)
-            pick = rng.choice(len(rows), size=min(PAIRS_PER_CHIP, len(rows)), replace=False)
-            pairs["vv"].append((vv[rows[pick], cols[pick]], grd[0][rows[pick], cols[pick]]))
-            pairs["vh"].append((vh[rows[pick], cols[pick]], grd[1][rows[pick], cols[pick]]))
-            fitted.append({"chip_id": chip["chip_id"], "event": event, "rtc_item": item_id, "vh_corr": round(corr, 3)})
-            print("fit", chip["chip_id"], item_id, round(corr, 3), flush=True)
-    mappings = {"median": fit(pairs), "quantile": fit_quantiles(pairs)}
-    rules = {"median": "median GRD dB per 0.5 dB bin of same-pass RTC dB, monotonic; train chips only",
-             "quantile": "RTC dB quantiles 0.5..99.5% mapped onto GRD dB quantiles of the same pixels; train chips only"}
-    for name, mapping in mappings.items():
-        record = {"rule": rules[name], "fit_chips": fitted, **mapping}
-        (out / f"rtc_harmonization_{name}.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+def main() -> None:
+    out = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    cache = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "ml" / "outputs" / "rtc_cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    catalog = json.loads((ROOT / "data" / "catalog" / "sen1floods11_handlabeled.json").read_text(encoding="utf-8"))
+    token_cache: dict[str, str] = {}
+
+    def token() -> str:
+        if "value" not in token_cache:
+            token_cache["value"] = _json(SAS)["token"]
+        return token_cache["value"]
 
     import torch
     from floodvalue.ensemble import run_ensemble
@@ -171,47 +237,70 @@ def main() -> None:
             result = run_ensemble(members, [np.stack([vv, vh])], calibration)
         return np.asarray(result.prob[0]) >= threshold
 
-    checks = []
-
-    def load_test(chip):
-        grd, bounds = read_tif("S1Hand", chip["chip_id"])
-        label, _ = read_tif("LabelHand", chip["chip_id"])
-        return chip, grd, label, same_pass(chip, grd, bounds, token)
-
-    tests = [chip for _, chips in sorted(by_part["test_core"].items()) for chip in chips[:PER_EVENT]]
+    # 1. Train chips only: pixel pairs, cross-validated choice, refit on all of them.
     with ThreadPoolExecutor(WORKERS) as pool:
-        loaded_tests = list(pool.map(load_test, tests))
-    for chip, grd, label, match in loaded_tests:
-            event = chip["event_key"]
-            if not match:
-                print("skip", chip["chip_id"], flush=True)
-                continue
-            corr, item_id, vv, vh, both = match
-            truth = label[0] == 1
-            valid = both & (label[0] >= 0)
-            mv, mh = harmonize(vv, vh, mappings["median"])
-            qv, qh = harmonize(vv, vh, mappings["quantile"])
-            row = {"chip_id": chip["chip_id"], "event": event, "rtc_item": item_id, "vh_corr": round(corr, 3),
-                   "grd_model": iou(water(grd[0], grd[1]), truth, valid),
-                   "grd_baseline": iou(grd[1] < -23.6, truth, valid),
-                   "rtc_model_raw": iou(water(vv, vh), truth, valid),
-                   "rtc_model_median": iou(water(mv, mh), truth, valid),
-                   "rtc_model_quantile": iou(water(qv, qh), truth, valid),
-                   "rtc_baseline_raw": iou(vh < -23.6, truth, valid),
-                   "rtc_baseline_quantile": iou(qh < -23.6, truth, valid),
-                   "water_pixels": int((truth & valid).sum()), "valid_pixels": int(valid.sum())}
-            checks.append(row)
-            print("check", json.dumps(row), flush=True)
-    def pooled(key):
-        values = [(row[key], row["water_pixels"]) for row in checks if row[key] is not None]
-        return round(sum(v * w for v, w in values) / sum(w for _, w in values), 4) if values else None
-    summary = {"rules": rules, "fit_chips": len(fitted), "check_chips": len(checks),
-               "water_weighted_iou": {key: pooled(key) for key in ("grd_model", "grd_baseline", "rtc_model_raw",
-                                                                  "rtc_model_median", "rtc_model_quantile",
-                                                                  "rtc_baseline_raw", "rtc_baseline_quantile")},
-               "chips": checks}
-    (out / "rtc_transfer.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    print(json.dumps(summary["water_weighted_iou"]))
+        loaded = list(pool.map(lambda chip: load_chip(chip, token, cache), _chips(catalog, "train")))
+    rng = np.random.default_rng(0)
+    train = []
+    for chip in loaded:
+        if chip is None:
+            continue
+        rows, cols = np.nonzero(chip["both"])
+        pick = rng.choice(len(rows), size=min(PAIRS_PER_CHIP, len(rows)), replace=False)
+        chip["pairs"] = {band: (chip[band][rows[pick], cols[pick]], chip["grd"][index][rows[pick], cols[pick]])
+                         for index, band in enumerate(("vv", "vh"))}
+        train.append(chip)
+        print("fit", chip["chip_id"], chip["rtc_item"], chip["vh_corr"], flush=True)
+
+    def score(mapping, chip):
+        return iou(water(*harmonize(chip["vv"], chip["vh"], mapping)), chip["truth"], chip["valid"])
+
+    cv = {scheme: cross_validate(train, FITTERS, score, group)
+          for scheme, group in (("leave_one_event_out", "event"), ("leave_one_chip_out", "chip_id"))}
+    for scheme, result in cv.items():
+        print(scheme, json.dumps(result["water_weighted_iou"]), flush=True)
+    shipped = select_mapping(cv["leave_one_event_out"]["water_weighted_iou"])
+    fitted = [{key: chip[key] for key in ("chip_id", "event", "rtc_item", "vh_corr")} for chip in train]
+    mapping = FITTERS[shipped]({band: [chip["pairs"][band] for chip in train] for band in ("vv", "vh")})
+    selection = {"selection_part": "train_cv", "selection_rule": SELECTION_RULE, "shipped_mapping": shipped,
+                 "cv_scores": {scheme: {"folds": result["folds"], **result["water_weighted_iou"]}
+                               for scheme, result in cv.items()}}
+    harmonization = {"rule": RULES[shipped], "mapping": shipped, **selection, "fit_chips": fitted, **mapping}
+
+    # 2. Independent test_core chips, scored once with the shipped mapping (report only).
+    with ThreadPoolExecutor(WORKERS) as pool:
+        loaded_tests = list(pool.map(lambda chip: load_chip(chip, token, cache), _chips(catalog, "test_core")))
+    checks = []
+    for chip in loaded_tests:
+        if chip is None:
+            continue
+        vv, vh, grd, truth, valid = chip["vv"], chip["vh"], chip["grd"], chip["truth"], chip["valid"]
+        mv, mh = harmonize(vv, vh, mapping)
+        row = {"chip_id": chip["chip_id"], "event": chip["event"], "rtc_item": chip["rtc_item"],
+               "vh_corr": chip["vh_corr"],
+               "grd_model": iou(water(grd[0], grd[1]), truth, valid),
+               "grd_baseline": iou(grd[1] < -23.6, truth, valid),
+               "rtc_model_raw": iou(water(vv, vh), truth, valid),
+               f"rtc_model_{shipped}": iou(water(mv, mh), truth, valid),
+               "rtc_baseline_raw": iou(vh < -23.6, truth, valid),
+               f"rtc_baseline_{shipped}": iou(mh < -23.6, truth, valid),
+               "water_pixels": chip["water_pixels"], "valid_pixels": chip["valid_pixels"]}
+        checks.append(row)
+        print("check", json.dumps(row), flush=True)
+    keys = ("grd_model", "grd_baseline", "rtc_model_raw", f"rtc_model_{shipped}", "rtc_baseline_raw",
+            f"rtc_baseline_{shipped}")
+    transfer = {"rules": RULES, "fit_chips": len(fitted), "check_chips": len(checks), **selection,
+                "cv_chips": {scheme: result["chips"] for scheme, result in cv.items()},
+                "test_part": "test_core", "test_role": REPORT_ROLE,
+                "water_weighted_iou": {key: pooled(checks, key) for key in keys},
+                "previous_selection": PREVIOUS_SELECTION, "chips": checks}
+    targets = ((out / "harmonization.json", out / "rtc_transfer.json") if out else
+               (ROOT / "ml/artifacts/rtc/harmonization.json", ROOT / "ml/artifacts/evaluation/rtc_transfer.json"))
+    for path, record in zip(targets, (harmonization, transfer)):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(record, indent=2), encoding="utf-8")
+    print(json.dumps({"shipped_mapping": shipped, "cv_scores": selection["cv_scores"],
+                      "test_core_report_only": transfer["water_weighted_iou"]}))
 
 
 if __name__ == "__main__":

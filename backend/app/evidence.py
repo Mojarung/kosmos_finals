@@ -26,6 +26,8 @@ def asset_proxy_check(scene_id: str) -> dict:
     reference = mask(scene_id, "water")
     rows, skipped = [], 0
     for asset in info["assets"]:
+        # Without p there is no EL. A point on permanent water keeps the mandatory EL = p·V·q,
+        # so it is a control point like any other.
         if asset.get("p_flood") is None:
             skipped += 1
             continue

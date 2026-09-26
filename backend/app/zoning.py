@@ -2,26 +2,45 @@
 
 Map error chance of a pixel is the probability that the map colours it wrongly:
 1 - p where the mask says water and p where it says dry land (p is calibrated).
-A pixel is doubtful when that chance is at least DOUBT_THRESHOLD, the edge of its
-top decile on validation pixels; no test part takes part in the choice. On the
-independent test_core 29.4% of doubtful pixels are wrong against 4.6% overall, and
-the same ranking finds errors with AUROC 0.888 (ensemble spread: 0.863). Doubtful
-area is what the zones try to cover.
+A pixel is doubtful when that chance is at least DOUBT_THRESHOLD: the lower root of
+binary entropy at the top-decile edge of entropy on the validation part, the pixels
+that already fitted Platt and the mask threshold (`floodvalue doubt-threshold`
+writes ml/artifacts/evaluation/doubt_threshold.json). Test parts never set it; they
+only report how the frozen value behaves (DOUBT_EVIDENCE). Doubtful area is what
+the zones try to cover.
 """
 
 from __future__ import annotations
 
+import json
+import os
 from functools import lru_cache
 from math import ceil, cos, floor, pi
+from pathlib import Path
 
 import numpy as np
 
 from .catalog import float_map, mask, metadata, on_refresh
 
-# ml/artifacts/evaluation/doubt_threshold.json → doubt_threshold, fitted on validation
-# by ml/scripts/doubt_threshold.py; the file also holds the test_core and Bolivia checks.
-DOUBT_THRESHOLD = 0.0822
-DOUBT_CHECK = "test_core: 29.4% of doubtful pixels wrong vs 4.6% overall, 63% of all errors inside"
+DOUBT_FILE = Path(os.environ.get("DOUBT_THRESHOLD_FILE", Path(__file__).resolve().parents[2] / "ml" / "artifacts"
+                                 / "evaluation" / "doubt_threshold.json"))
+_RECORD = json.loads(DOUBT_FILE.read_text(encoding="utf-8"))
+ENTROPY_TOP_DECILE_BITS = float(_RECORD["entropy_top_decile_bits"])
+DOUBT_THRESHOLD = float(_RECORD["map_error_chance_threshold"])
+_VALID = _RECORD["valid_at_threshold"]
+_TEST = _RECORD["report_only"]["parts"]["test_core"]
+DOUBT_SOURCE = "ml/artifacts/evaluation/doubt_threshold.json (floodvalue doubt-threshold, validation part)"
+DOUBT_BASIS = (f"top decile of binary entropy on validation ({_RECORD['chips']} chips): "
+               f"{_VALID['error_rate_doubtful']:.1%} of those pixels wrong vs {_VALID['error_rate']:.1%} overall; "
+               f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
+               f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall")
+_MEASURES = _RECORD["measure_auroc"]
+DOUBT_EVIDENCE = (f"threshold fixed on validation, where entropy also ranks errors better than ensemble spread "
+                  f"(AUROC {_MEASURES['entropy']:.3f} vs {_MEASURES['member_std']:.3f}); "
+                  f"test_core, report only: {_TEST['doubtful_share']:.1%} of pixels doubtful, "
+                  f"{_TEST['error_rate_doubtful']:.1%} of them wrong vs {_TEST['error_rate']:.1%} overall, "
+                  f"{_TEST['errors_inside_doubtful_share']:.1%} of all errors inside, AUROC "
+                  f"{_TEST['auroc_entropy']:.3f} vs {_TEST['auroc_member_std']:.3f}")
 # Zone sides are the 1.12 km object square (1.25 km², above the 1 km² minimum) and
 # its 1.5× and 2× multiples. Larger rectangles cover a river in one piece but no
 # longer fit a 6–7 thousand rouble budget, so the grouping stops at 2.24 km.
@@ -31,8 +50,8 @@ ZONE_SIDES_KM = (1.12, 1.68, 2.24)
 MAX_UNCERTAINTY_ZONES = 5
 STRIDE_KM = 0.14
 DOUBT_RULE = (f"map error chance = 1 - p where flood_mask = 1 and p where flood_mask = 0 (calibrated p); "
-              f"doubtful pixel: chance >= {DOUBT_THRESHOLD} (top decile of the chance on validation; "
-              f"{DOUBT_CHECK}); expected error area = sum of chances")
+              f"doubtful pixel: chance >= {DOUBT_THRESHOLD} (top entropy decile of the validation part, "
+              f"{ENTROPY_TOP_DECILE_BITS:.3f} bit; test parts only report it); expected error area = sum of chances")
 ZONE_RULE = (f"greedy non-overlapping rectangles with sides {ZONE_SIDES_KM} km on a {STRIDE_KM} km stride "
              "maximising doubtful area above the analysed area's average density (the density a broad "
              f"purchase gets); stop after {MAX_UNCERTAINTY_ZONES} zones or when no rectangle beats the average")

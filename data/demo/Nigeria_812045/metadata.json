@@ -272,7 +272,7 @@
   },
   "probability_status": "frozen_ensemble_calibrated_on_validation",
   "reference_status": "manual_label_for_diagnostics_only",
-  "permanent_rule": "JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water minus this layer; a portfolio point on it keeps EL = p·V·q and gets flood_expected_loss_rub = 0",
+  "permanent_rule": "JRCWaterHand of Sen1Floods11 v1.1: 1 = water both in 1984 and in 2018 by JRC Global Surface Water (Bai et al., Remote Sensing 2021, 13, 2220). Temporary flood = model water minus this layer; a portfolio point on it keeps the case EL = p * V * q, only the additional flood-only loss (flood_expected_loss_rub) is 0 there",
   "permanent_period_note": "Observations up to 2018: fully before 2019 events; for 2016-2018 events the period ends near the event, but water in both 1984 and 2018 selects long-lived water bodies",
   "permanent_water_pixels": 16503,
   "permanent_water_area_km2": 1.619,

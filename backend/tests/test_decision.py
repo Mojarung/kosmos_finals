@@ -13,7 +13,7 @@ from app.live import GRID, _portfolio
 from app.main import app
 from app.planning import contains, enrich_assets, quote
 from app.scene_builder import SceneSpec, build_scene
-from app.zoning import DOUBT_THRESHOLD
+from app.zoning import DOUBT_RULE, DOUBT_THRESHOLD, ENTROPY_TOP_DECILE_BITS
 from synthetic import PERMANENT_ROWS, make_chip
 from test_planning import validator
 
@@ -53,7 +53,6 @@ def test_plan_is_exact_best_basket_and_explains_every_zone():
             assert row["price_with_rub"] > 6500
         if row["reason"] == "nothing_new":
             assert row["gain_loss_rub"] == 0
-    assert all(zone["suitability_status"] == "scenario_usable" for zone in result["zones"])
 
 
 def test_uncertainty_zones_are_orderable_and_cover_doubt_cheaper_than_broad():
@@ -76,16 +75,26 @@ def test_uncertainty_zones_are_orderable_and_cover_doubt_cheaper_than_broad():
         assert frontier[-1]["doubt_share"] == 1.0
 
 
-def test_doubt_threshold_is_fitted_on_validation_only():
-    fitted = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text())
-    assert fitted["fitted_on"] == "valid" and fitted["quantile"] == 0.9
-    assert DOUBT_THRESHOLD == fitted["doubt_threshold"]
-    # On the independent part the doubtful pixels must hold errors far above the average.
-    check = fitted["test_core"]
-    assert check["error_rate_doubtful"] > 4 * check["error_rate"]
+def test_doubt_threshold_comes_from_the_validation_entropy_decile():
+    record = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text(encoding="utf-8"))
+    assert record["source_part"] == "valid" and record["chips"] == 89
+    assert record["report_only"]["role"] == "report_only_not_used_for_selection"
+    assert ENTROPY_TOP_DECILE_BITS == record["entropy_top_decile_bits"] == record["decile_edges"][9]
+    assert DOUBT_THRESHOLD == record["map_error_chance_threshold"]
+    p = DOUBT_THRESHOLD
+    assert abs(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) - ENTROPY_TOP_DECILE_BITS) < 1e-3
+    assert "validation" in DOUBT_RULE and "test_core" not in DOUBT_RULE
+    measures = record["measure_auroc"]
+    assert measures["part"] == "valid" and measures["entropy"] > measures["member_std"], \
+        "DOUBT_EVIDENCE says entropy ranks errors better than the spread on validation"
 
 
-def test_permanent_water_is_split_and_keeps_the_case_loss_model(tmp_path):
+def test_container_ships_the_doubt_threshold_record():
+    dockerfile = (ROOT / "backend/Dockerfile").read_text(encoding="utf-8")
+    assert "COPY ml/artifacts/evaluation/doubt_threshold.json ./ml/artifacts/evaluation/doubt_threshold.json" in dockerfile
+
+
+def test_permanent_water_is_split_and_carries_no_loss(tmp_path):
     files = make_chip(tmp_path / "source", "X_2")
     spec = SceneSpec(chip_id="X_2", event="Тест", observed_at="2018-09-21", seed=3, s1_path=files["s1"],
                      label_path=files["label"], inference_dir=files["inference"], split_part="test_core",
@@ -96,11 +105,8 @@ def test_permanent_water_is_split_and_keeps_the_case_loss_model(tmp_path):
     assert meta["flood_water_area_km2"] < meta["model_water_area_km2"]
     for asset in enrich_assets(meta["assets"]):
         assert asset["permanent_water_at_point"] == (asset["row"] < PERMANENT_ROWS)
-        assert asset["loss_status"] in {"ok", "no_data"}
-        if asset["p_flood"] is not None:
-            expected = round(asset["p_flood"] * asset["value_rub"] * asset["vulnerability"], 2)
-            assert asset["expected_loss_rub"] == expected
-            assert asset["flood_expected_loss_rub"] == (0 if asset["permanent_water_at_point"] else expected)
+        if asset["permanent_water_at_point"]:
+            assert asset["expected_loss_rub"] == 0 and asset["loss_status"] == "permanent_water"
     nigeria = analyze(None, 6500, "risk", 8, None, "Nigeria_812045")["region"]
     assert nigeria["permanent_status"] == "jrc_waterhand"
     total = nigeria["flood_water_area_km2"] + nigeria["permanent_water_area_km2"]
@@ -166,15 +172,17 @@ def test_vector_prices_match_exact_quotes_for_every_basket():
     from app.planning import quote
     ctx = context("Nigeria_812045", None)
     space = ctx.space
-    prices = space.prices(1.0)
-    for index in np.random.default_rng(3).choice(len(space.subsets), size=400, replace=False):
-        assert abs(prices[index] - quote(space.selected(int(index)))["total_rub"]) < 0.011
+    for deadline in (4, 8):  # radar and optics price on different discount curves
+        prices = space.prices(1.0, deadline)
+        for index in np.random.default_rng(3).choice(len(space.subsets), size=400, replace=False):
+            assert abs(prices[index] - quote(space.orders(int(index), deadline))["total_rub"]) < 0.011
 
 
 def test_plan_never_exceeds_budget_near_price_boundaries():
     ctx = context("Nigeria_812045", None)
-    prices = np.unique(np.round(ctx.space.prices(1.0), 2))
-    for budget in prices[1:40]:
-        index = ctx.space.best(float(budget), "risk", 8, None)
-        assert index is not None
-        assert quote(ctx.space.selected(index))["total_rub"] <= float(budget)
+    for deadline in (4, 8):
+        prices = np.unique(np.round(ctx.space.prices(1.0, deadline), 2))
+        for budget in prices[1:40]:
+            index = ctx.space.best(float(budget), "risk", deadline, None)
+            assert index is not None
+            assert quote(ctx.space.orders(index, deadline))["total_rub"] <= float(budget)

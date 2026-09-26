@@ -4,6 +4,28 @@
     "a": 0.7666532755645349,
     "b": -0.1796736118131183
   },
+  "doubt_threshold": {
+    "source_part": "valid",
+    "chips": 89,
+    "pixels": 20274154,
+    "entropy_top_decile_bits": 0.4114301532506943,
+    "map_error_chance_threshold": 0.0826,
+    "valid_at_threshold": {
+      "pixels": 20274154,
+      "doubtful_pixels": 2027318,
+      "doubtful_share": 0.09999519585379493,
+      "error_rate": 0.03615588596199871,
+      "error_rate_doubtful": 0.25851543763731194,
+      "error_rate_not_doubtful": 0.011450587926586287,
+      "errors_inside_doubtful_share": 0.7149680094948365
+    },
+    "measure_auroc": {
+      "part": "valid",
+      "entropy": 0.9306641287838794,
+      "member_std": 0.9171258716489084
+    },
+    "test_parts_role": "report_only_not_used_for_selection"
+  },
   "parts": {
     "test_core": {
       "baseline": {
@@ -59,7 +81,9 @@
         0.077172120909318,
         0.2947318438546509
       ],
-      "doubt_top_decile_bits": 0.4080650210380554,
+      "doubtful_share": 0.09950851842288178,
+      "doubtful_error_rate": 0.2939634690732001,
+      "errors_inside_doubtful_share": 0.629602390683039,
       "error_rate": 0.046671,
       "expected_error_rate": 0.03402382988268219,
       "chips": 55
@@ -118,7 +142,9 @@
         0.17535146813905686,
         0.34554842966613847
       ],
-      "doubt_top_decile_bits": 0.7124308347702026,
+      "doubtful_share": 0.18226943876189,
+      "doubtful_error_rate": 0.26998220695871084,
+      "errors_inside_doubtful_share": 0.7758420506179318,
       "error_rate": 0.0639945,
       "expected_error_rate": 0.0553743485240278,
       "chips": 15
@@ -467,40 +493,24 @@
       "grd_model": 0.6841,
       "grd_baseline": 0.5151,
       "rtc_model_raw": 0.1835,
-      "rtc_model_median": 0.5808,
       "rtc_model_quantile": 0.6374,
       "rtc_baseline_raw": 0.1015,
       "rtc_baseline_quantile": 0.4842
     },
-    "mapping": "quantile"
-  },
-  "doubt_check": {
-    "rule": "map error chance = 1 - p where p >= threshold, p elsewhere (calibrated p); doubtful pixel: chance >= the 90% quantile of that chance on validation pixels",
-    "fitted_on": "valid",
-    "doubt_threshold": 0.0822,
-    "valid": {
-      "pixels": 20274154,
-      "doubtful_share": 0.1001,
-      "error_rate": 0.0361,
-      "error_rate_doubtful": 0.2578,
-      "error_rate_other": 0.0114,
-      "errors_in_doubtful": 0.7148
+    "mapping": "quantile",
+    "selection_part": "train_cv",
+    "cv_scores": {
+      "leave_one_event_out": {
+        "folds": 7,
+        "median": 0.3188,
+        "quantile": 0.5846
+      },
+      "leave_one_chip_out": {
+        "folds": 13,
+        "median": 0.3162,
+        "quantile": 0.5856
+      }
     },
-    "test_core": {
-      "pixels": 11559945,
-      "doubtful_share": 0.0994,
-      "error_rate": 0.0464,
-      "error_rate_doubtful": 0.2943,
-      "error_rate_other": 0.0191,
-      "errors_in_doubtful": 0.6298
-    },
-    "bolivia": {
-      "pixels": 2824434,
-      "doubtful_share": 0.1832,
-      "error_rate": 0.0641,
-      "error_rate_doubtful": 0.2718,
-      "error_rate_other": 0.0175,
-      "errors_in_doubtful": 0.777
-    }
+    "test_role": "report_only_not_used_for_selection"
   }
 }

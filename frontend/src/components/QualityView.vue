@@ -9,7 +9,13 @@ const region = computed(() => state.analysis.region)
 const quality = computed(() => state.analysis.quality)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
 const flood = computed(() => quality.value.flood_only?.test_core)
-const doubtCheck = computed(() => quality.value.doubt_check?.test_core)
+// Проверка границы сомнений на независимом test_core; сама граница подобрана на validation.
+const doubtCheck = computed(() => {
+  const part = quality.value.parts?.test_core
+  return part?.doubtful_error_rate == null ? null : {
+    doubtful_share: part.doubtful_share, error_rate_doubtful: part.doubtful_error_rate,
+    error_rate: part.error_rate, errors_in_doubtful: part.errors_inside_doubtful_share }
+})
 const proxy = computed(() => state.analysis.asset_proxy_check)
 // Как модель переносится на Sentinel-1 RTC: те же снимки test_core с разметкой, но из каталога RTC.
 const transfer = computed(() => quality.value.rtc_transfer)

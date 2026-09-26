@@ -71,7 +71,7 @@ function select(asset) {
 
       <Transition name="expand">
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
-          <p v-if="asset.permanent_water_at_point" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка. Ущерб посчитан по правилу кейса p × V × q, но паводку из него не приходится ничего.</p>
+          <p v-if="asset.permanent_water_at_point" class="source-line">Точка стоит на постоянной воде JRC: вода здесь была и до паводка, поэтому ущерб от паводка 0. В asset_loss.csv по правилу кейса записан EL = p × V × q.</p>
           <div class="mini-rows">
             <div v-tip="'Вероятность воды в пикселе, где стоит объект'"><span>Вероятность воды</span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="'Вероятность, что карта окрасила точку объекта неправильно'"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>

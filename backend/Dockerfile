@@ -13,17 +13,17 @@ COPY data/catalog ./data/catalog
 COPY ml/src/floodvalue ./ml/src/floodvalue
 COPY ml/artifacts/model ./ml/artifacts/model
 COPY ml/artifacts/evaluation/calibration.json ./ml/artifacts/evaluation/calibration.json
+COPY ml/artifacts/evaluation/doubt_threshold.json ./ml/artifacts/evaluation/doubt_threshold.json
 COPY ml/artifacts/baseline/baseline.json ./ml/artifacts/baseline/baseline.json
 COPY ml/artifacts/rtc ./ml/artifacts/rtc
 RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app/backend
-# Commit of the code in the image, for run_metadata.json: the image has no .git.
-# FLOODVALUE_COMMIT=$(git rev-parse HEAD) docker compose up --build
-ARG FLOODVALUE_COMMIT=""
-ENV FLOODVALUE_COMMIT=${FLOODVALUE_COMMIT}
-ENV PATH="/app/backend/.venv/bin:${PATH}" \
+# The image has no .git: pass the commit at build time so run_metadata.json can name it.
+ARG FLOODVALUE_COMMIT=
+ENV FLOODVALUE_COMMIT=${FLOODVALUE_COMMIT} \
+    PATH="/app/backend/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/ml/src \
     LIVE_DATA_DIR=/app/data/live

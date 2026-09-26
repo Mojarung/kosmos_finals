@@ -182,8 +182,11 @@ def separate_live(scene_id: str) -> dict:
     pixel_area = info["area_km2"] / (GRID * GRID)
     assets = [{**asset, "permanent_water_at_point": bool(permanent[asset["row"], asset["col"]])} for asset in info["assets"]]
     water = model_mask == 1
+    # Terms as stated on the JRC GSW download page; the exporter adds the quote and the check date.
     references = [{"name": url.rsplit("/", 1)[1], "url": url, "role": "permanent_water_reference",
-                   "version": "JRC GSW v1.4 (1984-2021)", "license": "CC-BY-4.0", "observed_at": "1984/2021"}
+                   "version": "JRC GSW v1.4 (1984-2021)",
+                   "license": "Copernicus Programme data, free of charge, without restriction of use",
+                   "license_url": "https://global-surface-water.appspot.com/download", "observed_at": "1984/2021"}
                   for url in urls]
     updated = {**info, "assets": assets, "permanent_status": "jrc_gsw", "permanent_rule": GSW_RULE,
                "permanent_sources": urls,

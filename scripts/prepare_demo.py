@@ -45,7 +45,13 @@ def write_quality() -> None:
     evaluation = json.loads((ROOT / "ml/artifacts/evaluation/evaluation.json").read_text())
     quality_path = OUTPUT / "quality.json"
     previous = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
+    doubt = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text(encoding="utf-8"))
+    reported = doubt["report_only"]["parts"]
     quality = {"threshold": evaluation["threshold"], "calibration": evaluation["platt"],
+               "doubt_threshold": {key: doubt[key] for key in ("source_part", "chips", "pixels",
+                                                                "entropy_top_decile_bits", "map_error_chance_threshold",
+                                                                "valid_at_threshold", "measure_auroc")}
+               | {"test_parts_role": doubt["report_only"]["role"]},
                "parts": {}, "flood_only": {}}
     for part in ("test_core", "bolivia"):
         methods = evaluation["parts"][part]
@@ -62,7 +68,10 @@ def write_quality() -> None:
             "uncertainty_error_rate_by_decile": probability["uncertainty_member_std"]["error_rate_by_decile"],
             "doubt_error_auroc": probability["uncertainty_entropy"]["auroc"],
             "doubt_error_rate_by_decile": probability["uncertainty_entropy"]["error_rate_by_decile"],
-            "doubt_top_decile_bits": probability["uncertainty_entropy"]["decile_edges"][9],
+            # The service's threshold comes from valid; these describe it on this part (report only).
+            "doubtful_share": reported[part]["doubtful_share"],
+            "doubtful_error_rate": reported[part]["error_rate_doubtful"],
+            "errors_inside_doubtful_share": reported[part]["errors_inside_doubtful_share"],
             "error_rate": probability["uncertainty_entropy"]["error_rate"],
             "expected_error_rate": sum(item["count"] * min(item["mean_p"], 1 - item["mean_p"]) for item in bins) / pixels,
             "chips": methods["all_water/main"]["overall"]["chips"],
@@ -81,11 +90,9 @@ def write_quality() -> None:
         transfer = json.loads(transfer_path.read_text(encoding="utf-8"))
         quality["rtc_transfer"] = {key: transfer[key] for key in ("rules", "fit_chips", "check_chips", "water_weighted_iou")}
         quality["rtc_transfer"]["mapping"] = transfer.get("shipped_mapping")
-    doubt_path = ROOT / "ml/artifacts/evaluation/doubt_threshold.json"
-    if doubt_path.exists():
-        doubt = json.loads(doubt_path.read_text(encoding="utf-8"))
-        quality["doubt_check"] = {key: doubt[key] for key in ("rule", "fitted_on", "doubt_threshold",
-                                                              "valid", "test_core", "bolivia")}
+        for key in ("selection_part", "cv_scores", "test_role"):
+            if key in transfer:
+                quality["rtc_transfer"][key] = transfer[key]
     errors_path = ROOT / "ml/artifacts/evaluation/error_analysis.json"
     if errors_path.exists():
         errors = json.loads(errors_path.read_text(encoding="utf-8"))

@@ -1,0 +1,338 @@
+{
+  "historical_development_bounds_source": "artifacts/data_check.json",
+  "historical_bounds_sha256": "f1463dacdc72ac61b795bdc4010b7da787d6953d28a3cba7e1150c4493c9e971",
+  "fresh_checked_test_grids": 105,
+  "test_bounds_match_historical": true,
+  "adjacency": {
+    "test_core": {
+      "train": {},
+      "valid": {
+        "India_79637": [
+          "India_164336"
+        ],
+        "India_828067": [
+          "India_691027"
+        ],
+        "India_80221": [
+          "India_1018317"
+        ],
+        "India_1018327": [
+          "India_833266"
+        ],
+        "India_399883": [
+          "India_180633"
+        ],
+        "Sri-Lanka_534068": [
+          "Sri-Lanka_321316"
+        ],
+        "Sri-Lanka_922192": [
+          "Sri-Lanka_236628"
+        ],
+        "USA_350244": [
+          "USA_741178"
+        ],
+        "USA_67102": [
+          "USA_366607"
+        ]
+      }
+    },
+    "test_adjacent": {
+      "train": {
+        "Ghana_359826": [
+          "Ghana_597288"
+        ],
+        "Ghana_319168": [
+          "Ghana_83200"
+        ],
+        "Ghana_141271": [
+          "Ghana_147015"
+        ],
+        "India_747992": [
+          "India_804466"
+        ],
+        "India_631692": [
+          "India_324254"
+        ],
+        "Mekong_45934": [
+          "Mekong_1395593"
+        ],
+        "Mekong_1443339": [
+          "Mekong_1439641"
+        ],
+        "Mekong_382276": [
+          "Mekong_52610",
+          "Mekong_1282475",
+          "Mekong_16233",
+          "Mekong_1395593"
+        ],
+        "Mekong_424793": [
+          "Mekong_119477"
+        ],
+        "Nigeria_225131": [
+          "Nigeria_143329"
+        ],
+        "Pakistan_70625": [
+          "Pakistan_132143"
+        ],
+        "Paraguay_280900": [
+          "Paraguay_795075"
+        ],
+        "Paraguay_790830": [
+          "Paraguay_482517"
+        ],
+        "Paraguay_1029191": [
+          "Paraguay_247656",
+          "Paraguay_149787"
+        ],
+        "Paraguay_59731": [
+          "Paraguay_247656",
+          "Paraguay_339807",
+          "Paraguay_149787"
+        ],
+        "Paraguay_683296": [
+          "Paraguay_149787",
+          "Paraguay_791364"
+        ],
+        "Paraguay_511199": [
+          "Paraguay_149830"
+        ],
+        "Paraguay_80102": [
+          "Paraguay_54421"
+        ],
+        "Paraguay_651904": [
+          "Paraguay_921838"
+        ],
+        "Somalia_94102": [
+          "Somalia_886726"
+        ],
+        "Spain_6860600": [
+          "Spain_4915752",
+          "Spain_2472849",
+          "Spain_5816638",
+          "Spain_6199994",
+          "Spain_716716"
+        ],
+        "Spain_7558720": [
+          "Spain_7856615",
+          "Spain_8104659",
+          "Spain_2523247",
+          "Spain_1167260",
+          "Spain_337094",
+          "Spain_2594119"
+        ],
+        "Spain_5650136": [
+          "Spain_5923267",
+          "Spain_716716"
+        ],
+        "Spain_7370579": [
+          "Spain_7786924",
+          "Spain_1167260",
+          "Spain_2594119"
+        ],
+        "Spain_6095801": [
+          "Spain_7786924",
+          "Spain_7856615",
+          "Spain_1167260",
+          "Spain_2594119"
+        ],
+        "Spain_7387658": [
+          "Spain_4915752",
+          "Spain_1167260"
+        ],
+        "Sri-Lanka_117737": [
+          "Sri-Lanka_233609"
+        ],
+        "Sri-Lanka_649970": [
+          "Sri-Lanka_748447"
+        ],
+        "Sri-Lanka_849649": [
+          "Sri-Lanka_400518"
+        ],
+        "USA_905409": [
+          "USA_788696"
+        ],
+        "USA_430764": [
+          "USA_770353"
+        ],
+        "USA_527077": [
+          "USA_170264",
+          "USA_58086"
+        ],
+        "USA_933610": [
+          "USA_693819",
+          "USA_655230"
+        ],
+        "USA_595451": [
+          "USA_955053"
+        ],
+        "USA_670826": [
+          "USA_211406"
+        ]
+      },
+      "valid": {
+        "Nigeria_225131": [
+          "Nigeria_820924"
+        ],
+        "Paraguay_651904": [
+          "Paraguay_305760",
+          "Paraguay_648632"
+        ],
+        "Spain_5650136": [
+          "Spain_1199913"
+        ],
+        "Spain_7370579": [
+          "Spain_8372658",
+          "Spain_7604243",
+          "Spain_4282030"
+        ],
+        "Spain_7387658": [
+          "Spain_8372658",
+          "Spain_4282030",
+          "Spain_8565131"
+        ],
+        "Sri-Lanka_117737": [
+          "Sri-Lanka_132922"
+        ]
+      }
+    },
+    "bolivia": {
+      "train": {},
+      "valid": {}
+    }
+  },
+  "counts": {
+    "test_core": {
+      "train": 0,
+      "valid": 9
+    },
+    "test_adjacent": {
+      "train": 35,
+      "valid": 6
+    },
+    "bolivia": {
+      "train": 0,
+      "valid": 0
+    }
+  },
+  "test_core_without_train_or_validation_neighbours": [
+    "Ghana_313799",
+    "Ghana_1078550",
+    "Ghana_97059",
+    "Ghana_866994",
+    "Ghana_406026",
+    "Ghana_53713",
+    "Ghana_83483",
+    "Ghana_167233",
+    "India_900498",
+    "India_591317",
+    "India_952728",
+    "India_570384",
+    "India_44475",
+    "India_592446",
+    "India_772630",
+    "Mekong_333434",
+    "Mekong_254910",
+    "Nigeria_417184",
+    "Nigeria_812045",
+    "Nigeria_22088",
+    "Pakistan_849790",
+    "Pakistan_664885",
+    "Pakistan_694942",
+    "Pakistan_528249",
+    "Pakistan_167553",
+    "Paraguay_913449",
+    "Paraguay_232281",
+    "Paraguay_271769",
+    "Paraguay_40936",
+    "Paraguay_34417",
+    "Paraguay_868895",
+    "Somalia_699062",
+    "Somalia_60129",
+    "Somalia_685158",
+    "Somalia_166342",
+    "Somalia_322855",
+    "Sri-Lanka_1049830",
+    "Sri-Lanka_377277",
+    "Sri-Lanka_450918",
+    "Sri-Lanka_713926",
+    "USA_66511",
+    "USA_519181",
+    "USA_778194",
+    "USA_1049586",
+    "USA_504150",
+    "USA_758178"
+  ],
+  "declared_training_provenance": {
+    "artifacts/model/members/m1/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "28e56410f3cbf67f9e57b56cd26fa605871f4bd52f53d0e46f85d7761d2fa604"
+    },
+    "artifacts/model/members/m0/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "63321267f69044ae30cff0ba873616e20e08bbee5d643a2bb8e13402271d6895"
+    },
+    "artifacts/model/members/m2/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "0a893933459ad98bfd5e54eb9867d745dd4191e1441e2dcffb702a5fbf4dc1fa"
+    },
+    "artifacts/model/members/m3/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "5597a8b3a38beb0e661d18a7fd4f0636425d4c4faed24793e4e09a67962fddeb"
+    },
+    "artifacts/model/members/m4/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "778d3fd4461a8b9fc7dd4fb485cdcaf4b19e5cea89c7a6468e8dc2aa5eafbfd6"
+    },
+    "artifacts/next_optical/radar/members/m1/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "28e56410f3cbf67f9e57b56cd26fa605871f4bd52f53d0e46f85d7761d2fa604"
+    },
+    "artifacts/next_optical/radar/members/m0/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "63321267f69044ae30cff0ba873616e20e08bbee5d643a2bb8e13402271d6895"
+    },
+    "artifacts/next_optical/radar/members/m2/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "0a893933459ad98bfd5e54eb9867d745dd4191e1441e2dcffb702a5fbf4dc1fa"
+    },
+    "artifacts/next_optical/radar/members/m3/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "5597a8b3a38beb0e661d18a7fd4f0636425d4c4faed24793e4e09a67962fddeb"
+    },
+    "artifacts/next_optical/radar/members/m4/train_summary.json": {
+      "development_chips": 341,
+      "test_id_overlap": 0,
+      "sha256": "778d3fd4461a8b9fc7dd4fb485cdcaf4b19e5cea89c7a6468e8dc2aa5eafbfd6"
+    },
+    "artifacts/next_optical/optical/old/train_summary.json": {
+      "development_chips": 292,
+      "test_id_overlap": 0,
+      "sha256": "4e2b8ba782d0b8c01ffba2875f55580fa8e26d0b22f37352c30b98dbd678854b"
+    },
+    "artifacts/next_optical/optical/lightgbm/train_summary.json": {
+      "development_chips": 292,
+      "test_id_overlap": 0,
+      "sha256": "acf08bb1fb264db4bba7995057a0ac2f9dc78a899c4c5190c50e2daa4e11bafa"
+    },
+    "artifacts/next_optical/optical/hgb_large/train_summary.json": {
+      "development_chips": 292,
+      "test_id_overlap": 0,
+      "sha256": "e6556039700670252cfafe026f127990d2847837029d725b6127d1052c1bc0b5"
+    },
+    "artifacts/next_optical/optical/catboost/train_summary.json": {
+      "development_chips": 292,
+      "test_id_overlap": 0,
+      "sha256": "447e20a06202f74b96410c3bfb85ff0e7aa663d0c1536bb63565fc26e57fd528"
+    }
+  },
+  "limits": "Development bounds and training lists are stored provenance, not independently recreated training; test grids checked on freshly downloaded rasters. Neighbour-free is not event-independent or blind."
+}
