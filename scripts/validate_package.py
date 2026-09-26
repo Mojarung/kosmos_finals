@@ -253,7 +253,8 @@ def validate(path: str | Path) -> dict:
         require(set(decisions) == set(zones), "Zone decisions do not match the candidate catalog")
         require({key for key, row in decisions.items() if row["selected_in_c"] == "true"} == set(plans["C"]),
                 "Zone decisions disagree with plan C")
-        region_assets = {row["asset_id"]: row for row in losses if row["in_region"] == "true"}
+        # The ROI is a pixel-inspection window; A/B/C always uses the fixed ten-asset chip portfolio.
+        region_assets = {row["asset_id"]: row for row in losses}
         estimated = sum(float(row["expected_loss_rub"]) for row in region_assets.values() if row["expected_loss_rub"])
 
         def observes(zone_id: str) -> bool:

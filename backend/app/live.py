@@ -36,6 +36,8 @@ CALIBRATION = Path(os.environ.get("CALIBRATION_FILE", ROOT / "ml" / "artifacts" 
 # learned on; this per-band mapping (fitted on train chips) brings it back to GRD dB.
 HARMONIZATION = Path(os.environ.get("RTC_HARMONIZATION_FILE", ROOT / "ml" / "artifacts" / "rtc" / "harmonization.json"))
 GRID = 512
+PIXEL_M = 10
+MAX_SIDE_PIXELS = 2048
 GEOD = Geod(ellps="WGS84")
 _lock = threading.Lock()
 _members = None
@@ -61,7 +63,17 @@ def validate_area(bounds: list[float]) -> float:
         raise LiveError("Область больше 300 км². Приблизьте карту и выделите меньший участок.")
     if width < 1.25 or height < 1.25:
         raise LiveError("Для зон съёмки нужна рамка не меньше 1,25 км по каждой стороне.")
+    if width * 1000 > MAX_SIDE_PIXELS * PIXEL_M or height * 1000 > MAX_SIDE_PIXELS * PIXEL_M:
+        raise LiveError("Сторона рамки больше 20 км. Разделите область на соседние участки по 20 км.")
     return area
+
+
+def grid_size(bounds: list[float]) -> tuple[int, int]:
+    """Approximately 10 m per pixel at every location; dimensions vary with the ROI."""
+    width_m = GEOD.inv(bounds[0], bounds[1], bounds[2], bounds[1])[2]
+    height_m = GEOD.inv(bounds[0], bounds[1], bounds[0], bounds[3])[2]
+    return (max(128, int(np.ceil(width_m / PIXEL_M / 32) * 32)),
+            max(128, int(np.ceil(height_m / PIXEL_M / 32) * 32)))
 
 
 def _covers(bounds: list[float], scene: list[float]) -> bool:
@@ -121,17 +133,18 @@ def _features(bounds: list[float], item_id: str) -> list[dict]:
     raise LiveError("Выбранный снимок не найден для этой области. Обновите список снимков.")
 
 
-def _read_band(href: str, token: str, bounds: list[float]) -> np.ndarray:
+def _read_band(href: str, token: str, bounds: list[float], shape: tuple[int, int] = (GRID, GRID)) -> np.ndarray:
     host = urlparse(href).hostname or ""
     if not host.endswith(".blob.core.windows.net"):
         raise LiveError("Неподдерживаемый адрес растра в каталоге")
     signed = href + "?" + token
-    transform = from_bounds(*bounds, GRID, GRID)
+    height, width = shape
+    transform = from_bounds(*bounds, width, height)
     try:
         with rasterio.Env(GDAL_DISABLE_READDIR_ON_OPEN="EMPTY_DIR", GDAL_HTTP_MAX_RETRY="2"):
             with rasterio.open(signed) as source:
                 with WarpedVRT(source, crs="EPSG:4326", transform=transform,
-                               width=GRID, height=GRID, resampling=Resampling.bilinear) as warped:
+                               width=width, height=height, resampling=Resampling.bilinear) as warped:
                     values = warped.read(1, masked=True).astype("float32")
     except Exception as error:
         raise LiveError(f"Не удалось прочитать снимок Sentinel-1: {error}") from error
@@ -174,15 +187,16 @@ def _png(path: Path, rgba: np.ndarray) -> None:
 
 def _overlays(folder: Path, vh: np.ndarray, probability: np.ndarray,
               uncertainty: np.ndarray, model: np.ndarray, baseline: np.ndarray, valid: np.ndarray) -> None:
+    height, width = vh.shape
     radar = np.nan_to_num((vh + 33) / 28, nan=0.0).clip(0, 1)
     shade = (radar * 205 + 25).astype("uint8")
     _png(folder / "radar.png", np.stack([shade, shade, shade, np.where(valid, 245, 0)], axis=-1))
     for name, water, color in (("model", model, (31, 117, 176)), ("baseline", baseline, (209, 129, 48))):
-        rgba = np.zeros((GRID, GRID, 4), dtype="uint8")
+        rgba = np.zeros((height, width, 4), dtype="uint8")
         rgba[..., :3] = color
         rgba[..., 3] = np.where(water, 230, 0)
         _png(folder / f"{name}.png", rgba)
-    rgba = np.zeros((GRID, GRID, 4), dtype="uint8")
+    rgba = np.zeros((height, width, 4), dtype="uint8")
     rgba[..., 0] = 22 + probability * 43
     rgba[..., 1] = 92 + probability * 77
     rgba[..., 2] = 165 + probability * 70
@@ -197,8 +211,9 @@ def _overlays(folder: Path, vh: np.ndarray, probability: np.ndarray,
 
 
 def _raster(path: Path, values: np.ndarray, bounds: list[float], dtype: str, nodata: float) -> None:
-    with rasterio.open(path, "w", driver="GTiff", height=GRID, width=GRID, count=1,
-                       dtype=dtype, crs="EPSG:4326", transform=from_bounds(*bounds, GRID, GRID),
+    height, width = values.shape
+    with rasterio.open(path, "w", driver="GTiff", height=height, width=width, count=1,
+                       dtype=dtype, crs="EPSG:4326", transform=from_bounds(*bounds, width, height),
                        nodata=nodata, compress="deflate") as target:
         target.write(values.astype(dtype), 1)
 
@@ -217,8 +232,9 @@ def _portfolio(bounds: list[float], probability: np.ndarray, spread: np.ndarray,
     """Seeded random points over valid pixels, placed at pixel centres so p is read where the point is."""
     rows, cols = np.nonzero(valid)
     chosen = np.random.default_rng(PORTFOLIO_SEED).choice(len(rows), size=len(ASSET_TYPES), replace=False)
-    dx = (bounds[2] - bounds[0]) / GRID
-    dy = (bounds[3] - bounds[1]) / GRID
+    height, width = valid.shape
+    dx = (bounds[2] - bounds[0]) / width
+    dy = (bounds[3] - bounds[1]) / height
     result = []
     for number, ((kind, name, value, vulnerability), index) in enumerate(zip(ASSET_TYPES, chosen), 1):
         row, col = int(rows[index]), int(cols[index])
@@ -250,35 +266,85 @@ def _passport(source: dict, vv: np.ndarray, vh: np.ndarray) -> list[dict]:
         "absolute_orbit": props.get("sat:absolute_orbit"), "datatake_id": props.get("s1:datatake_id"),
         "license": LICENSE["id"], "license_url": LICENSE["url"], "providers": LICENSE["providers"],
         "attribution": LICENSE["attribution"], "role": "model_input",
-        "window_sha256": digest, "window_rule": "VV and VH of this item warped to the 512x512 EPSG:4326 grid, dB",
+        "window_sha256": digest, "window_rule": "VV and VH warped to an approximately 10m EPSG:4326 grid, dB",
     } for band in ("vv", "vh")]
 
 
-def prepare(bounds: list[float], item_id: str) -> dict:
+def _infer_tiled(s1: np.ndarray, progress=None) -> tuple[np.ndarray, np.ndarray]:
+    """Run unchanged 512px model on a variable-size ~10m grid with a 32px halo."""
+    import torch
+    from floodvalue.ensemble import run_ensemble
+    from floodvalue.infer import load_calibration
+    height, width = s1.shape[1:]
+    probability = np.zeros((height, width), dtype=np.float32)
+    spread = np.zeros_like(probability)
+    calibration, _ = load_calibration(CALIBRATION)
+    step, halo = GRID - 64, 32
+    tiles = [(y, x) for y in range(0, height, step) for x in range(0, width, step)]
+    torch.set_num_threads(2)
+    for index, (y, x) in enumerate(tiles, 1):
+        patch = np.full((2, GRID, GRID), np.nan, dtype=np.float32)
+        y0, x0 = max(0, y - halo), max(0, x - halo)
+        y1, x1 = min(height, y + step + halo), min(width, x + step + halo)
+        patch[:, y0 - y + halo:y1 - y + halo, x0 - x + halo:x1 - x + halo] = s1[:, y0:y1, x0:x1]
+        with torch.inference_mode():
+            result = run_ensemble(_ensemble(), [patch], calibration)
+        h, w = min(step, height - y), min(step, width - x)
+        probability[y:y+h, x:x+w] = result.prob[0, halo:halo+h, halo:halo+w]
+        spread[y:y+h, x:x+w] = result.member_std[0, halo:halo+h, halo:halo+w]
+        if progress:
+            progress("inference", index / len(tiles), f"Модель: фрагмент {index} из {len(tiles)}")
+    return probability, spread
+
+
+def _cached_scene(folder: Path) -> dict | None:
+    path = folder / "metadata.json"
+    if not path.is_file():
+        return None
+    info = json.loads(path.read_text(encoding="utf-8"))
+    # The reference layer is absent on live RTC scenes, but its nodata mask
+    # still has to match the variable-sized radar grid for region analysis.
+    expected = info["width"] * info["height"]
+    water = folder / "water_mask.bin"
+    if not water.is_file() or water.stat().st_size != expected:
+        replacement = folder / "water_mask.bin.partial"
+        replacement.write_bytes(np.full((info["height"], info["width"]), 255, dtype="uint8").tobytes())
+        os.replace(replacement, water)
+    return info
+
+
+def prepare(bounds: list[float], item_id: str, progress=None) -> dict:
     area = validate_area(bounds)
     features = _features(bounds, item_id)
     feature = features[0]
-    cache_key = b"live-v4:" + ("|".join(item["id"] for item in features) + ":" +
+    cache_key = b"live-v5-10m:" + ("|".join(item["id"] for item in features) + ":" +
                              ",".join(f"{n:.6f}" for n in bounds)).encode()
     cache_key += hashlib.sha256((MODEL / "model_card.json").read_bytes() + CALIBRATION.read_bytes()
                                 + (HARMONIZATION.read_bytes() if HARMONIZATION.is_file() else b"")).digest()
     digest = hashlib.sha256(cache_key).hexdigest()[:16]
     scene_id = f"live_{digest}"
     folder = LIVE_DIR / scene_id
-    if (folder / "metadata.json").is_file():
-        return json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
+    cached = _cached_scene(folder)
+    if cached is not None:
+        if progress: progress("ready", 1, "Готовый расчёт взят из кэша")
+        return cached
     with _lock:
-        if (folder / "metadata.json").is_file():
-            return json.loads((folder / "metadata.json").read_text(encoding="utf-8"))
+        cached = _cached_scene(folder)
+        if cached is not None:
+            if progress: progress("ready", 1, "Готовый расчёт взят из кэша")
+            return cached
+        width, height = grid_size(bounds)
         token = _json(SAS)["token"]
-        vv = np.full((GRID, GRID), np.nan, dtype=np.float32)
-        vh = np.full((GRID, GRID), np.nan, dtype=np.float32)
-        valid = np.zeros((GRID, GRID), dtype=bool)
+        vv = np.full((height, width), np.nan, dtype=np.float32)
+        vh = np.full((height, width), np.nan, dtype=np.float32)
+        valid = np.zeros((height, width), dtype=bool)
         used_features = []
         passport = []
-        for source in features:
-            source_vv = _read_band(source["assets"]["vv"]["href"], token, bounds)
-            source_vh = _read_band(source["assets"]["vh"]["href"], token, bounds)
+        for source_number, source in enumerate(features, 1):
+            if progress: progress("reading", (source_number - 1) / len(features),
+                                  f"Читаем VV/VH · кадр {source_number} из {len(features)}")
+            source_vv = _read_band(source["assets"]["vv"]["href"], token, bounds, (height, width))
+            source_vh = _read_band(source["assets"]["vh"]["href"], token, bounds, (height, width))
             fill = np.isfinite(source_vv) & np.isfinite(source_vh) & ~valid
             vv[fill], vh[fill] = source_vv[fill], source_vh[fill]
             valid |= fill
@@ -291,24 +357,20 @@ def prepare(bounds: list[float], item_id: str) -> dict:
         s1 = np.stack([vv, vh])
         if valid.mean() < 0.05:
             raise LiveError("На этом снимке радар не дал сигнала в рамке. Выберите другую дату.")
-        import torch
-        from floodvalue.ensemble import run_ensemble
+        if progress: progress("inference", 0, "Радар прочитан. Модель ищет воду")
         from floodvalue.infer import load_calibration
-        torch.set_num_threads(2)
-        calibration, threshold = load_calibration(CALIBRATION)
-        with torch.inference_mode():
-            result = run_ensemble(_ensemble(), [s1], calibration)
-        probability = np.asarray(result.prob[0], dtype=np.float32)
-        spread = np.asarray(result.member_std[0], dtype=np.float32)
+        _, threshold = load_calibration(CALIBRATION)
+        probability, spread = _infer_tiled(s1, progress)
         model = valid & (probability >= threshold)
         baseline = valid & (vh < -23.6)
         probability[~valid] = 0
         spread[~valid] = 0
+        if progress: progress("saving", 0.95, "Сохраняем слои и считаем объекты")
         folder.mkdir(parents=True, exist_ok=True)
         _overlays(folder, vh, probability, spread, model, baseline, valid)
         (folder / "model_mask.bin").write_bytes(np.where(valid, model, 255).astype("uint8").tobytes())
         (folder / "baseline_mask.bin").write_bytes(np.where(valid, baseline, 255).astype("uint8").tobytes())
-        (folder / "water_mask.bin").write_bytes(np.full((GRID, GRID), 255, dtype="uint8").tobytes())
+        (folder / "water_mask.bin").write_bytes(np.full((height, width), 255, dtype="uint8").tobytes())
         (folder / "probability.f32").write_bytes(probability.tobytes())
         (folder / "uncertainty.f32").write_bytes(spread.tobytes())
         _raster(folder / "flood_probability.tif", np.where(valid, probability, -9999), bounds, "float32", -9999)
@@ -317,21 +379,23 @@ def prepare(bounds: list[float], item_id: str) -> dict:
         _raster(folder / "baseline_mask.tif", np.where(valid, baseline, 255), bounds, "uint8", 255)
         metadata_record = {
             "chip_id": scene_id, "event": "Выбранная область", "observed_at": feature["properties"]["datetime"],
-            "bbox": bounds, "width": GRID, "height": GRID, "area_km2": round(area, 3),
+            "bbox": bounds, "width": width, "height": height, "area_km2": round(area, 3),
             "valid_pixels": int(valid.sum()), "water_pixels": None, "water_area_km2": None,
-            "model_water_pixels": int(model.sum()), "model_water_area_km2": round(float(model.sum() / (GRID*GRID) * area), 3),
-            "baseline_water_pixels": int(baseline.sum()), "baseline_water_area_km2": round(float(baseline.sum() / (GRID*GRID) * area), 3),
+            "model_water_pixels": int(model.sum()), "model_water_area_km2": round(float(model.sum() / (width*height) * area), 3),
+            "baseline_water_pixels": int(baseline.sum()), "baseline_water_area_km2": round(float(baseline.sum() / (width*height) * area), 3),
             "model_threshold": threshold, "baseline_threshold_db": -23.6,
             "portfolio_seed": PORTFOLIO_SEED, "portfolio_rule": PORTFOLIO_RULE, "assets": _portfolio(bounds, probability, spread, baseline, valid),
             "source_kind": "live_sentinel1_rtc", "source_item_id": feature["id"],
             "source_item_ids": [source["id"] for source in used_features],
             "source_manifest": passport, "source_license": LICENSE,
             "processed_at": datetime.now(timezone.utc).isoformat(),
-            "pixel_size_m_approx": round((area * 1_000_000 / (GRID * GRID)) ** 0.5, 1),
+            "pixel_size_m_approx": round((area * 1_000_000 / (width * height)) ** 0.5, 1),
+            "target_resolution_m": PIXEL_M, "grid_rule": "10m target, dimensions rounded up to a multiple of 32; 512px tiles with 32px halo",
             "portfolio_status": "scenario_locations_and_values",
             "reference_status": "no_manual_label",
             "radiometry": "rtc_harmonized_to_sen1floods11_grd" if harmonization() else "rtc_as_is",
             "permanent_status": "not_separated",
         }
         (folder / "metadata.json").write_text(json.dumps(metadata_record, ensure_ascii=False, indent=2), encoding="utf-8")
+        if progress: progress("ready", 1, "Анализ готов")
         return metadata_record

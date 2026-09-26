@@ -296,7 +296,7 @@ def plan_row(strategy: str, line: dict, product: dict) -> list:
     return [_blank(values[column]) for column in PLAN_COLUMNS]
 
 
-def decision_row(row: dict, case_loss: float, decision: dict) -> list:
+def decision_row(row: dict, case_loss: float, flood_loss: float, decision: dict) -> list:
     """One zone_decisions.csv row per catalog order: why it is in basket C or not, with its prices."""
     chosen = row["chosen"]
     values = {
@@ -306,7 +306,7 @@ def decision_row(row: dict, case_loss: float, decision: dict) -> list:
         "cost_rub": row["basket_cost_rub"],
         "basket_price_with_zone_rub": row["basket_total_rub"] if row["basket_hypothetical"] else None,
         "asset_ids": "|".join(row["asset_ids"]), "expected_loss_rub": case_loss,
-        "flood_expected_loss_rub": decision["expected_loss_rub"],
+        "flood_expected_loss_rub": flood_loss,
         # Gains belong to the footprint under the product the rule takes; other products show none.
         "gain_loss_rub": decision.get("gain_loss_rub") if chosen else None,
         "gain_doubt_share": decision.get("gain_doubt_share") if chosen else None,
@@ -319,14 +319,17 @@ def package(result: dict) -> io.BytesIO:
     info = metadata(scene_id)
     inputs = result["inputs"]
     ctx = context(scene_id, inputs.get("bbox"))
-    # Case files carry the mandatory EL = p·V·q; the flood-only reading the plan uses sits in *flood* columns.
+    # Case files and the basket use mandatory EL = p·V·q; flood-only is supplementary.
     all_assets = sorted(enrich_assets(raster_assets(scene_id, info), info["model_threshold"]),
                         key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))
-    region_ids = [asset["id"] for asset in result["assets"]]
+    from .planning import contains
+    region_ids = [asset["id"] for asset in result["assets"]
+                  if contains(result["region"]["bounds"], asset)]
     region_rank = {asset["id"]: index for index, asset in enumerate(sorted(
         (asset for asset in result["assets"] if asset["case_loss_status"] != "no_data"),
         key=lambda asset: (-asset["case_expected_loss_rub"], asset["id"])), 1)}
     case_loss = {asset["id"]: asset["case_expected_loss_rub"] or 0 for asset in result["assets"]}
+    flood_loss = {asset["id"]: asset["flood_expected_loss_rub"] or 0 for asset in result["assets"]}
 
     def case_covered(asset_ids: list[str], changed: dict[str, float] | None = None) -> float:
         losses = {**case_loss, **(changed or {})}
@@ -385,18 +388,21 @@ def package(result: dict) -> io.BytesIO:
             changed_inputs = {"asset_id": row["asset_id"], "input": row["input"],
                               "factor": row["factor"], "input_value": row["input_value"]}
             interpretation = (f"EL {row['case_expected_loss_rub']} RUB; rank {row['case_baseline_rank']}→"
-                              f"{row['case_rank']} among region assets; "
+                              f"{row['case_rank']} among the fixed ten assets; "
                               f"{_plan_change(base_orders, selected['candidate_ids'])}; fixed p-map")
-            if row["expected_loss_rub"] != row["case_expected_loss_rub"]:
-                interpretation += (f"; point on permanent water: the basket is re-optimised on its flood-only "
-                                   f"EL {row['expected_loss_rub']} RUB")
+            if row["asset_id"] in flood_loss and flood_loss[row["asset_id"]] != case_loss[row["asset_id"]]:
+                interpretation += "; JRC permanent-water adjustment is displayed separately"
+            changed_flood = dict(flood_loss)
+            if changed_flood[row["asset_id"]] != 0 or case_loss[row["asset_id"]] == 0:
+                changed_flood[row["asset_id"]] = row["expected_loss_rub"]
             sensitivity_rows.append([
                 f"asset_{row['asset_id']}_{row['input']}_{row['factor']}", "C",
                 json.dumps(changed_inputs, ensure_ascii=False), "", selected["quote"]["total_rub"],
                 case_covered(selected["covered_asset_ids"], {row["asset_id"]: row["case_expected_loss_rub"]}),
                 "feasible" if selected["feasible"] else "infeasible", interpretation,
                 row["case_expected_loss_rub"], row["case_rank"], "|".join(selected["candidate_ids"]),
-                _blank(selected["covered_doubt_share"]), selected["covered_expected_loss_rub"],
+                _blank(selected["covered_doubt_share"]),
+                round(sum(changed_flood[item] for item in selected["covered_asset_ids"]), 2),
             ])
         for row in result["sensitivity"]["plan"]:
             changed_inputs = {"input": row["input"], "factor": row["factor"],
@@ -410,7 +416,7 @@ def package(result: dict) -> io.BytesIO:
                 f"{row['input']} x{row['factor']}: {_plan_change(base_orders, row['candidate_ids'])}; "
                 "covered EL is not avoided loss",
                 "", "", "|".join(row["candidate_ids"]), _blank(row["covered_doubt_share"]),
-                row["covered_expected_loss_rub"],
+                round(sum(flood_loss[item] for item in row["covered_asset_ids"]), 2),
             ])
         archive.writestr("sensitivity.csv", _csv(
             ["scenario_id", "strategy", "changed_inputs_json", "decision_cost_rub", "data_cost_rub",
@@ -424,7 +430,9 @@ def package(result: dict) -> io.BytesIO:
                             "c_selected": row["in_c"], "b_selected": row["in_b"], "c_reason": row["reason"]}}
             for row in catalog]})
         archive.writestr("zone_decisions.csv", _csv(DECISION_COLUMNS, [
-            decision_row(row, case_covered(row["asset_ids"]), decisions[row["footprint_id"]]) for row in catalog]))
+            decision_row(row, case_covered(row["asset_ids"]),
+                         round(sum(flood_loss[item] for item in row["asset_ids"]), 2),
+                         decisions[row["footprint_id"]]) for row in catalog]))
         archive.writestr("procurement_plan.csv", _csv(PLAN_COLUMNS, [
             plan_row(strategy, line, product_by_id[line["candidate_id"]])
             for strategy in ("B", "C") for line in strategies[strategy]["quote"]["lines"]]))
@@ -441,7 +449,7 @@ def package(result: dict) -> io.BytesIO:
               len(item.get("covered_asset_ids", [])), _blank(item.get("covered_doubt_share")),
               _blank(item["residual_uncertainty"]), item["uncertainty_status"],
               "mean_map_error_probability_of_region" if key == "A" else "no_new_observation",
-              item["covered_expected_loss_rub"]]
+              round(sum(flood_loss[asset_id] for asset_id in item["covered_asset_ids"]), 2)]
              for key, item in strategies.items()]))
         quality = result["quality"]
         metrics_rows = []
@@ -523,24 +531,18 @@ def package(result: dict) -> io.BytesIO:
             "deadline_hours": inputs["deadline_hours"],
             "priority": inputs["priority"],
             "expected_loss_model": "p_flood * asset_value_rub * vulnerability_coef",
-            "expected_loss_scope": ("every asset with p_flood, including points on permanent water; status ok, "
+            "expected_loss_scope": ("all ten fixed chip assets with p_flood, including points on permanent water; status ok, "
                                     "partial or no_data; p_flood, expected_loss_rub and rank stay empty when not estimated"),
             "expected_loss_units": "RUB; scenario asset values and vulnerabilities",
             "flood_loss_model": ("additional model, not the case EL: flood_expected_loss_rub = 0 when "
                                  "permanent_water_at_point is true (JRC permanent water), otherwise expected_loss_rub"),
-            "decision_loss_rule": (
-                "The basket search scores loss with flood_expected_loss_rub: a point on JRC permanent water adds "
-                "nothing to the goal of plan C. Every case field reports the mandatory EL: asset_loss.csv "
-                "expected_loss_rub and rank, strategy_comparison.csv covered_expected_loss_rub and coverage_share, "
-                "sensitivity.csv covered_expected_loss_rub, asset_expected_loss_rub and rank, zone_decisions.csv "
-                "expected_loss_rub. covered_flood_loss_rub, "
-                "flood_expected_loss_rub and zone_decisions.csv gain_loss_rub show the flood-only numbers the plan "
-                "used. analysis.json is the screen state: there expected_loss_rub and covered_expected_loss_rub are "
-                "flood-only and the case_* fields carry the mandatory EL."),
-            "covered_loss_rule": ("sum of unique expected_loss_rub (p*V*q) of region assets inside the selected "
-                                  "event_observation orders delivered by the deadline; context (archive) and late "
-                                  "orders add no coverage; covered_flood_loss_rub sums flood_expected_loss_rub the same way"),
-            "coverage_share_rule": "covered / estimated EL of region assets; empty with coverage_status when the denominator is 0",
+            "decision_loss_rule": ("The basket search, screen, A/B/C and case CSV columns use mandatory "
+                                   "EL=p*V*q for the same ten chip assets, including points on permanent water. "
+                                   "flood_* columns display the separate JRC-adjusted interpretation."),
+            "covered_loss_rule": ("sum of unique expected_loss_rub (p*V*q) of all ten chip assets inside "
+                                  "selected event_observation orders delivered by the deadline; archive and late "
+                                  "orders add no coverage; the ROI changes pixel summaries, not the portfolio"),
+            "coverage_share_rule": "covered / estimated EL of the same ten chip assets; empty with coverage_status when the denominator is 0",
             "covered_doubt_rule": "doubtful area inside the union of selected zones / doubtful area of the analysed region",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
             "uncertainty_rule": ("asset_loss.uncertainty is the map error chance at the asset pixel: 1 - p where "
@@ -592,7 +594,7 @@ def package(result: dict) -> io.BytesIO:
                          "Вероятности и маски получены замороженной моделью по Sentinel-1.\n"
                          "asset_loss.csv: обязательный EL = p × V × q для всех объектов, в том числе на постоянной воде.\n"
                          "permanent_water.tif (если есть): постоянная вода JRC. Ущерб только от паводка (0 на ней) "
-                         "лежит в колонках flood_expected_loss_rub и covered_flood_loss_rub, по нему выбирается корзина C.\n"
+                         "лежит отдельно в колонках flood_expected_loss_rub и covered_flood_loss_rub.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
                          "Ручная метка использована только для проверки качества.\n"
                          "candidate_orders.geojson: каждая зона в трёх вариантах: новая оптика 1 м (ID зоны), "

@@ -8,7 +8,8 @@ import MorphLoader from './MorphLoader.vue'
 import MorphPanel from './MorphPanel.vue'
 import PlanView from './PlanView.vue'
 import QualityView from './QualityView.vue'
-import { exportDecision, fetchAnalysis, hasData, resetRegion, state } from '../store'
+import ProjectView from './ProjectView.vue'
+import { exportDecision, fetchAnalysis, hasData, resetRegion, retryRegion, state } from '../store'
 import { compactRub } from '../lib/format'
 
 const emit = defineEmits(['asset', 'zone', 'reset'])
@@ -16,6 +17,7 @@ const TABS = [
   { value: 'assets', label: 'Объекты', hint: 'Какие объекты под водой и во сколько обойдётся ущерб' },
   { value: 'plan', label: 'Съёмка', hint: 'Какие снимки купить под бюджет и срок, и почему именно их' },
   { value: 'quality', label: 'Качество', hint: 'Насколько можно верить карте воды' },
+  { value: 'projects', label: 'Проекты', hint: 'Свои объекты и история решений' },
 ]
 const scroller = ref(null)
 const content = ref(null)
@@ -36,7 +38,7 @@ function back() {
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
         <Activity :size="16" class="accent" />
-        <span v-if="hasData" class="tabular">Ущерб {{ compactRub(state.analysis.metrics.expected_loss_rub) }}</span>
+        <span v-if="hasData" class="tabular">EL {{ compactRub(state.analysis.metrics.expected_loss_rub) }}</span>
         <span v-else>Решение</span>
       </button>
     </template>
@@ -50,13 +52,14 @@ function back() {
       <div v-if="state.error" class="error-note">{{ state.error }} <button @click="fetchAnalysis">Повторить</button></div>
       <div v-if="state.liveStatus === 'searching' || state.liveStatus === 'preparing'" class="empty">
         <Globe2 :size="26" />
-        <strong>{{ state.liveStatus === 'searching' ? 'Ищем снимок' : 'Считаем ущерб по снимку' }}</strong>
+        <strong>{{ state.liveStage || 'Готовим анализ' }}</strong>
         <span>Когда модель найдёт воду, здесь появятся объекты, зоны и три варианта закупки.</span>
       </div>
       <div v-else-if="state.liveStatus === 'error'" class="empty">
         <Globe2 :size="26" />
         <strong>Анализ не готов</strong>
         <span>{{ state.liveError }}</span>
+        <button class="tonal-button" @click="retryRegion">Повторить</button>
         <button class="tonal-button" @click="back">Вернуться к демо</button>
       </div>
       <div v-else-if="state.analysis && !hasData" class="empty">
@@ -68,7 +71,8 @@ function back() {
       <div v-else-if="hasData" ref="content" :class="{ dimmed: state.loading }">
         <AssetsView v-if="state.tab === 'assets'" @asset="id => emit('asset', id)" />
         <PlanView v-else-if="state.tab === 'plan'" @zone="id => emit('zone', id)" />
-        <QualityView v-else />
+        <QualityView v-else-if="state.tab === 'quality'" />
+        <ProjectView v-else />
       </div>
       <Transition name="pop">
         <div v-if="state.loading && state.analysis" class="corner-loader"><MorphLoader :size="26" /></div>

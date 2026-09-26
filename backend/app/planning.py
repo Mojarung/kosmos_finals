@@ -368,24 +368,21 @@ def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
 
     case_expected_loss_rub is the mandatory case model EL = p·V·q for every asset with p,
     wherever the point stands; case_loss_status is ok or no_data. It goes to asset_loss.csv.
-    expected_loss_rub (also named flood_expected_loss_rub) is the additional flood-only model:
-    0 on JRC permanent water with loss_status permanent_water. The screen and the basket
-    search use it.
+    expected_loss_rub is the mandatory case EL and drives the basket search.
+    flood_expected_loss_rub is an explicitly separate interpretation that becomes
+    zero at a point classified as permanent water by JRC.
     """
     result = []
     for asset in assets:
         p = asset["p_flood"]
         permanent = bool(asset.get("permanent_water_at_point"))
         case_loss = None if p is None else round(p * asset["value_rub"] * asset["vulnerability"], 2)
-        if p is None:
-            loss, status = None, "no_data"
-        elif permanent:
-            loss, status = 0.0, "permanent_water"
-        else:
-            loss, status = case_loss, "ok"
+        flood_loss = None if p is None else (0.0 if permanent else case_loss)
+        status = "no_data" if p is None else "ok"
         result.append({
             **asset,
-            "expected_loss_rub": loss, "loss_status": status, "flood_expected_loss_rub": loss,
+            "expected_loss_rub": case_loss, "loss_status": status, "flood_expected_loss_rub": flood_loss,
+            "flood_loss_status": "no_data" if p is None else "permanent_water" if permanent else "ok",
             "case_expected_loss_rub": case_loss, "case_loss_status": "no_data" if p is None else "ok",
             "exposure_rub": round(asset["value_rub"] * asset["vulnerability"], 2),
             "map_error_probability": map_error_probability(p, threshold),
@@ -393,7 +390,7 @@ def enrich_assets(assets: list[dict], threshold: float = 0.41) -> list[dict]:
             "map_doubtful": None if p is None else map_error_probability(p, threshold) >= DOUBT_THRESHOLD,
             "probability_status": "frozen_ensemble",
         })
-    return sorted(result, key=lambda asset: (-(asset["expected_loss_rub"] or 0), asset["id"]))
+    return sorted(result, key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))
 
 
 def _half_up(values: np.ndarray, digits: int) -> np.ndarray:
