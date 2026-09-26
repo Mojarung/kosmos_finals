@@ -14,7 +14,8 @@ from urllib.parse import urlencode
 
 from .analysis import context
 from .catalog import ROOT, metadata, scene_dir
-from .planning import BASE_RATE, FRESHNESS_COEF, LEGAL_EDITION, PROCESSING_COEF, USAGE_COEF, as_polygon, enrich_assets
+from .planning import (ARCHIVE_LEAD_DAYS, BASE_RATE, OPTICAL_DELIVERY_HOURS, SAR_DELIVERY_HOURS, as_polygon,
+                       enrich_assets)
 from .scene_builder import PROBABILITY_RULE
 from .sensitivity import asset_plan_sensitivity
 from .zoning import DOUBT_BASIS, DOUBT_RULE, DOUBT_SOURCE, DOUBT_THRESHOLD, ZONE_RULE
@@ -26,7 +27,21 @@ REASONS = {
     "nothing_new": "adds nothing to the goal: its assets and doubtful area are already covered",
     "cheaper_equal": "an equal-value basket is cheaper",
     "plan_infeasible": "no basket satisfies the constraints",
+    "context_only": ("archive frame: shows the state before the flood, not current water; "
+                     "never bought as an observation and never counted in coverage"),
+    "product_rule": "the optical 1 m order of this footprint arrives by the deadline, so the product rule takes optics",
 }
+PLAN_COLUMNS = ["strategy", "candidate_id", "footprint_id", "sensor_type", "resolution_m", "acquisition_type",
+                "data_role", "observation_at", "age_days", "area_km2", "base_rate_rub_km2", "base_rate_status",
+                "processing_level", "usage_type", "guaranteed_purchase", "processing_coef", "usage_coef",
+                "freshness_coef", "discount_coef", "discount_group_id", "previous_group_area_km2",
+                "basket_group_area_km2", "group_area_km2", "discount_formula", "unit_price_rub_km2", "cost_rub",
+                "formula", "legal_edition"]
+DECISION_COLUMNS = ["candidate_id", "footprint_id", "kind", "sensor_type", "resolution_m", "acquisition_type",
+                    "data_role", "delivery_hours", "timely", "counts_for_coverage", "area_km2", "selected_in_c",
+                    "selected_in_b", "reason", "reason_text", "price_alone_rub", "unit_price_rub_km2", "cost_rub",
+                    "basket", "basket_price_with_zone_rub", "asset_ids", "expected_loss_rub",
+                    "flood_expected_loss_rub", "doubt_share", "gain_loss_rub", "gain_doubt_share"]
 # Every number the plan depends on, where it comes from and why this value.
 PARAMETERS = [
     {"name": "model_threshold", "value": 0.41, "source": "ml/REPORT.md §7",
@@ -40,16 +55,24 @@ PARAMETERS = [
      "basis": "compute limit: exact search over 2^16 baskets with 10 object zones and the broad zone"},
     {"name": "base_rate_rub_km2", "value": float(BASE_RATE), "source": "case control example",
      "basis": "scenario rate; no supplier quote; status scenario everywhere"},
-    {"name": "processing_coef_O", "value": float(PROCESSING_COEF), "source": "PP RF 840, L2",
-     "basis": "the operator needs an orthorectified product ready for analysis"},
-    {"name": "usage_coef_P", "value": float(USAGE_COEF), "source": "PP RF 840, internal use",
+    {"name": "processing_coef_O", "value": "L2 1.2 optics; L1 1 radar", "source": "PP RF 840 table: L0 1, L1 1, L2 1.2",
+     "basis": "optics is bought orthorectified and ready for analysis; the radar order is a calibrated L1 product "
+              "the team processes itself, as it does with Sentinel-1"},
+    {"name": "usage_coef_P", "value": 1, "source": "PP RF 840 table: internal 1, limited 1.2, unrestricted 1.5",
      "basis": "the imagery stays inside the operator; results are shared, the image is not"},
-    {"name": "freshness_coef_T", "value": float(FRESHNESS_COEF), "source": "PP RF 840, new acquisition",
-     "basis": "the flood is happening now; archive imagery cannot show current water"},
-    {"name": "resolution_m", "value": 1, "source": "team choice",
-     "basis": "1 m optics separates a building from water at its wall; Sentinel-1 at 10 m cannot"},
-    {"name": "delivery_hours", "value": 6, "source": "scenario",
-     "basis": "assumed tasking and delivery time inside the 6-12 h decision window of the case"},
+    {"name": "freshness_coef_T", "value": "1.8 new; 0.6 archive",
+     "source": "PP RF 840 table: new with guaranteed purchase 1.8, up to 90 days 1, older 0.6",
+     "basis": "the flood is happening now, so observations are new acquisitions; the archive frame is older than "
+              "90 days and serves only as pre-flood context"},
+    {"name": "resolution_m", "value": "1 optics; 3 radar", "source": "team choice",
+     "basis": "1 m optics separates a building from water at its wall; 3 m radar sees water through cloud; "
+              "Sentinel-1 at 10 m cannot resolve a single building"},
+    {"name": "delivery_hours", "value": f"{OPTICAL_DELIVERY_HOURS} optics; {SAR_DELIVERY_HOURS} radar; 0 archive",
+     "source": "scenario",
+     "basis": "assumed tasking and delivery time inside the 6-12 h decision window of the case; an all-weather "
+              "radar order is faster and does not wait for clear sky"},
+    {"name": "archive_lead_days", "value": ARCHIVE_LEAD_DAYS, "source": "scenario",
+     "basis": "the last clear dry-season optical frame before the event; any lead above 90 days gives T = 0.6"},
     {"name": "budget_rub", "value": None, "source": "operator input",
      "basis": "default 6500 RUB, about one sixth of a broad purchase of the chip; the frontier shows other budgets"},
 ]
@@ -214,6 +237,35 @@ def _blank(value: object) -> object:
     return "" if value is None else value
 
 
+def _flag(value: object) -> str:
+    return str(bool(value)).lower()
+
+
+def plan_row(strategy: str, line: dict, product: dict) -> list:
+    """One procurement_plan.csv row: the priced line next to the catalog conditions that explain it."""
+    values = {**line, "strategy": strategy, "footprint_id": product["footprint_id"],
+              "data_role": product["data_role"], "guaranteed_purchase": _flag(line["guaranteed_purchase"])}
+    return [_blank(values[column]) for column in PLAN_COLUMNS]
+
+
+def decision_row(row: dict, case_loss: float, decision: dict) -> list:
+    """One zone_decisions.csv row per catalog order: why it is in basket C or not, with its prices."""
+    chosen = row["chosen"]
+    values = {
+        **row, "timely": _flag(row["timely"]), "counts_for_coverage": _flag(row["counts_for_coverage"]),
+        "selected_in_c": _flag(row["in_c"]), "selected_in_b": _flag(row["in_b"]),
+        "reason_text": REASONS[row["reason"]], "unit_price_rub_km2": row["basket_unit_price_rub_km2"],
+        "cost_rub": row["basket_cost_rub"],
+        "basket_price_with_zone_rub": row["basket_total_rub"] if row["basket_hypothetical"] else None,
+        "asset_ids": "|".join(row["asset_ids"]), "expected_loss_rub": case_loss,
+        "flood_expected_loss_rub": decision["expected_loss_rub"],
+        # Gains belong to the footprint under the product the rule takes; other products show none.
+        "gain_loss_rub": decision.get("gain_loss_rub") if chosen else None,
+        "gain_doubt_share": decision.get("gain_doubt_share") if chosen else None,
+    }
+    return [_blank(values[column]) for column in DECISION_COLUMNS]
+
+
 def package(result: dict) -> io.BytesIO:
     scene_id = result["chip"]["chip_id"]
     info = metadata(scene_id)
@@ -232,9 +284,11 @@ def package(result: dict) -> io.BytesIO:
         losses = {**case_loss, **(changed or {})}
         return round(sum(losses[asset_id] for asset_id in asset_ids), 2)
 
-    zones = result["zones"]
     strategies = result["strategies"]
-    zone_by_id = {zone["id"]: zone for zone in zones}
+    pricing = result["pricing"]
+    zone_by_id = {zone["id"]: zone for zone in result["zones"]}
+    catalog = result["catalog"]
+    product_by_id = {row["candidate_id"]: row for row in catalog}
     decisions = {row["zone_id"]: row for row in result["zone_decisions"]}
     live = info.get("source_kind") == "live_sentinel1_rtc"
     output = io.BytesIO()
@@ -290,7 +344,7 @@ def package(result: dict) -> io.BytesIO:
                 json.dumps(changed_inputs, ensure_ascii=False), selected["quote"]["total_rub"],
                 case_covered(selected["covered_asset_ids"], {row["asset_id"]: row["case_expected_loss_rub"]}),
                 "feasible" if selected["feasible"] else "infeasible", interpretation,
-                row["case_expected_loss_rub"], row["case_rank"], "|".join(selected["zone_ids"]),
+                row["case_expected_loss_rub"], row["case_rank"], "|".join(selected["candidate_ids"]),
                 _blank(selected["covered_doubt_share"]), selected["covered_expected_loss_rub"],
             ])
         for row in result["sensitivity"]["plan"]:
@@ -303,7 +357,7 @@ def package(result: dict) -> io.BytesIO:
                 case_covered(row["covered_asset_ids"]),
                 "feasible" if row["feasible"] else "infeasible",
                 "Reoptimized basket for one changed input; covered EL is not avoided loss",
-                "", "", "|".join(row["zone_ids"]), _blank(row["covered_doubt_share"]),
+                "", "", "|".join(row["candidate_ids"]), _blank(row["covered_doubt_share"]),
                 row["covered_expected_loss_rub"],
             ])
         archive.writestr("sensitivity.csv", _csv(
@@ -311,41 +365,19 @@ def package(result: dict) -> io.BytesIO:
              "covered_expected_loss_rub", "result_status", "interpretation",
              "asset_expected_loss_rub", "rank", "zone_ids", "covered_doubt_share", "covered_flood_loss_rub"],
             sensitivity_rows))
+        # Every product of every footprint is its own order in the one catalog B and C choose from.
         json_file("candidate_orders.geojson", {"type": "FeatureCollection", "features": [
-            {"type": "Feature", "geometry": zone["geometry"],
-             "properties": {**{("candidate_id" if key == "id" else key): value
-                               for key, value in zone.items() if key not in {"geometry", "bounds", "name"}},
-                            "c_selected": decisions[zone["id"]]["selected"],
-                            "c_reason": decisions[zone["id"]]["reason"]}}
-            for zone in zones]})
-        archive.writestr("zone_decisions.csv", _csv(
-            ["candidate_id", "kind", "area_km2", "selected_in_c", "reason", "reason_text", "price_alone_rub",
-             "basket_price_with_zone_rub", "asset_ids", "expected_loss_rub", "flood_expected_loss_rub",
-             "doubt_share", "gain_loss_rub", "gain_doubt_share"],
-            [[row["zone_id"], row["kind"], row["area_km2"], str(row["selected"]).lower(), row["reason"],
-              REASONS[row["reason"]], row["price_alone_rub"], _blank(row.get("price_with_rub")),
-              "|".join(row["asset_ids"]), case_covered(row["asset_ids"]), row["expected_loss_rub"],
-              _blank(row["doubt_share"]), _blank(row.get("gain_loss_rub")), _blank(row.get("gain_doubt_share"))]
-             for row in result["zone_decisions"]]))
-        plan_rows = []
-        for strategy in ("B", "C"):
-            for line in strategies[strategy]["quote"]["lines"]:
-                zone = zone_by_id[line["candidate_id"]]
-                plan_rows.append([
-                    strategy, zone["id"], zone["area_km2"], line["base_rate_rub_km2"],
-                    line["base_rate_status"], zone["processing_level"], zone["usage_type"],
-                    str(zone["guaranteed_purchase"]).lower(), line["processing_coef"],
-                    line["usage_coef"], line["freshness_coef"], line["discount_coef"],
-                    line["discount_group_id"], line["group_area_km2"], line["unit_price_rub_km2"],
-                    line["cost_rub"], line["formula"], line["legal_edition"],
-                ])
-        archive.writestr("procurement_plan.csv", _csv(
-            ["strategy", "candidate_id", "area_km2", "base_rate_rub_km2",
-             "base_rate_status", "processing_level", "usage_type", "guaranteed_purchase",
-             "processing_coef", "usage_coef", "freshness_coef", "discount_coef",
-             "discount_group_id", "group_area_km2", "unit_price_rub_km2", "cost_rub",
-             "formula", "legal_edition"], plan_rows))
-        json_file("strategy_plans.json", {key: strategies[key]["zone_ids"] for key in ("A", "B", "C")})
+            {"type": "Feature", "geometry": zone_by_id[row["footprint_id"]]["geometry"],
+             "properties": {**{key: value for key, value in row.items() if key != "name"},
+                            "c_selected": row["in_c"], "b_selected": row["in_b"], "c_reason": row["reason"]}}
+            for row in catalog]})
+        archive.writestr("zone_decisions.csv", _csv(DECISION_COLUMNS, [
+            decision_row(row, case_covered(row["asset_ids"]), decisions[row["footprint_id"]]) for row in catalog]))
+        archive.writestr("procurement_plan.csv", _csv(PLAN_COLUMNS, [
+            plan_row(strategy, line, product_by_id[line["candidate_id"]])
+            for strategy in ("B", "C") for line in strategies[strategy]["quote"]["lines"]]))
+        json_file("strategy_plans.json", {"A": [], "B": strategies["B"]["candidate_ids"],
+                                          "C": strategies["C"]["candidate_ids"]})
         archive.writestr("strategy_comparison.csv", _csv(
             ["strategy", "data_cost_rub", "other_cost_rub", "decision_cost_rub",
              "budget_rub", "budget_feasible", "covered_expected_loss_rub", "coverage_share", "coverage_status",
@@ -428,8 +460,9 @@ def package(result: dict) -> io.BytesIO:
                 "flood_expected_loss_rub and zone_decisions.csv gain_loss_rub show the flood-only numbers the plan "
                 "used. analysis.json is the screen state: there expected_loss_rub and covered_expected_loss_rub are "
                 "flood-only and the case_* fields carry the mandatory EL."),
-            "covered_loss_rule": ("sum of unique expected_loss_rub (p*V*q) of region assets inside the selected zones; "
-                                  "covered_flood_loss_rub sums flood_expected_loss_rub the same way"),
+            "covered_loss_rule": ("sum of unique expected_loss_rub (p*V*q) of region assets inside the selected "
+                                  "event_observation orders delivered by the deadline; context (archive) and late "
+                                  "orders add no coverage; covered_flood_loss_rub sums flood_expected_loss_rub the same way"),
             "coverage_share_rule": "covered / estimated EL of region assets; empty with coverage_status when the denominator is 0",
             "covered_doubt_rule": "doubtful area inside the union of selected zones / doubtful area of the analysed region",
             "unestimated_exposure_rub": result["metrics"]["unestimated_exposure_rub"],
@@ -437,19 +470,25 @@ def package(result: dict) -> io.BytesIO:
                                  "flood_mask = 1, p where flood_mask = 0 (calibrated p, share 0-1); "
                                  "ensemble_spread and flood_uncertainty.tif keep the std of the five members "
                                  "as a diagnostic"),
-            "candidate_rule": "1.12 km square around each asset, uncertainty rectangles from the doubt map, and the broad selected-region rectangle; min 1 km²",
+            "candidate_rule": pricing["candidate_rule"],
+            "product_rule": pricing["product_rule"],
             "zone_area_crs": "EPSG:6933",
             "proxy_check": result["asset_proxy_check"],
-            "pricing": {"base_rate_status": "scenario", "base_rate_rub_km2": float(BASE_RATE),
-                        "legal_edition": LEGAL_EDITION,
+            "pricing": {**{key: value for key, value in pricing.items() if key not in ("candidate_rule", "product_rule")},
+                        "base_rate_rub_km2": float(BASE_RATE),
                         "legal_checked_at": "2026-09-25",
                         "legal_source_url": "https://government.ru/docs/all/160697/",
                         "legal_scope": "case_edition_verified; current procurement requires edition and provider check",
-                        "base_rate_source": "case_materials_control_example",
+                        "calculation_date_rule": ("orders are priced on calculation_date (UTC day of the analysis): it "
+                                                  "sets the order calendar year of every discount group and the age "
+                                                  "of existing imagery"),
                         "discount_group_id": strategies["C"]["quote"]["discount_group_id"],
-                        "discount_group_rule": strategies["C"]["quote"]["discount_group_rule"],
-                        "previous_group_area_km2": 0,
-                        "availability_status": "scenario_6_hours"},
+                        "discount_groups": {key: [group["discount_group_id"] for group in strategies[key]["quote"]["groups"]]
+                                            for key in ("B", "C")},
+                        "groups": {key: strategies[key]["quote"]["groups"] for key in ("B", "C")},
+                        "availability_status": (f"scenario: new optics {OPTICAL_DELIVERY_HOURS} h and new radar "
+                                                f"{SAR_DELIVERY_HOURS} h after the order; the archive frame is "
+                                                "available at once")},
             "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else row
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],
@@ -476,7 +515,10 @@ def package(result: dict) -> io.BytesIO:
                          "лежит в колонках flood_expected_loss_rub и covered_flood_loss_rub, по нему выбирается корзина C.\n"
                          "Точки и V/q учебные. Ставка и срок платной съёмки сценарные.\n"
                          "Ручная метка использована только для проверки качества.\n"
-                         "zone_decisions.csv: почему каждая зона вошла или не вошла в заказ C.\n"
+                         "candidate_orders.geojson: каждая зона в трёх вариантах: новая оптика 1 м (ID зоны), "
+                         "новый радар 3 м (-SAR) и архивная оптика старше 90 дней (-ARC, только контекст).\n"
+                         "zone_decisions.csv: почему каждая позиция каталога вошла или не вошла в заказ C.\n"
+                         "procurement_plan.csv: коэффициенты О, П, Т, Р каждой строки и группа скидки своей корзины.\n"
                          "sensitivity.csv: каждый вход меняется на ±20% по одному при фиксированной карте и портфеле.\n"
                          "Проверка перед реальным заказом: актуальная редакция ПП 840 и котировка поставщика.\n")
     output.seek(0)

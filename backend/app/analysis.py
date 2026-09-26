@@ -9,8 +9,9 @@ import numpy as np
 
 from .catalog import default_scene_id, float_map, mask, metadata, on_refresh, permanent_mask, quality, scene_catalog
 from .evidence import asset_proxy_check, reference_proxy_check
-from .planning import (BasketSpace, candidates, contains, enrich_assets, intersects, map_error_probability,
-                       rectangle_area_km2, square_around)
+from .planning import (CANDIDATE_RULE, PRODUCT_RULE, BasketSpace, as_date, candidates, chosen_product, contains,
+                       enrich_assets, intersects, map_error_probability, pricing_rules, rectangle_area_km2,
+                       square_around, today)
 from .sensitivity import asset_sensitivity, plan_sensitivity
 from .zoning import DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window, uncertainty_zones
 
@@ -197,7 +198,7 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     zones: list[dict] = []
     if region["data_status"] in WITH_DATA:
         doubtful = uncertainty_zones(scene_id, window, rectangle_area_km2)
-        zones = [zone for zone in candidates(all_assets, chip, broad_bounds, doubtful)
+        zones = [zone for zone in candidates(all_assets, chip, broad_bounds, doubtful, info.get("observed_at"))
                  if zone["kind"] != "object" or any(contains(zone["bounds"], asset) for asset in assets)]
     masks, masses, total = doubt_atoms(scene_id, window, zones) if zones else (None, None, 0.0)
     space = BasketSpace(zones, assets, masks, masses, total)
@@ -228,12 +229,26 @@ def _case_coverage(ctx: Context, covered_ids: list[str]) -> dict:
             "case_coverage_status": None if ctx.case_exposure else "no_estimated_exposure_in_region"}
 
 
-def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, deadline_hours: int) -> dict:
+def _broad(ctx: Context) -> tuple[dict | None, int | None]:
+    """The broad footprint of strategy B and its basket index."""
+    broad = next((zone for zone in ctx.zones if zone["id"] == "ZALL"), None)
+    return broad, ctx.space.index(["ZALL"]) if broad is not None else None
+
+
+def _zone_view(zone: dict, deadline_hours: int) -> dict:
+    """One footprint as the screen knows it, carrying the product the rule takes at this deadline."""
+    product = chosen_product(zone, deadline_hours)
+    return {**{key: value for key, value in zone.items() if key != "products"},
+            **{key: value for key, value in product.items() if key != "footprint_id"},
+            "timely": product["delivery_hours"] <= deadline_hours}
+
+
+def _strategies(ctx: Context, c: dict, budget_rub: float, deadline_hours: int, on) -> dict:
     space, exposure = ctx.space, ctx.exposure
-    zone_ids = [zone["id"] for zone in ctx.zones]
-    broad_index = space.index(["ZALL"]) if "ZALL" in zone_ids else None
-    b = space.summary(broad_index) if broad_index is not None else space.summary(None)
-    b_timely = deadline_hours >= 6
+    broad, broad_index = _broad(ctx)
+    b = space.summary(broad_index, deadline_hours, strategy="B", on=on)
+    # An empty B (no broad footprint outside the data) orders nothing, so nothing is late.
+    b_timely = broad is None or chosen_product(broad, deadline_hours)["delivery_hours"] <= deadline_hours
     b_covered_ids = b["covered_asset_ids"] if b_timely else []
     b_covered = b["covered_expected_loss_rub"] if b_timely else 0
     b_doubt = (b["covered_doubt_share"] if b_timely else 0) if space.doubt_total else None
@@ -246,7 +261,7 @@ def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, d
               "budget_feasible": True, "timely": True,
               "residual_uncertainty": round(ctx.region["doubt_share"], 5) if ctx.region.get("doubt_share") is not None else None,
               "uncertainty_status": "baseline"},
-        "B": {"label": "Широкая съёмка", "zone_ids": [z["id"] for z in space.selected(broad_index)] if broad_index is not None else [],
+        "B": {"label": "Широкая съёмка", "zone_ids": b["zone_ids"], "candidate_ids": b["candidate_ids"],
               "data_cost_rub": b["quote"]["total_rub"], "quote": b["quote"],
               "covered_asset_ids": b_covered_ids, "covered_expected_loss_rub": b_covered,
               "coverage_share": _share(b_covered, exposure), "coverage_status": no_exposure,
@@ -265,26 +280,31 @@ def _strategies(ctx: Context, c: dict, c_index: int | None, budget_rub: float, d
     }
 
 
-def _all_uncertainty(space: BasketSpace, broad: dict) -> dict | None:
+def _all_uncertainty(space: BasketSpace, broad: dict, deadline_hours: int) -> dict | None:
     """Buy every uncertainty zone: the doubt a broad purchase covers there, at its own price."""
     ids = [zone["id"] for zone in space.zones if zone["kind"] == "uncertainty"]
     if not ids:
         return None
-    plan = space.summary(space.index(ids))
+    plan = space.summary(space.index(ids), deadline_hours)
     cost = plan["quote"]["total_rub"]
-    return {"zone_ids": ids, "data_cost_rub": cost, "covered_doubt_share": plan["covered_doubt_share"],
+    return {"zone_ids": ids, "candidate_ids": plan["candidate_ids"], "data_cost_rub": cost,
+            "covered_doubt_share": plan["covered_doubt_share"],
             "covered_expected_loss_rub": plan["covered_expected_loss_rub"],
             "savings_share_vs_broad": round(1 - cost / broad["data_cost_rub"], 4) if broad["data_cost_rub"] else None}
 
 
 def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
-            deadline_hours: int, must_cover: str | None, scene_id: str | None = None) -> dict:
+            deadline_hours: int, must_cover: str | None, scene_id: str | None = None,
+            calculation_date: object = None) -> dict:
+    """calculation_date is the pricing date (today in UTC by default): it fixes the order year and image ages."""
     scene_id = scene_id or default_scene_id()
+    on = as_date(calculation_date) or today()
     ctx = context(scene_id, bounds)
     info, region, assets, space, exposure = ctx.info, ctx.region, ctx.assets, ctx.space, ctx.exposure
     c_index = space.best(budget_rub, priority, deadline_hours, must_cover)
-    c = space.summary(c_index)
-    strategies = _strategies(ctx, c, c_index, budget_rub, deadline_hours)
+    c = space.summary(c_index, deadline_hours, on=on)
+    strategies = _strategies(ctx, c, budget_rub, deadline_hours, on)
+    decisions = space.decisions(c_index, budget_rub, priority, deadline_hours, must_cover, on=on)
     b_cost = strategies["B"]["data_cost_rub"]
     c_useful = c["feasible"] and (c["covered_expected_loss_rub"] > 0 or (c["covered_doubt_share"] or 0) > 0)
     savings = round(b_cost - c["quote"]["total_rub"], 2) if c_useful and b_cost else None
@@ -302,8 +322,12 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                                             "metrics_independent", "permanent_rule") if key in info}
             | {"permanent_status": region["permanent_status"]},
         "scenes": scene_catalog()["scenes"],
-        "region": region, "assets": assets, "zones": ctx.zones,
-        "zone_decisions": space.decisions(c_index, budget_rub, priority, deadline_hours, must_cover),
+        "region": region, "assets": assets,
+        "zones": [_zone_view(zone, deadline_hours) for zone in ctx.zones],
+        "zone_decisions": decisions,
+        "catalog": space.catalog(c_index, _broad(ctx)[1], deadline_hours, decisions, on=on),
+        "pricing": {**pricing_rules(), "calculation_date": on.isoformat(), "order_year": on.year,
+                    "candidate_rule": CANDIDATE_RULE, "product_rule": PRODUCT_RULE},
         "sensitivity": {
             "asset": asset_sensitivity(assets),
             "plan": plan_sensitivity(space, budget_rub, priority, deadline_hours, must_cover),
@@ -342,7 +366,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
         "doubt": {"rule": DOUBT_RULE, "zone_rule": ZONE_RULE, "threshold": DOUBT_THRESHOLD,
                   "doubtful_area_km2": round(space.doubt_total * pixel_area, 3) if space.doubt_total else None,
                   "frontier": space.frontier(deadline_hours, must_cover),
-                  "all_uncertainty_zones": _all_uncertainty(space, strategies["B"]),
+                  "all_uncertainty_zones": _all_uncertainty(space, strategies["B"], deadline_hours),
                   "evidence": DOUBT_EVIDENCE,
                   "calibration_checked_here": not live},
         "strategies": strategies,
@@ -366,7 +390,8 @@ def _limitations(info: dict, region: dict) -> list[str]:
         "Обязательный EL = p × V × q считается для всех объектов, в том числе на постоянной воде. "
         "Ущерб только от паводка (0 на постоянной воде) идёт отдельной оценкой, по ней выбирается корзина C.",
         "V и q объектов заданы кейсом; сами точки учебные, а не реальный реестр.",
-        "Базовая ставка 788,64 ₽/км² и доступность новой съёмки через 6 часов сценарные.",
+        "Базовая ставка 788,64 ₽/км² и доступность новой съёмки (оптика через 6 часов, радар через 4 часа) сценарные.",
+        "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
     ]
     if live:
