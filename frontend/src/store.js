@@ -24,6 +24,8 @@ export const state = reactive({
   hoverZoneId: null,
   mustCover: null,
   layerMode: 'model',
+  // Сколько пикселей снимка без сигнала радара: карта рисует их серым, легенда называет.
+  radarGaps: 0,
   basemap: 'satellite',
   overlayOpacity: 58,
   showRadar: false,
@@ -48,6 +50,13 @@ export const selectedAsset = computed(() => state.analysis?.assets.find(item => 
 export const activePlan = computed(() => state.analysis?.strategies[state.strategy])
 export const testQuality = computed(() => state.analysis?.quality.parts.test_core)
 export const permanentSeparated = computed(() => ['jrc_waterhand', 'jrc_gsw'].includes(state.analysis?.region.permanent_status))
+/*
+ * Калибровка p и смысл «шанса ошибки» проверены только на снимках Sen1Floods11 GRD.
+ * Для кадра RTC API говорит false: статистику Sen1Floods11 к нему не прикладываем.
+ */
+export const calibrationChecked = computed(() => state.analysis?.doubt?.calibration_checked_here ?? !isLive.value)
+// Порог сомнений (шанс ошибки карты), выбранный на validation: 0,0826.
+export const doubtThreshold = computed(() => state.analysis?.doubt?.threshold ?? state.analysis?.quality.doubt_threshold?.map_error_chance_threshold)
 
 let controller
 let timer

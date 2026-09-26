@@ -174,15 +174,17 @@ def test_vector_prices_match_exact_quotes_for_every_basket():
     from app.planning import quote
     ctx = context("Nigeria_812045", None)
     space = ctx.space
-    prices = space.prices(1.0)
-    for index in np.random.default_rng(3).choice(len(space.subsets), size=400, replace=False):
-        assert abs(prices[index] - quote(space.selected(int(index)))["total_rub"]) < 0.011
+    for deadline in (4, 8):  # radar and optics price on different discount curves
+        prices = space.prices(1.0, deadline)
+        for index in np.random.default_rng(3).choice(len(space.subsets), size=400, replace=False):
+            assert abs(prices[index] - quote(space.orders(int(index), deadline))["total_rub"]) < 0.011
 
 
 def test_plan_never_exceeds_budget_near_price_boundaries():
     ctx = context("Nigeria_812045", None)
-    prices = np.unique(np.round(ctx.space.prices(1.0), 2))
-    for budget in prices[1:40]:
-        index = ctx.space.best(float(budget), "risk", 8, None)
-        assert index is not None
-        assert quote(ctx.space.selected(index))["total_rub"] <= float(budget)
+    for deadline in (4, 8):
+        prices = np.unique(np.round(ctx.space.prices(1.0, deadline), 2))
+        for budget in prices[1:40]:
+            index = ctx.space.best(float(budget), "risk", deadline, None)
+            assert index is not None
+            assert quote(ctx.space.orders(index, deadline))["total_rub"] <= float(budget)

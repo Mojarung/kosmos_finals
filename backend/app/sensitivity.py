@@ -72,7 +72,7 @@ def plan_sensitivity(space: BasketSpace, budget_rub: float, priority: str,
             selected = space.plan(budget, priority, deadline_hours, must_cover, tariff=multiplier)
             rows.append({"input": input_name, "factor": factor,
                          "budget_rub": budget, "tariff_multiplier": multiplier,
-                         "zone_ids": selected["zone_ids"],
+                         "zone_ids": selected["zone_ids"], "candidate_ids": selected["candidate_ids"],
                          "data_cost_rub": selected["quote"]["total_rub"],
                          "covered_expected_loss_rub": selected["covered_expected_loss_rub"],
                          "covered_doubt_share": selected["covered_doubt_share"],

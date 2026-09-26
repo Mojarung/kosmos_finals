@@ -21,7 +21,9 @@ validator_spec.loader.exec_module(validator)
 
 
 def test_case_control_price_and_basket_discount():
-    one_km = {"id": "control", "area_km2": 1.0}
+    one_km = {"id": "control", "area_km2": 1.0, "sensor_type": "optical", "resolution_m": 1,
+              "processing_level": "L2", "usage_type": "internal", "acquisition_type": "new",
+              "guaranteed_purchase": True}
     assert quote([one_km])["total_rub"] == 1703.46
     assert quote([one_km, one_km])["discount_coef"] < quote([one_km])["discount_coef"]
 
@@ -55,11 +57,15 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
     assert result["metrics"]["assets_in_region"] == 0
     assert result["metrics"]["region_expected_loss_rub"] == 0
     assert result["zones"] == []
+    assert len(result["assets"]) == 10
     assert result["strategies"]["C"]["data_cost_rub"] == 0
+    assert result["strategies"]["B"]["data_cost_rub"] == 0
 
     inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
+    # B is the declared broad rule of the fixed-chip experiment: the whole chip, whatever the region.
     assert abs(broad["area_km2"] - inside["chip"]["area_km2"]) < 0.001
+    assert inside["region"]["area_km2"] < inside["chip"]["area_km2"]
 
 
 def test_frozen_model_metrics_and_case_export():

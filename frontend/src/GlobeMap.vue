@@ -4,8 +4,9 @@ import * as maplibregl from 'maplibre-gl'
 import { ScanSearch, X } from '@lucide/vue'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { state } from './store'
+import { calibrationChecked, state } from './store'
 import { compactRub, number, percent } from './lib/format'
+import CalibrationBadge from './components/CalibrationBadge.vue'
 import { waterField } from './lib/water'
 import { WaterLayer } from './lib/waterLayer'
 import { bindTip } from './lib/tip'
@@ -44,6 +45,8 @@ const rasterNames = ['radar', 'probability', 'baseline', 'reference', 'uncertain
 const rasterFile = { radar: 'radar', probability: 'probability', baseline: 'baseline', reference: 'reference', uncertainty: 'doubt' }
 const satelliteTiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const water = new WaterLayer('water-layer', { onError: error => console.warn(error) })
+// Прозрачный пиксель: слой «нет сигнала» пуст, пока поле воды для снимка не готово.
+const EMPTY_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 // Цвета оверлеев в тон интерфейсу: объекты и их зоны янтарные, как риск, неуверенность фиолетовая.
 const COLORS = {
@@ -66,18 +69,37 @@ let waterToken = 0
 async function loadWater(chip, reveal) {
   const token = ++waterToken
   water.clear()
+  setNoData(null, chip.bbox)
   try {
     const permanent = ['jrc_waterhand', 'jrc_gsw'].includes(chip.permanent_status) ? '/api/demo/' + chip.chip_id + '/permanent.png' : null
-    const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent)
+    const field = await waterField('/api/demo/' + chip.chip_id + '/model.png', permanent, layerUrl(chip.chip_id, 'radar'))
     if (token !== waterToken) return false
     const [w, s, e, n] = chip.bbox
     const meters = (e - w) * 111320 * Math.cos(((s + n) / 2) * Math.PI / 180) / field.width
     water.setScene(field, chip.bbox, meters, { reveal })
+    setNoData(field.noData, chip.bbox)
     return true
   } catch (error) {
     console.warn('Water field:', error)
     return false
   }
+}
+/*
+ * Пиксели без сигнала радара закрашены серым поверх данных: иначе сквозь них видна
+ * подложка, и шов на стыке кадров Sentinel-1 выглядел как дорога поверх паводка.
+ */
+function setNoData(noData, bbox) {
+  state.radarGaps = noData?.count || 0
+  if (!ready) return
+  map.getSource('nodata')?.updateImage({ url: noData?.url || EMPTY_IMAGE, coordinates: coordinates(bbox) })
+  syncNoData()
+}
+function syncNoData() {
+  if (!ready || !map.getLayer('nodata-layer')) return
+  const pending = ['searching', 'preparing', 'error'].includes(state.liveStatus)
+  const shown = state.radarGaps > 0 && state.layerMode !== 'none' && !pending
+  map.setLayoutProperty('nodata-layer', 'visibility', shown ? 'visible' : 'none')
+  map.setPaintProperty('nodata-layer', 'raster-opacity', phase !== null ? 0 : state.overlayOpacity / 100)
 }
 function polygon(bounds) {
   const [w, s, e, n] = bounds
@@ -125,6 +147,9 @@ function buildOverlays() {
   }
   water.set({ theme: theme() })
   map.addLayer(water, before)
+  map.addSource('nodata', { type: 'image', url: EMPTY_IMAGE, coordinates: imageCoords })
+  map.addLayer({ id: 'nodata-layer', type: 'raster', source: 'nodata', layout: { visibility: 'none' },
+    paint: { 'raster-resampling': 'nearest', 'raster-fade-duration': 0, 'raster-opacity-transition': { duration: 350 } } }, before)
   map.addLayer({ id: 'chip-outline', type: 'line', source: 'chip',
     paint: { 'line-color': c.chip, 'line-width': 2, 'line-opacity': 0.9 } }, before)
   const zoneColor = ['match', ['get', 'kind'], 'uncertainty', c.doubt, 'broad', c.broad, c.object]
@@ -146,8 +171,6 @@ function buildOverlays() {
     paint: { 'circle-radius': 14, 'circle-color': c.chip, 'circle-opacity': 0.22 } }, before)
   map.addLayer({ id: 'probe-point', type: 'circle', source: 'probe',
     paint: { 'circle-radius': 5, 'circle-color': c.chip, 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff' } }, before)
-  map.addLayer({ id: 'journey-line', type: 'line', source: 'journey', filter: ['==', ['geometry-type'], 'LineString'],
-    paint: { 'line-color': c.chip, 'line-width': 2.5, 'line-opacity': 0.85, 'line-dasharray': [2, 1.5] } }, before)
   map.addLayer({ id: 'journey-points', type: 'circle', source: 'journey', filter: ['==', ['geometry-type'], 'Point'],
     paint: { 'circle-radius': ['case', ['==', ['get', 'end'], 1], 8, 5], 'circle-color': c.chip,
       'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } }, before)
@@ -155,21 +178,14 @@ function buildOverlays() {
   // Проекция всегда глобус: на крупном масштабе MapLibre сам рисует его плоским,
   // а при отдалении колесом карта плавно сворачивается в шар.
   map.setProjection({ type: 'globe' })
-  // MapLibre раскрывает длинную атрибуцию при добавлении нового raster-source.
-  // Оставляем доступную кнопку «i», а сам текст показываем по запросу.
-  requestAnimationFrame(() => {
-    const attribution = map?.getContainer().querySelector('.maplibregl-ctrl-attrib')
-    attribution?.removeAttribute('open')
-    attribution?.classList.remove('maplibregl-compact-show')
-  })
   ready = true
   syncMap()
   emit('ready')
 }
 
 function markerTip(asset, rank) {
-  const where = asset.loss_status === 'permanent_water' ? 'на постоянной воде, ущерба от паводка нет'
-    : asset.p_flood == null ? 'нет данных радара' : `вода ${percent(asset.p_flood)} · ущерб ${compactRub(asset.expected_loss_rub)}`
+  const where = asset.p_flood == null ? 'нет данных радара'
+    : `${asset.permanent_water_at_point ? 'постоянная вода' : 'вода'} ${percent(asset.p_flood)} · ущерб ${compactRub(asset.expected_loss_rub)}`
   return `${rank}. ${asset.name}: ${where}`
 }
 
@@ -229,6 +245,7 @@ function syncMap() {
   if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
     for (const name of rasterNames) map.setLayoutProperty(name + '-layer', 'visibility', 'none')
     water.set({ visible: false })
+    syncNoData()
     setData('chip', empty)
     setData('zones', empty)
     setData('region', state.region ? collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]) : empty)
@@ -264,6 +281,7 @@ function syncMap() {
     map.setPaintProperty(name + '-layer', 'raster-opacity', hidden ? 0 : state.overlayOpacity / 100)
   }
   water.set({ visible: state.layerMode === 'model' && !hidden, opacity: state.overlayOpacity / 100 })
+  syncNoData()
   map.setPaintProperty('chip-outline', 'line-opacity', hidden ? 0 : 0.9)
   setData('chip', hidden ? empty : collection([{ type: 'Feature', geometry: polygon(chip.bbox), properties: {} }]))
   setData('region', hidden || !state.region ? empty : collection([{ type: 'Feature', geometry: polygon(state.region), properties: {} }]))
@@ -331,30 +349,34 @@ function sceneCenter(scene) {
   const [w, s, e, n] = scene.bbox
   return [(w + e) / 2, (s + n) / 2]
 }
-function travelZoom(from, to) {
-  const longitude = Math.abs(from[0] - to[0])
-  return Math.min(longitude, 360 - longitude) < 16 && Math.abs(from[1] - to[1]) < 12 ? 4.1 : 1.8
-}
 function journeyFeatures(from, to) {
-  const points = []
-  for (let i = 0; i <= 32; i++) {
-    const t = i / 32
-    points.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t])
-  }
   return collection([
-    { type: 'Feature', geometry: { type: 'LineString', coordinates: points }, properties: {} },
     { type: 'Feature', geometry: { type: 'Point', coordinates: from }, properties: { end: 0 } },
     { type: 'Feature', geometry: { type: 'Point', coordinates: to }, properties: { end: 1 } },
   ])
 }
-async function moveCamera(center, zoom, duration) {
+async function moveCamera(center, zoom, duration, easing = t => t) {
   if (reducedMotion()) { map.jumpTo({ center, zoom, pitch: 0, bearing: 0 }); return }
   await new Promise(resolve => {
     const timer = setTimeout(done, duration + 300)
     function done() { clearTimeout(timer); map.off('moveend', done); resolve() }
     map.once('moveend', done)
-    map.easeTo({ center, zoom, pitch: 0, bearing: 0, duration, essential: false })
+    map.easeTo({ center, zoom, pitch: 0, bearing: 0, duration, easing, essential: false })
   })
+}
+async function orbitGlobe(from, to, zoom, token) {
+  if (reducedMotion()) return moveCamera(to, zoom, 0)
+  // MapLibre выбирает кратчайшую дугу между центрами. Промежуточные точки
+  // меньше 90° заставляют глобус пройти через дальнюю сторону даже для
+  // соседних стран, сохраняя непрерывное направление вращения.
+  const shortArc = ((to[0] - from[0] + 540) % 360) - 180
+  const longArc = shortArc >= 0 ? shortArc - 360 : shortArc + 360
+  const steps = Math.ceil(Math.abs(longArc) / 65)
+  for (let step = 1; step <= steps && token === flight; step++) {
+    const progress = step / steps
+    const center = [from[0] + longArc * progress, from[1] + (to[1] - from[1]) * progress]
+    await moveCamera(center, zoom, 2300 / steps, step === steps ? t => t * (2 - t) : t => t)
+  }
 }
 async function sceneFrameReady(token, limit = 8000) {
   const deadline = performance.now() + limit
@@ -460,12 +482,13 @@ async function flyToScene(id) {
   const origin = state.analysis.scenes.find(scene => scene.chip_id === originId) || state.analysis.chip
   const from = sceneCenter(origin)
   const to = sceneCenter(target)
-  const zoom = travelZoom(from, to)
+  const zoom = 1.8
   const [w, s, e, n] = target.bbox
   const camera = map.cameraForBounds([[w, s], [e, n]], { padding: padding(), maxZoom: 14.2 })
   const analysisReady = analysisFor(id)
   preloadScene(map, target, camera?.zoom ?? 13).catch(error => console.warn('Scene preload:', error))
-  preloadJourney(map, from, to, zoom).catch(error => console.warn('Journey preload:', error))
+  const globeReady = preloadJourney(map, from, to, zoom)
+    .catch(error => console.warn('Journey preload:', error))
 
   phase = 'out'
   journey.value = { from: origin.event, to: target.event, stage: 'depart' }
@@ -476,11 +499,16 @@ async function flyToScene(id) {
   map.stop()
   setData('journey', journeyFeatures(from, to))
   map.jumpTo({ center: from, zoom, pitch: 0, bearing: 0 })
-  const routeReady = await tilesReady(1800)
+  await globeReady
+  // Прогреты тайлы всего глобуса; остальные источники могут ещё догружать
+  // старый снимок и не должны скрывать сам облёт.
+  await tilesReady(1800)
   if (token !== flight) return
   journey.value.stage = 'travel'
-  if (routeReady) veiled.value = false
-  await moveCamera(to, zoom, 900)
+  veiled.value = false
+  if (!reducedMotion()) await wait(200)
+  if (token !== flight) return
+  await orbitGlobe(from, to, zoom, token)
   if (token !== flight) return
   journey.value.stage = 'arrive'
   if (!await analysisReady) {
@@ -619,7 +647,8 @@ onMounted(() => {
     maxTileCacheSize: 300, maxTileCacheZoomLevels: 16,
   })
   map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right')
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
+  // Атрибуцию подложки показывает строка под картой (App.vue, .map-credits): кнопка «i»
+  // MapLibre пряталась под панелью решения, а на телефоне была выключена совсем.
   map.on('error', error => {
     // MapLibre считает errored-тайл «загруженным» в areTilesLoaded().
     if (error.tile) tileErrorSeen = true
@@ -748,6 +777,7 @@ watch(() => state.drawing, value => {
           <div v-tip="state.analysis?.chip.source_kind === 'live_sentinel1_rtc' ? 'Для нового снимка ручной разметки нет' : 'Разметка Sen1Floods11. Только для проверки, в расчёт не идёт'"><span>Ручная метка</span><b>{{ water3(probe.reference_water) }}</b></div>
           <div v-tip="'Насколько расходятся пять моделей ансамбля, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number(probe.uncertainty * 100, 1) }} п.п.</b></div>
         </div>
+        <p v-if="!calibrationChecked" class="pixel-calib"><CalibrationBadge /></p>
         <p class="pixel-coords tabular">{{ probe.latitude.toFixed(4) }}, {{ probe.longitude.toFixed(4) }}</p>
       </template>
       <p v-else class="pixel-message">{{ PROBE_MESSAGES[probe?.status] || PROBE_MESSAGES.error }}</p>

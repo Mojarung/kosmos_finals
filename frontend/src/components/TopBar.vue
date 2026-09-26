@@ -21,6 +21,30 @@ const flag = computed(() => flagUrl(eventKey(current.value?.chip_id)))
 // Живой регион (рамка на карте) заменяет переключатель стран выбором даты снимка.
 const liveMode = computed(() => state.liveStatus !== 'idle' || state.liveCandidates.length > 0)
 const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+
+/*
+ * Что именно открыто: идентификатор S1-чипа Sen1Floods11 или кадр Sentinel-1 RTC.
+ * У кадра RTC спутник и абсолютная орбита читаются из идентификатора STAC:
+ * S1A_IW_GRDH_1SDV_<начало>_<конец>_<орбита>_<datatake>_rtc.
+ */
+const origin = computed(() => {
+  const scene = current.value
+  if (!scene || scene.chip_id === 'live_pending') return null
+  const chip = state.analysis?.chip?.chip_id === scene.chip_id ? state.analysis.chip : null
+  if (!scene.chip_id.startsWith('live_') && chip?.source_kind !== 'live_sentinel1_rtc') {
+    return { label: 'S1‑чип', value: scene.chip_id,
+      tip: `S1‑чип ${scene.chip_id} из Sen1Floods11 v1.1: радар Sentinel‑1 GRD, поляризации VV и VH, снимок ${date(scene.observed_at)}` }
+  }
+  const item = chip?.source_item_id || ''
+  const parts = item.split('_')
+  const known = parts.length >= 8 && /^S1[A-D]$/.test(parts[0]) && /^\d{6}$/.test(parts[6])
+  const orbit = known ? Number(parts[6]) : null
+  const when = chip?.observed_at ? `${date(chip.observed_at)}, ${utcTime(chip.observed_at)} UTC` : 'дата н/д'
+  return {
+    label: 'RTC‑кадр', value: known ? `${parts[0]}, орбита ${orbit}` : 'Sentinel‑1',
+    tip: `Кадр Sentinel‑1 RTC ${item || 'н/д'}. Снят ${when}` + (known ? `, спутник ${parts[0]}, абсолютная орбита ${orbit}` : '') + '. Ручной разметки для него нет',
+  }
+})
 </script>
 
 <template>
@@ -28,14 +52,16 @@ const utcTime = value => new Date(value).toLocaleTimeString('ru-RU', { hour: '2-
     <!-- Заголовок сцены: страна крупно, дата снимка под ней. Меняется сразу по клику,
          не дожидаясь расчёта, и прокручивается как табло. -->
     <div v-if="current" class="panel scene-title" data-enter
-      v-tip="`Снимок ${current.chip_id}: радар Sentinel‑1, поляризации VV и VH`">
+      v-tip="origin?.tip || 'Радар Sentinel‑1, поляризации VV и VH'">
       <Transition name="roll" mode="out-in">
         <div :key="current.chip_id" class="scene-title-body">
           <h1 class="scene-country">
             <img v-if="flag && !failedFlags.has(flag)" :src="flag" class="scene-flag" alt="" width="30" height="20" decoding="async"
               @error="failedFlags.add(flag)" />{{ current.event }}
           </h1>
-          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span class="scene-source">Sentinel‑1</span></p>
+          <p class="scene-date"><span class="tabular">{{ current.observed_at ? date(current.observed_at) : state.liveStatus === 'error' ? 'Нет снимка' : 'Ищем снимок' }}</span><span
+              v-if="origin" class="scene-source"><span class="scene-kind">{{ origin.label }}</span> <span class="scene-chip tabular">{{ origin.value }}</span></span><span
+              v-else class="scene-source">Sentinel‑1</span></p>
         </div>
       </Transition>
     </div>

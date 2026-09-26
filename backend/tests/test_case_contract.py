@@ -154,7 +154,9 @@ def test_run_metadata_names_the_code_commit_and_cross_platform_commands():
     assert any("uv run --project ml floodvalue infer --chip" in command for command in commands)
     assert any("budget=6500" in command for command in commands)
     assert any("scripts/validate_package.py" in command for command in commands)
-    assert meta["gitverse_commit"] is None
+    # The GitVerse repository holds the same commits, so the package names the commit it was built from.
+    assert meta["gitverse_commit"] == meta["code_commit"]
+    assert meta["repository"].startswith("https://gitverse.ru/")
 
 
 def test_code_commit_falls_back_to_the_build_variable(monkeypatch):

@@ -11,6 +11,7 @@ import json
 import math
 import sys
 import zipfile
+from datetime import date
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +31,26 @@ REQUIRED = {
 }
 # The case allows only these; a point on permanent water is ok with the mandatory EL = p·V·q.
 LOSS_STATUSES = {"ok", "partial", "no_data"}
+# Fields every catalog order carries by the case, plus delivery_hours that timeliness needs.
+CASE_FIELDS = ("candidate_id", "sensor_type", "resolution_m", "acquisition_type", "data_role", "observation_at",
+               "available_at", "processing_level", "usage_type", "guaranteed_purchase", "area_km2",
+               "base_rate_rub_km2", "base_rate_status", "base_rate_source", "delivery_hours")
+TABLES = {"acquisition_type": {"new", "operational", "archive"}, "data_role": {"event_observation", "context"},
+          "processing_level": {"L0", "L1", "L2"}, "usage_type": {"internal", "limited", "unrestricted"},
+          "sensor_type": {"optical", "sar"}}
+ORDER_FIELDS = ("candidate_id", "area_km2", "sensor_type", "resolution_m", "processing_level", "usage_type",
+                "acquisition_type", "guaranteed_purchase", "observation_at")
+LINE_NUMBERS = ("area_km2", "base_rate_rub_km2", "processing_coef", "usage_coef", "freshness_coef", "discount_coef",
+                "previous_group_area_km2", "basket_group_area_km2", "group_area_km2", "unit_price_rub_km2", "cost_rub")
+OPERATIONAL_DAYS = 90
+
+
+def freshness(order: dict, calculation_date: date) -> float:
+    """Т by the 90-day rule, written out apart from the price engine: new 1.8, up to 90 days 1, older 0.6."""
+    if order["acquisition_type"] == "new":
+        return 1.8
+    age = (calculation_date - date.fromisoformat(str(order["observation_at"])[:10])).days
+    return 1.0 if age <= OPERATIONAL_DAYS else 0.6
 
 
 def require(condition: bool, message: str) -> None:
@@ -103,8 +124,28 @@ def validate(path: str | Path) -> dict:
                  if row["scenario_id"].startswith("plan_")} == {"budget", "tariff"},
                 "Budget/tariff sensitivity missing")
 
+        calculation_date = date.fromisoformat(meta["pricing"]["calculation_date"])
+        deadline = int(meta["deadline_hours"])
         zones = {}
         for feature in features:
+            properties = feature["properties"]
+            missing = [field for field in CASE_FIELDS if field not in properties]
+            require(not missing, f"{properties.get('candidate_id')}: catalog order lacks {missing}")
+            name = properties["candidate_id"]
+            for field, allowed in TABLES.items():
+                require(properties[field] in allowed, f"{name}: {field} {properties[field]!r} is outside {sorted(allowed)}")
+            require(isinstance(properties["guaranteed_purchase"], bool), f"{name}: guaranteed_purchase must be true/false")
+            require(properties["base_rate_status"] == "scenario"
+                    or (properties["base_rate_status"] == "official" and properties["base_rate_source"]),
+                    f"{name}: an official base rate needs its source")
+            if properties["acquisition_type"] != "new":
+                require(properties["guaranteed_purchase"] is False, f"{name}: existing imagery is never a guaranteed purchase")
+                age = (calculation_date - date.fromisoformat(str(properties["observation_at"])[:10])).days
+                require(age >= 0 and (properties["acquisition_type"] == "operational") == (age <= OPERATIONAL_DAYS),
+                        f"{name}: {properties['acquisition_type']} but acquired {age} days before the calculation date")
+            if properties["acquisition_type"] == "archive":
+                require(properties["data_role"] == "context",
+                        f"{name}: an archive frame is context, never an observation of current water")
             geometry = feature["geometry"]
             ring = geometry["coordinates"]
             require(geometry["type"] == "Polygon" and len(ring) == 1 and len(ring[0]) == 5,
@@ -125,18 +166,51 @@ def validate(path: str | Path) -> dict:
         require(set(comparison) == set(plans) == {"A", "B", "C"}, "A/B/C strategies missing")
         require(not plans["A"] and float(comparison["A"]["data_cost_rub"]) == 0,
                 "A must have no paid imagery")
+        pricing = meta["pricing"]
+        basket_groups = {}
         for strategy in ("B", "C"):
             selected = plans[strategy]
             require(len(selected) == len(set(selected)) and set(selected) <= set(zones),
                     f"{strategy}: invalid zones")
-            priced = quote([{"id": zone_id, "area_km2": zones[zone_id]["area_km2"]} for zone_id in selected])
+            lines = [line for line in orders if line["strategy"] == strategy]
+            require([line["candidate_id"] for line in lines] == selected,
+                    f"{strategy}: procurement lines differ from strategy_plans.json")
+            # Re-price the basket with the price engine from the catalog conditions alone.
+            previous = {line["discount_group_id"][len(strategy) + 1:]: float(line["previous_group_area_km2"])
+                        for line in lines if line["discount_group_id"].startswith(f"{strategy}_")}
+            priced = quote([{key: zones[zone_id][key] for key in ORDER_FIELDS} for zone_id in selected],
+                           strategy=strategy, calculation_date=calculation_date, previous_group_area_km2=previous)
+            for line, expected in zip(lines, priced["lines"], strict=True):
+                zone_id, catalog = line["candidate_id"], zones[line["candidate_id"]]
+                require(line["discount_group_id"] == expected["discount_group_id"],
+                        f"{strategy}: {zone_id} discount group {line['discount_group_id']} != {expected['discount_group_id']}")
+                for key in LINE_NUMBERS:
+                    close(float(line[key]), expected[key], f"{strategy}: {zone_id} {key}", 1e-6)
+                for key in ("sensor_type", "processing_level", "usage_type", "acquisition_type"):
+                    require(line[key] == catalog[key], f"{strategy}: {zone_id} {key} differs from the catalog")
+                require(line["guaranteed_purchase"] == str(catalog["guaranteed_purchase"]).lower()
+                        and float(line["resolution_m"]) == float(catalog["resolution_m"]),
+                        f"{strategy}: {zone_id} product differs from the catalog")
+                close(float(line["freshness_coef"]), freshness(catalog, calculation_date),
+                      f"{strategy}: {zone_id} freshness_coef breaks the 90-day rule", 1e-9)
+                close(float(line["previous_group_area_km2"]), float(pricing["previous_group_area_km2"]),
+                      f"{strategy}: {zone_id} earlier group area differs from run metadata", 1e-9)
+            groups = {line["discount_group_id"] for line in lines}
+            for group_id in groups:
+                require(group_id.startswith(f"{strategy}_"), f"{strategy}: discount group {group_id} is not specific to basket {strategy}")
+                members = [line for line in lines if line["discount_group_id"] == group_id]
+                area = sum(float(line["area_km2"]) for line in members) + float(members[0]["previous_group_area_km2"])
+                require(len({(line["group_area_km2"], line["discount_coef"]) for line in members}) == 1,
+                        f"{strategy}: lines of discount group {group_id} disagree on S or P")
+                close(float(members[0]["group_area_km2"]), area, f"{strategy}: S of discount group {group_id}", 0.0005)
+            require(groups == set(pricing["discount_groups"][strategy]),
+                    f"{strategy}: discount groups differ between lines and run metadata")
+            basket_groups[strategy] = groups
             close(float(comparison[strategy]["data_cost_rub"]), priced["total_rub"],
                   f"{strategy}: total price")
-            lines = [line for line in orders if line["strategy"] == strategy]
-            require({line["candidate_id"] for line in lines} == set(selected),
-                    f"{strategy}: procurement lines differ")
             close(sum(float(line["cost_rub"]) for line in lines), priced["total_rub"],
                   f"{strategy}: line sum")
+        require(not basket_groups["B"] & basket_groups["C"], "B and C share a discount group")
         budget = float(meta["budget_rub"])
         require(comparison["C"]["budget_feasible"] == "false" or
                 float(comparison["C"]["data_cost_rub"]) <= budget, "C exceeds budget")
@@ -173,9 +247,8 @@ def validate(path: str | Path) -> dict:
             chance = 1 - pixel_p if flood[pixel_row, pixel_col] == 1 else pixel_p
             close(float(row["uncertainty"]), chance,
                   f"{row['asset_id']}: uncertainty is not the map error chance at the asset pixel", 1e-4)
-        groups = {line["discount_group_id"] for line in orders}
-        require(len(groups) <= 1 and (not groups or groups == {meta["pricing"]["discount_group_id"]}),
-                "Discount group differs between lines and run metadata")
+        if len(basket_groups["C"]) == 1:
+            require(basket_groups["C"] == {pricing["discount_group_id"]}, "Discount group of C differs from run metadata")
         decisions = {row["candidate_id"]: row for row in rows(archive, "zone_decisions.csv")}
         require(set(decisions) == set(zones), "Zone decisions do not match the candidate catalog")
         require({key for key, row in decisions.items() if row["selected_in_c"] == "true"} == set(plans["C"]),
@@ -183,24 +256,27 @@ def validate(path: str | Path) -> dict:
         # The ROI is a pixel-inspection window; A/B/C always uses the fixed ten-asset chip portfolio.
         region_assets = {row["asset_id"]: row for row in losses}
         estimated = sum(float(row["expected_loss_rub"]) for row in region_assets.values() if row["expected_loss_rub"])
+
+        def observes(zone_id: str) -> bool:
+            """Only an observation of the event delivered by the deadline covers anything."""
+            return (zones[zone_id]["data_role"] == "event_observation"
+                    and float(zones[zone_id]["delivery_hours"]) <= deadline)
+
         for strategy in ("B", "C"):
             row = comparison[strategy]
             covered = {asset_id for asset_id, asset in region_assets.items() if any(
                 float(zones[zone_id]["_bounds"][0]) <= float(by_id[asset_id]["longitude"]) <= float(zones[zone_id]["_bounds"][2])
                 and float(zones[zone_id]["_bounds"][1]) <= float(by_id[asset_id]["latitude"]) <= float(zones[zone_id]["_bounds"][3])
-                for zone_id in plans[strategy])}
+                for zone_id in plans[strategy] if observes(zone_id))}
             # expected_loss_rub of asset_loss.csv is the mandatory EL, so this is the mandatory covered EL.
             covered_loss = sum(float(region_assets[a]["expected_loss_rub"] or 0) for a in covered)
-            # B delivered after the decision deadline covers nothing by definition.
-            late_broad = (strategy == "B" and float(row["covered_expected_loss_rub"]) == 0
-                          and int(row["covered_asset_count"]) == 0)
-            if not late_broad:
-                close(float(row["covered_expected_loss_rub"]), covered_loss,
-                      f"{strategy}: covered EL must sum the mandatory EL of covered assets")
-                require(int(row["covered_asset_count"]) == len(covered), f"{strategy}: covered assets")
-                if row.get("covered_flood_loss_rub", "") != "":
-                    flood = sum(float(region_assets[a].get("flood_expected_loss_rub") or 0) for a in covered)
-                    close(float(row["covered_flood_loss_rub"]), flood, f"{strategy}: covered flood-only loss")
+            rule = "context (archive) and late orders add no coverage"
+            close(float(row["covered_expected_loss_rub"]), covered_loss,
+                  f"{strategy}: covered EL must sum the mandatory EL of covered assets; {rule}")
+            require(int(row["covered_asset_count"]) == len(covered), f"{strategy}: covered assets; {rule}")
+            if row.get("covered_flood_loss_rub", "") != "":
+                flood = sum(float(region_assets[a].get("flood_expected_loss_rub") or 0) for a in covered)
+                close(float(row["covered_flood_loss_rub"]), flood, f"{strategy}: covered flood-only loss")
             share = row["coverage_share"]
             require((share == "") == (estimated == 0), f"{strategy}: coverage share must be empty only without exposure")
             if share:
@@ -210,6 +286,20 @@ def validate(path: str | Path) -> dict:
                 require(row.get("coverage_status", "") != "", f"{strategy}: empty coverage share needs its reason")
             doubt = row["covered_doubt_share"]
             require(doubt == "" or 0 <= float(doubt) <= 1, f"{strategy}: doubt share outside [0,1]")
+        # The declared product rule: per footprint optics if on time, else radar if on time; archive never bought.
+        footprints: dict[str, list[dict]] = {}
+        for properties in zones.values():
+            footprints.setdefault(properties.get("footprint_id", properties["candidate_id"]), []).append(properties)
+        for strategy in ("B", "C"):
+            for zone_id in plans[strategy]:
+                require(zones[zone_id]["data_role"] == "event_observation",
+                        f"{strategy}: {zone_id} is context imagery; the product rule never buys it as an observation")
+                offers = sorted((item for item in footprints[zones[zone_id].get("footprint_id", zone_id)]
+                                 if item["data_role"] == "event_observation" and item["acquisition_type"] == "new"),
+                                key=lambda item: item["sensor_type"] != "optical")
+                pick = next((item for item in offers if float(item["delivery_hours"]) <= deadline), offers[0])
+                require(pick["candidate_id"] == zone_id,
+                        f"{strategy}: {zone_id} breaks the product rule, which takes {pick['candidate_id']}")
         estimated_rows = [row for row in region_assets.values() if row["expected_loss_rub"] != ""]
         region_ok = [row["asset_id"] for row in estimated_rows]
         by_loss = [row["asset_id"] for row in sorted(
@@ -224,8 +314,12 @@ def validate(path: str | Path) -> dict:
         require(not region_ok or {json.loads(row["changed_inputs_json"])["input"] for row in asset_scenarios}
                 == {"p", "V", "q"}, "p/V/q sensitivity missing")
         return {"status": "ok", "chip_id": meta["chip_id"], "assets": len(assets),
-                "zones": len(zones), "valid_pixels": int(p_mask.sum()),
-                "budget_rub": budget, "files": len(archive.namelist())}
+                "zones": len(zones), "footprints": len(footprints), "valid_pixels": int(p_mask.sum()),
+                "budget_rub": budget, "deadline_hours": deadline, "calculation_date": calculation_date.isoformat(),
+                "plans": {key: plans[key] for key in ("B", "C")},
+                "costs_rub": {key: float(comparison[key]["data_cost_rub"]) for key in ("B", "C")},
+                "discount_groups": {key: sorted(basket_groups[key]) for key in ("B", "C")},
+                "files": len(archive.namelist())}
 
 
 if __name__ == "__main__":

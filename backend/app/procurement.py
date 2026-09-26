@@ -24,6 +24,7 @@ from shapely.errors import GEOSException
 from shapely.geometry import Point, box, mapping, shape
 from shapely.ops import transform
 
+from .analysis import raster_assets
 from .catalog import ROOT, known_scene_ids, metadata
 from .planning import TO_EQUAL_AREA, square_around
 
@@ -120,7 +121,7 @@ def skyfi_post(path, payload):
 
 def asset_snapshot(info):
     return [{**a, "expected_loss_rub": round((a.get("p_flood") or 0) * a["value_rub"] * a["vulnerability"], 2)}
-            for a in info["assets"] if a.get("p_flood") is not None]
+            for a in raster_assets(info["chip_id"], info) if a.get("p_flood") is not None]
 
 
 def demo_offers(info):

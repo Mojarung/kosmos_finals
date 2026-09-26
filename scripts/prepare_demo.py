@@ -76,6 +76,10 @@ def write_quality() -> None:
             "expected_error_rate": sum(item["count"] * min(item["mean_p"], 1 - item["mean_p"]) for item in bins) / pixels,
             "chips": methods["all_water/main"]["overall"]["chips"],
         }
+        quality.setdefault("events", {})[part] = {
+            event: {"baseline": methods["all_water/baseline"]["events"][event]["micro"], "model": block["micro"],
+                    "chips": block["chips"]}
+            for event, block in methods["all_water/main"]["events"].items()}
         quality["flood_only"][part] = {
             "baseline": methods["no_jrc_permanent_water/baseline"]["overall"]["micro"],
             "model": methods["no_jrc_permanent_water/main"]["overall"]["micro"],

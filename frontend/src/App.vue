@@ -6,12 +6,31 @@ import DecisionPanel from './components/DecisionPanel.vue'
 import MorphLoader from './components/MorphLoader.vue'
 import ObservePanel from './components/ObservePanel.vue'
 import TopBar from './components/TopBar.vue'
-import { chooseRegion, fetchAnalysis, permanentSeparated, state } from './store'
+import { calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
+import { number, percent } from './lib/format'
 
 const mapRef = ref(null)
 const chrome = ref(null)
 const splash = ref(null)
 const mapReady = ref(false)
+
+// Порог маски воды: зафиксирован на validation и одинаков для всех снимков.
+const maskThreshold = computed(() => state.analysis?.chip.model_threshold)
+const maskNote = computed(() => maskThreshold.value == null || !['model', 'probability'].includes(state.layerMode) ? null : {
+  label: `маска: p ≥ ${number(maskThreshold.value, 2)}`,
+  hint: `Пиксель закрашен водой, если калиброванная вероятность p не ниже ${number(maskThreshold.value, 2)}. Порог выбран на validation по максимуму IoU и для этого снимка не менялся`,
+})
+// Сомнения: пиксели, где шанс ошибки карты не ниже порога с validation. Статистику test_core
+// показываем, только если калибровка проверена на таком снимке (Sen1Floods11 GRD).
+const doubtHint = computed(() => {
+  const threshold = doubtThreshold.value
+  const edge = threshold == null ? '' : `шанс ошибки карты ${percent(threshold)} и выше (порог ${number(threshold, 4)} выбран на validation)`
+  if (!calibrationChecked.value) {
+    return `Яркие пиксели: ${edge || 'высокий шанс ошибки карты'}. Калибровка на этом снимке не проверена: сколько здесь ошибок на самом деле, не измерено`
+  }
+  const rate = testQuality.value?.doubtful_error_rate
+  return `Яркие пиксели: ${edge || 'высокий шанс ошибки карты'}.` + (rate == null ? '' : ` На независимом test_core из таких пикселей ошибается ${percent(rate, 1)}`)
+})
 
 // Легенда называет ровно то, что сейчас нарисовано на карте.
 const legend = computed(() => {
@@ -24,7 +43,7 @@ const legend = computed(() => {
   return {
     model: water,
     probability: [{ key: 'probability', label: 'Вероятность воды', hint: 'Чем насыщеннее цвет, тем выше вероятность' }],
-    uncertainty: [{ key: 'uncertainty', label: 'Карта может ошибаться', hint: 'Яркие пиксели: шанс ошибки 8% и выше. Столько по тем же правилам ошибается каждый третий пиксель на независимой проверке' }],
+    uncertainty: [{ key: 'uncertainty', label: 'Карта может ошибаться', hint: doubtHint.value }],
     baseline: [{ key: 'baseline', label: 'Вода по порогу VH', hint: 'Классический метод для сравнения: VH ниже −23,6 дБ' }],
     reference: [{ key: 'reference', label: 'Вода по ручной метке', hint: 'Разметка Sen1Floods11. Только для проверки' }],
     none: [{ key: 'none', label: 'Слой выключен', hint: '' }],
@@ -95,9 +114,17 @@ onMounted(() => {
         <DecisionPanel @asset="chooseAsset" @zone="chooseZone" @reset="mapRef?.focusChip()" />
       </div>
       <div class="bottom-row">
+        <!-- Атрибуция подложки всегда на виду: схема из OpenStreetMap через OpenFreeMap,
+             спутник Esri World Imagery (адреса тайлов в GlobeMap.vue). Подписи OSM лежат
+             поверх и спутника, поэтому строка OSM есть в обоих режимах. -->
+        <!-- Одной строкой: Vue убирает пробелы-переводы строк между ссылками, и они слипались. -->
+        <p class="map-credits" aria-label="Источники подложки"><template v-if="state.basemap === 'satellite'">Снимок подложки ©&nbsp;<a href="https://www.esri.com/" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, GIS User Community; </template><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">©&nbsp;OpenMapTiles</a>, данные <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">©&nbsp;участники OpenStreetMap</a></p>
         <div v-if="state.analysis" class="panel map-console" data-enter>
           <div class="map-console-layer">
             <span v-for="item in legend" :key="item.key" v-tip="item.hint" class="legend-item"><i class="legend-water" :class="item.key"></i>{{ item.label }}</span>
+            <span v-if="maskNote" v-tip="maskNote.hint" class="legend-item legend-note tabular">{{ maskNote.label }}</span>
+            <span v-if="state.radarGaps && state.layerMode !== 'none'" class="legend-item"
+              v-tip="`Серые пиксели: радар Sentinel‑1 здесь не дал сигнала (${number(state.radarGaps)} пикс., например шов на стыке кадров). Вода там или суша, неизвестно; в площадь воды и ущерб они не входят`"><i class="legend-water nodata"></i>Нет сигнала</span>
             <span class="legend-item asset-key" v-tip="'Номер показывает место объекта в рейтинге ущерба. Оранжевый кружок: объект, скорее всего, в воде. Зелёное кольцо: объект внутри зоны заказа'"><i class="legend-asset"></i>Объект</span>
             <span v-if="state.showZones" class="legend-item zone-key" v-tip="'Пунктиром показаны зоны, которые можно заказать: оранжевые вокруг объектов, фиолетовые там, где карта может ошибаться'"><i class="legend-zone"></i>Зона</span>
           </div>
@@ -115,6 +142,7 @@ onMounted(() => {
                 aria-label="Видимость слоя на карте" :style="{ '--progress': state.overlayOpacity + '%' }" />
             </label>
           </div>
+          <p v-if="state.basemap === 'satellite'" class="basemap-note">Подложка: современный спутниковый снимок, только для ориентира; в расчёт не входит</p>
         </div>
       </div>
     </div>

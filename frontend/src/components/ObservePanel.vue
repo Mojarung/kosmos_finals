@@ -2,9 +2,10 @@
 import { computed } from 'vue'
 import { ChevronLeft, Crosshair, Globe2, Info, LoaderCircle, RotateCcw, Waves } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
+import CalibrationBadge from './CalibrationBadge.vue'
 import MorphPanel from './MorphPanel.vue'
 import ShareBar from './ShareBar.vue'
-import { hasData, isLive, permanentJob, permanentSeparated, resetRegion, retryRegion, state } from '../store'
+import { calibrationChecked, doubtThreshold, hasData, isLive, permanentJob, permanentSeparated, resetRegion, retryRegion, state, testQuality } from '../store'
 import { km, number, percent } from '../lib/format'
 
 const emit = defineEmits(['reset'])
@@ -31,6 +32,19 @@ const headline = computed(() => {
           : 'Вода по модели минус постоянная вода JRC (реки и озёра, которые были водой и в 1984, и в 2018 году)' }
     : { caption: 'Вода по модели', value: r.model_water_area_km2,
         hint: 'Постоянная вода для этой области не отделена: число включает реки и озёра' }
+})
+// Порог маски стоит рядом с площадью: число посчитано ровно по этой маске.
+const maskThreshold = computed(() => state.analysis?.chip.model_threshold)
+const maskHint = computed(() => maskThreshold.value == null ? '' : ` Маска воды: калиброванная p ≥ ${number(maskThreshold.value, 2)}, порог выбран на validation и зафиксирован.`)
+
+// Сомнительная площадь: порог с validation; ошибки test_core только для проверенной калибровки.
+const doubtHint = computed(() => {
+  const threshold = doubtThreshold.value
+  const edge = threshold == null ? 'Площадь, где карта может ошибаться.'
+    : `Площадь, где шанс ошибки карты ${percent(threshold)} и выше (порог ${number(threshold, 4)} выбран на validation).`
+  if (!calibrationChecked.value) return `${edge} Калибровка на этом снимке не проверена: сколько здесь ошибок на самом деле, не измерено`
+  const rate = testQuality.value?.doubtful_error_rate
+  return rate == null ? edge : `${edge} На независимом test_core из таких пикселей ошибается ${percent(rate, 1)}`
 })
 
 const segments = computed(() => {
@@ -77,8 +91,8 @@ function toggleDrawing() {
 
     <div class="panel-scroll">
       <template v-if="hasData">
-        <section class="block" v-tip="headline.hint">
-          <span class="caption">{{ headline.caption }}</span>
+        <section class="block" v-tip="headline.hint + maskHint">
+          <span class="caption caption-row">{{ headline.caption }}<span v-if="maskThreshold != null" class="caption-note tabular">маска: p ≥ {{ number(maskThreshold, 2) }}</span></span>
           <div class="hero">
             <AnimatedNumber class="display" :value="headline.value" :format="v => number(v, headline.value < 10 ? 2 : 1)" />
             <span class="unit">км²</span>
@@ -99,9 +113,10 @@ function toggleDrawing() {
             <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра в архиве JRC…' }}</span>
             <LoaderCircle v-if="permanentJob.status === 'running'" :size="15" class="spin accent" />
           </div>
-          <div class="row" v-tip="'Площадь, где шанс ошибки карты 8% и выше. На независимой проверке в таких точках ошибается каждый третий пиксель'">
+          <div class="row" v-tip="doubtHint">
             <span>Сомнительная площадь</span><strong class="tabular">{{ km(region.doubtful_area_km2) }}</strong>
           </div>
+          <div v-if="!calibrationChecked" class="badge-line"><CalibrationBadge /></div>
           <div class="row" v-tip="'Столько воды находит классический метод на той же площади: VH ниже −23,6 дБ'">
             <span>Порог VH нашёл бы</span><strong class="tabular">{{ km(region.baseline_water_area_km2) }}</strong>
           </div>
