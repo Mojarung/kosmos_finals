@@ -5,6 +5,8 @@ import { computed, reactive, watch } from 'vue'
  * компонентам пропсами. Панелей стало несколько, поэтому состояние общее.
  */
 export const state = reactive({
+  procurementOpen: false,
+  procurementOverlay: null,
   analysis: null,
   error: '',
   loading: false,

@@ -16,8 +16,10 @@ from . import live_jobs
 from .layers import doubt_png
 from .permanent import separate_live
 from . import projects
+from .procurement import router as procurement_router
 
 app = FastAPI(title="FloodValue API", version="0.2.0")
+app.include_router(procurement_router)
 
 
 def parse_bounds(bbox: str | None) -> list[float] | None:

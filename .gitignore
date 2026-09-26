@@ -12,3 +12,5 @@ data/live/
 
 data/runtime/
 .playwright-cli/
+frontend/test-results/
+frontend/playwright-report/

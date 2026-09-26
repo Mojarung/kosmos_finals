@@ -1,5 +1,7 @@
 services:
   backend:
+    environment:
+      SKYFI_API_KEY: ${SKYFI_API_KEY:-}
     build:
       context: .
       dockerfile: backend/Dockerfile

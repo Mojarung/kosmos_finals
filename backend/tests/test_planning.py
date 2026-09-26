@@ -48,12 +48,18 @@ def test_arbitrary_region_without_demo_data_is_not_misreported():
     result = response.json()
     assert result["region"]["data_status"] == "outside_coverage"
     assert result["region"]["model_water_area_km2"] is None
-    assert result["assets"] == []
+    # The case portfolio stays frozen when the ROI changes. Region metrics
+    # must not claim these objects are in an unrelated area.
+    original = client.get("/api/analysis").json()
+    assert result["assets"] == original["assets"]
+    assert result["metrics"]["assets_in_region"] == 0
+    assert result["metrics"]["region_expected_loss_rub"] == 0
+    assert result["zones"] == []
     assert result["strategies"]["C"]["data_cost_rub"] == 0
 
     inside = client.get("/api/analysis", params={"bbox": "5.801,9.067,5.83,9.096"}).json()
     broad = next(zone for zone in inside["zones"] if zone["id"] == "ZALL")
-    assert abs(broad["area_km2"] - inside["region"]["area_km2"]) < 0.001
+    assert abs(broad["area_km2"] - inside["chip"]["area_km2"]) < 0.001
 
 
 def test_frozen_model_metrics_and_case_export():

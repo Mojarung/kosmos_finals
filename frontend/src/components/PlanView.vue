@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
+import ProcurementView from './ProcurementView.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
 import RingGauge from './RingGauge.vue'
@@ -125,6 +126,12 @@ function hover(id) { state.hoverZoneId = id }
 </script>
 
 <template>
+  <div class="procurement-mode-switch">
+    <button :class="{ active: !state.procurementOpen }" @click="state.procurementOpen = false">Расчёт по ТЗ</button>
+    <button :class="{ active: state.procurementOpen }" @click="state.procurementOpen = true">Подобрать снимки</button>
+  </div>
+  <ProcurementView v-if="state.procurementOpen" :key="state.sceneId" />
+  <template v-else>
   <section class="block">
     <label class="budget-label" for="budget">
       <span class="caption">Бюджет на снимки</span>
@@ -266,4 +273,5 @@ function hover(id) { state.hoverZoneId = id }
   <p class="source-line" v-tip="'Ставка 788,64 ₽/км² взята из контрольного примера постановки, это не цена поставщика. Срок поставки 6 ч тоже допущение. Ущерб в зонах показывает, что проверять первым, а не сколько потерь удалось избежать'">
     <Info :size="14" />Ставка и срок поставки сценарные
   </p>
+</template>
 </template>

@@ -34,7 +34,7 @@ function back() {
 </script>
 
 <template>
-  <MorphPanel :open="state.decisionOpen" class="decision-panel" data-enter>
+  <MorphPanel :open="state.decisionOpen" class="decision-panel" :class="{ 'procurement-expanded': state.tab === 'plan' && state.procurementOpen }" data-enter>
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть решение'" @click="state.decisionOpen = true">
         <Activity :size="16" class="accent" />
@@ -79,7 +79,7 @@ function back() {
       </Transition>
     </div>
 
-    <footer class="panel-foot">
+    <footer v-if="!(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
       <button class="primary-button wide" :disabled="!hasData" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
         <Download :size="17" />Скачать решение
       </button>
