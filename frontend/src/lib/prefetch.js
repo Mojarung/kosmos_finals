@@ -41,9 +41,13 @@ function tileSources(map) {
 function urls(map, tilesFor) {
   const out = []
   for (const source of tileSources(map)) {
-    for (const [z, x, y] of tilesFor(source.offset, source.tileSize)) {
-      if (z < source.minzoom || z > source.maxzoom) continue
+    for (const tile of tilesFor(source.offset, source.tileSize)) {
+      if (tile[0] < source.minzoom) continue
+      // Глубже maxzoom MapLibre растягивает родительский тайл: его и греем (грубый спутник z5).
+      const shift = Math.max(0, tile[0] - source.maxzoom)
+      const [z, x, y] = [tile[0] - shift, tile[1] >> shift, tile[2] >> shift]
       const url = source.template.replace('{z}', z).replace('{x}', x).replace('{y}', y)
+      if (out.includes(url)) continue
       if (!fetched.has(url) || inFlight.has(url)) out.push(url)
     }
   }
