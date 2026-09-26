@@ -62,7 +62,7 @@ function toggleDrawing() {
     <template #pill>
       <button class="pill-button" v-tip="'Развернуть панель воды'" @click="state.observeOpen = true">
         <Waves :size="16" class="accent" />
-        <span v-if="hasData && headline" class="tabular">{{ number(headline.value, 1) }} км² {{ permanentSeparated ? 'паводка' : 'воды' }}</span>
+        <span v-if="hasData && headline" class="tabular">{{ number(headline.value, headline.value < 10 ? 2 : 1) }} км² {{ permanentSeparated ? 'паводка' : 'воды' }}</span>
         <span v-else>Вода</span>
       </button>
     </template>
@@ -80,7 +80,7 @@ function toggleDrawing() {
         <section class="block" v-tip="headline.hint">
           <span class="caption">{{ headline.caption }}</span>
           <div class="hero">
-            <AnimatedNumber class="display" :value="headline.value" :format="v => number(v, 1)" />
+            <AnimatedNumber class="display" :value="headline.value" :format="v => number(v, headline.value < 10 ? 2 : 1)" />
             <span class="unit">км²</span>
           </div>
           <ShareBar :segments="segments" />
