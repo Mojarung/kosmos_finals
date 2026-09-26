@@ -146,7 +146,6 @@ onMounted(() => {
                 aria-label="Видимость слоя на карте" :style="{ '--progress': state.overlayOpacity + '%' }" />
             </label>
           </div>
-          <p v-if="state.basemap === 'satellite'" class="basemap-note">Подложка: современный спутниковый снимок, только для ориентира; в расчёт не входит</p>
         </div>
       </div>
     </div>
