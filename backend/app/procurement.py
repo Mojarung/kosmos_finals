@@ -29,7 +29,7 @@ from shapely.geometry import box, mapping, shape
 from shapely.ops import transform, unary_union
 
 from .catalog import ROOT, known_scene_ids, metadata
-from .planning import TO_EQUAL_AREA
+from .planning import TO_EQUAL_AREA, today
 
 router = APIRouter(prefix='/api/procurement', tags=['procurement'])
 DB = Path(os.environ.get('FLOODVALUE_PROCUREMENT_DB', ROOT / 'data/runtime/procurement.sqlite3'))
@@ -195,8 +195,8 @@ def search(request: Search):
         raise HTTPException(404, 'Неизвестная сцена')
     info = metadata(request.scene_id)
     event = date.fromisoformat(info['observed_at'][:10])
-    start, end = request.from_date or event, request.to_date or date.today()
-    if start > end or end > date.today():
+    start, end = request.from_date or event, request.to_date or today()
+    if start > end or end > today():
         raise HTTPException(422, 'Укажите корректный исторический период съёмки')
     bounds = request.bbox or info['bbox']
     aoi = box(*bounds)

@@ -92,6 +92,11 @@ def box_sum(table: np.ndarray, r0: int, r1: int, c0: int, c1: int) -> float:
     return float(table[r1, c1] - table[r0, c1] - table[r1, c0] + table[r0, c0])
 
 
+def _boxes(table: np.ndarray, top: np.ndarray, bottom: np.ndarray, left: np.ndarray, right: np.ndarray) -> np.ndarray:
+    """box_sum for arrays of windows at once."""
+    return table[bottom, right] - table[top, right] - table[bottom, left] + table[top, left]
+
+
 def window_sum(scene_id: str, kind: str, window: tuple[int, int, int, int]) -> float:
     return box_sum(_integral(scene_id, kind), *window)
 
@@ -168,12 +173,9 @@ def uncertainty_zones(scene_id: str, window: tuple[int, int, int, int], area_km2
             top, left = np.meshgrid(_positions(r0, r1, height, row_stride),
                                     _positions(c0, c1, width, col_stride), indexing="ij")
             bottom, right = top + height, left + width
-
-            def boxes(source: np.ndarray) -> np.ndarray:
-                return source[bottom, right] - source[top, right] - source[bottom, left] + source[top, left]
-
-            mass = boxes(table)
-            excess = np.where(boxes(taken_table) == 0, mass - density * height * width, -np.inf)
+            mass = _boxes(table, top, bottom, left, right)
+            free = _boxes(taken_table, top, bottom, left, right) == 0
+            excess = np.where(free, mass - density * height * width, -np.inf)
             index = np.unravel_index(int(np.argmax(excess)), excess.shape)
             if best is None or excess[index] > best[0]:
                 best = (float(excess[index]), int(top[index]), int(bottom[index]),

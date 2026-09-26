@@ -8,7 +8,6 @@ import uuid
 import zipfile
 from itertools import combinations
 
-from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import Field
 from shapely.geometry import Point, shape

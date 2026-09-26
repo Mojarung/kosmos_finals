@@ -3,10 +3,10 @@ import io
 import json
 import zipfile
 
-from test_procurement import catalog, client  # noqa: F401  (client is a fixture)
+from test_procurement import catalog, client  # noqa: F401,F811  (client is a fixture)
 
 
-def test_export_keeps_catalog_dollars_apart_from_the_case_rubles(client):
+def test_export_keeps_catalog_dollars_apart_from_the_case_rubles(client):  # noqa: F811  (pytest fixture)
     c = catalog()
     saved = client.post('/api/procurement/decisions', json={'catalog_id': c['id']}).json()
     z = zipfile.ZipFile(io.BytesIO(client.get('/api/procurement/decisions/' + saved['id'] + '/export').content))
