@@ -10,6 +10,7 @@ RUN uv pip install --python /app/backend/.venv/bin/python \
 COPY backend/app ./backend/app
 COPY data/demo ./data/demo
 COPY data/catalog ./data/catalog
+COPY data/backtest ./data/backtest
 COPY ml/src/floodvalue ./ml/src/floodvalue
 COPY ml/artifacts/model ./ml/artifacts/model
 COPY ml/artifacts/evaluation/calibration.json ./ml/artifacts/evaluation/calibration.json

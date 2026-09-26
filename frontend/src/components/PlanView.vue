@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { ChevronDown, Info, Pin, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
+import BacktestPanel from './BacktestPanel.vue'
 import BubbleTabs from './BubbleTabs.vue'
 import FrontierChart from './FrontierChart.vue'
 import RingGauge from './RingGauge.vue'
@@ -310,6 +311,8 @@ function hover(id) { state.hoverZoneId = id }
   <section v-if="pitch.length" class="block pitch">
     <p v-for="line in pitch" :key="line">{{ line }}</p>
   </section>
+
+  <BacktestPanel :scene-id="state.sceneId" />
 
   <section v-if="chart" class="block">
     <span class="caption" v-tip="'Линия: лучший набор зон для каждой суммы заказа по доле сомнительной площади. Точки: варианты A, B, C и все сомнительные участки вместе'">Сколько сомнений закрывает каждый рубль</span>
