@@ -14,6 +14,15 @@
 
 Сборка для сдачи требует чистого checkout: запуск через обёртку записывает точный Git commit в контейнер и каждый ZIP.
 
+Рамку на карте считает модель с контекстом. Её веса (15 файлов, 696 МБ) лежат в Git LFS рабочей копии на GitHub, а в копию на GitVerse не поместились из-за лимита LFS в 2 ГБ в месяц. В клоне GitVerse их нужно поставить до сборки, одним архивом с [Google Drive](https://drive.google.com/file/d/1XjEdtb7nVy25i0AnklaBGTjbTFesOQFr/view?usp=sharing):
+
+```bash
+uv run scripts/fetch_context_weights.py
+# если архив уже скачан: uv run scripts/fetch_context_weights.py --zip context_model_weights.zip
+```
+
+Скрипт сверяет sha256 каждого файла с `ml/artifacts/context_model/recipe.json` и кладёт веса в `ml/artifacts/context_model`; в копии GitVerse этот путь в `.gitignore`, так что checkout остаётся чистым. Без весов сервис тоже запускается, только рамка на карте считается S1 fallback.
+
 ```bash
 ./scripts/compose.sh up --build
 # Docker: CONTAINER_CLI=docker ./scripts/compose.sh up --build
