@@ -16,6 +16,25 @@
 
 Чистый S1-контроль из этой серии получил **0,70617 на test_core и 0,66314 на Bolivia** за счёт усреднения вероятностей исходных пяти моделей. Он доступен отдельно; результаты S1 и S1+S2 приводятся раздельно.
 
+**Модель с контекстом** получает кроме снимка события то, что было на земле до паводка: радар Sentinel-1 RTC того же трека за год, HAND и рельеф, постоянную воду JRC, WorldCover; по желанию Sentinel-2 L2A с маской облаков. Выбрана на OOF пяти групповых фолдов train+valid, тест посчитан один раз: без оптики **test_core 0,689, test_adjacent 0,719, Bolivia 0,706**, с оптикой L2A **0,821, 0,815, 0,816**. Лучше v1 на новом событии и соседних окнах, на test_core на 0,8 пункта ниже из-за одного чипа. Сервис запускает её для рамок на карте, где S2Hand нет. [Протокол](research/fresh/PROTOCOL.md), [результаты и разбор](research/fresh/RESULTS.md), пакет `artifacts/context_model/`.
+
+```bash
+uv sync --group research
+uv run python scripts/fresh_fetch_aux.py static      # DEM, HAND, WorldCover -> data/aux/static
+uv run python scripts/fresh_fetch_aux.py rtc         # радар до события, 20 м -> data/aux/rtc
+uv run python scripts/fresh_fetch_aux.py aggregate   # медиана, p10, p90, последняя дата -> data/aux/pre
+uv run python scripts/fresh_fetch_aux.py l2a         # S2 L2A на дату S2 -> data/aux/s2l2a
+uv run python scripts/fresh_build_cache.py && uv run python scripts/fresh_build_cache.py --optics
+uv run python -m floodvalue.context_cv folds
+uv run python -m floodvalue.context_cv cv --config configs/context/r34_all.json   # и варианты --set, см. PROTOCOL.md
+uv run python -m floodvalue.context_final select effb4_all r34_all r34_s1static r34_s1pre r34_s1 r34_all_s2 r34_all_s2:nos2
+uv run python -m floodvalue.context_final test       # один раз: второй запуск запрещён кодом
+uv run python -m floodvalue.context_final package
+uv run floodvalue infer --chip Bolivia_103757 --recipe artifacts/context_model/recipe.json --out outputs/context_Bolivia_103757
+```
+
+Загрузка слоёв на канале 0,3 МБ/с до Azure шла около часа; одна сеть учится 4-9 минут на RTX 5070.
+
 Разметка Sen1Floods11 основана на классификации по S2 с ручными исправлениями. Эту зависимость учитываем при сравнении режимов; подробнее — в разделе о данных и ограничениях отчёта.
 
 ## Установка
