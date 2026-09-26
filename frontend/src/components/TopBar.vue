@@ -1,13 +1,15 @@
 <script setup>
-import { computed, reactive } from 'vue'
-import { Box, Globe2, LocateFixed, Moon, Satellite, Sun } from '@lucide/vue'
+import { computed, reactive, ref } from 'vue'
+import { Box, Globe2, LocateFixed, Moon, Satellite, Sun, Upload } from '@lucide/vue'
 import CountryPicker from './CountryPicker.vue'
+import UploadS1 from './UploadS1.vue'
 import { chooseScene, loadLiveItem, state } from '../store'
 import { toggleTheme } from '../lib/theme'
 import { date } from '../lib/format'
 import { eventKey, flagUrl } from '../lib/flags'
 
 const emit = defineEmits(['globe', 'focus-chip', 'tilt'])
+const uploadOpen = ref(false)
 
 const current = computed(() => {
   if (['searching', 'preparing', 'error'].includes(state.liveStatus)) {
@@ -31,6 +33,10 @@ const origin = computed(() => {
   const scene = current.value
   if (!scene || scene.chip_id === 'live_pending') return null
   const chip = state.analysis?.chip?.chip_id === scene.chip_id ? state.analysis.chip : null
+  if (chip?.source_kind === 'uploaded_sentinel1_geotiff') {
+    return { label: 'Свой GeoTIFF', value: chip.source_filename || scene.chip_id,
+      tip: `Загруженный двухканальный Sentinel‑1 GeoTIFF · VV/VH · дата ${date(scene.observed_at)}. Источник и лицензия указаны пользователем, локальная точность не измерена.` }
+  }
   if (!scene.chip_id.startsWith('live_') && chip?.source_kind !== 'live_sentinel1_rtc') {
     return { label: 'S1‑чип', value: scene.chip_id,
       tip: `S1‑чип ${scene.chip_id} из Sen1Floods11 v1.1: радар Sentinel‑1 GRD, поляризации VV и VH, снимок ${date(scene.observed_at)}` }
@@ -70,7 +76,7 @@ const origin = computed(() => {
     <div class="topbar-center">
       <div v-if="liveMode" class="panel capsule live-scenes" data-enter>
         <Satellite :size="17" class="accent" />
-        <span v-if="!state.liveCandidates.length" class="live-scenes-label">{{ state.liveStatus === 'searching' ? 'Ищем снимки…' : 'Новый регион' }}</span>
+        <span v-if="!state.liveCandidates.length" class="live-scenes-label">{{ state.liveStatus === 'searching' ? 'Ищем снимки…' : state.analysis?.chip.source_kind === 'uploaded_sentinel1_geotiff' ? 'Загруженный снимок' : 'Новый регион' }}</span>
         <label v-else class="live-select-label">
           <span>Снимок</span>
           <select :value="state.liveItemId" aria-label="Дата снимка Sentinel-1" @change="loadLiveItem($event.target.value)">
@@ -83,6 +89,8 @@ const origin = computed(() => {
     </div>
 
     <div class="panel capsule actions" data-enter>
+      <button v-tip="'Загрузить свой двухканальный Sentinel‑1 GeoTIFF'" class="ghost-icon"
+        aria-label="Загрузить снимок Sentinel-1" @click="uploadOpen = true"><Upload :size="18" /></button>
       <button v-tip="'Вернуться к снимку'" class="ghost-icon" aria-label="Показать весь снимок" @click="emit('focus-chip')"><LocateFixed :size="18" /></button>
       <button v-tip="state.globeView ? '3D-обзор доступен, когда карта приближена к территории' : state.tilted ? 'Вернуть вид сверху' : 'Наклонный 3D-обзор территории'"
         class="ghost-icon" :class="{ active: state.tilted }" :aria-pressed="state.tilted" aria-label="3D-обзор"
@@ -92,5 +100,6 @@ const origin = computed(() => {
         <Sun v-if="state.theme === 'dark'" :size="18" /><Moon v-else :size="18" />
       </button>
     </div>
+    <UploadS1 v-if="uploadOpen" @close="uploadOpen = false" />
   </header>
 </template>

@@ -1,0 +1,28 @@
+import { test, expect } from '@playwright/test'
+
+test('historical check is collapsed, honestly versioned and independent of current budget', async ({ page }) => {
+  const errors = []
+  page.on('pageerror', error => errors.push(error.message))
+  await page.goto('/')
+  await page.getByRole('tab', { name: 'Съёмка', exact: true }).click()
+  const panel = page.getByTestId('backtest')
+  const chart = panel.getByTestId('backtest-chart')
+  await expect(panel).toContainText('60,1%')
+  await expect(chart).toBeHidden()
+  await panel.locator(':scope > summary').press('Enter')
+  await expect(chart).toBeVisible()
+  await expect(panel).toContainText('прежней модели S1')
+  for (const value of ['130,75 млн ₽', '52,13 млн ₽', '2,46 млн ₽', '422,2 тыс. ₽']) await expect(chart).toContainText(value)
+  const rows = chart.locator('.backtest-chart-row')
+  await expect(rows).toHaveCount(3)
+  expect(await rows.nth(0).locator('.backtest-error-bar').evaluate(el => parseFloat(el.style.width))).toBe(100)
+  expect(await rows.nth(2).locator('.backtest-cost-bar').evaluate(el => parseFloat(el.style.width))).toBeCloseTo(17.16, 1)
+  await page.getByLabel('Бюджет на снимки').press('Home')
+  await expect(chart).toContainText('52,13 млн ₽')
+  await panel.getByText('Выборка и ограничения', { exact: true }).click()
+  await expect(panel).toContainText('55 участков')
+  await expect(panel).toContainText('15 участков')
+  await expect(panel).toContainText('не проверка снимка 1 м')
+  await expect(panel).toContainText('фиксированный тест при 6 500 ₽')
+  expect(errors).toEqual([])
+})

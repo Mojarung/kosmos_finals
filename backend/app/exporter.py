@@ -204,6 +204,7 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
 
     Checked facts override a license stored in older scene metadata.
     """
+    uploaded = info.get("source_kind") == "uploaded_sentinel1_geotiff"
     entry = {
         "version": "Sentinel-1 RTC" if live else "Sen1Floods11_v1.1",
         "observed_at": info["observed_at"], "published_at": None, "available_at": None,
@@ -211,6 +212,12 @@ def manifest_entry(item: dict, info: dict, live: bool) -> dict:
         "limitation": "No field-verified flood label for this region" if live else "Historical 512x512 chip; not a live flood observation",
         **item,
     }
+    if uploaded:
+        return {**entry, "version": "user_supplied_geotiff", "license": "user_supplied_unverified",
+                "limitation": ("Two-band VV/VH GeoTIFF supplied by the operator; acquisition date, "
+                               "processing level and rights were not independently verified.")}
+    if item.get("layer") == "S2Hand":
+        entry["observed_at"] = info.get("model", {}).get("dates", {}).get("s2_date")
     url = str(item.get("url") or "")
     layer = item.get("layer") or next((name for name in SEN1FLOODS11_LAYERS if name in item["name"]), None)
     if item.get("collection") == "sentinel-1-rtc":
@@ -253,19 +260,27 @@ def _commands(scene_id: str, info: dict, inputs: dict, live: bool) -> list[str]:
     if inputs.get("bbox"):
         query["bbox"] = ",".join(str(value) for value in inputs["bbox"])
     archive = f"floodvalue-{scene_id}.zip"
-    commands = ["git lfs install --local", "git lfs pull", "uv sync --project ml",
+    commands = ["git lfs install --local", "git lfs pull", "uv sync --project ml --group research",
                 "uv sync --project backend --extra demo"]
     if not live:
         commands += [f"curl --create-dirs -o data/source/{item['name']} {item['url']}"
                      for item in info["source_manifest"] if item.get("url")]
         commands.append(f"uv run --project ml floodvalue infer --s1 data/source/{scene_id}_S1Hand.tif "
-                        f"--out data/inference/{scene_id}")
+                        f"--out data/inference/{scene_id}" +
+                        (" --recipe ml/artifacts/next_optical/recipe.json" +
+                         (f" --s2 data/source/{scene_id}_S2Hand.tif --s1-date {info['model']['dates']['s1_date']} "
+                          f"--s2-date {info['model']['dates']['s2_date']}" if info['model']['mode'] == 'S1+S2' else " --no-optical")
+                         if info.get("model") else ""))
         if info.get("origin", "demo") == "demo":
             commands.append("uv run --project backend --extra demo python scripts/prepare_demo.py")
     commands += ["uv run --project ml floodvalue download",
                  "uv run --project ml floodvalue infer --chip <CHIP> --out data/inference/<CHIP>",
                  "./scripts/compose.sh up --build"]
-    if live:
+    if info.get("source_kind") == "uploaded_sentinel1_geotiff":
+        commands.append(f'curl --data-binary @source_s1.tif -H "Content-Type: image/tiff" '
+                        f'"http://localhost:18000/api/uploads?observed_at={info["observed_at"]}'
+                        f'&radiometry={info["source_radiometry"]}&filename=source_s1.tif"')
+    elif live:
         bbox = ",".join(str(value) for value in info["bbox"])
         commands.append(f'curl -X POST "http://localhost:18000/api/live/prepare?bbox={bbox}'
                         f'&item_id={info.get("source_item_id")}"')
@@ -392,6 +407,9 @@ def package(result: dict) -> io.BytesIO:
     # Case files and the basket use mandatory EL = p·V·q; flood-only is supplementary.
     all_assets = sorted(enrich_assets(raster_assets(scene_id, info), info["model_threshold"]),
                         key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))
+    if info.get("model"):
+        for asset in all_assets:
+            asset["p_check"] = None
     region_ids = [asset["id"] for asset in result["assets"]
                   if contains(result["region"]["bounds"], asset)]
     region_rank = {asset["id"]: index for index, asset in enumerate(sorted(
@@ -410,7 +428,7 @@ def package(result: dict) -> io.BytesIO:
     catalog = result["catalog"]
     product_by_id = {row["candidate_id"]: row for row in catalog}
     decisions = {row["zone_id"]: row for row in result["zone_decisions"]}
-    live = info.get("source_kind") == "live_sentinel1_rtc"
+    live = info.get("source_kind") in {"live_sentinel1_rtc", "uploaded_sentinel1_geotiff"}
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         def json_file(name: str, value: object) -> None:
@@ -536,7 +554,7 @@ def package(result: dict) -> io.BytesIO:
         metrics_rows = []
 
         def metric_row(part: str, event: str, water: str, method: str, scored: dict, pixels: int) -> list:
-            return [part, event, water, method, scored["iou"], scored["f1"], scored["precision"], scored["recall"],
+            return [part, event, water, method, (info.get("model", {}).get("id", "service_s1") if part == "selected_region" else "service_s1") if method == "model" else "baseline_vh", scored["iou"], scored["f1"], scored["precision"], scored["recall"],
                     pixels, _blank(scored.get("tp")), _blank(scored.get("fp")), _blank(scored.get("fn"))]
 
         for part in ("test_core", "bolivia"):
@@ -560,7 +578,7 @@ def package(result: dict) -> io.BytesIO:
                 metrics_rows.append(metric_row("selected_region", scene_id, water, method, scored,
                                                scored["valid_pixels"]))
         archive.writestr("metrics.csv", _csv(
-            ["part", "event", "water", "method", "iou", "f1", "precision", "recall", "n_pixels", "tp", "fp", "fn"],
+            ["part", "event", "water", "method", "model_id", "iou", "f1", "precision", "recall", "n_pixels", "tp", "fp", "fn"],
             metrics_rows))
         run_signature = json.dumps({"chip": scene_id, "inputs": inputs,
                                     "region": result["region"]["bounds"]}, sort_keys=True)
@@ -581,8 +599,12 @@ def package(result: dict) -> io.BytesIO:
                                 "file": "permanent_water.tif" if info.get("permanent_rule") else None},
             "source_timing": scene_timing(info),
             "doubt_rule": DOUBT_RULE, "uncertainty_zone_rule": ZONE_RULE,
-            "model": "5 member S1-only U-Net ResNet34 ensemble, Platt calibrated on validation",
-            "model_weights": {"card": "ml/artifacts/model/model_card.json", "sha256": model_weights()},
+            "model": info.get("model", "5 member S1-only U-Net ResNet34 ensemble, Platt calibrated on validation"),
+            "model_weights": ({"card": "ml/artifacts/next_optical/MODEL_CARD.md",
+                               "recipe": "ml/artifacts/next_optical/recipe.json",
+                               "recipe_sha256": info["model"]["recipe_sha256"]} if info.get("model") else
+                              {"card": "ml/artifacts/model/model_card.json", "sha256": model_weights()}),
+            "metrics_scope": "test_core/bolivia rows: legacy service_s1; selected_region: current model",
             "baseline": ("VH < -23.6 dB: threshold fitted on train, channel chosen on validation "
                          "(ml/artifacts/baseline/baseline.json)"),
             "repository": REPOSITORY, "mirror": MIRROR,
@@ -648,7 +670,9 @@ def package(result: dict) -> io.BytesIO:
                         "availability_status": (f"scenario: new optics {OPTICAL_DELIVERY_HOURS} h and new radar "
                                                 f"{SAR_DELIVERY_HOURS} h after the order; the archive frame is "
                                                 "available at once")},
-            "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else row
+            "parameters": [{**row, "value": inputs["budget_rub"]} if row["name"] == "budget_rub" else
+                           {**row, "value": info["model_threshold"], "source": info.get("model", {}).get("source", row["source"])}
+                           if row["name"] == "model_threshold" else row
                            for row in PARAMETERS],
             "sensitivity_method": result["sensitivity"]["method"],
             "sensitivity_rule": ("every row re-plans C on the fixed p-map and portfolio; decision_cost_rub = data_cost_rub "
@@ -674,6 +698,8 @@ def package(result: dict) -> io.BytesIO:
             names.append("permanent_water.tif")
         for name in names:
             archive.write(scene_dir(scene_id) / name, arcname=name)
+        if info.get("source_kind") == "uploaded_sentinel1_geotiff":
+            archive.write(scene_dir(scene_id) / "source_s1.tif", arcname="source_s1.tif")
         selected_footprints = sorted({product_by_id[order]["footprint_id"] for order in strategies["C"]["candidate_ids"]})
         archive.writestr("zones_overlay.png", overlay_png(scene_id, info["bbox"], result["zones"], selected_footprints,
                                                           all_assets))

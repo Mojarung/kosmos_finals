@@ -1,4 +1,5 @@
 <script setup>
+import Reveal from './Reveal.vue'
 import { computed } from 'vue'
 import { ArrowRight, Check, ChevronRight, Pin } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
@@ -70,7 +71,7 @@ function select(asset) {
     <p v-if="analysis.chip.portfolio_status" class="source-line portfolio-note">10 учебных объектов: места и стоимости сценарные</p>
     <p v-if="!calibrationChecked" class="portfolio-note"><CalibrationBadge /></p>
     <p v-if="analysis.region.data_status === 'partial_coverage'" class="source-line portfolio-note">Снимок покрывает {{ percent(analysis.region.observed_area_km2 / analysis.region.area_km2, 1) }} рамки. В остальных точках ущерб не оценить.</p>
-    <span class="caption">Ожидаемый ущерб · p × V × q</span>
+    <span class="caption">Ожидаемый ущерб · сценарий</span>
     <div class="hero">
       <AnimatedNumber class="display" :value="analysis.metrics.expected_loss_rub / 1e6" :format="v => v.toLocaleString('ru-RU', { maximumFractionDigits: 2 })" />
       <span class="unit">млн ₽</span>
@@ -102,13 +103,13 @@ function select(asset) {
         <ChevronRight :size="16" class="row-chevron" />
       </button>
 
-      <Transition name="expand">
+      <Reveal>
         <div v-if="state.selectedAssetId === asset.id && selectedAsset" class="asset-detail">
           <p v-if="asset.flood_loss_status === 'permanent_water'" class="source-line">Точка на постоянной воде JRC. Обязательный ущерб p × V × q: {{ compactRub(asset.expected_loss_rub) }}; дополнительная оценка только паводка: {{ compactRub(asset.flood_expected_loss_rub) }}.</p>
           <div class="mini-rows">
             <div v-tip="pHint(asset)"><span>Вероятность воды<small v-if="biasLabel(asset)" class="bias-mark">{{ biasLabel(asset) }}</small></span><b class="tabular">{{ percent(asset.p_flood, 1) }}</b></div>
             <div v-tip="errorHint"><span>Шанс ошибки карты</span><b class="tabular">{{ percent(asset.map_error_probability, 1) }}</b></div>
-            <div v-tip="'Насколько расходятся пять моделей в этой точке, в процентных пунктах вероятности'"><span>Разброс пяти моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
+            <div v-tip="'Различия прогнозов участников ансамбля в этой точке'"><span>Расхождение моделей</span><b class="tabular">{{ number((asset.uncertainty || 0) * 100, 1) }} п.п.</b></div>
             <div v-tip="'V × q: сколько объект теряет, если окажется в воде'"><span>Стоимость × уязвимость</span><b class="tabular">{{ compactRub(asset.value_rub) }} × {{ number(asset.vulnerability, 2) }}</b></div>
           </div>
           <span class="caption sensitivity-caption" v-tip="'Каждый вход по очереди меняется на −20% и +20%, остальные на месте. Видно, какой из них двигает объект в рейтинге'">Если вход ошибается на 20%</span>
@@ -124,7 +125,7 @@ function select(asset) {
             {{ state.mustCover === asset.id ? 'Убрать из обязательных' : 'Обязательно доснять' }}
           </button>
         </div>
-      </Transition>
+      </Reveal>
     </template>
   </div>
 

@@ -1,0 +1,2867 @@
+{
+  "version": 1,
+  "model": "service_s1",
+  "protocol_sha256": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+  "budget_rub": 6500.0,
+  "deadline_hours": 8,
+  "priority": "risk",
+  "calculation_date": "2026-09-26",
+  "control_point_rule": "audit 13: ten S1-valid seeded positions and fixed case V×q, independent of p and labels",
+  "evaluation_rule": "replace p with binary manual water label only for labelled asset points inside timely ordered zones",
+  "label_source": "Sen1Floods11 v1.1 LabelHand, manual S2-derived label at approximately 10 m",
+  "limitation": "Retrospective proxy, not a purchased 1 m image, measured damage or a blind test. B may exceed the fixed C budget.",
+  "interval_method": "2000 descriptive bootstrap resamples of chips within each displayed group; chips within events are dependent",
+  "source": "ml/research/audit_20260926/protocol.json + saved ml/outputs/audit_20260926/*.npz + official S1Hand",
+  "reproduce": "backend/.venv/bin/python scripts/backtest_procurement.py",
+  "summary": {
+    "chips": 70,
+    "labelled_assets": 571,
+    "invalid_assets": 129,
+    "error_a_rub": 130747709.38,
+    "error_b_rub": 0.0,
+    "error_c_rub": 52126579.17,
+    "c_error_reduction_percent": 60.13,
+    "c_reduction_chip_bootstrap_95_percent": [
+      50.44,
+      69.36
+    ],
+    "c_price_share_of_b_percent": 17.16,
+    "c_cost_rub": 422162.38,
+    "b_cost_rub": 2459823.61,
+    "c_corrected_statuses": 19,
+    "b_corrected_statuses": 29
+  },
+  "parts": {
+    "test_core": {
+      "chips": 55,
+      "labelled_assets": 457,
+      "invalid_assets": 93,
+      "error_a_rub": 97911963.66,
+      "error_b_rub": 0.0,
+      "error_c_rub": 42363609.27,
+      "c_error_reduction_percent": 56.73,
+      "c_reduction_chip_bootstrap_95_percent": [
+        45.84,
+        67.91
+      ],
+      "c_price_share_of_b_percent": 17.33,
+      "c_cost_rub": 331123.98,
+      "b_cost_rub": 1910546.91,
+      "c_corrected_statuses": 14,
+      "b_corrected_statuses": 23
+    },
+    "bolivia": {
+      "chips": 15,
+      "labelled_assets": 114,
+      "invalid_assets": 36,
+      "error_a_rub": 32835745.71,
+      "error_b_rub": 0.0,
+      "error_c_rub": 9762969.9,
+      "c_error_reduction_percent": 70.27,
+      "c_reduction_chip_bootstrap_95_percent": [
+        57.92,
+        79.22
+      ],
+      "c_price_share_of_b_percent": 16.57,
+      "c_cost_rub": 91038.4,
+      "b_cost_rub": 549276.7,
+      "c_corrected_statuses": 5,
+      "b_corrected_statuses": 6
+    }
+  },
+  "chips": [
+    {
+      "chip_id": "Ghana_313799",
+      "part": "test_core",
+      "s1_sha256": "4555c98d54ea0ca81e681abc75af20d61774fbbcdc3d48992c3378ebdd5887bc",
+      "prediction_sha256": "b3bdde04e916bdebfcbe820c0fc167081f00dab0c31fac5ef23649e5d847aea7",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 1477696.909662336,
+        "error_after_rub": 1477696.909662336,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1477696.909662336,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37162.23,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1477696.909662336,
+        "error_after_rub": 65129.35026548803,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z01",
+          "Z02",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_1078550",
+      "part": "test_core",
+      "s1_sha256": "8ce880a2236c57b3a4ef9b6c575648d21813e8a10bab2c7bc82cb1fee197e027",
+      "prediction_sha256": "ead4c6c00537e0226cfaef7996a60a5a853234624e2576816e5132a2e3c97eb6",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 206936.6521667689,
+        "error_after_rub": 206936.6521667689,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 206936.6521667689,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37023.31,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 206936.6521667689,
+        "error_after_rub": 164020.14086488634,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z07",
+          "Z10",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_97059",
+      "part": "test_core",
+      "s1_sha256": "9a5a69c8e48e75cdacab88616517ac537962616f36bfba450ce00b057a74f2b2",
+      "prediction_sha256": "938801b6a8730e9b91d896ab1c223d1cea1203222dcf1669723a1f0d3427d72c",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 0,
+      "invalid_assets": 10,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 37191.72,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z07",
+          "Z05"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_866994",
+      "part": "test_core",
+      "s1_sha256": "d59fe3b0acf60b68b0270b7b2639a46142765332abde0edb97108b0a5181fb01",
+      "prediction_sha256": "ee6513b24d94134032583039d597911b99f6df36c5e5b4a3bb8511294a362478",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 4,
+      "invalid_assets": 6,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 3343044.932372868,
+        "error_after_rub": 3343044.932372868,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3343044.932372868,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 37253.58,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3343044.932372868,
+        "error_after_rub": 3343044.932372868,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_406026",
+      "part": "test_core",
+      "s1_sha256": "e48885b39a1bbfc96b1b8dfe08d6c002e8cfc0a93dd6b628cd1b12d483160e3b",
+      "prediction_sha256": "22330854606d9799fcef16859d9b6bd22d25a8261ddf7e1a21cb9793c6d64550",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 196706.2029056251,
+        "error_after_rub": 196706.2029056251,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 196706.2029056251,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37028.84,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 196706.2029056251,
+        "error_after_rub": 103439.71769325435,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "Z08"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_53713",
+      "part": "test_core",
+      "s1_sha256": "9b02324cd247cbe8212c73f958f430655972d010de8bab7e79f1c442f25a9bb6",
+      "prediction_sha256": "b8baa9642e0426d37eb1813b0f3fb0848b41f49ad5c4c27bf97df8ebe87ee421",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 11,
+      "A": {
+        "error_before_rub": 145398.11071008444,
+        "error_after_rub": 145398.11071008444,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 145398.11071008444,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37058.34,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 145398.11071008444,
+        "error_after_rub": 81424.6584661305,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z08",
+          "Z06",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_83483",
+      "part": "test_core",
+      "s1_sha256": "affd4371d4806abad4fa259298be31c35efdeca18e9aadac3222d7a088215ee7",
+      "prediction_sha256": "2ade7f2c4515587c7693ec074611ca96bac827e497ddb0fb858b08cca1b057f5",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 0,
+      "invalid_assets": 10,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 37187.64,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 6143.84,
+        "zone_ids": [
+          "Z10",
+          "Z06",
+          "U1"
+        ]
+      }
+    },
+    {
+      "chip_id": "Ghana_167233",
+      "part": "test_core",
+      "s1_sha256": "81d91cd92dd2f11818d01d93390a8462ed19912d3a0b4a618e536ef1b7217923",
+      "prediction_sha256": "a044c601b814f01b454f5cc9195ac7ae112d3e6620ae01babf48a50bba386314",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 11,
+      "A": {
+        "error_before_rub": 77263.75500205904,
+        "error_after_rub": 77263.75500205904,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 77263.75500205904,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37048.99,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 77263.75500205904,
+        "error_after_rub": 48167.37371729687,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z09",
+          "Z02",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_900498",
+      "part": "test_core",
+      "s1_sha256": "83bc6bca280cb51264028515c944928ea2201386bee411d8bb5cabbcb51cc4a6",
+      "prediction_sha256": "5522501b14a8c3dbd826210b1cf3e98d2c812bb6431c47d02c51c2c2256c170b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 9113634.057156742,
+        "error_after_rub": 9113634.057156742,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 9113634.057156742,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 3,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 33932.94,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 9113634.057156742,
+        "error_after_rub": 4167696.1343735456,
+        "corrected_statuses": 2,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z07",
+          "Z10",
+          "Z08"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_591317",
+      "part": "test_core",
+      "s1_sha256": "53374c3e29255f1400339f7b32dc6145032eac613e3c808f840203cd7ea4c139",
+      "prediction_sha256": "fb0503e204d56a12346860bb371926fd67886fb9ab7741b3125b2ae9d486a600",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 3003297.7394293994,
+        "error_after_rub": 3003297.7394293994,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3003297.7394293994,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 33970.89,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3003297.7394293994,
+        "error_after_rub": 2861678.2277822495,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_79637",
+      "part": "test_core",
+      "s1_sha256": "550231c166d2592eeffb50e26cee6197c7adbd74cb6b84269843d0a268b5ca55",
+      "prediction_sha256": "80267e0bb93b46e2722839eb196d59164686115670fe4cd5769279a1c08589ae",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 1792376.9601155072,
+        "error_after_rub": 1792376.9601155072,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1792376.9601155072,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34057.7,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1792376.9601155072,
+        "error_after_rub": 217135.194176808,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z02",
+          "Z03",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_952728",
+      "part": "test_core",
+      "s1_sha256": "ccd39d95515ed60d19b0e6c767581545b4ea5fd6044624440b1159402ad55e6c",
+      "prediction_sha256": "7738b0cc3fef06e84022e4f4746da83370d77670eb6d0cd9e7df581650204265",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 7,
+      "invalid_assets": 3,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 2659304.5396730304,
+        "error_after_rub": 2659304.5396730304,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2659304.5396730304,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 33896.44,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2659304.5396730304,
+        "error_after_rub": 201179.52451109886,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z09",
+          "Z03",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_828067",
+      "part": "test_core",
+      "s1_sha256": "b3746c7e3ceaefaa65fe923b1faeff9d0605a260e0707cef3a4aedc12fab018b",
+      "prediction_sha256": "3c08fbd02a222303f099c7df0913530785469d724069f44655eca790c5c9f214",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 1860421.429388225,
+        "error_after_rub": 1860421.429388225,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1860421.429388225,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 33983.29,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1860421.429388225,
+        "error_after_rub": 307943.36940161884,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z01",
+          "Z06",
+          "Z08"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_570384",
+      "part": "test_core",
+      "s1_sha256": "7bc4c1a73f6e6631cd1c9a715a7a8db0790e9442cc5172c04f6832626f6bdd42",
+      "prediction_sha256": "b44a77e601bb16fd73f9e77f58ec3a6e084faea3add6fa5b0b741e81b20d1d8b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 658437.4198690057,
+        "error_after_rub": 658437.4198690057,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 658437.4198690057,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 34155.42,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 658437.4198690057,
+        "error_after_rub": 295513.64965736866,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z02",
+          "Z04",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_44475",
+      "part": "test_core",
+      "s1_sha256": "8f37aec1f4c623f6e7ba2c5a6f5340016aad1edb07b4a33a3dfaa66fb7588a08",
+      "prediction_sha256": "599859b19059fe3aae710af637a82085c494d6791a660189e49c4b609732bc33",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 179404.14589829743,
+        "error_after_rub": 179404.14589829743,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 179404.14589829743,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34007.61,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 179404.14589829743,
+        "error_after_rub": 61491.006799042225,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z03",
+          "Z10",
+          "Z09"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_80221",
+      "part": "test_core",
+      "s1_sha256": "d460ee319bab15012039331aed63136895ef0a6c0fc21b8cf4b579e806b07a25",
+      "prediction_sha256": "1a9e2b3947568d71ab87d9c46d6ebe26dbef08238eb358f47cdcae96db798d56",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 7,
+      "invalid_assets": 3,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 429727.4801880121,
+        "error_after_rub": 429727.4801880121,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 429727.4801880121,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 33983.29,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 429727.4801880121,
+        "error_after_rub": 53068.47430765629,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z02",
+          "Z08",
+          "Z03"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_1018327",
+      "part": "test_core",
+      "s1_sha256": "d69a706c250dd3dd37ff43eb4969117460abd64d3280bca71fdd9916f4f3d6b1",
+      "prediction_sha256": "ed6933be45e7a1b8d4fa3c6fef26c13e7c397cbe391804699757ee6e7574f9b5",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 2538759.6691958606,
+        "error_after_rub": 2538759.6691958606,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2538759.6691958606,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 33970.89,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2538759.6691958606,
+        "error_after_rub": 385223.82816299796,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z07",
+          "Z02",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_592446",
+      "part": "test_core",
+      "s1_sha256": "a56299df37160745abd570528ad50d29de2bc5a3e3b4d2369db5ac6359c5f552",
+      "prediction_sha256": "0c33654f27115b74756cfee44bbaa620188ec3eff08e1df638415216ab08c068",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 233212.45624683797,
+        "error_after_rub": 233212.45624683797,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 233212.45624683797,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 34204.26,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 233212.45624683797,
+        "error_after_rub": 106551.65885109454,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z02",
+          "Z09",
+          "Z05"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_772630",
+      "part": "test_core",
+      "s1_sha256": "277541a0d4bc7167b968964dba85f2b92d7a9c8591bc1a03b7e8b45ff6377dfc",
+      "prediction_sha256": "f99f58167af6922c89cac85a1063d09314f97d807de082c3d9a9161542078239",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 5,
+      "invalid_assets": 5,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 172669.2857220769,
+        "error_after_rub": 172669.2857220769,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 172669.2857220769,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 33806.88,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 172669.2857220769,
+        "error_after_rub": 43139.223754405975,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6131.54,
+        "zone_ids": [
+          "Z02",
+          "Z09",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "India_399883",
+      "part": "test_core",
+      "s1_sha256": "3cdb20bbf53e1500de925233db53ab41b49f02116141d2d17aa1b3700551c482",
+      "prediction_sha256": "01b55bef6464fb1315fdeb4057f96d64fcff2365015961560150bb7f4a68e50b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 1931662.2297745198,
+        "error_after_rub": 1931662.2297745198,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1931662.2297745198,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 33946.56,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1931662.2297745198,
+        "error_after_rub": 766180.8151286095,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z10",
+          "Z07",
+          "Z03"
+        ]
+      }
+    },
+    {
+      "chip_id": "Mekong_333434",
+      "part": "test_core",
+      "s1_sha256": "abed88cdb40aa823a3255ea53fdee7afd8ccabdb3e2045734b89c4756bf3a325",
+      "prediction_sha256": "fcea3992333ed074239358d1b66350f2e9c41a0454398402c9ad273db399fa05",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 443630.2037211135,
+        "error_after_rub": 443630.2037211135,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 443630.2037211135,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 36699.83,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 443630.2037211135,
+        "error_after_rub": 407269.7404772043,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z10",
+          "Z05",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "Mekong_254910",
+      "part": "test_core",
+      "s1_sha256": "143aed56655704da0f27412dccf63cafc78f95719995f405b9021c14dea0bf26",
+      "prediction_sha256": "02000470e429eaaac10eef47ff1ac2fdb1710a340989928ed36b591396dbad8b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 6086692.977161147,
+        "error_after_rub": 6086692.977161147,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 6086692.977161147,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 2,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 36796.89,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 6086692.977161147,
+        "error_after_rub": 3512893.3074185625,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z01",
+          "Z10",
+          "Z09"
+        ]
+      }
+    },
+    {
+      "chip_id": "Nigeria_417184",
+      "part": "test_core",
+      "s1_sha256": "99b58fdcad3b27e09a0bb672246cf59f58e1c7e211d290e45485c5321995d7dc",
+      "prediction_sha256": "6e7455bc1d319c0f1349f7a14e3908b00a13ca80025b7f54ff512676cc8b38b9",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 4,
+      "invalid_assets": 6,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 888534.0901091695,
+        "error_after_rub": 888534.0901091695,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 888534.0901091695,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 37125.77,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 888534.0901091695,
+        "error_after_rub": 629407.4390083551,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z04",
+          "Z03",
+          "Z05"
+        ]
+      }
+    },
+    {
+      "chip_id": "Nigeria_812045",
+      "part": "test_core",
+      "s1_sha256": "60721c48b1bc862abdb9e6b0ee93d67590fb058f4581e43f615569b22beff4e0",
+      "prediction_sha256": "008175ed8fb394e7bfdb07c117598892ce56a051bc1e93564b227281d40ff875",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 912259.2809610069,
+        "error_after_rub": 912259.2809610069,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 912259.2809610069,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 37183.56,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 912259.2809610069,
+        "error_after_rub": 759609.1407351196,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z10",
+          "Z06",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "Nigeria_22088",
+      "part": "test_core",
+      "s1_sha256": "7674eafc5f76181b40561bb870eabd07b7904384dc7e193158c52584b745db4f",
+      "prediction_sha256": "4c6d49daf77f1fb08d51bddf23d89f6e2161fb3e70e066966ddda5ee8f3aea57",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 185530.1630217582,
+        "error_after_rub": 185530.1630217582,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 185530.1630217582,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37106.81,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 185530.1630217582,
+        "error_after_rub": 104138.53097707033,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z06",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "Pakistan_849790",
+      "part": "test_core",
+      "s1_sha256": "ff1f7b9afce78918808ced5d648d4df28a2047a05f934f649e728bad38533007",
+      "prediction_sha256": "410e8c5c07d3f969df03c9be82c75e7be576a45206ba9c6206d37dd649291c98",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 15391956.500569358,
+        "error_after_rub": 15391956.500569358,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 15391956.500569358,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 6,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 32193.05,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 15391956.500569358,
+        "error_after_rub": 8267500.459589064,
+        "corrected_statuses": 3,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6159.23,
+        "zone_ids": [
+          "Z02",
+          "Z05",
+          "U3"
+        ]
+      }
+    },
+    {
+      "chip_id": "Pakistan_664885",
+      "part": "test_core",
+      "s1_sha256": "e5c39467d3f1672fa280077d4a8157d1df6cc41b1d91e0fafee457e2858e310f",
+      "prediction_sha256": "7a36858153b4001b990b16295ff35da031367712ee636a2b569f04247da1e8ee",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 2,
+      "invalid_assets": 8,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 33600.15521757305,
+        "error_after_rub": 33600.15521757305,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 33600.15521757305,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 32148.14,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 33600.15521757305,
+        "error_after_rub": 33600.15521757305,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 6139.23,
+        "zone_ids": [
+          "Z05",
+          "Z07",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "Pakistan_694942",
+      "part": "test_core",
+      "s1_sha256": "f613d5439c98554b004bf351b7b6550a89f4275835e7bce7671b35b04efa32c2",
+      "prediction_sha256": "9aa69a894c6d0de57387fae417462a56735540410e2765567c76d145f51054aa",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 3680855.572037399,
+        "error_after_rub": 3680855.572037399,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3680855.572037399,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 32133.17,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3680855.572037399,
+        "error_after_rub": 325451.9918933511,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6199.16,
+        "zone_ids": [
+          "Z02",
+          "U2"
+        ]
+      }
+    },
+    {
+      "chip_id": "Pakistan_528249",
+      "part": "test_core",
+      "s1_sha256": "b12a55ded38df04c960d9c2f6256eef5ae40c7e46360624a85041f21f7068ede",
+      "prediction_sha256": "143ff2615f459d713ee335dbdef44c5f60bb922ca33b802d019c6f1f04fcfc89",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 3,
+      "invalid_assets": 7,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 41157.66137838364,
+        "error_after_rub": 41157.66137838364,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 41157.66137838364,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 33226.99,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 41157.66137838364,
+        "error_after_rub": 4308.732692152262,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6134.64,
+        "zone_ids": [
+          "Z02",
+          "Z07",
+          "Z04"
+        ]
+      }
+    },
+    {
+      "chip_id": "Pakistan_167553",
+      "part": "test_core",
+      "s1_sha256": "412d8b25b478d7e34e70394ba2ceebfdb983575b0d10179702d936e50d993dd7",
+      "prediction_sha256": "9495514c7ad02b002e78672fa63bf205a381c955da26341d444744f0453a67a1",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 540803.359891288,
+        "error_after_rub": 540803.359891288,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 540803.359891288,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 32894.02,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 540803.359891288,
+        "error_after_rub": 239202.66637578607,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 6134.64,
+        "zone_ids": [
+          "Z10",
+          "Z01",
+          "Z03"
+        ]
+      }
+    },
+    {
+      "chip_id": "Paraguay_913449",
+      "part": "test_core",
+      "s1_sha256": "d574270d0876e440adfac65762f76a32e67ddcb2508b381480e806e81df3833b",
+      "prediction_sha256": "4e8f6cb23b71da44c2a7a28d36756e48671b34172ba06a16883c8db2ba95c4f0",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 876372.1936615184,
+        "error_after_rub": 876372.1936615184,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 876372.1936615184,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34670.25,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 876372.1936615184,
+        "error_after_rub": 818266.0632533953,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z09",
+          "Z05",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Paraguay_232281",
+      "part": "test_core",
+      "s1_sha256": "285b324cfb02da2b5b707d1fe5ff8c4c870e2c3b3f17b49ebdbbe50fcf48bf32",
+      "prediction_sha256": "c7381a47c4309bfe5e2d334759eabf07e711fbcfad2460bc3f5bbb9f5ef45716",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 3531271.111627575,
+        "error_after_rub": 3531271.111627575,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3531271.111627575,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34441.5,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3531271.111627575,
+        "error_after_rub": 3118708.2063872367,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z05",
+          "Z07",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "Paraguay_271769",
+      "part": "test_core",
+      "s1_sha256": "a8d1f64cc7d9f07e7c6250907c8061c9a4ca1f6a7e603e8fd4d6325eabb7dc84",
+      "prediction_sha256": "c048c8cb83e397a1c36e54fc8cf1b2037e74e36f36717d572dba882835e673fd",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 223716.15329757333,
+        "error_after_rub": 223716.15329757333,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 223716.15329757333,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34781.5,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 223716.15329757333,
+        "error_after_rub": 109061.80748715997,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6160.75,
+        "zone_ids": [
+          "Z06",
+          "Z02",
+          "U4"
+        ]
+      }
+    },
+    {
+      "chip_id": "Paraguay_40936",
+      "part": "test_core",
+      "s1_sha256": "59056f7dfe3a19baa65b6eaf1479eab473ca60f614ae8bafe1df05d09d6bbfd2",
+      "prediction_sha256": "d413eba13de01f2ad867eeb816d73161370b5ccf7f7f9927e0665b18f452292a",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 1502199.4882496074,
+        "error_after_rub": 1502199.4882496074,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1502199.4882496074,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 34579.56,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1502199.4882496074,
+        "error_after_rub": 133280.68829141557,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6148.45,
+        "zone_ids": [
+          "Z04",
+          "Z05",
+          "U2"
+        ]
+      }
+    },
+    {
+      "chip_id": "Paraguay_34417",
+      "part": "test_core",
+      "s1_sha256": "1e495c046f50b200a40839161ea97aedcc59344a0e2e1a285c33f37b3e0b7e5a",
+      "prediction_sha256": "342609225767c8e66ae2731a9308809c43f911e5468e5930166d815cd30a25c5",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 0,
+      "invalid_assets": 10,
+      "candidate_zones": 11,
+      "A": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 34545.84,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 0.0,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      }
+    },
+    {
+      "chip_id": "Paraguay_868895",
+      "part": "test_core",
+      "s1_sha256": "6dee78da18dc8b35a706160fe08eb7a937ef66562809978bcbe32ee4bf604327",
+      "prediction_sha256": "b8614c471c625097dc52468b44bbc80916ff3f4f46bf612d6fd33ee3340d03b4",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 5,
+      "invalid_assets": 5,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 473739.54439535737,
+        "error_after_rub": 473739.54439535737,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 473739.54439535737,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 34613.51,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 473739.54439535737,
+        "error_after_rub": 308062.84630671144,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6130.02,
+        "zone_ids": [
+          "Z09",
+          "Z07",
+          "Z04"
+        ]
+      }
+    },
+    {
+      "chip_id": "Somalia_699062",
+      "part": "test_core",
+      "s1_sha256": "c905fcba8efe764f1c91d9b1fb061da12b797c645ad33b80befb575dc00a5d38",
+      "prediction_sha256": "90d5ee0ec4d42c9b1d5581e84a1dacfd5f10adf05d664dc19904b45573f5db7b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 156874.5782598853,
+        "error_after_rub": 156874.5782598853,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 156874.5782598853,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 37557.9,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 156874.5782598853,
+        "error_after_rub": 54188.2342658937,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z10",
+          "Z02",
+          "Z05"
+        ]
+      }
+    },
+    {
+      "chip_id": "Somalia_60129",
+      "part": "test_core",
+      "s1_sha256": "d3a90e8b4af8b13bfcfd0025bd73b2b1f6cf6b6ee3d577f317184ca5fb4231a8",
+      "prediction_sha256": "43586793b3de87c60c8615ab6de13fc169e5be741a0fa0474f1a76b1b95dab6f",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 93997.1819287166,
+        "error_after_rub": 93997.1819287166,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 93997.1819287166,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 37510.71,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 93997.1819287166,
+        "error_after_rub": 21632.055286318064,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z10",
+          "Z05",
+          "Z04"
+        ]
+      }
+    },
+    {
+      "chip_id": "Somalia_685158",
+      "part": "test_core",
+      "s1_sha256": "352c7eee098e572232ddcd7694f2197d8ff261f6262a2a69ac7868b1ee758e70",
+      "prediction_sha256": "d89f2c773b6a1d3c0aaa2bd42bf3decfa557a94723dcaf293a2786e9341cdaca",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 7,
+      "invalid_assets": 3,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 3149556.900188327,
+        "error_after_rub": 3149556.900188327,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3149556.900188327,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 37556.71,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3149556.900188327,
+        "error_after_rub": 1172051.7783425748,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z08",
+          "Z02",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "Somalia_166342",
+      "part": "test_core",
+      "s1_sha256": "f6ad2e32d1bfd1d2e5684733bb4baf648b960257d5b210309a9b12ae12f94632",
+      "prediction_sha256": "c006b8a58264a8a7275109a12e120e19b6a8a82ef6e75183c76f227ef1e7e685",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 436868.6882779002,
+        "error_after_rub": 436868.6882779002,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 436868.6882779002,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 37521.49,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 436868.6882779002,
+        "error_after_rub": 212612.3232766986,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z09",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "Somalia_322855",
+      "part": "test_core",
+      "s1_sha256": "a9c284e8e99bd544383d0a455882b221bb95f7f05be81b98f51442b19570f678",
+      "prediction_sha256": "9feaa9c6112233ed28aa4ca54d67fd8f756969b850cbad1c0aec0342eb15bd9d",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 3882061.2313225865,
+        "error_after_rub": 3882061.2313225865,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3882061.2313225865,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37560.52,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3882061.2313225865,
+        "error_after_rub": 1317431.80481717,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z07",
+          "Z06",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_1049830",
+      "part": "test_core",
+      "s1_sha256": "e82f3c2780d62a5651c62446ad24920c9833e4a9f0f0704fe465ebb7ea75e53a",
+      "prediction_sha256": "c22295c9b0873557c621a9cba9541d2b2493e124f5bca2e1bc9107775428bed3",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 2070025.3679417074,
+        "error_after_rub": 2070025.3679417074,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2070025.3679417074,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 37409.86,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2070025.3679417074,
+        "error_after_rub": 2026929.2812328786,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z06",
+          "Z07",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_534068",
+      "part": "test_core",
+      "s1_sha256": "ae5d25f74fe6c996adf86862a59448b62bb44a4c6440240515e8d664053784ed",
+      "prediction_sha256": "e5ac38be14c0028a088959d6c6c71dcf6ab06940c5c75f508a7a9e19619df403",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 2580336.3144397736,
+        "error_after_rub": 2580336.3144397736,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2580336.3144397736,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37280.69,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2580336.3144397736,
+        "error_after_rub": 692762.7205848694,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "Z09"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_922192",
+      "part": "test_core",
+      "s1_sha256": "723812c3822f6762c90f1fa6e2ba4bcfae460fe1cc6fba00255fc46b6ac81528",
+      "prediction_sha256": "63c0b907c7d8323de2b2d859b18840d58353a29a14d9f3ae68c708279a2d5801",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 4905419.878941029,
+        "error_after_rub": 4905419.878941029,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 4905419.878941029,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37397.64,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 4905419.878941029,
+        "error_after_rub": 136018.9586877823,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z02",
+          "Z01",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_377277",
+      "part": "test_core",
+      "s1_sha256": "945fc64fd2b61eae40aa73086f60ac7136d1ef90d6f1d973caa6ed5d9eb7140f",
+      "prediction_sha256": "b5820bbdb471f73494e8e327fb45bb631e64ac74852556d758c6a36f780b43fc",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 1026465.8032916486,
+        "error_after_rub": 1026465.8032916486,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1026465.8032916486,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37407.23,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1026465.8032916486,
+        "error_after_rub": 846454.641316086,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z05",
+          "Z02",
+          "Z03"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_450918",
+      "part": "test_core",
+      "s1_sha256": "e16e21f19409fae3daa3b4bc7c4c2932e1733a86a5207f20fb417180c312af95",
+      "prediction_sha256": "586a814c82e99a7b1cf84437cc6a969ba3f1c410c1fccdda623bd8d890f2a67e",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 6246500.299172476,
+        "error_after_rub": 6246500.299172476,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 6246500.299172476,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 2,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 37409.86,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 6246500.299172476,
+        "error_after_rub": 37767.033791169524,
+        "corrected_statuses": 2,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z10",
+          "Z05",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "Sri-Lanka_713926",
+      "part": "test_core",
+      "s1_sha256": "8d51be4c5e9a9bb87ae95b69ae2ba10a59ac30d84056b6d65d5cbc44af2e515d",
+      "prediction_sha256": "4365ccab9413d959687f3c76bc7bd7b21f7d416e72762563e8b0b8dba650995a",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 3797140.8119425178,
+        "error_after_rub": 3797140.8119425178,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 3797140.8119425178,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 37299.37,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 3797140.8119425178,
+        "error_after_rub": 885496.8974366784,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6116.19,
+        "zone_ids": [
+          "Z08",
+          "Z07",
+          "Z05"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_350244",
+      "part": "test_core",
+      "s1_sha256": "fb42f489d9ce914c566cf126fb59d44a93c94b134a05925e39ac279a4378e4cf",
+      "prediction_sha256": "6ba71d511872447d30205f3223d62567358c8c3198ab64018847a43d50a990db",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 204544.57118175924,
+        "error_after_rub": 204544.57118175924,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 204544.57118175924,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29602.17,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 204544.57118175924,
+        "error_after_rub": 67653.42536382377,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6148.44,
+        "zone_ids": [
+          "Z03",
+          "Z07",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_66511",
+      "part": "test_core",
+      "s1_sha256": "f60e348a778558717eeb93f38c418222f52e5bf451f843fbb1900feaf5923171",
+      "prediction_sha256": "a75997d15bfd329f55413afb6c53c845f69eca1027f23cf74c3e1e6863e37f11",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 1720206.581032835,
+        "error_after_rub": 1720206.581032835,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1720206.581032835,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29547.4,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1720206.581032835,
+        "error_after_rub": 1650716.628599912,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6148.44,
+        "zone_ids": [
+          "Z04",
+          "Z06",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_519181",
+      "part": "test_core",
+      "s1_sha256": "b793f503115d0e6185afecd2b40daaa85e1d839869527f3e8438802c61df3a32",
+      "prediction_sha256": "20aa298916c5e04a60777d5847d20122638ddd429c8dcd9bf477755ca6c551a3",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 523063.943348825,
+        "error_after_rub": 523063.943348825,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 523063.943348825,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29781.75,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 523063.943348825,
+        "error_after_rub": 390250.31039491296,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6148.44,
+        "zone_ids": [
+          "Z05",
+          "Z06",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_778194",
+      "part": "test_core",
+      "s1_sha256": "0745bc1a71a7b2ad4248a979dac866c6615f28d3d6a5d6e1df726825ed9abf6f",
+      "prediction_sha256": "a15739fe28f4409636d89e562a622806431a5d2f1d0d623cc1191cdf2fbfd961",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 267904.4730612077,
+        "error_after_rub": 267904.4730612077,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 267904.4730612077,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29995.42,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 267904.4730612077,
+        "error_after_rub": 53545.5790348351,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6148.44,
+        "zone_ids": [
+          "Z06",
+          "Z02",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_67102",
+      "part": "test_core",
+      "s1_sha256": "c9ff1e645dbfdee3c8b182cc65ab793372bade004f5900cf744d8167bfa7bacc",
+      "prediction_sha256": "28be5bd7d30ef9c97e7238ce73fe32b7801ccb0dfafa1b796e2531a276a727d5",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 1376046.8474356458,
+        "error_after_rub": 1376046.8474356458,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1376046.8474356458,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29942.02,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1376046.8474356458,
+        "error_after_rub": 477165.66633898765,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 6148.44,
+        "zone_ids": [
+          "Z10",
+          "Z07",
+          "Z01"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_1049586",
+      "part": "test_core",
+      "s1_sha256": "6f0247e1ef023c7080a3b0777bb2a3d8bdc6c3c6e24fc72c9af6e53630d03db9",
+      "prediction_sha256": "55d947acd8010cbdf35d0b2fb125905d66374d15d6fc5ad65da61bf24e494738",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 155255.20471855998,
+        "error_after_rub": 155255.20471855998,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 155255.20471855998,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29835.19,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 155255.20471855998,
+        "error_after_rub": 28830.041736364365,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 6173.04,
+        "zone_ids": [
+          "Z05",
+          "Z08",
+          "U3"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_504150",
+      "part": "test_core",
+      "s1_sha256": "e1072a4a217074bc10194920b958c9074c7aa68e674616d998f3ccfac058c2bc",
+      "prediction_sha256": "28c0ced1c0e7a9d5492bedb2f8bea75de80a6637c2af93dc67e599306249b537",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 292980.7962151244,
+        "error_after_rub": 292980.7962151244,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 292980.7962151244,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29942.02,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 292980.7962151244,
+        "error_after_rub": 105254.1387733072,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6166.9,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "U2"
+        ]
+      }
+    },
+    {
+      "chip_id": "USA_758178",
+      "part": "test_core",
+      "s1_sha256": "b54323b62f6490f8a7286f3bdf77a7e1b1b659d2c90412112f78bf4a3ac917df",
+      "prediction_sha256": "97c3699c73e490aef373292815d198c09fbb0c2a041b0b11dc708d39e376a4b2",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 194441.76140241325,
+        "error_after_rub": 194441.76140241325,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 194441.76140241325,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 29977.75,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 194441.76140241325,
+        "error_after_rub": 144058.69818292558,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6169.99,
+        "zone_ids": [
+          "Z07",
+          "Z02",
+          "U1"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_103757",
+      "part": "bolivia",
+      "s1_sha256": "d7c7630e6540b3d32b063ed079d73e55c95b1c0347f5d94257b2b7300befb4c8",
+      "prediction_sha256": "02dabd3bc3bd171b264e905bf803df19ea4b55bbe91dcc2be0413213aa1bb13e",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 2859822.7383568883,
+        "error_after_rub": 2859822.7383568883,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2859822.7383568883,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 36562.33,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2859822.7383568883,
+        "error_after_rub": 641976.7396524549,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 6169.98,
+        "zone_ids": [
+          "Z06",
+          "U1",
+          "U3"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_129334",
+      "part": "bolivia",
+      "s1_sha256": "9d09909c8067a8e0bbe1e2d6199a4656d3cf059c6c599f060d8f08ece3392646",
+      "prediction_sha256": "246d0a7428b5d0f18b76cfbf9c8f0b1541c6abed0b7fd2c96d25a6078a4e0783",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 7489025.3535006195,
+        "error_after_rub": 7489025.3535006195,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 7489025.3535006195,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 36535.4,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 7489025.3535006195,
+        "error_after_rub": 1143167.3974730074,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6166.9,
+        "zone_ids": [
+          "Z01",
+          "U3"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_195474",
+      "part": "bolivia",
+      "s1_sha256": "a12ec27a55d6779bc278c0a57928741980723b0e1f94e5cd17d2c4f013ebd3ff",
+      "prediction_sha256": "9ca86b58f5a51349903a09c871fba11d23b24f2cae5ef75f69dd3303018ab445",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 770062.034833245,
+        "error_after_rub": 770062.034833245,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 770062.034833245,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 36385.54,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 770062.034833245,
+        "error_after_rub": 642523.032031022,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z07",
+          "Z02",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_23014",
+      "part": "bolivia",
+      "s1_sha256": "b0ad4a308f49acb26ebe584f210410ea41f0e6e2bf2196cff2e8f25f1f6d2516",
+      "prediction_sha256": "e04d2b4eab3e203103319b1a54eb8909d0cde842c2884472f0006346d25dcd04",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 7,
+      "invalid_assets": 3,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 136883.9459377341,
+        "error_after_rub": 136883.9459377341,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 136883.9459377341,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 36654.18,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 136883.9459377341,
+        "error_after_rub": 40653.98059319705,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z02",
+          "Z10",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_233925",
+      "part": "bolivia",
+      "s1_sha256": "81cd862bdd3189940d0e0ed85032b7c4553d28f64d1a0cfa4a0d60afe21ed6a7",
+      "prediction_sha256": "8ba6cedfeb6e5c62bdfe1b5b801d2d966a9a31c49ba1ea11ab37352bb35b5d3e",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 7,
+      "invalid_assets": 3,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 94382.20957526937,
+        "error_after_rub": 94382.20957526937,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 94382.20957526937,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 7,
+        "data_cost_rub": 36761.82,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 94382.20957526937,
+        "error_after_rub": 65754.42343018949,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z07",
+          "Z02",
+          "Z06"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_242570",
+      "part": "bolivia",
+      "s1_sha256": "bb9877cebc95a130bf2bc1005796748aefea742ded8956b5e2e5de646c83a9db",
+      "prediction_sha256": "92c81cd510dd6a4f50d1a8fa5a634141dde3ad0fb583e70573d87af100993167",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 6,
+      "invalid_assets": 4,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 2425938.784889877,
+        "error_after_rub": 2425938.784889877,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 2425938.784889877,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 36718.82,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 2425938.784889877,
+        "error_after_rub": 593431.4688667655,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z02",
+          "Z09",
+          "Z08"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_290290",
+      "part": "bolivia",
+      "s1_sha256": "bbf07831042482b409570d46a4c335e2b404a5d1aa341c89bc9dfbc1fcd67d93",
+      "prediction_sha256": "c782a5aec782d183325af200925e04f1de2bd5df3fd9af973a54e345f08910b3",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 1315774.3090996519,
+        "error_after_rub": 1315774.3090996519,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1315774.3090996519,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 36730.83,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1315774.3090996519,
+        "error_after_rub": 61481.137573719025,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z02",
+          "Z05",
+          "Z07"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_294583",
+      "part": "bolivia",
+      "s1_sha256": "599aa979e6a9c47df1a8a8dbd07ccf999c630618a0079cf39ea0e8dbf8c91cba",
+      "prediction_sha256": "6ad93a788c0cf63afa4fbc92a90e4fc4b2c22ed3da81014b3894378492af6d6a",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 5,
+      "invalid_assets": 5,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 6171626.829355955,
+        "error_after_rub": 6171626.829355955,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 6171626.829355955,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 2,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 36844.22,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 6171626.829355955,
+        "error_after_rub": 1911408.4474742413,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 2,
+        "data_cost_rub": 5201.12,
+        "zone_ids": [
+          "Z05",
+          "U2"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_312675",
+      "part": "bolivia",
+      "s1_sha256": "3752c30bb4682c28927962e30af0d83aff5c51df79b012dc93adb302db794c07",
+      "prediction_sha256": "cbc1576ffe366dabb66cdfa367442c0e422c6e4af83318ade8a303e7c6aadad0",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 6,
+      "invalid_assets": 4,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 159597.08623122424,
+        "error_after_rub": 159597.08623122424,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 159597.08623122424,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 6,
+        "data_cost_rub": 36486.82,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 159597.08623122424,
+        "error_after_rub": 46814.18624240905,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6140.76,
+        "zone_ids": [
+          "Z07",
+          "Z02",
+          "U2"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_314919",
+      "part": "bolivia",
+      "s1_sha256": "aa49b10df661f2a4d63ac90221273d76c2653563a79fe3b2eceb3f4dbc887283",
+      "prediction_sha256": "26c88bf62538c4057af3b4509ef33b6de61531de9d0148eb2d94797c3fb81707",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 4,
+      "invalid_assets": 6,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 322900.5504399538,
+        "error_after_rub": 322900.5504399538,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 322900.5504399538,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 4,
+        "data_cost_rub": 36548.87,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 322900.5504399538,
+        "error_after_rub": 28430.789709091187,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z05",
+          "Z08",
+          "Z10"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_360519",
+      "part": "bolivia",
+      "s1_sha256": "261c40008d449d1e5d35aeae4650748fafd5bd5685c31448d2c58f4e98fdddcd",
+      "prediction_sha256": "23ed1b26787d55c38c7c4df55456ca8515c3cf1c53889e7beff506ab2fe7fd04",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 9,
+      "invalid_assets": 1,
+      "candidate_zones": 12,
+      "A": {
+        "error_before_rub": 160544.7612470016,
+        "error_after_rub": 160544.7612470016,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 160544.7612470016,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 9,
+        "data_cost_rub": 36660.9,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 160544.7612470016,
+        "error_after_rub": 40722.74421341717,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z06",
+          "Z07",
+          "Z09"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_379434",
+      "part": "bolivia",
+      "s1_sha256": "95d0beda1c4b04449c0d9c4f24599116d3cb38009093cb4d7ef26131f9a26974",
+      "prediction_sha256": "ae16db85812db7697fa32bc106b2ab442d51ad76acc845283ce5b2dbb6d48bb0",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 15,
+      "A": {
+        "error_before_rub": 1521324.0904267877,
+        "error_after_rub": 1521324.0904267877,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 1521324.0904267877,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 36422.11,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 1521324.0904267877,
+        "error_after_rub": 1269513.8001814485,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z10",
+          "Z05",
+          "Z02"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_432776",
+      "part": "bolivia",
+      "s1_sha256": "f51074aa752e2db2400742c1dce5e6b4c61b836517f2835a1832328c25cd6d83",
+      "prediction_sha256": "cc52f92704ef2d97b5d5f52532fa1d44f0e31a225e1bd028edc5b9317dcbce7b",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 8,
+      "invalid_assets": 2,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 9001632.309891284,
+        "error_after_rub": 9001632.309891284,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 9001632.309891284,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 8,
+        "data_cost_rub": 36542.14,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 9001632.309891284,
+        "error_after_rub": 2984515.158832073,
+        "corrected_statuses": 1,
+        "covered_labelled_assets": 3,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z08",
+          "Z02",
+          "Z04"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_60373",
+      "part": "bolivia",
+      "s1_sha256": "c2dd9a80bda30a35d4e569eb8a256b0e556c21439c8a3f3ec78cd84a9faf28ac",
+      "prediction_sha256": "b041cd311c02f290d8f266a8d050662161931bf44e6cb6786490aa131b505a25",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 10,
+      "invalid_assets": 0,
+      "candidate_zones": 14,
+      "A": {
+        "error_before_rub": 310604.3973355554,
+        "error_after_rub": 310604.3973355554,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 310604.3973355554,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 10,
+        "data_cost_rub": 36660.9,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 310604.3973355554,
+        "error_after_rub": 208323.63798981532,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 6151.54,
+        "zone_ids": [
+          "Z01",
+          "Z02",
+          "U3"
+        ]
+      }
+    },
+    {
+      "chip_id": "Bolivia_76104",
+      "part": "bolivia",
+      "s1_sha256": "6ef58adb2287b582f2c5580732ea28ea0481a2856367aa75cd7578cc8b5e76b8",
+      "prediction_sha256": "a5ef791fd6c7e868101b6087b828f73ebd9de213c7e87f3793d169e4e20a6120",
+      "prediction_fingerprint": "9515986d3d177ca56bc8d2f8c93b6a520fd4fc918dd9a8fd7fc3651956c5f7f4",
+      "labelled_assets": 5,
+      "invalid_assets": 5,
+      "candidate_zones": 13,
+      "A": {
+        "error_before_rub": 95626.31268054247,
+        "error_after_rub": 95626.31268054247,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 0,
+        "data_cost_rub": 0.0,
+        "zone_ids": []
+      },
+      "B": {
+        "error_before_rub": 95626.31268054247,
+        "error_after_rub": 0.0,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 5,
+        "data_cost_rub": 36761.82,
+        "zone_ids": [
+          "ZALL"
+        ]
+      },
+      "C": {
+        "error_before_rub": 95626.31268054247,
+        "error_after_rub": 84252.95110791922,
+        "corrected_statuses": 0,
+        "covered_labelled_assets": 1,
+        "data_cost_rub": 6120.81,
+        "zone_ids": [
+          "Z03",
+          "Z02",
+          "Z09"
+        ]
+      }
+    }
+  ]
+}

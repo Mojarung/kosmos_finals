@@ -1,0 +1,19 @@
+{
+  "s1": "Ghana_313799_S1Hand.tif",
+  "s2": null,
+  "recipe": "ml/artifacts/next_optical/recipe.json",
+  "recipe_sha256": "7527a498b586c396661f51d0b373e1b36e7b11ae483161af47efd69f3de1c9e0",
+  "threshold": 0.46,
+  "optical_used_pixels": 0,
+  "dates": null,
+  "mode": "S1 fallback",
+  "valid_pixels": 262144,
+  "date_policy": "S2 calendar date no later than S1 and at most two days earlier; time-of-day unavailable",
+  "uncertainty": "sqrt(.25*(optical_mean-radar)^2+.5*optical_member_variance); radar std on fallback; not a confidence interval",
+  "files": {
+    "flood_probability.tif": "2859a4df188d863bce73f117002e871c919e8ba36ff6bc690ddbd323ea46cb14",
+    "flood_mask.tif": "952d79cd69ba6a59551b2f2c7f286f77d6df7ae5c45eb8c3b0ac461677bdb091",
+    "flood_uncertainty.tif": "f4a680d44875997ce008c37d6723f8f604d0edfc9662f566f81180f64068d479",
+    "baseline_mask.tif": "9b448fb41d30da646f531fa9b095a0e85699361c80b63d563caf50cca4359963"
+  }
+}

@@ -19,7 +19,7 @@ from .temporal import scene_timing
 from .zoning import (DOUBT_EVIDENCE, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window,
                      uncertainty_zones, union_share)
 
-LIVE = "live_sentinel1_rtc"
+LIVE = {"live_sentinel1_rtc", "uploaded_sentinel1_geotiff"}
 WITH_DATA = {"covered", "partial_coverage"}
 
 
@@ -118,7 +118,7 @@ def _region(scene_id: str, bounds_key: tuple[float, ...] | None) -> dict:
     valid = predicted != 255
     valid_pixels = int(valid.sum())
     observed = rectangle_area_km2(overlap)
-    if info.get("source_kind") == LIVE:
+    if info.get("source_kind") in LIVE:
         observed *= valid_pixels / max(1, predicted.size)
     if not valid_pixels:
         return {**common, "observed_area_km2": round(observed, 3), "data_status": "no_valid_pixels"}
@@ -202,6 +202,9 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     bounds = list(bounds_key) if bounds_key else None
     region = _region(scene_id, bounds_key)
     all_assets = enrich_assets(raster_assets(scene_id, info), info["model_threshold"])
+    if info.get("model", {}).get("id") == "next_optical":
+        for asset in all_assets:
+            asset["p_check"] = None  # Legacy Platt reliability bins do not describe this isotonic model.
     # A/B/C is a fixed-chip experiment. The ROI changes pixel statistics and
     # doubt sampling, never its ten seeded assets or their p, V and q.
     assets = all_assets
@@ -359,15 +362,16 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
     other = "information" if priority == "risk" else "risk"
     alternate = space.plan(budget_rub, other, deadline_hours, must_cover)
     pixel_area = info["area_km2"] / (info["width"] * info["height"])
-    live = info.get("source_kind") == LIVE
+    live = info.get("source_kind") in LIVE
     return {
         "chip": {key: info[key] for key in (
             "chip_id", "event", "observed_at", "bbox", "area_km2", "valid_pixels",
             "model_water_area_km2", "water_area_km2", "portfolio_seed",
             "model_threshold", "baseline_threshold_db")}
-            | {key: info[key] for key in ("source_kind", "source_item_id", "source_item_ids", "pixel_size_m_approx",
+            | {key: info[key] for key in ("source_kind", "source_item_id", "source_item_ids",
+                                            "source_filename", "source_sha256", "source_radiometry", "pixel_size_m_approx",
                                             "portfolio_status", "portfolio_rule", "processed_at", "split_part",
-                                            "metrics_independent", "permanent_rule") if key in info}
+                                            "metrics_independent", "permanent_rule", "model", "evaluation_role") if key in info}
             | {"permanent_status": region["permanent_status"], "timing": scene_timing(info)},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets,
@@ -421,20 +425,20 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                   "frontier": space.frontier(deadline_hours, must_cover),
                   "all_uncertainty_zones": _all_uncertainty(space, strategies["B"], deadline_hours),
                   "evidence": DOUBT_EVIDENCE,
-                  "calibration_checked_here": not live},
+                  "calibration_checked_here": not live and not info.get("model")},
         "strategies": strategies,
         "comparison": {"data_savings_vs_broad_rub": savings,
                        "coverage_gain_vs_open_rub": c["covered_expected_loss_rub"],
                        "status": "modeled_risk_coverage_not_prevented_loss"},
         "quality": quality(),
-        "calibration_bias": BIAS,
+        "calibration_bias": ({"status": "not_evaluated_for_current_model", "model_id": "next_optical"} if info.get("model") else BIAS),
         "asset_proxy_check": reference_proxy_check() if live else asset_proxy_check(scene_id),
         "limitations": _limitations(info, region),
     }
 
 
 def _limitations(info: dict, region: dict) -> list[str]:
-    live = info.get("source_kind") == LIVE
+    live = info.get("source_kind") in LIVE
     water = {
         "jrc_waterhand": "Постоянная вода JRC вычтена из карты паводка.",
         "jrc_gsw": "Постоянная вода JRC Global Surface Water (вода и в 1984, и в 2021 году) вычтена из карты паводка.",
@@ -448,7 +452,11 @@ def _limitations(info: dict, region: dict) -> list[str]:
         "Архивный оптический кадр уточняет состояние до паводка и в покрытие текущей воды не входит.",
         "Охват ожидаемого ущерба показывает приоритет проверки, а не предотвращённый ущерб.",
     ]
-    if CALIBRATION_LIMITATION:
+    if info.get("model"):
+        rows += ["Новая модель next_optical: исторический backtest и таблицы качества прежней S1-модели не оценивают эту версию.",
+                 "Порог сомнений сохранён от прежней модели как правило планирования; точность вероятностей и этот порог для новой версии в сервисе ещё не проверены.",
+                 "Оптика S2 связана с источником ручных меток. Тестовые события уже изучались; это не новая слепая проверка."]
+    elif CALIBRATION_LIMITATION:
         rows.append(CALIBRATION_LIMITATION)
     if live:
         rows += ["Для нового региона нет ручной метки: локальные IoU/F1 не вычисляются.",

@@ -6,6 +6,8 @@ async function open(page) {
   if (page.viewportSize().width < 1024) await page.getByRole('button', { name: /^EL / }).click()
   await page.getByRole('tab', { name:'Съёмка', exact:true }).click()
   await page.getByRole('button', { name:'Каталог SkyFi', exact:true }).click()
+  await expect(page.getByTestId('imagery-gallery').or(page.getByRole('button', { name:'Показать весь архив', exact:true }))).toBeVisible({ timeout:90000 })
+  if (await page.getByRole('button', { name:'Показать весь архив', exact:true }).isVisible()) await page.getByRole('button', { name:'Показать весь архив', exact:true }).click()
   await expect(page.getByTestId('imagery-gallery')).toBeVisible({ timeout:90000 })
   await expect(page.getByTestId('recommendation')).toHaveAttribute('aria-busy','false')
 }
