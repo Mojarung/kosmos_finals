@@ -48,7 +48,8 @@ function strategyKeydown(event,key) {const step={ArrowDown:1,ArrowRight:1,ArrowU
     </div>
   </section>
 
-  <div v-if="strategies" class="rows strategy-rows" role="radiogroup" aria-label="Вариант закупки">
+  <details v-if="strategies" class="strategy-picker"><summary><span><small>Вариант съёмки</small><b>{{ STRATEGIES[state.strategy].name }}</b></span><strong>{{ status(state.strategy) }}</strong></summary>
+  <div class="rows strategy-rows" role="radiogroup" aria-label="Вариант закупки">
     <button v-for="key in ['A', 'B', 'C']" :key="key" class="row strategy-row" :data-key="key"
       role="radio" :aria-checked="state.strategy === key" :tabindex="state.strategy === key ? 0 : -1"
       :class="{ selected: state.strategy === key }" @click="pick(key)" @keydown="strategyKeydown($event, key)">
@@ -67,7 +68,8 @@ function strategyKeydown(event,key) {const step={ArrowDown:1,ArrowRight:1,ArrowU
       </span>
     </button>
   </div>
-  <p v-if="strategies" class="meter-key"><i class="coverage"></i>ущерб в зонах <i class="doubt"></i>сомнения в зонах</p>
+  <p class="meter-key"><i class="coverage"></i>ущерб в зонах <i class="doubt"></i>сомнения в зонах</p>
+  </details>
 
   <section v-if="plan" class="block">
     <div class="panel-summary"><strong><Money :value="plan?.data_cost_rub" /></strong><span>{{ plural(plan?.zone_ids?.length || 0, ['зона', 'зоны', 'зон']) }} · {{ plural(coveredCount, objectWords) }}</span></div>

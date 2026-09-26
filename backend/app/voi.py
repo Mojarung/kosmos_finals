@@ -60,12 +60,12 @@ def _bounds(value: str | None) -> list[float] | None:
 
 
 def calculate(scene_id: str, bounds: list[float] | None, visit_cost_rub: float,
-              deadline_hours: int, must_cover: str | None) -> dict:
+              deadline_hours: int, must_cover: str | None, target_ids: list[str] | None = None) -> dict:
     if not math.isfinite(visit_cost_rub) or not 0 <= visit_cost_rub <= 10_000_000:
         raise ValueError("Стоимость выезда должна быть от 0 до 10 млн ₽")
     if not 1 <= deadline_hours <= 48:
         raise ValueError("Срок решения должен быть от 1 до 48 ч")
-    ctx = context(scene_id, bounds)
+    ctx = context(scene_id, bounds, target_ids)
     space = ctx.space
     if must_cover and must_cover not in {a["id"] for a in ctx.assets}:
         raise ValueError("Неизвестный обязательный объект")
@@ -125,7 +125,7 @@ def calculate(scene_id: str, bounds: list[float] | None, visit_cost_rub: float,
     baseline_cost = round(sum(row["before_rub"] or 0 for row in asset_rows), 2)
     after_cost = round(baseline_cost - float(benefit[index]), 2)
     return {"scene_id": scene_id, "model": metadata(scene_id).get("model", {"id": "service_s1"}), "inputs": {"visit_cost_rub": visit_cost_rub,
-            "deadline_hours": deadline_hours, "must_cover": must_cover, "bbox": bounds},
+            "deadline_hours": deadline_hours, "must_cover": must_cover, "bbox": bounds, "target_ids": target_ids},
             "status": "positive_net_basket" if index else "no_positive_net_basket",
             "method": METHOD, "limitation": LIMITATION,
             "scenario": {"visit_cost_status": "operator_scenario", "price_status": "scenario_not_supplier_quote",
@@ -143,12 +143,12 @@ def calculate(scene_id: str, bounds: list[float] | None, visit_cost_rub: float,
                      **decision_costs(priced["total_rub"], priced["lines"])}}
 
 
-def _request(scene_id: str | None, bbox: str | None, visit_cost: float, deadline: int, must_cover: str | None) -> dict:
+def _request(scene_id: str | None, bbox: str | None, visit_cost: float, deadline: int, must_cover: str | None, target_ids: str | None = None) -> dict:
     scene = scene_id or default_scene_id()
     if scene not in known_scene_ids():
         raise HTTPException(404, "Неизвестная сцена")
     try:
-        return calculate(scene, _bounds(bbox), visit_cost, deadline, must_cover)
+        return calculate(scene, _bounds(bbox), visit_cost, deadline, must_cover, target_ids.split(",") if target_ids is not None else None)
     except ValueError as error:
         raise HTTPException(422, str(error)) from error
 
@@ -156,15 +156,15 @@ def _request(scene_id: str | None, bbox: str | None, visit_cost: float, deadline
 @router.get("")
 def get_voi(scene_id: str | None = None, bbox: str | None = None,
             visit_cost: float = Query(DEFAULT_VISIT_COST_RUB, ge=0, le=10_000_000),
-            deadline: int = Query(8, ge=1, le=48), must_cover: str | None = None) -> dict:
-    return _request(scene_id, bbox, visit_cost, deadline, must_cover)
+            deadline: int = Query(8, ge=1, le=48), must_cover: str | None = None, target_ids: str | None = None) -> dict:
+    return _request(scene_id, bbox, visit_cost, deadline, must_cover, target_ids)
 
 
 @router.get("/export")
 def export_voi(scene_id: str | None = None, bbox: str | None = None,
                visit_cost: float = Query(DEFAULT_VISIT_COST_RUB, ge=0, le=10_000_000),
-               deadline: int = Query(8, ge=1, le=48), must_cover: str | None = None):
-    result = _request(scene_id, bbox, visit_cost, deadline, must_cover)
+               deadline: int = Query(8, ge=1, le=48), must_cover: str | None = None, target_ids: str | None = None):
+    result = _request(scene_id, bbox, visit_cost, deadline, must_cover, target_ids)
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("value_of_information.json", json.dumps(result, ensure_ascii=False, indent=2))

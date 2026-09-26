@@ -396,11 +396,12 @@ function markerTip(asset, rank) {
 function updateMarkers() {
   if (!map || !state.analysis) return
   const currentIds = new Set()
-  const ranks = new Map(state.analysis.assets.map((asset, index) => [asset.id, index + 1]))
+  const mapAssets = state.tab === 'plan' ? state.analysis.all_assets || state.analysis.assets : state.analysis.assets
+  const ranks = new Map(mapAssets.map((asset, index) => [asset.id, index + 1]))
   const coveredIds = state.tab === 'plan' && !state.procurementOpen && state.procurementOverlay !== null
     ? new Set(state.procurementOverlay.filter(zone => zone.properties.active).flatMap(zone => zone.properties.asset_ids || []))
     : new Set(state.analysis.strategies[state.strategy]?.covered_asset_ids || [])
-  for (const asset of buildingMode.value ? [] : state.analysis.assets) {
+  for (const asset of buildingMode.value ? [] : mapAssets) {
     currentIds.add(asset.id)
     let entry = markers.get(asset.id)
     if (!entry) {
@@ -422,7 +423,9 @@ function updateMarkers() {
     const rank = ranks.get(asset.id)
     entry.element.textContent = String(rank)
     entry.marker.setLngLat([asset.longitude, asset.latitude])
-    entry.element.classList.toggle('selected', asset.id === state.selectedAssetId)
+    entry.element.classList.toggle('selected', state.pointPicking ? state.pointTargetIds?.includes(asset.id) : asset.id === state.selectedAssetId)
+    if (state.pointPicking) entry.element.setAttribute('aria-pressed', String(!!state.pointTargetIds?.includes(asset.id)))
+    else entry.element.removeAttribute('aria-pressed')
     entry.element.classList.toggle('high-risk', asset.loss_status === 'ok' && asset.p_flood >= state.analysis.chip.model_threshold)
     entry.element.classList.toggle('covered', coveredIds.has(asset.id) && state.showZones)
     const text = markerTip(asset, rank)
@@ -1069,7 +1072,7 @@ onMounted(() => {
 onBeforeUnmount(() => { ready = false; flight++; clearTimeout(warmTimer); clearTimeout(styleTimer); for (const entry of markers.values()) { entry.untip?.(); entry.marker.remove() } for (const marker of zoneLabels.values()) marker.remove(); map?.remove() })
 watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy, state.hoverZoneId, state.selectedZoneId,
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab, state.objectMode,
-  state.procurementOverlay, state.projectOverlay], syncMap, { deep: true })
+  state.procurementOverlay, state.projectOverlay, state.pointPicking, state.pointTargetIds], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
 watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus, buildingPlan.picking, buildingPlan.selectedIds], syncBuildings)
 watch(() => [buildingPlanOverlay.value, currentBuildingPlan.value, buildingPlanMode.value], syncMap)

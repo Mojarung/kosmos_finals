@@ -27,14 +27,14 @@ const disclosures = useDisclosureMotion()
 const scroller = ref(null)
 const content = ref(null)
 
-watch(() => state.tab, (tab, previous) => {
+watch(() => `${state.tab}:${state.planStep}`, (tab, previous) => {
   disclosures.stop()
   scroller.value?.scrollTo({ top: 0 })
   if (!content.value) return
   gsap.killTweensOf(content.value)
   gsap.set(content.value, { clearProps: 'transform,opacity' })
   if (!reducedMotion()) {
-    const direction = TABS.findIndex(item => item.value === tab) > TABS.findIndex(item => item.value === previous) ? 1 : -1
+    const direction = TABS.findIndex(item => item.value === tab.split(':')[0]) >= TABS.findIndex(item => item.value === previous.split(':')[0]) ? 1 : -1
     gsap.fromTo(content.value, { x: direction * 10, opacity: 0 }, { x: 0, opacity: 1, duration: .24, ease: 'power2.out', clearProps: 'transform,opacity' })
   }
 }, { flush: 'post' })
@@ -100,8 +100,8 @@ function back() {
 
     <footer v-if="(!buildingMode || buildingPlanMode) && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
       <button v-if="buildingPlanMode" class="primary-button wide" :disabled="!buildingPlan.result || buildingPlan.busy || buildings.busy || buildingPlan.exporting" @click="downloadBuildingPlan"><Download :size="17" />{{ buildingPlan.exporting ? 'Готовим…' : state.procurementMethod === 'value' ? 'Скачать расчёт зон и допущения' : 'Скачать решение' }}</button>
-      <a v-else-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref" download @click="!state.voiExportHref && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
-      <button v-else class="primary-button wide" :disabled="!hasData" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
+      <a v-else-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref || state.pointTargetIds?.length === 0" download @click="(!state.voiExportHref || state.pointTargetIds?.length === 0) && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
+      <button v-else class="primary-button wide" :disabled="!hasData || state.loading || (state.tab === 'plan' && state.pointTargetIds?.length === 0)" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
         <Download :size="17" />Скачать решение
       </button>
     </footer>

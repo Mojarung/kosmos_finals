@@ -1097,3 +1097,42 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
   .scene-date { flex-direction: row; flex-wrap: wrap; column-gap: 8px; font-size: 11px; }
   .scene-demo-note { margin-top: 0; }
 }
+
+/* The same three-step imagery workflow for footprints and point assets. */
+.shooting-workflow { padding-top: 4px; }
+.shooting-heading { padding: 10px 0 12px; }
+.shooting-heading h3 { margin: 5px 0 0; font-size: 18px; line-height: 1.25; letter-spacing: -.3px; }
+.shooting-heading p { margin: 7px 0 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.eyebrow { font-size: 10px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; color: var(--muted-foreground); }
+.shooting-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; margin: 14px 0; border-bottom: 1px solid var(--border); }
+.shooting-steps button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; font-size: 12px; border-bottom: 2px solid transparent; color: var(--muted-foreground); }
+.shooting-steps button span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--surface-3); font-size: 10px; }
+.shooting-steps button.active { border-color: var(--primary); color: var(--foreground); font-weight: 650; }
+.shooting-steps button.active span { background: var(--primary); color: var(--on-primary); }
+.shooting-selection { display:flex; width:100%; align-items:center; justify-content:space-between; gap:10px; padding:11px 12px; border-radius:12px; background:var(--surface-2); font-size:12px; margin-bottom:10px; }
+.shooting-selection b { font-weight:550; color:var(--primary); }
+.scope-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-bottom:12px; }
+.scope-options button { border:1px solid var(--border); border-radius:13px; padding:12px 4px; display:grid; gap:5px; min-width:0; background:var(--surface-1); }
+.scope-options button.selected { border-color:var(--primary); background:var(--primary-container); color:var(--on-primary-container); }
+.scope-options b { font-size:13px; }.scope-options small { font-size:10px; line-height:1.3; color:var(--muted-foreground); }
+.target-search { margin-top:16px; display:grid; gap:9px; }.target-search > input { width:100%; padding:10px 12px; border:1px solid var(--border); background:var(--surface-1); color:var(--foreground); border-radius:10px; font:inherit; font-size:12px; }
+.target-search > div { display:flex; justify-content:space-between; font-size:11px; }.target-search label { display:flex; align-items:center; gap:7px; color:var(--muted-foreground); }
+.compact-target-list { margin-top:7px; }.compact-target-list > label { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+.compact-target-list > label > span { flex:1; min-width:0; display:grid; gap:4px; }.compact-target-list b { font-size:12px; font-weight:550; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.compact-target-list small { font-size:10px; color:var(--muted-foreground); }.compact-target-list strong { font-size:11px; font-weight:550; font-variant-numeric:tabular-nums; }
+.plan-targets input[type=checkbox] { accent-color:var(--primary); width:16px; height:16px; flex:none; }.target-pagination { display:flex; align-items:center; justify-content:space-between; margin:8px 0; font-size:11px; color:var(--muted-foreground); }
+.plan-targets .primary-button { margin-top:16px; }
+.strategy-picker { border:1px solid var(--border); border-radius:14px; background:var(--surface-1); margin:8px 0 12px; overflow:hidden; }
+.strategy-picker > summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; cursor:pointer; list-style:none; }
+.strategy-picker > summary::after { content:'⌄'; color:var(--muted-foreground); }.strategy-picker[open] > summary::after { transform:rotate(180deg); }.strategy-picker > summary > span { display:grid; gap:4px; flex:1; }.strategy-picker summary small { font-size:10px; color:var(--muted-foreground); }.strategy-picker summary b { font-size:13px; font-weight:600; }.strategy-picker summary strong { font-size:10px; color:var(--muted-foreground); font-weight:400; }.strategy-picker .strategy-rows { padding:0 10px; }.strategy-picker .meter-key { padding:0 10px 8px; }
+.plan-coverage { padding:14px 0 4px; border-top:1px solid var(--border); }.coverage-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }.coverage-heading h3 { margin:4px 0 0; font-size:22px; }.coverage-heading > svg { color:var(--primary); }.plan-coverage > .panel-note { font-size:11px; margin:8px 0 12px; }
+.coverage-card { border:1px solid var(--border); border-radius:14px; margin:8px 0; background:var(--surface-1); overflow:hidden; }.coverage-card.selected { border-color:var(--primary); }
+.coverage-card-head { display:flex; align-items:center; gap:8px; padding:12px 8px; }.coverage-number { display:grid; place-items:center; width:25px; height:25px; border-radius:8px; background:var(--primary-container); color:var(--on-primary-container); font-size:11px; flex:none; }.coverage-card-head > div { flex:1; min-width:0; display:grid; gap:5px; }.coverage-card-head b { font-size:12px; font-weight:550; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.coverage-card-head small { font-size:10px; color:var(--muted-foreground); }.coverage-card-head strong { font-size:11px; font-weight:600; white-space:nowrap; }.coverage-card details { border-top:1px solid var(--border); }.coverage-card summary { padding:9px 12px; cursor:pointer; font-size:11px; color:var(--muted-foreground); }.coverage-card summary > span { float:right; }.coverage-detail { padding:0 12px 12px; font-size:11px; line-height:1.5; }.coverage-detail ul { max-height:180px; overflow:auto; padding-left:16px; }.coverage-detail li { padding:3px 0; }.coverage-detail small { color:var(--muted-foreground); }
+.shooting-workflow button:focus-visible, .shooting-workflow summary:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+.shooting-steps { margin: 8px 0 10px; }
+.shooting-workflow > .bubble-tabs { margin-top: 6px; }
+.shooting-workflow .procurement-mode-switch { margin: 8px 0; }
+@media (max-width: 600px) {
+  .shooting-workflow .control-row { gap: 6px; font-size: 12px; }
+  .shooting-workflow .budget-value { font-size: 24px; }
+  .shooting-workflow .block { padding-block: 12px; }
+}

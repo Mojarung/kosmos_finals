@@ -198,7 +198,7 @@ def raster_assets(scene_id: str, info: dict) -> list[dict]:
 
 
 @lru_cache(maxsize=64)
-def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
+def _context(scene_id: str, bounds_key: tuple[float, ...] | None, target_ids: tuple[str, ...] | None = None) -> Context:
     info = metadata(scene_id)
     bounds = list(bounds_key) if bounds_key else None
     region = _region(scene_id, bounds_key)
@@ -206,9 +206,9 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     if info.get("model", {}).get("id") in {"next_optical", "context"}:
         for asset in all_assets:
             asset["p_check"] = None  # Legacy Platt reliability bins of the v1 ensemble do not describe these models.
-    # A/B/C is a fixed-chip experiment. The ROI changes pixel statistics and
-    # doubt sampling, never its ten seeded assets or their p, V and q.
-    assets = all_assets
+    # The default A/B/C case keeps its ten seeded assets. An explicit target_ids
+    # selection plans for a subset without changing the source portfolio or p/V/q.
+    assets = all_assets if target_ids is None else [a for a in all_assets if a["id"] in target_ids]
     chip = info["bbox"]
     broad_bounds = chip
     window = pixel_window(info, chip)
@@ -218,7 +218,7 @@ def _context(scene_id: str, bounds_key: tuple[float, ...] | None) -> Context:
     zones: list[dict] = []
     if region["data_status"] in WITH_DATA:
         doubtful = uncertainty_zones(scene_id, window, rectangle_area_km2)
-        zones = candidates(all_assets, chip, broad_bounds, doubtful, info.get("observed_at"))
+        zones = candidates(assets, chip, broad_bounds, doubtful, info.get("observed_at"))
     masks, masses, total = doubt_atoms(scene_id, window, zones) if zones else (None, None, 0.0)
     space = BasketSpace(zones, assets, masks, masses, total)
     exposure = round(sum(asset["expected_loss_rub"] or 0 for asset in assets), 2)
@@ -231,8 +231,13 @@ on_refresh(_region.cache_clear)
 on_refresh(_context.cache_clear)
 
 
-def context(scene_id: str, bounds: list[float] | None) -> Context:
-    return _context(scene_id, tuple(bounds) if bounds else None)
+def context(scene_id: str, bounds: list[float] | None, target_ids: list[str] | None = None) -> Context:
+    if target_ids is not None:
+        known = {a["id"] for a in metadata(scene_id)["assets"]}
+        if not target_ids or not set(target_ids) <= known:
+            raise ValueError("Выберите хотя бы один существующий объект")
+    return _context(scene_id, tuple(bounds) if bounds else None,
+                    tuple(sorted(set(target_ids))) if target_ids is not None else None)
 
 
 def _share(value: float, total: float) -> float | None:
@@ -347,11 +352,11 @@ def _all_uncertainty(space: BasketSpace, broad: dict, deadline_hours: int) -> di
 
 def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             deadline_hours: int, must_cover: str | None, scene_id: str | None = None,
-            calculation_date: object = None) -> dict:
+            calculation_date: object = None, target_ids: list[str] | None = None) -> dict:
     """calculation_date is the pricing date (today in UTC by default): it fixes the order year and image ages."""
     scene_id = scene_id or default_scene_id()
     on = as_date(calculation_date) or today()
-    ctx = context(scene_id, bounds)
+    ctx = context(scene_id, bounds, target_ids)
     info, region, assets, space, exposure = ctx.info, ctx.region, ctx.assets, ctx.space, ctx.exposure
     c_index = space.best(budget_rub, priority, deadline_hours, must_cover)
     c = space.summary(c_index, deadline_hours, on=on)
@@ -377,6 +382,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             | {"permanent_status": region["permanent_status"], "timing": scene_timing(info)},
         "scenes": scene_catalog()["scenes"],
         "region": region, "assets": assets,
+        "all_assets": context(scene_id, bounds).assets if target_ids is not None else assets,
         "zones": [_zone_view(zone, deadline_hours) for zone in ctx.zones],
         "zone_decisions": decisions,
         "catalog": space.catalog(c_index, _broad(ctx)[1], deadline_hours, decisions, on=on),
@@ -389,7 +395,7 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
             "method": "one_input_at_a_time_20_percent_fixed_probability_map_and_portfolio",
         },
         "inputs": {"budget_rub": budget_rub, "priority": priority, "bbox": bounds,
-                   "deadline_hours": deadline_hours, "must_cover": must_cover},
+                   "deadline_hours": deadline_hours, "must_cover": must_cover, "target_ids": target_ids},
         "metrics": {"portfolio_count": len(assets), "expected_loss_rub": exposure,
                     "case_expected_loss_rub": ctx.case_exposure,
                     "high_probability_assets": sum((a["p_flood"] or 0) >= info["model_threshold"] for a in assets),

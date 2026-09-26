@@ -63,7 +63,7 @@ const REASONS = { selected: 'в заказе', over_budget: 'превышает 
 
 function payload() {
   return {
-    scene_id: state.sceneId, bbox: state.region,
+    scene_id: state.sceneId, bbox: state.region, target_ids: state.pointTargetIds,
     budget_rub: state.budget, deadline_hours: state.deadline,
     priority: state.priority, must_cover: state.mustCover,
     base_rate_rub_km2: Number(baseRate.value),

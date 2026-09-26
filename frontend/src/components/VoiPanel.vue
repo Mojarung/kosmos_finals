@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { compactRub, plural, rub } from '../lib/format'
+import PlanCoverage from './PlanCoverage.vue'
 import Money from './Money.vue'
 import InformationValueResult from './InformationValueResult.vue'
 import BubbleTabs from './BubbleTabs.vue'
@@ -25,6 +26,7 @@ const params = computed(() => {
     deadline: String(state.deadline) })
   if (state.region) query.set('bbox', state.region.join(','))
   if (state.mustCover) query.set('must_cover', state.mustCover)
+  if (state.pointTargetIds !== null) query.set('target_ids', state.pointTargetIds.join(','))
   return query
 })
 const exportHref = computed(() => '/api/voi/export?' + params.value)
@@ -39,6 +41,7 @@ function overlay() {
       || JSON.stringify(result.value.inputs.bbox) !== JSON.stringify(state.region)
       || result.value.inputs.deadline_hours !== state.deadline
       || result.value.inputs.must_cover !== state.mustCover
+      || JSON.stringify(result.value.inputs.target_ids ?? null) !== JSON.stringify(state.pointTargetIds)
       || result.value.inputs.visit_cost_rub !== Number(visitCost.value)) {
     state.procurementOverlay = null
     state.voiExportHref = null
@@ -55,7 +58,7 @@ function overlay() {
 }
 
 async function load() {
-  if (!props.active) { overlay(); return }
+  if (!props.active || state.pointTargetIds?.length === 0) { result.value = null; overlay(); return }
   controller?.abort()
   if (!validVisitCost.value) {
     error.value = 'Введите стоимость выезда от 0 до 10 млн ₽.'
@@ -81,7 +84,7 @@ async function load() {
     if (controller === current) loading.value = false
   }
 }
-watch(() => [props.active, state.sceneId, state.region, state.deadline, state.mustCover, visitCost.value], () => {
+watch(() => [props.active, state.sceneId, state.region, state.deadline, state.mustCover, visitCost.value, state.pointTargetIds], () => {
   clearTimeout(timer)
   state.voiExportHref = null
   if (props.active) timer = setTimeout(load, 180)
@@ -90,6 +93,7 @@ watch(() => [props.active, state.sceneId, state.region, state.deadline, state.mu
 watch(() => state.analysis, overlay)
 onBeforeUnmount(() => { clearTimeout(timer); controller?.abort(); state.procurementOverlay = null; state.voiExportHref = null })
 
+const coverage = computed(()=>chosen.value.map(z=>({id:z.zone_id,name:zoneName(z),count:z.asset_ids.length,objects:z.asset_ids.map(id=>state.analysis?.assets.find(a=>a.id===id)).filter(Boolean),area:z.area_km2,cost:lines.value.get(z.candidate_id)??z.price_alone_rub,hours:z.delivery_hours,note:reason(z)})))
 function zoneName(zone) {
   if (zone.kind === 'broad') return 'Вся область'
   if (zone.kind === 'uncertainty') return zone.name
@@ -106,7 +110,7 @@ function reason(zone) {
 
 <template>
   <div class="voi" data-testid="voi-panel">
-    <section class="block voi-intro">
+    <section v-if="state.planStep==='plan'" class="block voi-intro">
       <h3>Окупится ли снимок?</h3>
       <label for="visit-cost">Цена выезда к одному объекту, ₽</label>
       <input id="visit-cost" v-model.number="visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" :aria-invalid="!validVisitCost" />
@@ -115,7 +119,9 @@ function reason(zone) {
     <p v-if="loading" class="block" role="status">Считаем…</p>
     <div v-if="error" class="block error-note" role="alert">{{ error }} <button @click="load">Повторить</button></div>
     <div v-if="result" class="voi-output" :class="{ dimmed: loading }" :inert="loading || undefined">
-      <InformationValueResult :result="result" :required-id="state.mustCover" />
+      <InformationValueResult v-if="state.planStep==='plan'" :result="result" :required-id="state.mustCover" />
+      <PlanCoverage v-if="state.planStep==='plan'" :zones="coverage" :busy="loading" :words="['точка','точки','точек']" @zone="id=>emit('zone',id)" />
+      <div v-if="state.planStep==='details'">
       <details class="disclosure voi-settings"><summary>Условия расчёта</summary><div class="disclosure-body voi-intro">
         <label for="voi-must-cover">Обязательно проверить</label>
         <select id="voi-must-cover" v-model="mustCoverModel" aria-label="Обязательный объект"><option value="">Без условия</option><option v-for="asset in state.analysis?.assets || []" :key="asset.id" :value="asset.id">{{ asset.name }}</option></select>
@@ -142,6 +148,7 @@ function reason(zone) {
         <div class="voi-totals"><div><span>Решения без снимков</span><b><Money :value="result.plan.action_cost_before_rub" /></b></div><div><span>Решения со снимками</span><b><Money :value="result.plan.action_cost_after_observation_rub" /></b></div><div><span>Снимки и обработка</span><b><Money :value="result.plan.decision_cost_rub" /></b></div></div>
         <p class="panel-note">В расходах на решения учтены выезды и ожидаемые потери от пропуска объекта. Подробный расчёт — в выгрузке.</p>
       </div></details>
+      </div>
     </div>
   </div>
 </template>

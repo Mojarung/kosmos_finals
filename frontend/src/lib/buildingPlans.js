@@ -2,10 +2,15 @@ import { computed, reactive, watch } from 'vue'
 import { state, createProject, loadProjects, openProject } from '../store'
 import { buildings } from './buildings'
 
-export const buildingPlan = reactive({ baseRate: 788.64, processing: 'default', usage: 'internal', mustCover: null, notice: '', saving: false, scope: 'all', picking: false, selectedIds: [], visitCost: 10000, result: null, busy: false, error: '', exporting: false })
+export const buildingPlan = reactive({ baseRate: 788.64, processing: 'default', usage: 'internal', mustCover: null, notice: '', saving: false, scope: 'top', picking: false, selectedIds: [], visitCost: 10000, result: null, busy: false, error: '', exporting: false })
 export const buildingPlanMode = computed(() => state.tab === 'plan' && state.objectMode === 'buildings' && !state.procurementProjectId)
-export const buildingTargets = computed(() => (buildings.data?.features || []).filter(f => buildingPlan.scope === 'all' || buildingPlan.selectedIds.includes(f.id)))
-export const buildingScope = computed(() => buildings.applied ? { ...buildings.applied, target_ids: buildingPlan.scope === 'all' ? null : [...buildingPlan.selectedIds].sort() } : null)
+export const buildingTargets = computed(() => {
+  const features = buildings.data?.features || []
+  if (buildingPlan.scope === 'top') return [...features].sort((a,b) => (b.properties.expected_loss_rub || 0) - (a.properties.expected_loss_rub || 0) || String(a.id).localeCompare(String(b.id))).slice(0,10)
+  const ids = new Set(buildingPlan.selectedIds)
+  return buildingPlan.scope === 'all' ? features : features.filter(f => ids.has(f.id))
+})
+export const buildingScope = computed(() => buildings.applied ? { ...buildings.applied, target_ids: buildingPlan.scope === 'all' ? null : buildingTargets.value.map(f => f.id).sort() } : null)
 export const currentBuildingPlan = computed(() => buildingPlan.result?.strategies[state.strategy] || null)
 export const buildingPlanZones = computed(() => buildingPlan.result?.zones || [])
 export const buildingPlanOverlay = computed(() => {
@@ -21,6 +26,7 @@ export function toggleBuildingTarget(id) {
 }
 export function startBuildingSelection() {
   if (buildingPlan.mustCover && !buildingPlan.selectedIds.includes(buildingPlan.mustCover)) toggleBuildingTarget(buildingPlan.mustCover)
+  if (buildingPlan.scope !== 'selected') buildingPlan.selectedIds = buildingTargets.value.map(f => f.id)
   buildingPlan.scope = 'selected'
   buildingPlan.picking = true
   buildings.selectedId = null
@@ -34,12 +40,14 @@ export function finishBuildingSelection() {
 watch(buildingPlanMode, active => { if (!active) buildingPlan.picking = false })
 export function requireBuilding(id) {
   buildingPlan.mustCover = buildingPlan.mustCover === id ? null : id
+  if (buildingPlan.scope === 'top') { buildingPlan.selectedIds = buildingTargets.value.map(f => f.id); buildingPlan.scope = 'selected' }
   if (buildingPlan.scope === 'selected' && !buildingPlan.selectedIds.includes(id)) toggleBuildingTarget(id)
   state.objectMode = 'buildings'
   state.procurementProjectId = null
   state.procurementOpen = false
   state.strategy = 'C'
   state.tab = 'plan'
+  state.planStep = 'plan'
   state.decisionOpen = true
 }
 export function planBuilding(id) {
@@ -50,6 +58,7 @@ export function planBuilding(id) {
   state.procurementOpen = false
   state.strategy = 'C'
   state.tab = 'plan'
+  state.planStep = 'plan'
   state.decisionOpen = true
 }
 watch(() => [buildingPlan.scope, buildingPlan.selectedIds], () => {
@@ -62,7 +71,7 @@ watch(() => [state.sceneId, buildings.data?.catalog_id], ([scene, catalogId], [o
     buildingPlan.notice = ''
     buildingPlan.selectedIds = []
     buildingPlan.picking = false
-    buildingPlan.scope = 'all'
+    buildingPlan.scope = 'top'
   }
 })
 export const buildingPlanRequest = computed(() => ({ buildings: buildingScope.value, budget_rub: Number(state.budget), deadline_hours: state.deadline,

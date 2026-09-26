@@ -403,7 +403,7 @@ def package(result: dict) -> io.BytesIO:
     scene_id = result["chip"]["chip_id"]
     info = metadata(scene_id)
     inputs = result["inputs"]
-    ctx = context(scene_id, inputs.get("bbox"))
+    ctx = context(scene_id, inputs.get("bbox"), inputs.get("target_ids"))
     # Case files and the basket use mandatory EL = p·V·q; flood-only is supplementary.
     all_assets = sorted(enrich_assets(raster_assets(scene_id, info), info["model_threshold"]),
                         key=lambda asset: (-(asset["case_expected_loss_rub"] or 0), asset["id"]))

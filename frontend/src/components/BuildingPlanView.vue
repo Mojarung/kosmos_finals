@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { MapPin, ChevronLeft, ChevronRight, Satellite } from '@lucide/vue'
+import { MapPin, Satellite } from '@lucide/vue'
+import PlanCoverage from './PlanCoverage.vue'
 import BacktestPanel from './BacktestPanel.vue'
 import FrontierChart from './FrontierChart.vue'
 import BubbleTabs from './BubbleTabs.vue'
@@ -11,36 +12,26 @@ import BudgetPlanSummary from './BudgetPlanSummary.vue'
 import InformationValueResult from './InformationValueResult.vue'
 import { state, workspace, loadProjects } from '../store'
 import { buildings, loadBuildings } from '../lib/buildings'
-import { buildingPlan, buildingPlanRequest, buildingTargets, buildingScope, currentBuildingPlan, buildingPlanZones, downloadBuildingPlan, loadBuildingPlan, toggleBuildingTarget, startBuildingSelection, saveBuildingPlan } from '../lib/buildingPlans'
+import { buildingPlan, buildingPlanRequest, buildingTargets, buildingScope, currentBuildingPlan, buildingPlanZones, loadBuildingPlan, saveBuildingPlan } from '../lib/buildingPlans'
 import { compactRub, rub, percent, plural } from '../lib/format'
 
 const emit = defineEmits(['zone'])
-const selectionOpen = ref(false)
-watch(() => buildingPlan.picking, (picking, previous) => { if (previous && !picking) selectionOpen.value = false })
 const projectId = ref('')
-const search = ref('')
-const page = ref(0)
-const pageSize = 6
 onMounted(loadProjects)
 const projects = computed(() => workspace.projects.filter(p => p.scene_id === state.sceneId))
 const result = computed(() => buildingPlan.result)
 const plan = computed(() => currentBuildingPlan.value)
 const zones = computed(() => buildingPlanZones.value.filter(z => plan.value?.zone_ids.includes(z.id)))
+const targetNames = computed(() => new Map(buildingTargets.value.map(f=>[f.id,f.properties.tags?.name || f.properties.type_label || 'Здание'])))
+const coverage = computed(() => zones.value.map(z=>({id:z.id,name:z.name,count:z.building_count,area:z.area_km2,cost:z.cost_rub,hours:z.product?.delivery_hours,note:zoneReason(z),objects:(z.building_ids||[]).map(id=>({id,name:targetNames.value.get(id) || 'Здание'}))})))
 const maxBudget = computed(() => Math.max(10000, Math.ceil((result.value?.strategies.B.data_cost_rub || 0) / 1000) * 1000, state.budget))
-const selectedIds = computed(() => new Set(buildingPlan.selectedIds))
-const matches = computed(() => (buildings.data?.features || []).filter(f => `${f.properties.name} ${f.id} ${f.properties.type_label}`.toLowerCase().includes(search.value.toLowerCase())))
-const pages = computed(() => Math.max(1, Math.ceil(matches.value.length / pageSize)))
-const visibleBuildings = computed(() => matches.value.slice(page.value * pageSize, (page.value + 1) * pageSize))
-watch([search, () => buildings.data?.catalog_id], () => { page.value = 0 })
 const rejected = computed(() => buildingPlanZones.value.filter(z => !plan.value?.zone_ids.includes(z.id)))
 const mustCover = computed({get: () => buildingPlan.mustCover || '', set: value => { buildingPlan.mustCover = value || null }})
 const zoneReason = zone => ({ selected: 'В заказе', comparison: 'Другой вариант съёмки; для оптимального подбора выберите «Рекомендация»', late: 'Позже срока решения', plan_infeasible: 'Обязательное здание не покрыто при этих условиях', nothing_new: 'Не добавляет охвата по выбранной цели', over_budget: `Заказ с этой зоной: ${rub(zone.price_with_rub)} — выше бюджета`, lower_net_benefit: 'Другой набор даёт больше чистой пользы', cheaper_equal: 'Другой набор даёт не меньший результат дешевле' }[zone.reason] || '')
 function focusZone(zone) { state.showZones = true; state.selectedZoneId = zone.id; emit('zone', zone.id) }
-const scopes = computed(() => [{value:'all',label:'Все здания'}, {value:'selected',label:`Выбранные · ${buildingPlan.selectedIds.length}`}])
 const chartPoints = computed(() => result.value ? ['A','B','C'].map(key => ({key:key.toLowerCase(),label:key,cost:result.value.strategies[key].data_cost_rub,share:result.value.strategies[key].coverage_share,active:state.strategy === key})) : [])
 const strategyNames = { A:'Не покупать', B:'Снять всё', C:'Только нужные зоны' }
 function showCoverage() { state.showZones = true; emit('zone','__all__') }
-function pickBuilding(id) { buildingPlan.scope = 'selected'; toggleBuildingTarget(id) }
 function openCatalog() { state.suppliersOpen = false; state.procurementOpen = true }
 const valueResult = computed(() => plan.value ? { plan: {...plan.value, derived_budget_rub:plan.value.data_cost_rub}, status:plan.value.zone_ids.length?'positive_net_basket':'no_positive_net_basket' } : null)
 watch(() => state.procurementMethod, method => { if (method === 'value') state.strategy = 'C' }, { immediate: true })
@@ -55,26 +46,15 @@ watch(() => state.procurementMethod, method => { if (method === 'value') state.s
     <SuppliersView v-if="state.suppliersOpen && result && !buildingPlan.busy" :key="JSON.stringify(result.inputs)" :building-request="buildingPlanRequest" :building-zones="zones" />
     <ProcurementView v-else-if="state.procurementOpen && result" :key="JSON.stringify(buildingScope)" :building-context="buildingScope" :building-bounds="result.scope.bbox" :building-summary="result.scope" />
     <template v-else-if="!state.suppliersOpen && !state.procurementOpen">
-      <details v-if="buildings.data?.features.length" class="disclosure" :open="selectionOpen" @toggle="selectionOpen = $event.target.open">
-        <summary>{{ buildingPlan.scope === 'all' ? 'Все здания' : 'Выбранные здания' }} · {{ buildingTargets.length }} · Изменить</summary>
-        <div class="disclosure-body detail-content">
-        <BubbleTabs v-model="buildingPlan.scope" :options="scopes" stretch label="Какие здания снимать" />
-        <button class="tonal-button wide" @click="startBuildingSelection"><MapPin :size="15" />{{ buildingPlan.selectedIds.length ? 'Изменить выбор на карте' : 'Выбрать здания на карте' }}</button>
-        <p class="panel-note">{{ buildingPlan.scope === 'all' ? 'В расчёте все загруженные дома. Отметьте нужные для ручной подборки.' : 'В расчёте только отмеченные дома.' }}</p>
-        <input v-model="search" class="plan-input" type="search" placeholder="Название, тип или ID" aria-label="Поиск здания для съёмки" />
-        <div class="target-list"><label v-for="feature in visibleBuildings" :key="feature.id" class="target-row"><input type="checkbox" :checked="selectedIds.has(feature.id)" :aria-label="'Выбрать ' + feature.id" @change="pickBuilding(feature.id)" /><span><b>{{ feature.properties.tags.name || feature.properties.type_label }}</b><small>{{ feature.id }}</small></span><small>{{ compactRub(feature.properties.expected_loss_rub) }}</small></label></div>
-        <p v-if="!matches.length" class="panel-note">Зданий по запросу не найдено.</p>
-        <nav class="pagination" aria-label="Страницы зданий"><button class="ghost-icon small" :disabled="page === 0" aria-label="Предыдущие здания" @click="page--"><ChevronLeft :size="16" /></button><span>{{ page + 1 }} / {{ pages }} · {{ matches.length }} зданий</span><button class="ghost-icon small" :disabled="page + 1 >= pages" aria-label="Следующие здания" @click="page++"><ChevronRight :size="16" /></button></nav>
-        <button class="primary-button wide" @click="selectionOpen = false">К плану · {{ plural(buildingTargets.length,['здание','здания','зданий']) }}</button>
-        </div>
-      </details>
       <template v-if="buildingTargets.length">
-        <BudgetPlanSummary v-if="state.procurementMethod === 'budget'" :strategies="result?.strategies" :plan="plan" :max-budget="maxBudget" :required-id="buildingPlan.mustCover" :required-label="buildingPlan.mustCover" :covered-count="plan?.covered_building_ids.length || 0" :object-words="['здание','здания','зданий']" doubt-label="сомнений по зданиям" @clear-required="buildingPlan.mustCover = null" />
-        <div v-if="state.procurementMethod === 'value'" class="voi">
+        <BudgetPlanSummary v-if="state.planStep === 'plan' && state.procurementMethod === 'budget'" :strategies="result?.strategies" :plan="plan" :max-budget="maxBudget" :required-id="buildingPlan.mustCover" :required-label="buildingPlan.mustCover" :covered-count="plan?.covered_building_ids.length || 0" :object-words="['здание','здания','зданий']" doubt-label="сомнений по зданиям" @clear-required="buildingPlan.mustCover = null" />
+        <div v-if="state.planStep === 'plan' && state.procurementMethod === 'value'" class="voi">
           <section class="block voi-intro"><h3>Окупится ли снимок?</h3><label for="building-visit-cost">Цена выезда к одному объекту, ₽</label><input id="building-visit-cost" v-model.number="buildingPlan.visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" /><div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="[4,8,12].map(value => ({value,label:value + ' ч'}))" size="sm" label="Срок решения" /></div></section>
           <InformationValueResult v-if="valueResult" :result="valueResult" :required-id="buildingPlan.mustCover" />
           <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
         </div>
+        <PlanCoverage v-if="state.planStep==='plan'" :zones="coverage" :busy="buildingPlan.busy" :words="['здание','здания','зданий']" @zone="id=>emit('zone',id)" />
+        <div v-if="state.planStep==='details'">
         <details class="disclosure"><summary>Состав заказа · {{ plural(zones.length,['зона','зоны','зон']) }}</summary><div class="disclosure-body detail-content">
         <p class="panel-note">Один снимок может покрывать много домов. На карте его границы показаны голубой рамкой.</p>
         <button class="tonal-button wide" :disabled="!zones.length" @click="showCoverage"><MapPin :size="15" />Показать все зоны</button>
@@ -105,8 +85,9 @@ watch(() => state.procurementMethod, method => { if (method === 'value') state.s
         <details v-if="result && plan" class="disclosure"><summary>Расчёт и допущения</summary><div class="detail-content"><p class="panel-note">В расчёте {{ result.scope.count }} зданий. С оценкой ущерба: {{ result.scope.estimated }}; с условной ценой: {{ result.scope.synthetic_cost }}.</p><div class="control-line"><span>Снимки и обработка</span><b>{{ rub(plan.decision_cost_rub) }}</b></div><div class="control-line"><span>Сомнения в охвате</span><b>{{ percent(plan.covered_doubt_share) }}</b></div><p v-for="note in result.method" :key="note" class="panel-note">{{ note }}</p></div></details>
         <details class="disclosure"><summary>Сохранить план в проект</summary><div class="detail-content"><select v-model="projectId" class="plan-input" aria-label="Проект для плана зданий"><option value="">Создать проект для зданий</option><option v-for="project in projects" :key="project.id" :value="project.id">{{ project.name }}</option></select><button class="tonal-button wide" :disabled="!result || buildingPlan.saving || buildingPlan.busy || buildings.busy" @click="saveBuildingPlan(projectId)">{{ buildingPlan.saving ? 'Сохраняем…' : 'Сохранить текущий план' }}</button><p v-if="buildingPlan.notice" class="panel-note" role="status">{{ buildingPlan.notice }}</p></div></details>
         </div></details>
+        </div>
       </template>
-      <p v-else class="panel-note">Отметьте здания в блоке «Изменить» или выберите их на карте.</p>
+      <p v-else-if="!buildings.busy" class="panel-note">Отметьте здания на шаге «Объекты» или выберите их на карте.</p>
     </template>
   </section>
 </template>

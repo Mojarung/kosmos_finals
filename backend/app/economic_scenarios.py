@@ -29,6 +29,7 @@ class AssetChange(BaseModel):
 
 
 class ScenarioRequest(BaseModel):
+    target_ids: list[str] | None = None
     scene_id: str
     bbox: list[float] | None = Field(default=None, min_length=4, max_length=4)
     budget_rub: float = Field(default=6500, ge=0, le=1_000_000)
@@ -124,7 +125,7 @@ def _plan(ctx, space: BasketSpace, budget: float, deadline: int, priority: str,
 def calculate(request: ScenarioRequest) -> dict:
     if request.scene_id not in known_scene_ids():
         raise ValueError("Снимок не найден.")
-    ctx = context(request.scene_id, request.bbox)
+    ctx = context(request.scene_id, request.bbox, request.target_ids)
     if request.must_cover and request.must_cover not in {item["id"] for item in ctx.assets}:
         raise ValueError("Обязательный объект не найден.")
     assets, losses = _assets(ctx, request.asset_changes)

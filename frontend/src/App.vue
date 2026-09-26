@@ -7,7 +7,7 @@ import DecisionPanel from './components/DecisionPanel.vue'
 import MorphLoader from './components/MorphLoader.vue'
 import ObservePanel from './components/ObservePanel.vue'
 import TopBar from './components/TopBar.vue'
-import { calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
+import { togglePointTarget, calibrationChecked, chooseRegion, doubtThreshold, fetchAnalysis, permanentSeparated, state, testQuality } from './store'
 import { number, percent } from './lib/format'
 import { buildingMode } from './lib/buildings'
 import { buildingPlan, toggleBuildingTarget, finishBuildingSelection, buildingPlanMode, buildingPlanZones, currentBuildingPlan } from './lib/buildingPlans'
@@ -55,6 +55,7 @@ const legend = computed(() => {
 })
 
 function chooseAsset(id) {
+  if (state.pointPicking) { togglePointTarget(id); return }
   state.objectMode = 'points'
   state.selectedAssetId = id
   state.tab = 'assets'
@@ -116,6 +117,11 @@ onMounted(() => {
 
     <div ref="chrome" class="chrome">
       <TopBar @globe="mapRef?.showGlobe()" @place="mapRef?.focusPlace($event)" @focus-chip="mapRef?.focusChip()" @tilt="mapRef?.toggleTilt()" />
+      <div v-if="state.pointPicking" class="panel building-picker" role="region" aria-label="Выбор точек для съёмки">
+        <div><strong aria-live="polite">Выбрано точек: {{ state.pointTargetIds?.length || 0 }}</strong><span>Нажмите на точку. Повторный клик уберёт её.</span></div>
+        <button class="ghost-button" @click="state.pointTargetIds=[];state.pointScope='selected';state.mustCover=null">Очистить</button>
+        <button class="primary-button" @click="state.pointPicking=false;state.decisionOpen=true;state.showZones=true">Готово</button>
+      </div>
       <div v-if="buildingPlanMode && buildingPlan.picking" class="panel building-picker" role="region" aria-label="Выбор зданий для съёмки">
         <div><strong aria-live="polite">Выбрано зданий: {{ buildingPlan.selectedIds.length }}</strong><span>Нажмите на дом. Повторный клик уберёт его.</span></div>
         <button class="ghost-button" :disabled="!buildingPlan.selectedIds.length" @click="buildingPlan.selectedIds = []">Очистить</button>

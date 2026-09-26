@@ -48,7 +48,7 @@ def parse_bounds(bbox: str | None) -> list[float] | None:
 
 
 def response(bbox: str | None, budget: float, priority: str, deadline: int,
-             must_cover: str | None, scene_id: str | None) -> dict:
+             must_cover: str | None, scene_id: str | None, target_ids: str | None = None) -> dict:
     if priority not in {"risk", "information"}:
         raise HTTPException(422, "Цель планирования: risk (ущерб) или information (сомнения).")
     scene_id = scene_id or default_scene_id()
@@ -56,7 +56,13 @@ def response(bbox: str | None, budget: float, priority: str, deadline: int,
         raise HTTPException(404, "Сцена не найдена.")
     if must_cover and must_cover not in {asset["id"] for asset in metadata(scene_id)["assets"]}:
         raise HTTPException(422, "Объект не найден.")
-    return analyze(parse_bounds(bbox), budget, priority, deadline, must_cover, scene_id)
+    selected = target_ids.split(",") if target_ids is not None else None
+    if selected is not None and must_cover and must_cover not in selected:
+        raise HTTPException(422, "Обязательный объект должен входить в выборку")
+    try:
+        return analyze(parse_bounds(bbox), budget, priority, deadline, must_cover, scene_id, target_ids=selected)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
 
 
 @app.get("/api/health")
@@ -76,6 +82,7 @@ class AssetImport(BaseModel):
 
 
 class DecisionCreate(BaseModel):
+    target_ids: list[str] | None = None
     bbox: str | None = None
     budget: float = 6500
     priority: str = "risk"
@@ -124,7 +131,7 @@ def save_project_decision(project_id: str, request: DecisionCreate) -> dict:
     try:
         detail = projects.get(project_id)
         analysis = response(request.bbox, request.budget, request.priority, request.deadline,
-                            request.must_cover, detail["scene_id"])
+                            request.must_cover, detail["scene_id"], ",".join(request.target_ids) if request.target_ids is not None else None)
         return projects.save_decision(project_id, analysis)
     except KeyError as error:
         raise HTTPException(404, "Проект не найден.") from error
@@ -348,8 +355,9 @@ def get_analysis(
     deadline: int = Query(8, ge=1, le=48),
     must_cover: str | None = None,
     scene_id: str | None = None,
+    target_ids: str | None = None,
 ) -> dict:
-    return response(bbox, budget, priority, deadline, must_cover, scene_id)
+    return response(bbox, budget, priority, deadline, must_cover, scene_id, target_ids)
 
 
 LAYER_FILES = {"radar.png", "model.png", "baseline.png", "reference.png", "probability.png", "uncertainty.png",
@@ -377,8 +385,9 @@ def export_decision(
     deadline: int = Query(8, ge=1, le=48),
     must_cover: str | None = None,
     scene_id: str | None = None,
+    target_ids: str | None = None,
 ) -> StreamingResponse:
-    result = response(bbox, budget, priority, deadline, must_cover, scene_id)
+    result = response(bbox, budget, priority, deadline, must_cover, scene_id, target_ids)
     return StreamingResponse(package(result), media_type="application/zip", headers={
         "Content-Disposition": f'attachment; filename="floodvalue-{result["chip"]["chip_id"]}.zip"'
     })

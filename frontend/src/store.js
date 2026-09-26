@@ -5,6 +5,10 @@ import { computed, reactive, watch } from 'vue'
  * компонентам пропсами. Панелей стало несколько, поэтому состояние общее.
  */
 export const state = reactive({
+  planStep: 'plan',
+  pointTargetIds: null,
+  pointScope: 'all',
+  pointPicking: false,
   procurementOpen: false,
   // Третий режим вкладки «Съёмка»: где купить снимки и что пришло от поставщика.
   suppliersOpen: false,
@@ -81,11 +85,13 @@ export function parameters() {
   })
   if (state.region) params.set('bbox', state.region.join(','))
   if (state.mustCover) params.set('must_cover', state.mustCover)
+  if (state.tab === 'plan' && state.objectMode === 'points' && state.pointTargetIds !== null) params.set('target_ids', state.pointTargetIds.join(','))
   return params
 }
 
 export async function fetchAnalysis() {
   controller?.abort()
+  if (state.tab === 'plan' && state.objectMode === 'points' && state.pointTargetIds?.length === 0) { state.loading = false; return }
   const current = new AbortController()
   controller = current
   state.loading = true
@@ -102,12 +108,20 @@ export async function fetchAnalysis() {
   }
 }
 
-watch(() => [state.sceneId, state.region, state.budget, state.deadline, state.priority, state.mustCover, state.objectMode, state.procurementProjectId], ([scene, region], [oldScene, oldRegion] = []) => {
+watch(() => [state.sceneId, state.region, state.budget, state.deadline, state.priority, state.mustCover, state.objectMode, state.procurementProjectId, state.pointTargetIds, state.tab], ([scene, region], [oldScene, oldRegion] = []) => {
   if (state.liveStatus === 'searching' || state.liveStatus === 'preparing') return
   clearTimeout(timer)
   if (scene === oldScene && region === oldRegion && state.objectMode === 'buildings' && !state.procurementProjectId) return
   timer = setTimeout(fetchAnalysis, 110)
 })
+watch(() => state.sceneId, () => { state.pointTargetIds = null; state.pointScope = 'all'; state.pointPicking = false })
+watch(() => [state.tab, state.objectMode], () => { if (state.tab !== 'plan' || state.objectMode !== 'points') state.pointPicking = false })
+export function togglePointTarget(id) {
+  state.pointScope = 'selected'
+  const ids = state.pointTargetIds ?? (state.analysis?.all_assets || state.analysis?.assets || []).map(a => a.id)
+  state.pointTargetIds = ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]
+  if (state.mustCover && !state.pointTargetIds.includes(state.mustCover)) state.mustCover = null
+}
 watch(() => state.tab, value => { if (value === 'plan') state.showZones = true })
 
 export function chooseScene(id) {
@@ -280,7 +294,7 @@ export async function saveProjectDecision() {
   const result = await apiJson(`/api/projects/${workspace.active.id}/decisions`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ bbox: state.region?.join(',') || null, budget: state.budget,
-      priority: state.priority, deadline: state.deadline, must_cover: state.mustCover }),
+      priority: state.priority, deadline: state.deadline, must_cover: state.mustCover, target_ids: state.pointTargetIds }),
   })
   await openProject(workspace.active.id)
   await loadProjects()
