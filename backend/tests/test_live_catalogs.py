@@ -65,11 +65,20 @@ def test_scanex_needs_no_account_and_prices_russian_and_free_scenes(client):
     assert kanopus["price_status"] == "pp840_case_formula" and "СКАНЭКС" in kanopus["price_note"]
     assert landsat["price"] == 0 and landsat["open_data"] and landsat["resolution_m"] == 15
     assert unknown["resolution_m"] is None
+    assert kanopus["preview_url"].startswith("https://gptl.ru/") and landsat["preview_url"].startswith("https://")
     plan = client.post("/api/procurement/plan", json={"catalog_id": c["id"], "budget": 50000, "resolution_m": 3}).json()
     # At 3 m only Kanopus qualifies: Landsat is 15 m, the unknown platform has no stated resolution.
     assert plan["recommendation"]["ids"] == ["10893679"]
     unknown_row = next(o for o in plan["offers"] if o["id"] == "X-UNKNOWN")
     assert "Недостаточная детализация" in unknown_row["filter_reasons"]
+
+
+def test_scanex_drops_previews_of_servers_that_do_not_answer():
+    assert scanex.preview("http://api.intelligence-airbusds.com/catalog/ogc/userservices?featureid=X") is None
+    assert scanex.preview("https://api.discover.digitalglobe.com/show?id=10200100D931AA00") is None
+    assert scanex.preview("http://36.112.130.153:7777/DSSPlatform/BROWSE/x.jpg") is None
+    assert (scanex.preview("http://www.gptl.ru/previews/Kanopus-V1/2020/05/1_1.png")
+            == "https://www.gptl.ru/previews/Kanopus-V1/2020/05/1_1.png")
 
 
 def test_free_copernicus_scenes_cost_nothing_and_keep_their_thumbnails(client):

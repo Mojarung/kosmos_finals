@@ -30,6 +30,10 @@ RESOLUTION = {
 }
 PREFIXES = {"Канопус-В": 2.5, "Ресурс-П": 0.7, "TripleSat": 0.8, "GJ1": 0.5}
 SAR = {"GF3"}
+# Preview hosts that answered on 2026-09-26. Maxar/DigitalGlobe did not respond, Airbus links carry an expired key
+# (HTTP 401), the Chinese archive servers timed out, 21AT gave 404, and SCANEX's own qls.kosmosnimki.ru gave 404,
+# so those scenes are shown without a picture instead of waiting for a dead link.
+PREVIEW_HOSTS = ("https://gptl.ru/", "https://www.gptl.ru/", "https://ims.cr.usgs.gov/", "https://earthexplorer.usgs.gov/")
 FREE = {"LANDSAT_8", "LANDSAT_9"}
 
 
@@ -60,6 +64,14 @@ def search(aoi, start: date, end: date, limit: int = 300) -> list[dict]:
     return [dict(zip(fields, values)) for values in payload["Result"]["values"]]
 
 
+def preview(url: str | None) -> str | None:
+    """The supplier's preview when its server is known to answer; http links of those hosts move to https."""
+    if not url:
+        return None
+    url = url.replace("http://", "https://", 1)
+    return url if url.startswith(PREVIEW_HOSTS) else None
+
+
 def normalize(row: dict, aoi, event_date: str | None, on: date) -> dict | None:
     platform = row.get("platform") or "СКАНЭКС"
     corners = [(row[f"x{i}"], row[f"y{i}"]) for i in range(1, 5)]
@@ -68,7 +80,7 @@ def normalize(row: dict, aoi, event_date: str | None, on: date) -> dict | None:
     return make_offer(provider="СКАНЭКС", identifier=str(row["sceneid"]), title=platform,
                       sensor="sar" if platform in SAR else "optical", footprint=Polygon(corners), aoi=aoi,
                       resolution_m=resolution(platform), captured=captured, timestamp=captured,
-                      cloud=row.get("cloudness"), preview=row.get("url"), event_date=event_date, on=on,
+                      cloud=row.get("cloudness"), preview=preview(row.get("url")), event_date=event_date, on=on,
                       order_url=ORDER_URL, free=free,
                       price_note=None if free else "цена поставщика по заявке в СКАНЭКС",
                       extra={"off_nadir_angle": row.get("tilt"), "platform_identifier": platform,

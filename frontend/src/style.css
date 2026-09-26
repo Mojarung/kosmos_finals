@@ -1037,3 +1037,9 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .source-switch button.active { background: rgba(50, 131, 107, .12); color: var(--foreground); }
 
 .price-note { margin: -6px 0 10px; font-size: 11px; color: var(--muted-foreground); }
+
+/* Карточка снимка без превью: контур кадра (пунктир) и территория, как в инспекторе */
+.image-unavailable.card-footprint { gap: 6px; }
+.image-unavailable.card-footprint svg { width: 86%; height: auto; max-height: 70%; }
+.card-footprint-scene { fill: #e4ad6a14; stroke: #e4ad6a; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.card-footprint .aoi-rect { stroke-width: 1.5; }

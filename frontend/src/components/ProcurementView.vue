@@ -194,6 +194,24 @@ function eventPeriod() {
 }
 function onKeydown(event) { if (event.key === 'Escape') enlarged.value = false }
 function entireArchive() { query.from_date = eventDate(); query.to_date = today; search() }
+function rings(geometry) {
+  return geometry?.type === 'Polygon' ? [geometry.coordinates] : geometry?.type === 'MultiPolygon' ? geometry.coordinates : []
+}
+// Card schematic without a preview: the scene and the territory in one frame, so a scene larger than the territory
+// shows as a big dashed outline around a small box instead of a filled rectangle.
+function sceneSketch(o) {
+  if (!catalog.value) return null
+  const [w, s, e, n] = catalog.value.bbox
+  const points = rings(o.footprint).flat(2).concat([[w, s], [e, n]])
+  const xs = points.map(p => p[0]), ys = points.map(p => p[1])
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys)
+  const k = Math.min(300 / (x1 - x0 || 1), 150 / (y1 - y0 || 1))
+  const dx = (320 - (x1 - x0) * k) / 2, dy = (170 - (y1 - y0) * k) / 2
+  const project = ([x, y]) => [dx + (x - x0) * k, 170 - dy - (y - y0) * k]
+  const path = geometry => rings(geometry).flatMap(poly => poly.map(ring => ring.map((point, i) => (i ? 'L' : 'M') + project(point).map(v => v.toFixed(1)).join(',')).join(' ') + 'Z')).join(' ')
+  const [ax, ay] = project([w, n]), [bx, by] = project([e, s])
+  return { scene: path(o.footprint), cover: path(o.coverage_geometry), aoi: { x: ax, y: ay, width: Math.max(bx - ax, 2), height: Math.max(by - ay, 2) } }
+}
 function mapPath(geometry) {
   if (!geometry || !catalog.value) return ''
   const [w, s, e, n] = catalog.value.bbox
@@ -311,7 +329,7 @@ onUnmounted(() => {
           <label v-if="view === 'gallery'" class="matches-toggle"><input v-model="onlyMatches" type="checkbox" />Только в пределах лимита и фильтров</label>
           <div v-if="view === 'gallery'" class="imagery-gallery" data-testid="imagery-gallery">
             <article v-for="(o, index) in shown" :key="o.id" class="image-card" :class="{ focused: o.id === focusedId, compared: selectedIds.includes(o.id) }" :data-testid="'image-' + o.id">
-              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable"><Satellite :size="27" /><span>Превью поставщика недоступно</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ projectMode ? o.covered_asset_ids?.length + ' ваших объектов' : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (projectMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
+              <button class="image-card-main" :aria-label="'Открыть ' + o.title + ' ' + o.capture_date" @click="focus(o)"><div class="image-cover"><img v-if="o.preview_url && !failedImages.has(o.id)" :src="o.preview_url" :alt="o.title + ' · ' + o.capture_date" :loading="index < 6 ? 'eager' : 'lazy'" :fetchpriority="index < 2 ? 'high' : 'auto'" @load="loadedPreviews.add(o.id)" referrerpolicy="no-referrer" @error="failedImages.add(o.id)" /><div v-else class="image-unavailable card-footprint"><svg v-if="sceneSketch(o)" viewBox="0 0 320 170" role="img" :aria-label="'Кадр ' + o.title + ' и территория'"><path :d="sceneSketch(o).scene" class="card-footprint-scene" /><rect v-bind="sceneSketch(o).aoi" class="aoi-rect" /><path :d="sceneSketch(o).cover" class="footprint-fill" /></svg><span>Превью нет · пунктир: кадр, рамка: территория</span></div><div v-if="o.preview_url && !failedImages.has(o.id) && !loadedPreviews.has(o.id)" class="preview-loading"><Satellite :size="21" /><span>Загружаем превью…</span></div><span class="provider-chip">{{ o.provider }}</span><span class="resolution-chip">{{ num(o.resolution_m, 2) }} м</span></div><div class="image-card-info"><div><b>{{ o.title }}</b><span>{{ date(o.capture_date) }}</span></div><div class="image-price"><strong>{{ money(o.price) }}</strong><span>{{ projectMode ? o.covered_asset_ids?.length + ' ваших объектов' : num(o.coverage_percent) + '% территории' }}</span></div><div class="image-meter"><i :style="{ width: (projectMode ? o.covered_el_percent || 0 : o.coverage_percent) + '%' }" /></div><p><Cloud :size="12" />{{ o.cloud_percent == null ? 'Облачность неизвестна' : num(o.cloud_percent) + '% облачности' }}<span v-if="o.filter_reasons?.length" class="filter-warning">Вне условий</span></p></div></button>
               <button class="compare-button" :disabled="busy || selected.length >= 4 && !selectedIds.includes(o.id)" :aria-pressed="selectedIds.includes(o.id)" @click="toggle(o)"><Check v-if="selectedIds.includes(o.id)" :size="14" />{{ selectedIds.includes(o.id) ? 'В сравнении' : 'Добавить к сравнению' }}</button>
             </article>
             <div v-if="!shown.length" class="no-filter-results">Фильтры скрыли все кадры. <button class="text-button" @click="onlyMatches = false; year = null">Показать весь каталог</button></div>
@@ -336,7 +354,7 @@ onUnmounted(() => {
         </main>
         <aside v-if="focused" class="image-inspector" data-testid="image-inspector">
           <div class="inspector-heading"><div><span class="eyebrow">ВЫБРАННЫЙ СНИМОК</span><h3>{{ focused.title }} <span>{{ focused.provider }}</span></h3></div><button class="icon-button" aria-label="Увеличить превью" @click="enlarged = true" :disabled="!focused.preview_url"><Expand :size="17" /></button></div>
-          <button class="inspector-preview" @click="enlarged = true" :disabled="!focused.preview_url"><img v-if="focused.preview_url && !failedImages.has(focused.id)" :src="focused.preview_url" :alt="'Превью ' + focused.title" referrerpolicy="no-referrer" @error="focused && failedImages.add(focused.id)" /><div v-else class="image-unavailable"><Satellite :size="36" /><span>Поставщик не предоставил доступное превью</span></div><span>{{ date(focused.capture_date) }} · превью целого кадра</span></button>
+          <button class="inspector-preview" @click="enlarged = true" :disabled="!focused.preview_url"><img v-if="focused.preview_url && !failedImages.has(focused.id)" :src="focused.preview_url" :alt="'Превью ' + focused.title" referrerpolicy="no-referrer" @error="focused && failedImages.add(focused.id)" /><div v-else class="image-unavailable"><Satellite :size="36" /><span>Сервер превью поставщика не отвечает; контур кадра ниже</span></div><span>{{ date(focused.capture_date) }} · превью целого кадра</span></button>
           <div class="inspector-price"><div><span>{{ focused.quote_validated ? 'Оценка проверена ' + sourceInfo.name : focused.price_status === 'pp840_case_formula' ? 'Оценка по ПП № 840' : 'Оценка по каталогу' }}</span><strong>{{ money(focused.price) }}</strong></div><div><span>Детализация</span><b>{{ focused.resolution_m == null ? 'н/д' : num(focused.resolution_m, 2) + ' м' }}</b></div></div>
           <p v-if="focused.price_note" class="price-note">{{ focused.price_note }}</p>
           <div v-if="projectMode" class="project-offer-metrics"><b>{{ plural(focused.covered_asset_ids?.length || 0, ['ваш объект', 'ваших объекта', 'ваших объектов']) }}</b><span>EL {{ compactRub(focused.covered_expected_loss_rub) }} · {{ num(focused.covered_el_percent) }}%</span><small v-if="!focused.timely" class="filter-warning">Не укладывается в срок {{ projectDeadline }} ч</small></div>
