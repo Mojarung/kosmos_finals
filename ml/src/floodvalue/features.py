@@ -53,26 +53,40 @@ class NormStats:
         )
 
 
+def channel_pixels(s1_chips: Sequence[np.ndarray], channel_set: str, channel: int) -> np.ndarray:
+    """Valid pixels of one channel from every chip, in chip order, as one contiguous float32 vector."""
+    parts = [build_channels(s1, channel_set)[channel][s1_valid(s1)] for s1 in s1_chips]
+    return np.concatenate(parts) if parts else np.empty(0, dtype=np.float32)
+
+
 def fit_norm_stats(s1_chips: Sequence[np.ndarray], channel_set: str) -> NormStats:
-    """Percentile clip bounds, then mean/std of clipped valid pixels, per channel."""
-    stacks = [build_channels(s1, channel_set)[:, s1_valid(s1)] for s1 in s1_chips]
-    pixels = np.concatenate(stacks, axis=1) if stacks else np.empty((len(CHANNEL_SETS[channel_set]), 0))
-    if pixels.shape[1] == 0:
-        raise ValueError("no valid S1 pixels to fit normalisation statistics")
-    low = np.percentile(pixels, CLIP_PERCENTILES[0], axis=1)
-    high = np.percentile(pixels, CLIP_PERCENTILES[1], axis=1)
-    clipped = np.clip(pixels, low[:, None], high[:, None])
-    return NormStats(
-        channel_set,
-        tuple(float(v) for v in low),
-        tuple(float(v) for v in high),
-        tuple(float(v) for v in clipped.mean(axis=1)),
-        tuple(float(max(v, MIN_STD)) for v in clipped.std(axis=1)),
-    )
+    """Percentile clip bounds, then mean/std of clipped valid pixels, per channel.
+
+    One channel at a time as a contiguous vector, with float64 sums. Until 26.09 the sums
+    ran in float32 along the strided axis of an F-ordered [C, N] array, which numpy
+    accumulates pixel by pixel; on the train part that moved the mean by about 5 dB.
+    """
+    low, high, mean, std = [], [], [], []
+    for channel in range(len(CHANNEL_SETS[channel_set])):
+        pixels = channel_pixels(s1_chips, channel_set, channel)
+        if pixels.size == 0:
+            raise ValueError("no valid S1 pixels to fit normalisation statistics")
+        # Scalar q keeps the float32 bounds that the shipped members were trained with.
+        lo, hi = np.percentile(pixels, CLIP_PERCENTILES[0]), np.percentile(pixels, CLIP_PERCENTILES[1])
+        np.clip(pixels, lo, hi, out=pixels)
+        low.append(float(lo))
+        high.append(float(hi))
+        mean.append(float(pixels.mean(dtype=np.float64)))
+        std.append(float(max(pixels.std(dtype=np.float64), MIN_STD)))
+    return NormStats(channel_set, tuple(low), tuple(high), tuple(mean), tuple(std))
 
 
 def normalize(s1: np.ndarray, stats: NormStats) -> tuple[np.ndarray, np.ndarray]:
-    """Model input [C, H, W] with invalid pixels set to 0 (the channel mean), plus the validity mask."""
+    """Model input [C, H, W] with invalid pixels set to 0, plus the validity mask.
+
+    0 stands for ``stats.mean`` in dB. For the shipped v1 members that is VV -5.6 / VH -8.7 dB,
+    bright backscatter rather than the train mean (see ``floodvalue norm-check``).
+    """
     valid = s1_valid(s1)
     x = build_channels(s1, stats.channel_set)
     low, high = np.array(stats.low)[:, None, None], np.array(stats.high)[:, None, None]
