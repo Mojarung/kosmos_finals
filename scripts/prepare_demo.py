@@ -77,6 +77,11 @@ def write_quality() -> None:
         transfer = json.loads(transfer_path.read_text(encoding="utf-8"))
         quality["rtc_transfer"] = {key: transfer[key] for key in ("rules", "fit_chips", "check_chips", "water_weighted_iou")}
         quality["rtc_transfer"]["mapping"] = transfer.get("shipped_mapping")
+    doubt_path = ROOT / "ml/artifacts/evaluation/doubt_threshold.json"
+    if doubt_path.exists():
+        doubt = json.loads(doubt_path.read_text(encoding="utf-8"))
+        quality["doubt_check"] = {key: doubt[key] for key in ("rule", "fitted_on", "doubt_threshold",
+                                                              "valid", "test_core", "bolivia")}
     errors_path = ROOT / "ml/artifacts/evaluation/error_analysis.json"
     if errors_path.exists():
         errors = json.loads(errors_path.read_text(encoding="utf-8"))

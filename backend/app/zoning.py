@@ -2,35 +2,26 @@
 
 Map error chance of a pixel is the probability that the map colours it wrongly:
 1 - p where the mask says water and p where it says dry land (p is calibrated).
-A pixel is doubtful when that chance is at least DOUBT_THRESHOLD, the edge of the
-top decile of binary entropy on the independent test_core: 29.5% of those pixels
-are wrong against 4.7% overall, and the same ranking finds errors with AUROC 0.888
-(ensemble spread: 0.863). Doubtful area is what the zones try to cover.
+A pixel is doubtful when that chance is at least DOUBT_THRESHOLD, the edge of its
+top decile on validation pixels; no test part takes part in the choice. On the
+independent test_core 29.4% of doubtful pixels are wrong against 4.6% overall, and
+the same ranking finds errors with AUROC 0.888 (ensemble spread: 0.863). Doubtful
+area is what the zones try to cover.
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
-from math import ceil, cos, floor, log2, pi
+from math import ceil, cos, floor, pi
 
 import numpy as np
 
 from .catalog import float_map, mask, metadata, on_refresh
 
-# ml/artifacts/evaluation/evaluation.json → probability.test_core.uncertainty_entropy.decile_edges[9]
-ENTROPY_TOP_DECILE_BITS = 0.4080650210380554
-
-
-def _inverse_entropy(bits: float) -> float:
-    low, high = 1e-9, 0.5
-    for _ in range(80):
-        middle = (low + high) / 2
-        value = -(middle * log2(middle) + (1 - middle) * log2(1 - middle))
-        low, high = (middle, high) if value < bits else (low, middle)
-    return (low + high) / 2
-
-
-DOUBT_THRESHOLD = round(_inverse_entropy(ENTROPY_TOP_DECILE_BITS), 4)
+# ml/artifacts/evaluation/doubt_threshold.json → doubt_threshold, fitted on validation
+# by ml/scripts/doubt_threshold.py; the file also holds the test_core and Bolivia checks.
+DOUBT_THRESHOLD = 0.0822
+DOUBT_CHECK = "test_core: 29.4% of doubtful pixels wrong vs 4.6% overall, 63% of all errors inside"
 # Zone sides are the 1.12 km object square (1.25 km², above the 1 km² minimum) and
 # its 1.5× and 2× multiples. Larger rectangles cover a river in one piece but no
 # longer fit a 6–7 thousand rouble budget, so the grouping stops at 2.24 km.
@@ -40,8 +31,8 @@ ZONE_SIDES_KM = (1.12, 1.68, 2.24)
 MAX_UNCERTAINTY_ZONES = 5
 STRIDE_KM = 0.14
 DOUBT_RULE = (f"map error chance = 1 - p where flood_mask = 1 and p where flood_mask = 0 (calibrated p); "
-              f"doubtful pixel: chance >= {DOUBT_THRESHOLD} (top entropy decile of test_core, "
-              f"{ENTROPY_TOP_DECILE_BITS:.3f} bit); expected error area = sum of chances")
+              f"doubtful pixel: chance >= {DOUBT_THRESHOLD} (top decile of the chance on validation; "
+              f"{DOUBT_CHECK}); expected error area = sum of chances")
 ZONE_RULE = (f"greedy non-overlapping rectangles with sides {ZONE_SIDES_KM} km on a {STRIDE_KM} km stride "
              "maximising doubtful area above the analysed area's average density (the density a broad "
              f"purchase gets); stop after {MAX_UNCERTAINTY_ZONES} zones or when no rectangle beats the average")

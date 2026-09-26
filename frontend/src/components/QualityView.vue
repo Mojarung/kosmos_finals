@@ -9,6 +9,7 @@ const region = computed(() => state.analysis.region)
 const quality = computed(() => state.analysis.quality)
 const gain = computed(() => (testQuality.value.model.iou - testQuality.value.baseline.iou) * 100)
 const flood = computed(() => quality.value.flood_only?.test_core)
+const doubtCheck = computed(() => quality.value.doubt_check?.test_core)
 const proxy = computed(() => state.analysis.asset_proxy_check)
 // Как модель переносится на Sentinel-1 RTC: те же снимки test_core с разметкой, но из каталога RTC.
 const transfer = computed(() => quality.value.rtc_transfer)
@@ -71,7 +72,7 @@ function openWeak() {
     <div class="mini-rows">
       <div v-tip="'Ошибка калибровки ECE: насколько вероятность совпадает с реальной частотой воды. Чем меньше, тем лучше'"><span>Ошибка калибровки</span><span class="compare tabular">{{ number(testQuality.ece_raw, 3) }}<ArrowRight :size="12" /><b>{{ number(testQuality.ece_calibrated, 3) }}</b></span></div>
       <div v-tip="'Как хорошо шанс ошибки карты отличает ошибочные пиксели от верных. 0,5 значит наугад, 1 значит без промахов. По этой мере строятся сомнительные участки'"><span>Сомнения находят ошибки</span><b class="tabular">AUROC {{ number(testQuality.doubt_error_auroc ?? testQuality.uncertainty_error_auroc, 3) }}</b></div>
-      <div v-if="testQuality.doubt_error_rate_by_decile" v-tip="`Среди 10% самых сомнительных пикселей ошибается ${percent(testQuality.doubt_error_rate_by_decile[9], 1)}, в среднем по снимкам ${percent(testQuality.error_rate, 1)}`"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(testQuality.doubt_error_rate_by_decile[9], 1) }}</b></div>
+      <div v-if="doubtCheck" v-tip="`Сомнительный пиксель: шанс ошибки от 8%, граница подобрана на validation. На независимой проверке такие пиксели занимают ${percent(doubtCheck.doubtful_share, 1)} снимков, в них ошибается ${percent(doubtCheck.error_rate_doubtful, 1)} против ${percent(doubtCheck.error_rate, 1)} в среднем, и сюда попадает ${percent(doubtCheck.errors_in_doubtful, 0)} всех ошибок`"><span>Ошибки в сомнительных пикселях</span><b class="tabular">{{ percent(doubtCheck.error_rate_doubtful, 1) }}</b></div>
       <div v-tip="'Паводок в Боливии, которого не было в обучении'"><span>Новое событие, Боливия</span><b class="tabular">IoU {{ percent(quality.parts.bolivia.model.iou, 1) }}</b></div>
     </div>
   </section>

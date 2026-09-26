@@ -96,7 +96,7 @@ function toggleDrawing() {
             <span>{{ permanentJob.status === 'error' ? 'Постоянную воду отделить не удалось' : 'Ищем реки и озёра в архиве JRC…' }}</span>
             <LoaderCircle v-if="permanentJob.status === 'running'" :size="15" class="spin accent" />
           </div>
-          <div class="row" v-tip="'Площадь, где шанс ошибки карты 8% и выше. На независимой проверке в таких точках ошибается каждый третий пиксель'">
+          <div class="row" v-tip="'Площадь, где шанс ошибки карты 8% и выше. Граница подобрана на validation, на независимой проверке в таких точках ошибается почти каждый третий пиксель'">
             <span>Сомнительная площадь</span><strong class="tabular">{{ km(region.doubtful_area_km2) }}</strong>
           </div>
           <div class="row" v-tip="'Столько воды находит классический метод на той же площади: VH ниже −23,6 дБ'">

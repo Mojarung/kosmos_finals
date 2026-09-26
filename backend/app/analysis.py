@@ -12,7 +12,7 @@ from .evidence import asset_proxy_check, reference_proxy_check
 from .planning import (BasketSpace, candidates, contains, enrich_assets, intersects, map_error_probability,
                        rectangle_area_km2, square_around)
 from .sensitivity import asset_sensitivity, plan_sensitivity
-from .zoning import DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window, uncertainty_zones
+from .zoning import DOUBT_CHECK, DOUBT_RULE, DOUBT_THRESHOLD, ZONE_RULE, doubt_atoms, pixel_window, uncertainty_zones
 
 LIVE = "live_sentinel1_rtc"
 WITH_DATA = {"covered", "partial_coverage"}
@@ -329,8 +329,8 @@ def analyze(bounds: list[float] | None, budget_rub: float, priority: str,
                   "doubtful_area_km2": round(space.doubt_total * pixel_area, 3) if space.doubt_total else None,
                   "frontier": space.frontier(deadline_hours, must_cover),
                   "all_uncertainty_zones": _all_uncertainty(space, strategies["B"]),
-                  "evidence": "test_core: ranking AUROC 0.888 vs 0.863 for ensemble spread; "
-                              "top decile error rate 29.5% vs 0.1% in the lowest",
+                  "evidence": "threshold fitted on validation; test_core: ranking AUROC 0.888 vs 0.863 "
+                              "for ensemble spread; " + DOUBT_CHECK,
                   "calibration_checked_here": not live},
         "strategies": strategies,
         "comparison": {"data_savings_vs_broad_rub": savings,

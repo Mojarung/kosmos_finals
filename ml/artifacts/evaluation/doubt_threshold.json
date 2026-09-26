@@ -1,0 +1,32 @@
+{
+  "rule": "map error chance = 1 - p where p >= threshold, p elsewhere (calibrated p); doubtful pixel: chance >= the 90% quantile of that chance on validation pixels",
+  "fitted_on": "valid",
+  "model_threshold": 0.41,
+  "quantile": 0.9,
+  "doubt_threshold": 0.0822,
+  "entropy_bits_at_threshold": 0.4099,
+  "valid": {
+    "pixels": 20274154,
+    "doubtful_share": 0.1001,
+    "error_rate": 0.0361,
+    "error_rate_doubtful": 0.2578,
+    "error_rate_other": 0.0114,
+    "errors_in_doubtful": 0.7148
+  },
+  "test_core": {
+    "pixels": 11559945,
+    "doubtful_share": 0.0994,
+    "error_rate": 0.0464,
+    "error_rate_doubtful": 0.2943,
+    "error_rate_other": 0.0191,
+    "errors_in_doubtful": 0.6298
+  },
+  "bolivia": {
+    "pixels": 2824434,
+    "doubtful_share": 0.1832,
+    "error_rate": 0.0641,
+    "error_rate_doubtful": 0.2718,
+    "error_rate_other": 0.0175,
+    "errors_in_doubtful": 0.777
+  }
+}

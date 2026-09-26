@@ -24,7 +24,7 @@ const legend = computed(() => {
   return {
     model: water,
     probability: [{ key: 'probability', label: 'Вероятность воды', hint: 'Чем насыщеннее цвет, тем выше вероятность' }],
-    uncertainty: [{ key: 'uncertainty', label: 'Карта может ошибаться', hint: 'Яркие пиксели: шанс ошибки 8% и выше. Столько по тем же правилам ошибается каждый третий пиксель на независимой проверке' }],
+    uncertainty: [{ key: 'uncertainty', label: 'Карта может ошибаться', hint: 'Яркие пиксели: шанс ошибки 8% и выше. На независимой проверке в таких пикселях ошибается почти каждый третий' }],
     baseline: [{ key: 'baseline', label: 'Вода по порогу VH', hint: 'Классический метод для сравнения: VH ниже −23,6 дБ' }],
     reference: [{ key: 'reference', label: 'Вода по ручной метке', hint: 'Разметка Sen1Floods11. Только для проверки' }],
     none: [{ key: 'none', label: 'Слой выключен', hint: '' }],

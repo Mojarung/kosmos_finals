@@ -13,7 +13,7 @@ from app.live import GRID, _portfolio
 from app.main import app
 from app.planning import contains, enrich_assets, quote
 from app.scene_builder import SceneSpec, build_scene
-from app.zoning import DOUBT_THRESHOLD, ENTROPY_TOP_DECILE_BITS
+from app.zoning import DOUBT_THRESHOLD
 from synthetic import PERMANENT_ROWS, make_chip
 from test_planning import validator
 
@@ -75,12 +75,13 @@ def test_uncertainty_zones_are_orderable_and_cover_doubt_cheaper_than_broad():
         assert frontier[-1]["doubt_share"] == 1.0
 
 
-def test_doubt_threshold_matches_the_test_core_entropy_decile():
-    evaluation = json.loads((ROOT / "ml/artifacts/evaluation/evaluation.json").read_text())
-    edge = evaluation["probability"]["test_core"]["uncertainty_entropy"]["decile_edges"][9]
-    assert ENTROPY_TOP_DECILE_BITS == edge
-    p = DOUBT_THRESHOLD
-    assert abs(-(p * np.log2(p) + (1 - p) * np.log2(1 - p)) - edge) < 1e-3
+def test_doubt_threshold_is_fitted_on_validation_only():
+    fitted = json.loads((ROOT / "ml/artifacts/evaluation/doubt_threshold.json").read_text())
+    assert fitted["fitted_on"] == "valid" and fitted["quantile"] == 0.9
+    assert DOUBT_THRESHOLD == fitted["doubt_threshold"]
+    # On the independent part the doubtful pixels must hold errors far above the average.
+    check = fitted["test_core"]
+    assert check["error_rate_doubtful"] > 4 * check["error_rate"]
 
 
 def test_permanent_water_is_split_and_carries_no_loss(tmp_path):
