@@ -24,6 +24,16 @@ onMounted(load)
 const summary = computed(() => result.value?.summary)
 const current = computed(() => result.value?.chips.find(item => item.chip_id === props.sceneId))
 const fmt = value => value == null ? 'нет оценки' : number(value, 1) + '%'
+const comparisons = computed(() => {
+  if (!summary.value) return []
+  const s = summary.value
+  return [
+    { key: 'A', name: 'без заказа', error: s.error_a_rub, cost: 0 },
+    { key: 'B', name: 'вся область', error: s.error_b_rub, cost: s.b_cost_rub },
+    { key: 'C', name: 'выбранные зоны', error: s.error_c_rub, cost: s.c_cost_rub },
+  ]
+})
+const barWidth = (value, maximum) => `${maximum ? Math.max(value > 0 ? 2 : 0, value / maximum * 100) : 0}%`
 </script>
 
 <template>
@@ -33,6 +43,16 @@ const fmt = value => value == null ? 'нет оценки' : number(value, 1) + 
     <div v-else-if="error" role="alert"><p>{{ error }}</p><button type="button" class="backtest-action" @click="load">Повторить</button></div>
     <template v-else-if="summary">
       <p class="backtest-lead">При лимите <b>{{ rub(result.budget_rub) }}</b> и сроке <b>{{ result.deadline_hours }} ч</b> стратегия C снизила ошибку EL‑прокси на <strong>{{ fmt(summary.c_error_reduction_percent) }}</strong> за <strong>{{ fmt(summary.c_price_share_of_b_percent) }}</strong> цены широкой съёмки B.</p>
+      <figure class="backtest-chart" data-testid="backtest-chart" aria-label="Сравнение A, B и C: сумма ошибки EL-прокси и цена данных на 70 чипах">
+        <figcaption>Что даёт заказ на 70 чипах <small>меньше ошибка и цена — лучше</small></figcaption>
+        <div class="backtest-axis"><span>Стратегия</span><span>Ошибка EL‑прокси</span><span>Цена данных</span></div>
+        <div v-for="row in comparisons" :key="row.key" class="backtest-chart-row">
+          <span class="backtest-chart-name"><b>{{ row.key }}</b><small>{{ row.name }}</small></span>
+          <div class="backtest-measure"><b>{{ compactRub(row.error) }}</b><div class="backtest-track"><span class="backtest-error-bar" :style="{ width: barWidth(row.error, summary.error_a_rub) }" /></div></div>
+          <div class="backtest-measure"><b>{{ compactRub(row.cost) }}</b><div class="backtest-track"><span class="backtest-cost-bar" :style="{ width: barWidth(row.cost, summary.b_cost_rub) }" /></div></div>
+        </div>
+        <p>B — идеальный верхний предел: метка открыта по всей области; широкий заказ может превышать лимит на чип.</p>
+      </figure>
       <div class="backtest-numbers">
         <div><b>{{ compactRub(summary.error_a_rub) }} → {{ compactRub(summary.error_c_rub) }}</b><span>сумма |pVq − yVq|, A → C</span></div>
         <div><b>{{ summary.c_corrected_statuses }} из {{ summary.b_corrected_statuses }}</b><span>статусов вода/суша исправлено C от возможных у B</span></div>
@@ -58,6 +78,21 @@ const fmt = value => value == null ? 'нет оценки' : number(value, 1) + 
 .backtest-tag { padding: 4px 7px; border: 1px solid var(--border); border-radius: 5px; font-size: 10px; color: var(--muted-foreground); }
 .backtest-lead { margin: 13px 0; line-height: 1.5; }
 .backtest-lead strong { font-size: 17px; color: var(--reference); font-variant-numeric: tabular-nums; }
+.backtest-chart { margin: 14px 0; padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.backtest-chart figcaption { font-size: 12px; font-weight: 700; }
+.backtest-chart figcaption small { display: block; margin-top: 2px; font-size: 10px; font-weight: 400; color: var(--muted-foreground); }
+.backtest-axis, .backtest-chart-row { display: grid; grid-template-columns: minmax(68px, .8fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 9px; }
+.backtest-axis { margin-top: 12px; color: var(--muted-foreground); font-size: 9px; line-height: 1.2; }
+.backtest-chart-row { min-height: 49px; border-top: 1px solid var(--border); }
+.backtest-chart-name b, .backtest-chart-name small, .backtest-measure b { display: block; }
+.backtest-chart-name b { font-size: 13px; }
+.backtest-chart-name small { color: var(--muted-foreground); font-size: 9px; line-height: 1.2; }
+.backtest-measure b { margin-bottom: 5px; font-size: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.backtest-track { height: 7px; border-radius: 8px; background: var(--border); overflow: hidden; }
+.backtest-track span { display: block; height: 100%; border-radius: inherit; }
+.backtest-error-bar { background: var(--reference); }
+.backtest-cost-bar { background: #a67733; }
+.backtest-chart p { margin: 9px 0 0; color: var(--muted-foreground); font-size: 10px; line-height: 1.35; }
 .backtest-numbers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
 .backtest-numbers div { min-width: 0; padding: 10px 8px; background: var(--surface-2); border-radius: 6px; }
 .backtest-numbers b, .backtest-numbers span { display: block; }
