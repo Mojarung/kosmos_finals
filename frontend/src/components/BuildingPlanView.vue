@@ -49,7 +49,7 @@ watch(() => state.procurementMethod, method => { if (method === 'value') state.s
       <template v-if="buildingTargets.length">
         <BudgetPlanSummary v-if="state.planStep === 'plan' && state.procurementMethod === 'budget'" :strategies="result?.strategies" :plan="plan" :max-budget="maxBudget" :required-id="buildingPlan.mustCover" :required-label="buildingPlan.mustCover" :covered-count="plan?.covered_building_ids.length || 0" :object-words="['здание','здания','зданий']" doubt-label="сомнений по зданиям" @clear-required="buildingPlan.mustCover = null" />
         <div v-if="state.planStep === 'plan' && state.procurementMethod === 'value'" class="voi">
-          <section class="block voi-intro"><h3>Окупится ли снимок?</h3><label for="building-visit-cost">Цена выезда к одному объекту, ₽</label><input id="building-visit-cost" v-model.number="buildingPlan.visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" /><div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="[4,8,12].map(value => ({value,label:value + ' ч'}))" size="sm" label="Срок решения" /></div></section>
+          <section class="block voi-intro"><label for="building-visit-cost">Выезд на объект, ₽</label><input id="building-visit-cost" v-model.number="buildingPlan.visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" /><div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="[4,8,12].map(value => ({value,label:value + ' ч'}))" size="sm" label="Срок решения" /></div></section>
           <InformationValueResult v-if="valueResult" :result="valueResult" :required-id="buildingPlan.mustCover" />
           <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
         </div>
@@ -87,7 +87,7 @@ watch(() => state.procurementMethod, method => { if (method === 'value') state.s
         </div></details>
         </div>
       </template>
-      <p v-else-if="!buildings.busy" class="panel-note">Отметьте здания на шаге «Объекты» или выберите их на карте.</p>
+      <p v-else-if="!buildings.busy" class="panel-note">Выберите здания через счётчик сверху.</p>
     </template>
   </section>
 </template>

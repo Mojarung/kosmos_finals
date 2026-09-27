@@ -111,8 +111,8 @@ function reason(zone) {
 <template>
   <div class="voi" data-testid="voi-panel">
     <section v-if="state.planStep==='plan'" class="block voi-intro">
-      <h3>Окупится ли снимок?</h3>
-      <label for="visit-cost">Цена выезда к одному объекту, ₽</label>
+
+      <label for="visit-cost">Выезд на объект, ₽</label>
       <input id="visit-cost" v-model.number="visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" :aria-invalid="!validVisitCost" />
       <div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="deadlineOptions" size="sm" label="Срок решения" /></div>
     </section>

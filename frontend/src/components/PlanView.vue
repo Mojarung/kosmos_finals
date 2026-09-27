@@ -4,7 +4,7 @@ import PlanCoverage from './PlanCoverage.vue'
 import { buildingTargets } from '../lib/buildingPlans'
 import Reveal from './Reveal.vue'
 import { computed, ref } from 'vue'
-import { ChevronDown, Info, Pin, X } from '@lucide/vue'
+import { ArrowLeft, Building2, ChevronDown, Info, MapPin, Pin, SlidersHorizontal, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
 import SuppliersView from './SuppliersView.vue'
@@ -281,11 +281,20 @@ function hover(id) { state.hoverZoneId = id }
 
 <template>
   <div class="shooting-workflow">
-  <BubbleTabs v-if="!state.procurementProjectId" v-model="state.objectMode" :options="[{ value: 'buildings', label: 'Здания' }, { value: 'points', label: 'Точки' }]" stretch label="Объекты для съёмки" />
-  <nav class="shooting-steps" aria-label="Шаги планирования"><button v-for="(step,index) in [{id:'objects',label:'Объекты'},{id:'plan',label:'План'},{id:'details',label:'Детали'}]" :key="step.id" :aria-current="state.planStep===step.id?'step':undefined" :class="{active:state.planStep===step.id}" @click="state.planStep=step.id; state.procurementOpen=false; state.suppliersOpen=false"><span>{{ index+1 }}</span>{{ step.label }}</button></nav>
+  <div v-if="state.planStep==='plan'" class="plan-toolbar">
+    <div v-if="!state.procurementProjectId" class="plan-source" role="group" aria-label="Объекты для съёмки">
+      <button :aria-pressed="state.objectMode==='buildings'" :class="{active:state.objectMode==='buildings'}" @click="state.objectMode='buildings'"><Building2 :size="16" />Здания</button>
+      <button :aria-pressed="state.objectMode==='points'" :class="{active:state.objectMode==='points'}" @click="state.objectMode='points'"><MapPin :size="16" />Точки</button>
+    </div>
+    <button v-if="!state.procurementProjectId" class="plan-selection-trigger" :aria-label="`Изменить выбор: ${targetCount} ${state.objectMode==='buildings'?'зданий':'точек'}`" @click="state.planStep='objects'"><span>Выбрано {{ targetCount.toLocaleString('ru-RU') }}</span><ChevronDown :size="14" /></button>
+    <button class="plan-settings" aria-label="Детали и поставщики" v-tip="'Смета, каталог и поставщики'" @click="state.planStep='details'"><SlidersHorizontal :size="18" /></button>
+  </div>
+  <header v-else class="plan-subpage-head">
+    <button class="plan-settings" aria-label="Вернуться к плану" @click="state.planStep='plan';state.procurementOpen=false;state.suppliersOpen=false"><ArrowLeft :size="19" /></button>
+    <h3>{{ state.planStep==='objects' ? (state.objectMode==='buildings'?'Выбор зданий':'Выбор точек') : 'Детали плана' }}</h3>
+  </header>
   <PlanTargets v-if="state.planStep==='objects'" />
   <template v-else>
-  <button v-if="!state.procurementProjectId" class="shooting-selection" @click="state.planStep='objects'"><span>{{ plural(targetCount, state.objectMode==='buildings'?['здание','здания','зданий']:['точка','точки','точек']) }} в расчёте</span><b>Изменить →</b></button>
   <div v-if="state.planStep === 'details'" class="procurement-mode-switch">
     <!-- Два разных расчёта: сценарные рубли по ПП 840 идут в A/B/C и в ZIP, доллары SkyFi живут отдельно. -->
     <button aria-label="Расчёт по ТЗ" :class="{ active: !state.procurementOpen && !state.suppliersOpen }" v-tip="'Цены в рублях по ПП № 840, базовая ставка сценарная. Этот расчёт идёт в сравнение A/B/C и в «Скачать решение»'"
@@ -295,9 +304,9 @@ function hover(id) { state.hoverZoneId = id }
     <button aria-label="Поставщики" :class="{ active: state.suppliersOpen }" v-tip="'Где купить снимки плана, в том числе из России, и загрузка полученных файлов из папки'"
       @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
-  <div v-if="state.planStep === 'plan' && !state.procurementOpen && !state.suppliersOpen" class="procurement-mode-switch" role="group" aria-label="Правило выбора зон">
-    <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'">По бюджету</button>
-    <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'">По ценности информации</button>
+  <div v-if="state.planStep === 'plan' && !state.procurementOpen && !state.suppliersOpen" class="plan-method" role="group" aria-label="Правило выбора зон">
+    <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'" aria-label="По бюджету">Бюджет</button>
+    <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'" aria-label="По ценности информации">Польза снимка</button>
   </div>
   <BuildingPlanView v-if="buildingPlanMode" @zone="id => emit('zone', id)" />
   <template v-else-if="targetCount">
@@ -410,7 +419,7 @@ function hover(id) { state.hoverZoneId = id }
   </template>
 </template>
   </template>
-  <p v-if="!buildingPlanMode && !targetCount" class="panel-note">Объекты не выбраны. Откройте шаг «Объекты» и отметьте нужные.</p>
+  <p v-if="!buildingPlanMode && !targetCount" class="panel-note">Нажмите на счётчик сверху, чтобы выбрать объекты.</p>
   </template>
   </div>
 </template>

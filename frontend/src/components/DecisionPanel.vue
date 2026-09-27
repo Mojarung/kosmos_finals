@@ -2,7 +2,7 @@
 import { gsap } from 'gsap'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { reducedMotion, useDisclosureMotion } from '../lib/panelMotion'
-import { Activity, ChevronRight, Download, Globe2, Maximize2, Minimize2 } from '@lucide/vue'
+import { Activity, Check, ChevronRight, Download, Globe2, Maximize2, Minimize2 } from '@lucide/vue'
 import AssetsView from './AssetsView.vue'
 import BuildingsView from './BuildingsView.vue'
 import BubbleTabs from './BubbleTabs.vue'
@@ -13,7 +13,7 @@ import ProjectView from './ProjectView.vue'
 import { exportDecision, fetchAnalysis, hasData, resetRegion, retryRegion, state } from '../store'
 import { compactRub } from '../lib/format'
 import { buildingMode, buildings } from '../lib/buildings'
-import { buildingPlanMode, buildingPlan, downloadBuildingPlan } from '../lib/buildingPlans'
+import { buildingPlanMode, buildingPlan, buildingTargets, downloadBuildingPlan } from '../lib/buildingPlans'
 
 const emit = defineEmits(['asset', 'zone', 'building', 'reset'])
 const TABS = [
@@ -21,6 +21,7 @@ const TABS = [
   { value: 'plan', label: 'Съёмка', hint: 'Какие снимки купить под бюджет и срок, и почему именно их' },
   { value: 'projects', label: 'Проекты', hint: 'Свои объекты и история решений' },
 ]
+const planTargetCount = computed(() => buildingPlanMode.value ? buildingTargets.value.length : state.pointTargetIds?.length ?? state.analysis?.assets.length ?? 0)
 const expanded = computed({ get: () => state.decisionExpanded, set: value => { state.decisionExpanded = value } })
 const layoutClass = computed(() => [expanded.value && 'decision-expanded', state.tab === 'plan' && state.procurementOpen && 'procurement-expanded', state.procurementMapMode && 'procurement-map-mode'].filter(Boolean).join(' '))
 const disclosures = useDisclosureMotion()
@@ -99,10 +100,11 @@ function back() {
     </div>
 
     <footer v-if="(!buildingMode || buildingPlanMode) && !(state.tab === 'plan' && state.procurementOpen)" class="panel-foot">
-      <button v-if="buildingPlanMode" class="primary-button wide" :disabled="!buildingPlan.result || buildingPlan.busy || buildings.busy || buildingPlan.exporting" @click="downloadBuildingPlan"><Download :size="17" />{{ buildingPlan.exporting ? 'Готовим…' : state.procurementMethod === 'value' ? 'Скачать расчёт зон и допущения' : 'Скачать решение' }}</button>
-      <a v-else-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref || state.pointTargetIds?.length === 0" download @click="(!state.voiExportHref || state.pointTargetIds?.length === 0) && $event.preventDefault()"><Download :size="17" />Скачать расчёт зон и допущения</a>
-      <button v-else class="primary-button wide" :disabled="!hasData || state.loading || (state.tab === 'plan' && state.pointTargetIds?.length === 0)" v-tip="'Один ZIP: карты воды, вероятности, сомнений и постоянной воды, таблица объектов, план закупки с причинами по каждой зоне, сравнение A/B/C, метрики и обоснование параметров'" @click="exportDecision">
-        <Download :size="17" />Скачать решение
+      <button v-if="state.tab==='plan' && state.planStep==='objects'" class="primary-button wide" :disabled="!planTargetCount" @click="state.pointPicking=false;state.planStep='plan';state.showZones=true"><Check :size="18" />Готово · {{ planTargetCount }}</button>
+      <button v-else-if="buildingPlanMode" class="primary-button wide" :disabled="!buildingPlan.result || buildingPlan.busy || buildings.busy || buildingPlan.exporting" @click="downloadBuildingPlan"><Download :size="17" />{{ buildingPlan.exporting ? 'Готовим…' : state.procurementMethod === 'value' ? 'Скачать расчёт' : 'Скачать план' }}</button>
+      <a v-else-if="state.tab === 'plan' && state.procurementMethod === 'value'" class="primary-button wide export-link" :href="state.voiExportHref || undefined" :aria-disabled="!state.voiExportHref || state.pointTargetIds?.length === 0" download @click="(!state.voiExportHref || state.pointTargetIds?.length === 0) && $event.preventDefault()"><Download :size="17" />Скачать расчёт</a>
+      <button v-else class="primary-button wide" :disabled="!hasData || state.loading || (state.tab === 'plan' && state.pointTargetIds?.length === 0)" v-tip="'Карты, выбранные объекты и расчёт одним ZIP'" @click="exportDecision">
+        <Download :size="17" />{{ state.tab==='plan' ? 'Скачать план' : 'Скачать решение' }}
       </button>
     </footer>
   </MorphPanel>
