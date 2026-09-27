@@ -4,7 +4,7 @@ import PlanCoverage from './PlanCoverage.vue'
 import PlanInsights from './PlanInsights.vue'
 import { buildingTargets } from '../lib/buildingPlans'
 import Reveal from './Reveal.vue'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { ArrowLeft, Building2, ChevronDown, Info, MapPin, Pin, SlidersHorizontal, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
@@ -24,13 +24,31 @@ import Money from './Money.vue'
 const emit = defineEmits(['zone', 'asset', 'building'])
 const planView = ref(state.procurementMethod === 'value' ? 'value' : 'overview')
 const planRoot = ref(null)
+const expandedBeforeCharts = ref(null)
+function restorePanelWidth() {
+  if (expandedBeforeCharts.value === null) return
+  state.decisionExpanded = expandedBeforeCharts.value
+  expandedBeforeCharts.value = null
+}
 function showView(view) {
+  if (view === 'charts' && planView.value !== 'charts') {
+    expandedBeforeCharts.value = state.decisionExpanded
+    state.decisionExpanded = true
+  } else if (planView.value === 'charts' && view !== 'charts') restorePanelWidth()
   planView.value = view
   state.planRiskFilter = null
   state.procurementMethod = view === 'value' ? 'value' : 'budget'
   nextTick(() => planRoot.value?.closest('.panel-scroll')?.scrollTo({ top: 0 }))
 }
 watch(() => [state.objectMode, state.sceneId, state.tab], () => { state.planRiskFilter = null }, { immediate: true })
+watch(() => [state.tab, state.planStep], () => {
+  if (state.tab !== 'plan' || state.planStep !== 'plan') restorePanelWidth()
+  else if (planView.value === 'charts' && expandedBeforeCharts.value === null) {
+    expandedBeforeCharts.value = state.decisionExpanded
+    state.decisionExpanded = true
+  }
+})
+onBeforeUnmount(restorePanelWidth)
 const procurementMethod = computed({ get: () => state.procurementMethod, set: value => { state.procurementMethod = value } })
 const analysis = computed(() => state.analysis)
 const broadCost = computed(() => analysis.value?.strategies.B.data_cost_rub || 0)
