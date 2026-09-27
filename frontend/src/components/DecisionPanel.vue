@@ -40,6 +40,11 @@ watch(() => `${state.tab}:${state.planStep}`, (tab, previous) => {
   }
 }, { flush: 'post' })
 
+// On a narrow screen the water panel otherwise consumes the planner's viewport.
+watch(() => state.tab, tab => {
+  if (tab === 'plan' && window.innerWidth < 1024) state.observeOpen = false
+})
+
 onBeforeUnmount(() => gsap.killTweensOf(content.value))
 
 function back() {
@@ -91,7 +96,7 @@ function back() {
           <BuildingsView v-if="buildingMode" @building="(feature, reveal) => emit('building', feature, reveal)" />
           <AssetsView v-else @asset="id => emit('asset', id)" />
         </template>
-        <PlanView v-else-if="state.tab === 'plan'" @zone="id => emit('zone', id)" />
+        <PlanView v-else-if="state.tab === 'plan'" @zone="id => emit('zone', id)" @asset="id => emit('asset', id)" @building="feature => emit('building', feature)" />
         <ProjectView v-else-if="state.tab === 'projects'" />
       </div>
       <Transition name="pop">

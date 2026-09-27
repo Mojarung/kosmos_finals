@@ -15,6 +15,7 @@ import { buildings, loadBuildings } from '../lib/buildings'
 import { buildingPlan, buildingPlanRequest, buildingTargets, buildingScope, currentBuildingPlan, buildingPlanZones, loadBuildingPlan, saveBuildingPlan } from '../lib/buildingPlans'
 import { compactRub, rub, percent, plural } from '../lib/format'
 
+const props = defineProps({ view: { type: String, default: 'zones' } })
 const emit = defineEmits(['zone'])
 const projectId = ref('')
 onMounted(loadProjects)
@@ -23,7 +24,7 @@ const result = computed(() => buildingPlan.result)
 const plan = computed(() => currentBuildingPlan.value)
 const zones = computed(() => buildingPlanZones.value.filter(z => plan.value?.zone_ids.includes(z.id)))
 const targetNames = computed(() => new Map(buildingTargets.value.map(f=>[f.id,f.properties.tags?.name || f.properties.type_label || 'Здание'])))
-const coverage = computed(() => zones.value.map(z=>({id:z.id,name:z.name,count:z.building_count,area:z.area_km2,cost:z.cost_rub,hours:z.product?.delivery_hours,note:zoneReason(z),objects:(z.building_ids||[]).map(id=>({id,name:targetNames.value.get(id) || 'Здание'}))})))
+const coverage = computed(() => zones.value.map(z=>({id:z.id,name:z.name,count:z.building_count,area:z.area_km2,cost:z.cost_rub,loss:z.expected_loss_rub,hours:z.product?.delivery_hours,note:zoneReason(z),objects:(z.building_ids||[]).map(id=>({id,name:targetNames.value.get(id) || 'Здание'}))})))
 const maxBudget = computed(() => Math.max(10000, Math.ceil((result.value?.strategies.B.data_cost_rub || 0) / 1000) * 1000, state.budget))
 const rejected = computed(() => buildingPlanZones.value.filter(z => !plan.value?.zone_ids.includes(z.id)))
 const mustCover = computed({get: () => buildingPlan.mustCover || '', set: value => { buildingPlan.mustCover = value || null }})
@@ -47,13 +48,13 @@ watch(() => state.procurementMethod, method => { if (method === 'value') state.s
     <ProcurementView v-else-if="state.procurementOpen && result" :key="JSON.stringify(buildingScope)" :building-context="buildingScope" :building-bounds="result.scope.bbox" :building-summary="result.scope" />
     <template v-else-if="!state.suppliersOpen && !state.procurementOpen">
       <template v-if="buildingTargets.length">
-        <BudgetPlanSummary v-if="state.planStep === 'plan' && state.procurementMethod === 'budget'" :strategies="result?.strategies" :plan="plan" :max-budget="maxBudget" :required-id="buildingPlan.mustCover" :required-label="buildingPlan.mustCover" :covered-count="plan?.covered_building_ids.length || 0" :object-words="['здание','здания','зданий']" doubt-label="сомнений по зданиям" @clear-required="buildingPlan.mustCover = null" />
-        <div v-if="state.planStep === 'plan' && state.procurementMethod === 'value'" class="voi">
+        <BudgetPlanSummary v-if="state.planStep === 'plan' && props.view === 'zones' && state.procurementMethod === 'budget'" :strategies="result?.strategies" :plan="plan" :max-budget="maxBudget" :required-id="buildingPlan.mustCover" :required-label="buildingPlan.mustCover" :covered-count="plan?.covered_building_ids.length || 0" :object-words="['здание','здания','зданий']" doubt-label="сомнений по зданиям" @clear-required="buildingPlan.mustCover = null" />
+        <div v-if="state.planStep === 'plan' && props.view === 'value' && state.procurementMethod === 'value'" class="voi">
           <section class="block voi-intro"><label for="building-visit-cost">Выезд на объект, ₽</label><input id="building-visit-cost" v-model.number="buildingPlan.visitCost" type="number" min="0" max="10000000" step="500" aria-label="Цена выезда" /><div class="voi-control"><span>Получить за</span><BubbleTabs v-model="state.deadline" :options="[4,8,12].map(value => ({value,label:value + ' ч'}))" size="sm" label="Срок решения" /></div></section>
           <InformationValueResult v-if="valueResult" :result="valueResult" :required-id="buildingPlan.mustCover" />
           <p v-if="plan?.reason" class="warn-note">{{ plan.reason }}</p>
         </div>
-        <PlanCoverage v-if="state.planStep==='plan'" :zones="coverage" :busy="buildingPlan.busy" :words="['здание','здания','зданий']" @zone="id=>emit('zone',id)" />
+        <PlanCoverage v-if="state.planStep==='plan' && props.view==='zones'" :zones="coverage" :busy="buildingPlan.busy" :words="['здание','здания','зданий']" @zone="id=>emit('zone',id)" />
         <div v-if="state.planStep==='details'">
         <details class="disclosure"><summary>Состав заказа · {{ plural(zones.length,['зона','зоны','зон']) }}</summary><div class="disclosure-body detail-content">
         <p class="panel-note">Один снимок может покрывать много домов. На карте его границы показаны голубой рамкой.</p>

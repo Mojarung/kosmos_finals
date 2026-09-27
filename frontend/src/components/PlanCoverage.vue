@@ -21,6 +21,7 @@ function reveal(id,open){const next=new Set(openIds.value);open?next.add(id):nex
         <button class="coverage-location" :aria-label="`Показать зону ${index+1} на карте`" @click="focus(zone.id)"><span class="coverage-number"><MapPin :size="15" /></span><span><b>Зона {{ index+1 }}</b><small>{{ plural(zone.count,words) }} · {{ km(zone.area) }}</small></span></button>
         <strong>{{ rub(zone.cost) }}</strong><button class="coverage-expand" :aria-label="`Состав зоны ${index+1}`" :aria-expanded="openIds.has(zone.id)" @click="reveal(zone.id,!openIds.has(zone.id))"><ChevronDown :size="16" :class="{up:openIds.has(zone.id)}" /></button>
       </div>
+      <div v-if="zone.loss != null" class="coverage-metrics"><span><i :style="{width:`${Math.max(0,Math.min(100,zone.loss/(Math.max(1,...zones.map(item=>item.loss || 0)))*100))}%`}" /></span><small>Ущерб {{ rub(zone.loss) }}</small></div>
       <div v-if="openIds.has(zone.id)" class="coverage-detail"><p>{{ zone.name }}<span v-if="zone.hours != null"> · {{ zone.hours }} ч</span></p><ul><li v-for="item in zone.objects" :key="item.id">{{ item.name }} <small>{{ item.id }}</small></li></ul><p v-if="!zone.objects?.length">Уточнение карты воды</p></div>
     </div>
     <button v-if="zones.length>3" class="link-row" @click="expanded=!expanded">{{ expanded?'Свернуть':`Ещё ${zones.length-3}` }}</button>

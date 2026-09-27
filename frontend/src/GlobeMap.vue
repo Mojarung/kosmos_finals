@@ -329,12 +329,12 @@ function buildOverlays() {
   map.addLayer(water, before)
   const buildingColor = ['case', ['==', ['get', 'picked'], 1], '#f3b632', ['==', ['get', 'in_plan'], 1], '#4c9ec2', ['==', ['get', 'water_probability_proxy'], null], '#899199', ['>', ['coalesce', ['get', 'water_fraction'], 0], 0], '#d57442', '#398b81']
   map.addLayer({ id: 'building-fill', type: 'fill-extrusion', source: 'buildings', paint: {
-    'fill-extrusion-color': buildingColor, 'fill-extrusion-opacity': .78,
+    'fill-extrusion-color': ['case', ['==', ['get', 'risk_dimmed'], 1], '#a9b3b2', buildingColor], 'fill-extrusion-opacity': .78,
     'fill-extrusion-height': ['coalesce', ['get', 'height_m'], 6], 'fill-extrusion-base': 0,
     'fill-extrusion-vertical-gradient': true,
   } }, before)
   map.addLayer({ id: 'building-outline', type: 'line', source: 'buildings', paint: {
-    'line-color': buildingColor, 'line-width': ['case', ['<=', ['coalesce', ['get', 'risk_rank'], 999999], 10], 2.5, .7],
+    'line-color': buildingColor, 'line-opacity': ['case', ['==', ['get', 'risk_dimmed'], 1], .18, 1], 'line-width': ['case', ['<=', ['coalesce', ['get', 'risk_rank'], 999999], 10], 2.5, .7],
   } }, before)
   map.addLayer({ id: 'building-selected', type: 'fill-extrusion', source: 'selected-building', paint: {
     'fill-extrusion-color': '#ffbd5b', 'fill-extrusion-opacity': .95,
@@ -552,7 +552,7 @@ function syncBuildings() {
   const covered = new Set(!buildingPlanMode.value ? [] : state.procurementOpen
     ? (state.procurementOverlay || []).flatMap(f => f.properties.building_ids || []) : currentBuildingPlan.value?.covered_building_ids || [])
   const picked = new Set(buildingPlanMode.value && buildingPlan.picking ? buildingPlan.selectedIds : [])
-  const features = visible ? buildings.data.features.map(f => ({ ...f, properties: { ...f.properties, picked: picked.has(f.id) ? 1 : 0, in_plan: !buildingPlan.picking && covered.has(f.id) ? 1 : 0 } })) : []
+  const features = visible ? buildings.data.features.map(f => ({ ...f, properties: { ...f.properties, picked: picked.has(f.id) ? 1 : 0, in_plan: !buildingPlan.picking && covered.has(f.id) ? 1 : 0, risk_dimmed: state.tab === 'plan' && state.planRiskFilter && f.properties.building_type !== state.planRiskFilter ? 1 : 0 } })) : []
   setData('buildings', collection(features))
   setData('selected-building', collection(features.filter(f => !buildingPlan.picking && f.id === buildings.selectedId)))
   if (visible && features.length && !phase && !state.globeView && buildingCameraScene !== state.sceneId) {
@@ -1074,7 +1074,7 @@ watch(() => [state.analysis, state.region, state.selectedAssetId, state.strategy
   state.layerMode, state.basemap, state.overlayOpacity, state.showRadar, state.showZones, state.liveStatus, state.tab, state.objectMode,
   state.procurementOverlay, state.projectOverlay, state.pointPicking, state.pointTargetIds], syncMap, { deep: true })
 watch(() => state.basemap, () => scheduleWarmUp())
-watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus, buildingPlan.picking, buildingPlan.selectedIds], syncBuildings)
+watch(() => [buildings.data, buildings.selectedId, buildingMode.value, state.sceneId, state.liveStatus, buildingPlan.picking, buildingPlan.selectedIds, state.planRiskFilter], syncBuildings)
 watch(() => [buildingPlanOverlay.value, currentBuildingPlan.value, buildingPlanMode.value], syncMap)
 // classList, а не :class: Vue перезаписал бы className и стёр классы, которые ставит MapLibre.
 // Шторка закрывается сразу по клику: пока она опускается, расчёт для новой сцены успевает прийти.

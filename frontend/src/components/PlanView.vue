@@ -1,9 +1,10 @@
 <script setup>
 import PlanTargets from './PlanTargets.vue'
 import PlanCoverage from './PlanCoverage.vue'
+import PlanInsights from './PlanInsights.vue'
 import { buildingTargets } from '../lib/buildingPlans'
 import Reveal from './Reveal.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ArrowLeft, Building2, ChevronDown, Info, MapPin, Pin, SlidersHorizontal, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
@@ -20,7 +21,14 @@ import { activePlan, state } from '../store'
 import { compactRub, date, km, number, percent, plural, rub } from '../lib/format'
 import Money from './Money.vue'
 
-const emit = defineEmits(['zone'])
+const emit = defineEmits(['zone', 'asset', 'building'])
+const planView = ref(state.procurementMethod === 'value' ? 'value' : 'overview')
+function showView(view) {
+  planView.value = view
+  state.planRiskFilter = null
+  state.procurementMethod = view === 'value' ? 'value' : 'budget'
+}
+watch(() => [state.objectMode, state.sceneId, state.tab], () => { state.planRiskFilter = null }, { immediate: true })
 const procurementMethod = computed({ get: () => state.procurementMethod, set: value => { state.procurementMethod = value } })
 const analysis = computed(() => state.analysis)
 const broadCost = computed(() => analysis.value?.strategies.B.data_cost_rub || 0)
@@ -274,7 +282,7 @@ const targetCount = computed(() => buildingPlanMode.value ? buildingTargets.valu
 const coverage = computed(() => (analysis.value?.zones || []).filter(z=>plan.value?.zone_ids.includes(z.id)).map(z=>{
   const row=decisions.value.find(r=>r.zone_id===z.id)
   const objects=(row?.asset_ids || []).map(id=>analysis.value.assets.find(a=>a.id===id)).filter(Boolean)
-  return {id:z.id,name:zoneTitle(z),count:objects.length,objects,area:z.area_km2,cost:basketLines.value.get(row?.candidate_id ?? z.id) ?? row?.cost_rub ?? 0,hours:row?.delivery_hours ?? z.delivery_hours,note:row?why(row):''}
+  return {id:z.id,name:zoneTitle(z),count:objects.length,objects,area:z.area_km2,cost:basketLines.value.get(row?.candidate_id ?? z.id) ?? row?.cost_rub ?? 0,loss:row?.expected_loss_rub ?? 0,hours:row?.delivery_hours ?? z.delivery_hours,note:row?why(row):''}
 }))
 function hover(id) { state.hoverZoneId = id }
 </script>
@@ -304,20 +312,20 @@ function hover(id) { state.hoverZoneId = id }
     <button aria-label="Поставщики" :class="{ active: state.suppliersOpen }" v-tip="'Где купить снимки плана, в том числе из России, и загрузка полученных файлов из папки'"
       @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
-  <div v-if="state.planStep === 'plan' && !state.procurementOpen && !state.suppliersOpen" class="plan-method" role="group" aria-label="Правило выбора зон">
-    <button :class="{ active: procurementMethod === 'budget' }" :aria-pressed="procurementMethod === 'budget'" @click="procurementMethod = 'budget'" aria-label="По бюджету">Бюджет</button>
-    <button :class="{ active: procurementMethod === 'value' }" :aria-pressed="procurementMethod === 'value'" @click="procurementMethod = 'value'" aria-label="По ценности информации">Польза снимка</button>
-  </div>
-  <BuildingPlanView v-if="buildingPlanMode" @zone="id => emit('zone', id)" />
+  <nav v-if="state.planStep === 'plan' && !state.procurementOpen && !state.suppliersOpen" class="plan-method" aria-label="Разделы плана">
+    <button v-for="item in [{key:'overview',label:'Обзор'},{key:'risks',label:'Риски'},{key:'zones',label:'Зоны'},{key:'value',label:'Выгода'}]" :key="item.key" :class="{active:planView===item.key}" :aria-current="planView===item.key?'page':undefined" @click="showView(item.key)">{{ item.label }}</button>
+  </nav>
+  <PlanInsights v-if="state.planStep==='plan' && targetCount && (planView==='overview' || planView==='risks')" :view="planView" :building="buildingPlanMode" @zones="showView('zones')" @object="value => buildingPlanMode ? emit('building', value) : emit('asset', value)" />
+  <BuildingPlanView v-if="buildingPlanMode" v-show="state.planStep==='details' || planView==='zones' || planView==='value' || !targetCount" :view="planView" @zone="id => emit('zone', id)" />
   <template v-else-if="targetCount">
   <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
   <SuppliersView v-else-if="state.suppliersOpen" />
   <template v-else>
   <VoiPanel v-show="procurementMethod === 'value'" :active="procurementMethod === 'value'" @zone="id => emit('zone', id)" />
   <template v-if="procurementMethod === 'budget'">
-  <BudgetPlanSummary v-if="state.planStep==='plan'" :strategies="analysis.strategies" :plan="plan" :max-budget="maxBudget" :required-id="state.mustCover" :required-label="analysis.assets.find(a => a.id === state.mustCover)?.name || state.mustCover" :covered-count="plan?.covered_asset_ids?.length || 0" :object-words="['точка','точки','точек']" :delivery-hours="deliveryHours" @clear-required="state.mustCover = null" />
+  <BudgetPlanSummary v-if="state.planStep==='plan' && planView==='zones'" :strategies="analysis.strategies" :plan="plan" :max-budget="maxBudget" :required-id="state.mustCover" :required-label="analysis.assets.find(a => a.id === state.mustCover)?.name || state.mustCover" :covered-count="plan?.covered_asset_ids?.length || 0" :object-words="['точка','точки','точек']" :delivery-hours="deliveryHours" @clear-required="state.mustCover = null" />
 
-  <PlanCoverage v-if="state.planStep==='plan'" :zones="coverage" :busy="state.loading" :words="['точка','точки','точек']" @zone="id=>emit('zone',id)" />
+  <PlanCoverage v-if="state.planStep==='plan' && planView==='zones'" :zones="coverage" :busy="state.loading" :words="['точка','точки','точек']" @zone="id=>emit('zone',id)" />
   <div v-if="state.planStep==='details'">
   <details class="disclosure"><summary>Проверка модели на снимке</summary><div class="disclosure-body"><BacktestPanel :scene-id="state.sceneId" /></div></details>
 

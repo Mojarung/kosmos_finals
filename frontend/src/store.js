@@ -33,6 +33,7 @@ export const state = reactive({
   liveProgress: 0,
   drawing: false,
   selectedAssetId: null,
+  planRiskFilter: null,
   // Зона под курсором в списке плана: карта подсвечивает её контур.
   hoverZoneId: null,
   selectedZoneId: null,
