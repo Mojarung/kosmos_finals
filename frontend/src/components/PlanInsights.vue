@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ChevronRight, Crosshair } from '@lucide/vue'
 import { state } from '../store'
 import { buildings } from '../lib/buildings'
@@ -7,9 +7,11 @@ import { buildingPlan, buildingTargets, currentBuildingPlan } from '../lib/build
 import { activePlan } from '../store'
 import { compactRub, percent, plural } from '../lib/format'
 import Money from './Money.vue'
+import FrontierChart from './FrontierChart.vue'
 
 const props = defineProps({ view: { type: String, required: true }, building: Boolean })
-const emit = defineEmits(['object', 'zones'])
+const emit = defineEmits(['object', 'zones', 'zone'])
+const showAllZones = ref(false)
 const strategies = computed(() => props.building ? buildingPlan.result?.strategies : state.analysis?.strategies)
 const plan = computed(() => props.building ? currentBuildingPlan.value : activePlan.value)
 const allCount = computed(() => props.building ? buildings.data?.features.length || 0 : (state.analysis?.all_assets || state.analysis?.assets || []).length)
@@ -47,6 +49,31 @@ const filtered = computed(() => items.value.filter(item => !props.building || !s
   .sort((a, b) => b.loss - a.loss))
 const maxGroupLoss = computed(() => Math.max(1, ...groups.value.map(group => group.loss)))
 const maxItemLoss = computed(() => Math.max(1, ...filtered.value.map(item => item.loss)))
+const frontier = computed(() => props.building ? buildingPlan.result?.frontier || [] : state.analysis?.doubt?.frontier || [])
+const chartMeasure = computed(() => props.building ? 'охват ущерба' : 'охват сомнений')
+const chartPoints = computed(() => choices.map(choice => ({
+  key: choice.key.toLowerCase(), label: choice.key,
+  cost: strategies.value?.[choice.key]?.data_cost_rub || 0,
+  share: (props.building ? strategies.value?.[choice.key]?.coverage_share : strategies.value?.[choice.key]?.covered_doubt_share) || 0,
+  active: state.strategy === choice.key,
+})))
+const coveredShare = computed(() => totalLoss.value ? Math.min(1, coveredLoss.value / totalLoss.value) : 0)
+const topThreeShare = computed(() => totalLoss.value ? [...items.value].sort((a, b) => b.loss - a.loss).slice(0, 3).reduce((sum, item) => sum + item.loss, 0) / totalLoss.value : 0)
+const selectedZones = computed(() => {
+  const source = props.building ? buildingPlan.result?.zones || [] : state.analysis?.zones || []
+  const selected = new Set(plan.value?.zone_ids || [])
+  const lines = new Map((plan.value?.quote?.lines || []).map(line => [line.candidate_id, line.cost_rub]))
+  const decisions = new Map((state.analysis?.zone_decisions || []).map(row => [row.zone_id, row]))
+  return source.filter(zone => selected.has(zone.id)).map((zone, index) => {
+    const asset = !props.building && state.analysis?.assets?.find(item => item.id === zone.asset_id)
+    const label = zone.kind === 'broad' ? 'Вся область' : props.building ? zone.name || `Зона ${index + 1}`
+      : zone.kind === 'uncertainty' ? `Сомнительный участок ${zone.id.slice(1)}` : asset?.name || `Зона ${index + 1}`
+    return { id: zone.id, label, cost: lines.get(zone.product?.candidate_id || zone.candidate_id) ?? zone.cost_rub ?? zone.price_alone_rub ?? 0,
+      loss: zone.expected_loss_rub ?? decisions.get(zone.id)?.expected_loss_rub ?? (zone.kind === 'broad' ? totalLoss.value : 0) }
+  }).sort((a, b) => b.loss - a.loss)
+})
+const maxZoneCost = computed(() => Math.max(1, ...selectedZones.value.map(zone => zone.cost)))
+const maxZoneLoss = computed(() => Math.max(1, ...selectedZones.value.map(zone => zone.loss)))
 function selectType(key) { state.planRiskFilter = state.planRiskFilter === key ? null : key }
 function selectObject(item) { emit('object', props.building ? item.feature : item.id) }
 </script>
@@ -85,6 +112,18 @@ function selectObject(item) { emit('object', props.building ? item.feature : ite
         <button v-for="(item,index) in filtered.slice(0,5)" :key="item.id" @click="selectObject(item)"><span class="risk-rank">{{ index+1 }}</span><span class="risk-top-name"><b>{{ item.name }}</b><small>{{ item.id }}</small></span><strong>{{ compactRub(item.loss) }}</strong><Crosshair :size="14" /></button>
       </div>
       <p class="insights-caveat">Нажмите на {{ building ? 'тип, чтобы выделить здания на карте, или на здание для оценки' : 'объект, чтобы увидеть его на карте и открыть оценку' }}.</p>
+    </template>
+    <template v-else-if="view === 'charts'">
+      <div class="insights-heading"><h3>Бюджет → {{ chartMeasure }}</h3></div>
+      <div class="analytics-plot"><FrontierChart v-if="frontier.length" :frontier="frontier" :points="chartPoints" :budget="state.budget" :description="`Лучший ${chartMeasure} при разном бюджете`" /><p v-else class="insights-caveat">Для этой области кривая бюджета недоступна.</p></div>
+      <div class="insights-heading"><h3>Что покрывает съёмка</h3><span>{{ percent(coveredShare) }} ущерба</span></div>
+      <div class="analytics-coverage" role="img" :aria-label="`${compactRub(coveredLoss)} ущерба в зонах из ${compactRub(totalLoss)}`"><span :style="{width:`${coveredShare*100}%`}" /></div>
+      <div class="analytics-legend"><span>В зонах <b>{{ compactRub(coveredLoss) }}</b></span><span>Вне зон <b>{{ compactRub(Math.max(0,totalLoss-coveredLoss)) }}</b></span></div>
+      <div class="analytics-concentration"><span>Топ‑3 объекта</span><strong>{{ percent(topThreeShare) }} ущерба</strong><i><span :style="{width:`${topThreeShare*100}%`}" /></i></div>
+      <div class="insights-heading"><h3>Ущерб и цена по зонам</h3><span>{{ plural(selectedZones.length, ['зона','зоны','зон']) }}</span></div>
+      <div v-if="selectedZones.length" class="analytics-zone-list"><button v-for="zone in showAllZones ? selectedZones : selectedZones.slice(0,5)" :key="zone.id" @click="emit('zone',zone.id)"><b>{{ zone.label }}</b><span><small>Ущерб</small><strong>{{ compactRub(zone.loss) }}</strong></span><i class="loss"><span :style="{width:`${zone.loss/maxZoneLoss*100}%`}" /></i><span><small>Снимок</small><strong>{{ compactRub(zone.cost) }}</strong></span><i class="cost"><span :style="{width:`${zone.cost/maxZoneCost*100}%`}" /></i></button><button v-if="selectedZones.length>5" class="analytics-more" @click="showAllZones=!showAllZones">{{ showAllZones ? 'Свернуть' : `Ещё ${selectedZones.length-5}` }}</button></div>
+      <p v-else class="insights-caveat">Для этого варианта снимки не покупаются.</p>
+      <p class="insights-caveat">Ущерб в зонах показывает приоритет проверки, а не предотвращённые потери.</p>
     </template>
   </section>
 </template>

@@ -4,7 +4,7 @@ import PlanCoverage from './PlanCoverage.vue'
 import PlanInsights from './PlanInsights.vue'
 import { buildingTargets } from '../lib/buildingPlans'
 import Reveal from './Reveal.vue'
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { ArrowLeft, Building2, ChevronDown, Info, MapPin, Pin, SlidersHorizontal, X } from '@lucide/vue'
 import AnimatedNumber from './AnimatedNumber.vue'
 import ProcurementView from './ProcurementView.vue'
@@ -23,10 +23,12 @@ import Money from './Money.vue'
 
 const emit = defineEmits(['zone', 'asset', 'building'])
 const planView = ref(state.procurementMethod === 'value' ? 'value' : 'overview')
+const planRoot = ref(null)
 function showView(view) {
   planView.value = view
   state.planRiskFilter = null
   state.procurementMethod = view === 'value' ? 'value' : 'budget'
+  nextTick(() => planRoot.value?.closest('.panel-scroll')?.scrollTo({ top: 0 }))
 }
 watch(() => [state.objectMode, state.sceneId, state.tab], () => { state.planRiskFilter = null }, { immediate: true })
 const procurementMethod = computed({ get: () => state.procurementMethod, set: value => { state.procurementMethod = value } })
@@ -288,7 +290,7 @@ function hover(id) { state.hoverZoneId = id }
 </script>
 
 <template>
-  <div class="shooting-workflow">
+  <div ref="planRoot" class="shooting-workflow">
   <div v-if="state.planStep==='plan'" class="plan-toolbar">
     <div v-if="!state.procurementProjectId" class="plan-source" role="group" aria-label="Объекты для съёмки">
       <button :aria-pressed="state.objectMode==='buildings'" :class="{active:state.objectMode==='buildings'}" @click="state.objectMode='buildings'"><Building2 :size="16" />Здания</button>
@@ -313,9 +315,9 @@ function hover(id) { state.hoverZoneId = id }
       @click="state.suppliersOpen = true; state.procurementOpen = false">Поставщики</button>
   </div>
   <nav v-if="state.planStep === 'plan' && !state.procurementOpen && !state.suppliersOpen" class="plan-method" aria-label="Разделы плана">
-    <button v-for="item in [{key:'overview',label:'Обзор'},{key:'risks',label:'Риски'},{key:'zones',label:'Зоны'},{key:'value',label:'Выгода'}]" :key="item.key" :class="{active:planView===item.key}" :aria-current="planView===item.key?'page':undefined" @click="showView(item.key)">{{ item.label }}</button>
+    <button v-for="item in [{key:'overview',label:'Обзор'},{key:'risks',label:'Риски'},{key:'charts',label:'Графики'},{key:'zones',label:'Зоны'},{key:'value',label:'Выгода'}]" :key="item.key" :class="{active:planView===item.key}" :aria-current="planView===item.key?'page':undefined" @click="showView(item.key)">{{ item.label }}</button>
   </nav>
-  <PlanInsights v-if="state.planStep==='plan' && targetCount && (planView==='overview' || planView==='risks')" :view="planView" :building="buildingPlanMode" @zones="showView('zones')" @object="value => buildingPlanMode ? emit('building', value) : emit('asset', value)" />
+  <PlanInsights v-if="state.planStep==='plan' && targetCount && ['overview','risks','charts'].includes(planView)" :view="planView" :building="buildingPlanMode" @zones="showView('zones')" @zone="id => emit('zone', id)" @object="value => buildingPlanMode ? emit('building', value) : emit('asset', value)" />
   <BuildingPlanView v-if="buildingPlanMode" v-show="state.planStep==='details' || planView==='zones' || planView==='value' || !targetCount" :view="planView" @zone="id => emit('zone', id)" />
   <template v-else-if="targetCount">
   <ProcurementView v-if="state.procurementOpen" :key="`${state.sceneId}:${state.procurementProjectId || 'case'}`" />
